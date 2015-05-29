@@ -1,0 +1,69 @@
+# test home
+curl http://localhost:8080
+
+# DB
+curl http://localhost:8080/init_db
+http://localhost:8080/init_db
+http://localhost:8080/show_db
+
+# job list
+http://localhost:8080/ctbin
+
+# job
+http://localhost:8080/ctbin/426b0286-e656-b924-c14a-fbd02f9ebaa9
+http://localhost:8080/ctbin/426b0286-e656-b924-c14a-fbd02f9ebaa9/phase
+http://localhost:8080/ctbin/426b0286-e656-b924-c14a-fbd02f9ebaa9/executionduration
+http://localhost:8080/ctbin/426b0286-e656-b924-c14a-fbd02f9ebaa9/destruction
+http://localhost:8080/ctbin/426b0286-e656-b924-c14a-fbd02f9ebaa9/error
+http://localhost:8080/ctbin/426b0286-e656-b924-c14a-fbd02f9ebaa9/quote
+http://localhost:8080/ctbin/426b0286-e656-b924-c14a-fbd02f9ebaa9/parameters
+http://localhost:8080/ctbin/426b0286-e656-b924-c14a-fbd02f9ebaa9/parameters/evfile
+http://localhost:8080/ctbin/426b0286-e656-b924-c14a-fbd02f9ebaa9/results
+http://localhost:8080/ctbin/426b0286-e656-b924-c14a-fbd02f9ebaa9/results/0
+http://localhost:8080/ctbin/426b0286-e656-b924-c14a-fbd02f9ebaa9/owner
+
+# create job
+curl -d "evfile=test.fits" -d "enumbins=2" http://localhost:8080/ctbin
+curl -d "evfile=test.fits" -d "enumbins=2" -d "PHASE=RUN" http://localhost:8080/ctbin
+curl -F "evfile=test.fits" -F "enumbins=2" -F "file=@/home/mservillat/CTA/svn_voparis-cta/uws_server/events.fits" http://localhost:8080/ctbin
+
+# delete job
+curl -X DELETE http://localhost:8080/ctbin/6ce13bc5-dbf3-6b04-b1e7-28d47ad32794
+curl -d "ACTION=DELETE" http://localhost:8080/ctbin/6ce13bc5-dbf3-6b04-b1e7-28d47ad32794
+curl -d "BADKEY=DELETE" http://localhost:8080/ctbin/6ce13bc5-dbf3-6b04-b1e7-28d47ad32794
+
+# start job
+curl -d "PHASE=RUN" http://localhost:8080/ctbin/6ce13bc5-dbf3-6b04-b1e7-28d47ad32794/phase
+curl -d "BADKEY=RUN" http://localhost:8080/ctbin/6ce13bc5-dbf3-6b04-b1e7-28d47ad32794/phase
+curl -d "PHASE=BADVALUE" http://localhost:8080/ctbin/6ce13bc5-dbf3-6b04-b1e7-28d47ad32794/phase
+
+# abort job
+curl -d "PHASE=ABORT" http://localhost:8080/ctbin/6ce13bc5-dbf3-6b04-b1e7-28d47ad32794/phase
+
+# change execution_duration
+curl -d "EXECUTIONDURATION=120" http://localhost:8080/ctbin/426b0286-e656-b924-c14a-fbd02f9ebaa9/executionduration
+curl -d "EXECUTIONDURATION=AA" http://localhost:8080/ctbin/426b0286-e656-b924-c14a-fbd02f9ebaa9/executionduration
+curl -d "EXECUTIONDUR=AA" http://localhost:8080/ctbin/426b0286-e656-b924-c14a-fbd02f9ebaa9/executionduration
+
+# change desctruction_time
+curl -d "DESTRUCTION=2016-01-01T00:00:00" http://localhost:8080/ctbin/426b0286-e656-b924-c14a-fbd02f9ebaa9/destruction
+curl -d "DESTRUCTION=2016-01-01T00:00:00.55555" http://localhost:8080/ctbin/426b0286-e656-b924-c14a-fbd02f9ebaa9/destruction
+curl -d "DESTRUCTION=2016-01-01 00:00:00" http://localhost:8080/ctbin/426b0286-e656-b924-c14a-fbd02f9ebaa9/destruction
+curl -d "DESTRUCTION=AA" http://localhost:8080/ctbin/426b0286-e656-b924-c14a-fbd02f9ebaa9/destruction
+curl -d "DESTRUCT=AA" http://localhost:8080/ctbin/426b0286-e656-b924-c14a-fbd02f9ebaa9/destruction
+
+# change parameter
+curl -d "VALUE=5" http://localhost:8080/ctbin/426b0286-e656-b924-c14a-fbd02f9ebaa9/parameters/enumbins
+curl -d "VALUE=5" http://localhost:8080/ctbin/6ce13bc5-dbf3-6b04-b1e7-28d47ad32794/parameters/enumbins
+curl -d "VAL=5" http://localhost:8080/ctbin/6ce13bc5-dbf3-6b04-b1e7-28d47ad32794/parameters/enumbins
+curl -d "VALUE=AA" http://localhost:8080/ctbin/6ce13bc5-dbf3-6b04-b1e7-28d47ad32794/parameters/enumbins
+
+# job_events
+curl http://localhost:8080/job_event/badid
+curl http://localhost:8080/job_event/123456
+curl http://localhost:8080/job_event/123456?PHASE=BADVALUE
+curl http://localhost:8080/job_event/123456?PHASE=HELD
+curl http://localhost:8080/job_event/123456?PHASE=SUSPENDED
+curl http://localhost:8080/job_event/123456?PHASE=EXECUTING
+curl http://localhost:8080/job_event/123456?PHASE=COMPLETED
+curl 'http://localhost:8080/job_event/123456?PHASE=ERROR&ERROR=error_message'

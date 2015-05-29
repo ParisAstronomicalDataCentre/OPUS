@@ -1,0 +1,20 @@
+#!/bin/sh
+### Job name
+#SBATCH --job-name=ctbin_6ce13bc5-dbf3-6b04-b1e7-28d47ad32794
+### Declare job non-rerunable
+#SBATCH --no-requeue
+### Output files
+#SBATCH --error=uwsdata/err.%j
+#SBATCH --output=uwsdata/job.%j
+### Mail to user
+#SBATCH --mail-user=mathieu.servillat@obspm.fr
+#SBATCH --mail-type=ALL
+### Queue name (small, long)
+#SBATCH --partition=short
+#Time
+#SBATCH --time=0:01:00
+#Memory
+#SBATCH --mem=200mb
+#Define number of processors
+#SBATCH --nodes=1 --ntasks-per-node=1
+/home/vouws/uws/ctbin.pl 'voplus.obspm.fr/cta/events.fits' 5

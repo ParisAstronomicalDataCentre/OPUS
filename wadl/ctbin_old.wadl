@@ -1,0 +1,306 @@
+<?xml version="1.0" standalone="yes"?>
+<application xmlns="http://wadl.dev.java.net/2009/02"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+   xsi:schemaLocation="http://wadl.dev.java.net/2009/02 http://www.w3.org/Submission/wadl/wadl.xsd"
+   xmlns:uws="xmlns:uws=http://www.ivoa.net/xml/UWS/v1.0"
+   xmlns:xlink="xmlns:xlink=http://www.w3.org/1999/xlink">
+   <doc>Implements the UWS service</doc>
+   <grammars>
+      <include href="http://ivoa.net/xml/UWS/UWS-v1.0.xsd"/>
+   </grammars>
+<!-- TODO: base value -->
+   <resources base="http://voparis-uws.obspm.fr/uws-v1.0/ctbin">
+      <resource path="{job-id}">
+         <doc>This resource handles a job</doc>
+         <method name="DELETE">
+            <doc>Delete a job</doc>
+            <request>
+               <param style="template" name="job-id" type="xs:string" required="true"/>
+            </request>
+            <response status="303">
+               <doc>Redirects to /{job}</doc>
+            </response>
+            <response status="404"/>
+            <response status="500"/>
+         </method>
+         <method name="GET">
+            <doc>Get a job summary</doc>
+            <request>
+               <param style="template" name="job-id" type="xs:string" required="true"/>
+            </request>
+            <response status="200">
+               <representation mediaType="text/xml" element="uws:job"/>
+            </response>
+            <response status="404"/>
+            <response status="500"/>
+         </method>
+         <method name="POST">
+            <doc>Control a Job</doc>
+            <request>
+               <param style="template" name="job-id" type="xs:string" required="true"/>
+<!-- TODO: parameters -->
+               <param style="query" name="dest" type="xs:string" required="false" default="mycopy">
+                  <doc>Name of copied file</doc>
+               </param>
+               <param style="query" name="source" type="xs:anyURI" required="false">
+                  <doc>URI of the file to copy</doc>
+               </param>
+<!-- END: parameters -->
+               <param style="query" name="ACTION" type="xs:string" required="false">
+                  <option value="DELETE"/>
+               </param>
+               <representation mediaType="multipart/form-data"/>
+               <representation mediaType="application/x-www-form-urlencoded"/>
+            </request>
+            <response status="303">
+               <doc>Redirects to /{job}/{job-id}</doc>
+            </response>
+            <response status="404"/>
+            <response status="415"/>
+            <response status="500"/>
+         </method>
+      </resource>
+      <resource path="{job-id}/phase">
+         <doc>This resource handles job phase</doc>
+         <method name="GET">
+            <doc>Get job phase</doc>
+            <request>
+               <param style="template" name="job-id" type="xs:string" required="true"/>
+            </request>
+            <response status="200">
+               <representation mediaType="text/plain" element="xs:string"/>
+            </response>
+            <response status="404"/>
+            <response status="500"/>
+         </method>
+         <method name="POST">
+            <doc>Control a Job</doc>
+            <request>
+               <param style="template" name="job-id" type="xs:string" required="true"/>
+               <param style="query" name="PHASE" type="xs:string" required="false">
+                  <option value="ABORT"/>
+                  <option value="RUN"/>
+               </param>
+               <representation mediaType="application/x-www-form-urlencoded"/>
+            </request>
+            <response status="303">
+               <doc>Redirects to /{job}/{job-id}</doc>
+            </response>
+            <response status="404"/>
+            <response status="500"/>
+         </method>
+      </resource>
+      <resource path="{job-id}/executionduration">
+         <doc>This resource handles execution duration</doc>
+         <method name="GET">
+            <doc>Get job execution duration</doc>
+            <request>
+               <param style="template" name="job-id" type="xs:int" required="true"/>
+            </request>
+            <response status="200">
+               <representation mediaType="text/plain" element="xs:int"/>
+            </response>
+            <response status="404"/>
+            <response status="500"/>
+         </method>
+         <method name="POST">
+            <doc>Set execution duration</doc>
+            <request>
+               <param style="template" name="job-id" type="xs:string" required="true"/>
+               <param style="query" name="EXECUTIONDURATION" type="xs:int" required="false"/>
+            </request>
+            <response status="303">
+               <doc>Redirects to /{job}/{job-id}</doc>
+            </response>
+            <response status="404"/>
+            <response status="500"/>
+         </method>
+      </resource>
+      <resource path="{job-id}/destruction">
+         <doc>This resource handles the destruction time of the job</doc>
+         <method name="GET">
+            <doc>Get job destruction time as ISO8601 format</doc>
+            <request>
+               <param style="template" name="job-id" type="xs:string" required="true"/>
+            </request>
+            <response status="200">
+               <representation mediaType="text/plain" element="xs:dateTime"/>
+            </response>
+            <response status="404"/>
+            <response status="500"/>
+         </method>
+         <method name="POST">
+            <doc>Set job destruction time</doc>
+            <request>
+               <param style="template" name="job-id" type="xs:string" required="true"/>
+               <param style="query" name="DESTRUCTION" type="xs:dateTime" required="false"/>
+            </request>
+            <response status="303">
+               <doc>Redirects to /{job}/{job-id}</doc>
+            </response>
+            <response status="404"/>
+            <response status="500"/>
+         </method>
+      </resource>
+      <resource path="{job-id}/error">
+         <doc>This resource handles error happening during the job processing</doc>
+         <method name="GET">
+            <doc>Get the generated error</doc>
+            <request>
+               <param style="template" name="job-id" type="xs:string" required="true"/>
+            </request>
+            <response status="200">
+               <representation mediaType="text/xml" element="uws:errorSummary"/>
+            </response>
+            <response status="404"/>
+            <response status="500"/>
+         </method>
+      </resource>
+      <resource path="{job-id}/quote">
+         <doc title="Quote Resource">This resource handles quote prediction</doc>
+         <method name="GET">
+            <doc>Get quote value</doc>
+            <request>
+               <param style="template" name="job-id" type="xs:string" required="true"/>
+            </request>
+            <response status="200">
+               <representation mediaType="text/plain" element="xs:dateTime"/>
+            </response>
+            <response status="404"/>
+            <response status="500"/>
+         </method>
+      </resource>
+      <resource path="{job-id}/results">
+         <doc title="Results Resource">This resource handles job results</doc>
+         <method name="GET">
+            <doc>Get job results</doc>
+            <request>
+               <param style="template" name="job-id" type="xs:string" required="true"/>
+            </request>
+            <response status="200">
+               <representation mediaType="text/xml" element="uws:results"/>
+            </response>
+            <response status="404"/>
+            <response status="500"/>
+         </method>
+      </resource>
+      <resource path="{job-id}/results/{result-id}">
+         <doc>This resource handles result value</doc>
+         <method name="GET">
+            <doc>Get a result</doc>
+            <request>
+               <param style="template" name="job-id" type="xs:string" required="true"/>
+               <param style="template" name="result-id" type="xs:string" required="true">
+<!-- TODO: results name -->
+                  <option value="0" mediaType="image/fits"/>
+                  <option value="1" mediaType="image/fits"/>
+<!-- END: results name -->
+               </param>
+            </request>
+            <response status="200"/>
+            <response status="404"/>
+            <response status="500"/>
+         </method>
+      </resource>
+      <resource path="{job-id}/parameters">
+         <doc title="Parameters Resource">This resource handles job parameters</doc>
+         <method name="GET">
+            <doc>Get Job parameters</doc>
+            <request>
+               <param style="template" name="job-id" type="xs:string" required="true"/>
+            </request>
+            <response status="200">
+               <representation mediaType="text/xml" element="uws:parameters"/>
+            </response>
+            <response status="404"/>
+            <response status="500"/>
+         </method>
+         <method name="POST">
+            <doc>Set parameters</doc>
+            <request>
+               <param style="template" name="job-id" type="xs:string" required="true"/>
+<!-- TODO: parameters -->
+               <param style="query" name="evfile" type="xs:anyURI" required="false">
+                  <doc>URI of the event list file</doc>
+               </param>
+               <param style="query" name="enumbins" type="xs:string" required="false">
+                  <doc>Number of energy bins</doc>
+               </param>
+<!-- END: parameters -->
+               <representation mediaType="multipart/form-data"/>
+               <representation mediaType="application/x-www-form-urlencoded"/>
+            </request>
+            <response status="303">
+               <doc>Redirect to /{job}/{job-id}</doc>
+            </response>
+            <response status="404"/>
+            <response status="415"/>
+            <response status="500"/>
+         </method>
+      </resource>
+      <resource path="{job-id}/parameters/{parameter-name}">
+         <doc>This resource handles parameter value</doc>
+         <method name="GET">
+            <doc>Get a parameter name</doc>
+            <request>
+               <param style="template" name="job-id" type="xs:string" required="true"/>
+               <param style="template" name="parameter-name" type="xs:string" required="true">
+<!-- TODO: parameters name -->
+                  <option value="evfile" mediaType="text/plain"/>
+                  <option value="enumbins" mediaType="text/plain"/>
+<!-- END: parameters name -->
+               </param>
+            </request>
+            <response status="200"/>
+            <response status="404"/>
+            <response status="500"/>
+         </method>
+      </resource>
+      <resource path="{job-id}/owner">
+         <doc>This resource handles job owner</doc>
+         <method name="GET">
+            <doc>Getting an ownerId</doc>
+            <request>
+               <param style="template" name="job-id" type="xs:string" required="true"/>
+            </request>
+            <response status="200">
+               <representation mediaType="text/plain" element="xs:string"/>
+            </response>
+            <response status="404"/>
+            <response status="500"/>
+         </method>
+      </resource>
+      <resource>
+         <doc>This resource contains the whole list of job</doc>
+         <method name="GET">
+            <doc>List all created jobs. The list may be empty if the UWS is idle</doc>
+            <response status="200">
+               <representation mediaType="text/xml" element="uws:jobs"/>
+            </response>
+            <response status="500"/>
+         </method>
+         <method name="POST">
+            <doc>POSTing a request to the Job List creates a new job</doc>
+            <request>
+<!-- TODO: parameters -->
+               <param style="query" name="dest" type="xs:string" required="true" default="mycopy">
+                  <doc>The name of copied file.</doc>
+               </param>
+               <param style="query" name="source" type="xs:anyURI" required="true">
+                  <doc>The URI of the file to be copied.</doc>
+               </param>
+<!-- END: parameters -->
+               <param style="query" name="PHASE" type="xs:string" required="false" fixed="RUN"/>
+               <representation mediaType="multipart/form-data"/>
+               <representation mediaType="application/x-www-form-urlencoded"/>
+            </request>
+            <response status="303">
+               <doc>Redirects to newly created resource /{job-id}</doc>
+            </response>
+            <response status="415"/>
+            <response status="500"/>
+         </method>
+      </resource>
+   </resources>
+</application>
