@@ -71,7 +71,7 @@ class SLURMManager(Manager):
         pbs = [
             "#!/bin/sh",
             "### Job name",
-            "#SBATCH --job-name=%s_%s" % (job.jobname, job.jobid),
+            "#SBATCH --job-name={}_{}".format(job.jobname, job.jobid),
             "### Declare job non-rerunable",
             "#SBATCH --no-requeue",
             "### Output files",
@@ -89,7 +89,7 @@ class SLURMManager(Manager):
             "### Queue name (small, long)",
             "### Script execution",
             "/obs/vouws/uws_scripts/ctbin.pl 'voplus.obspm.fr/cta/events.fits' 5",
-            #"/home/vouws/uws/%s.pl '%s'" % (job.jobname, job.jobid),
+            #"/home/vouws/uws/{}.pl '{}'".format(job.jobname, job.jobid),
         ]
         # Insert server specific sbatch commands before "### Script execution"
         pbs[-2:1] = SLURM_SBATCH
@@ -119,10 +119,10 @@ class SLURMManager(Manager):
         # Copy parameter file
         cmd2 = ['scp', PARAMS_PATH + params_file, self.ssh_arg + ':' + self.params_path + params_file]
         sp.check_output(cmd2, stderr=sp.STDOUT)
-        # Start job: "ssh vouws@tycho.obspm.fr '~/uws/uwshandler.sh -x start -p ~/name'"
+        # Start job using uws_handler
+        # "ssh vouws@tycho.obspm.fr '~/uws/uwshandler.sh -x start -p ~/name'"
         cmd3 = ['ssh', self.ssh_arg, self.uws_handler, '-x start', '-p ' + self.pbs_path + pbs_file]
         jobid_cluster = sp.check_output(cmd3, stderr=sp.STDOUT)
-        # TODO: change start time here?
         # Remove trailing \n from output
         return jobid_cluster[:-1]
 
@@ -159,9 +159,9 @@ class SLURMManager(Manager):
         """
         # "ssh vouws@tycho.obspm.fr '~/uws/uwshandler.sh -x status -p jobid'"
         cmd = ['ssh', self.ssh_arg, self.uws_handler, '-x start_time', '-p ' + str(job.jobid_cluster)]
-        end_time = sp.check_output(cmd, stderr=sp.STDOUT)
+        start_time = sp.check_output(cmd, stderr=sp.STDOUT)
         # Remove trailing \n from output,and replace ' ' by 'T' in ISO date
-        return end_time[:-1].replace(' ','T')
+        return start_time[:-1].replace(' ','T')
 
     def get_end_time(self, job):
         """Get job end time from SLURM server

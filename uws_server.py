@@ -12,8 +12,6 @@ See http://www.ivoa.net/documents/UWS/20101010/REC-UWS-1.0-20101010.html
 import sys
 import traceback
 import uuid
-from functools import wraps
-from subprocess import CalledProcessError
 from bottle import Bottle, request, response, abort, redirect, run
 from uws_classes import *
 
@@ -67,6 +65,7 @@ user = 'anonymous'
 
 def set_user():
     """Set user from request header"""
+    global user
     # TODO: Set user from REMOTE_USER (?)
     pass
 
@@ -85,6 +84,7 @@ def is_job_server():
 
 def is_localhost():
     """Test if super-user"""
+    global user
     # Request comes from a job server:
     ip = request.environ.get('REMOTE_ADDR', '')
     if ip == '127.0.0.1':
@@ -104,7 +104,7 @@ def abort_403():
     Returns:
         403 Forbidden
     """
-    abort(403, 'You don\'t have permission to access %s on this server.' + request.urlparts.path)
+    abort(403, 'You don\'t have permission to access {} on this server.'.format(request.urlparts.path))
 
 
 def abort_404(msg=None):
@@ -193,7 +193,7 @@ def init_db(db):
         with open(filename) as f:
             sql = f.read()
         db.executescript(sql)
-        logger.info('Database initialized using %s' % filename)
+        logger.info('Database initialized using ' + filename)
     except:
         abort_500_except()
     redirect('/show_db')
@@ -224,13 +224,13 @@ def show_db(db):
             for k in cols:
                 html += k + ' = ' + str(job[k]) + '<br>'
             # Parameters
-            query = "select * from job_parameters where jobid = '" + jobid + "';"
+            query = "select * from job_parameters where jobid='{}';".format(jobid)
             params = db.execute(query).fetchall()
             html += '<strong>Parameters:</strong><br>'
             for param in params:
                 html += param['name'] + ' = ' + param['value'] + ' (byRef=' + str(param['byref']) + ')<br>'
             # Results
-            query = "select * from job_results where jobid = '" + jobid + "';"
+            query = "select * from job_results where jobid='{}';".format(jobid)
             results = db.execute(query).fetchall()
             html += '<strong>Results</strong><br>'
             for result in results:
@@ -242,7 +242,39 @@ def show_db(db):
 
 
 # ----------
+# Server maintenance
+
+
+@app.route('/maintenance')
+def maintenance(db):
+    """Performs server maintenance, e.g. executed regularly by the server itself (localhost)
+
+    Returns:
+        200 OK: text/plain (on success)
+        403 Forbidden (if not localhost)
+        500 Internal Server Error (on error)
+    """
+    if not is_localhost():
+        abort_403()
+    try:
+        # Get joblist
+
+        # For each job:
+        # TODO: Check consistency of dates (destruction_time > end_time > start_time > creation_time)
+        # TODO: Update status if phase is not PENDING or terminal (or for all jobs?)
+        # TODO: If job is SUSPENDED, try to restart the job
+        # TODO: If destruction time is passed, delete job
+        pass
+    except:
+        abort_500_except()
+    # Response
+    response.content_type = 'text/plain; charset=UTF8'
+    return ''
+
+
+# ----------
 # Interface with job queue manager
+
 
 @app.route('/job_event/<jobid_cluster>')
 def job_event(jobid_cluster, db):
@@ -251,46 +283,43 @@ def job_event(jobid_cluster, db):
     Returns:
         200 OK: text/plain (on success)
         403 Forbidden (if not super_user)
-        404 Not Found: Job not found (on TypeError)
+        404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
     if not is_job_server():
         abort_403()
     else:
-        logger.info('job_server connected (%s) on %s' % (user, request.urlparts.path))
+        logger.info('job_server connected ({}) on {}'.format(user, request.urlparts.path))
     try:
-        logger.info('jobid_cluster=' + jobid_cluster + ' GET=' + str(request.GET.dict))
+        logger.info('jobid_cluster={} GET={}'.format(jobid_cluster, str(request.GET.dict)))
         # Query db for jobname and jobid
-        query = "SELECT jobname, jobid FROM jobs WHERE jobid_cluster='%s';" % jobid_cluster
+        query = "SELECT jobname, jobid FROM jobs WHERE jobid_cluster='{}';".format(jobid_cluster)
         j = db.execute(query).fetchone()
+        if not j:
+            raise NotFoundWarning('Job with jobid_cluster={} NOT FOUND'.format(jobid_cluster))
         # Get job description from DB
         job = Job(j['jobname'], j['jobid'], user, db, get_description=True)
-        # Update job with PHASE=, MSG=
+        # Update job with PHASE=, ERROR=
         if 'PHASE' in request.GET:
-            phase = request.GET['PHASE']
-            cur_phase = job.phase
-            if phase == 'ERROR':
+            new_phase = request.GET['PHASE']
+            phase = job.phase
+            if new_phase == 'ERROR':
                 if 'ERROR' in request.GET:
-                    job.change_status(phase, request.GET['ERROR'])
+                    job.change_status(new_phase, request.GET['ERROR'])
                 else:
-                    job.change_status(phase)
-                logger.info('%s %s ERROR reported (from %s)' % (job.jobname, job.jobid, user))
-            elif phase != cur_phase:
-                job.change_status(phase)
-                logger.info('%s %s phase %s --> %s (from %s)' % (job.jobname, job.jobid, cur_phase, phase, user))
+                    job.change_status(new_phase)
+                logger.info('{} {} ERROR reported (from {})'.format(job.jobname, job.jobid, user))
+            elif new_phase != phase:
+                job.change_status(new_phase)
+                logger.info('{} {} phase {} --> {} (from {})'.format(job.jobname, job.jobid, phase, new_phase, user))
             else:
-                raise RuntimeWarning('Phase is already ' + phase)
+                raise UserWarning('Phase is already ' + new_phase)
         else:
-            raise RuntimeWarning('Unknown event sent for job ' + job.jobid)
-    except TypeError as e:
-        if 'NoneType' in e.message:
-            abort_404('Job with jobid_cluster=%s NOT FOUND' % jobid_cluster)
-        else:
-            abort_500(e.message)
-    except RuntimeWarning as e:
+            raise UserWarning('Unknown event sent for job ' + job.jobid)
+    except NotFoundWarning as e:
+        abort_404(e.message)
+    except UserWarning as e:
         abort_500(e.message)
-    except KeyError as e:
-        abort_500('Unknown phase ' + e.args[0])
     except:
         abort_500_except()
     # Response
@@ -344,7 +373,7 @@ def create_job(jobname, db):
         if request.forms.get('PHASE') == 'RUN':
             job.start()
             logger.info(jobname + ' ' + jobid + ' started with jobid_cluster=' + str(job.jobid_cluster))
-    except RuntimeWarning as e:
+    except UserWarning as e:
         abort_500(e.message)
     except CalledProcessError as e:
         abort_500_except('STDERR output:\n' + e.output)
@@ -365,7 +394,7 @@ def get_job(jobname, jobid, db):
     Returns:
         the <job> element in the UWS schema
         200 OK: text/xml (on success)
-        404 Not Found: Job not found (on TypeError)
+        404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
     try:
@@ -377,11 +406,8 @@ def get_job(jobname, jobid, db):
         xml = job.to_xml()
         response.content_type = 'text/xml; charset=UTF8'
         return xml
-    except TypeError as e:
-        if 'NoneType' in e.message:
-            abort_404('Job "%s" NOT FOUND' % jobid)
-        else:
-            abort_500(e.message)
+    except NotFoundWarning as e:
+        abort_404(e.message)
     except:
         abort_500_except()
 
@@ -392,7 +418,7 @@ def delete_job(jobname, jobid, db):
 
     Returns:
         303 See other: /<jobname> (on success)
-        404 Not Found: Job not found (on TypeError)
+        404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
     try:
@@ -403,11 +429,8 @@ def delete_job(jobname, jobid, db):
         # Delete job
         job.delete()
         logger.info(jobname + ' ' + jobid + ' DELETED')
-    except TypeError as e:
-        if 'NoneType' in e.message:
-            abort_404('Job "%s" NOT FOUND' % jobid)
-        else:
-            abort_500(e.message)
+    except NotFoundWarning as e:
+        abort_404(e.message)
     except CalledProcessError as e:
         abort_500_except('STDERR output:\n' + e.output)
     except:
@@ -429,16 +452,13 @@ def post_job(jobname, jobid, db):
             job.delete()
             logger.info(jobname + ' ' + jobid + ' DELETED')
         else:
-            raise RuntimeWarning('ACTION=DELETE is not specified in POST')
-    except TypeError as e:
-        if 'NoneType' in e.message:
-            abort_404('Job "%s" NOT FOUND' % jobid)
-        else:
-            abort_500(e.message)
+            raise UserWarning('ACTION=DELETE is not specified in POST')
+    except NotFoundWarning as e:
+        abort_404(e.message)
+    except UserWarning as e:
+        abort_500(e.message)
     except CalledProcessError as e:
         abort_500_except('STDERR output:\n' + e.output)
-    except RuntimeWarning as e:
-        abort_500(e.message)
     except:
         abort_500_except()
     redirect('/' + jobname)
@@ -454,7 +474,7 @@ def get_phase(jobname, jobid, db):
 
     Returns:
         200 OK: text/plain: one of the fixed strings (on success)
-        404 Not Found: Job not found (on TypeError)
+        404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
     try:
@@ -465,11 +485,8 @@ def get_phase(jobname, jobid, db):
         # Return value
         response.content_type = 'text/plain; charset=UTF8'
         return job.phase
-    except TypeError as e:
-        if 'NoneType' in e.message:
-            abort_404('Job "%s" NOT FOUND' % jobid)
-        else:
-            abort_500(e.message)
+    except NotFoundWarning as e:
+        abort_404(e.message)
     except:
         abort_500_except()
 
@@ -480,7 +497,7 @@ def post_phase(jobname, jobid, db):
 
     Returns:
         303 See other: /<jobname>/<jobid> (on success)
-        404 Not Found: Job not found (on TypeError)
+        404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
     try:
@@ -494,7 +511,7 @@ def post_phase(jobname, jobid, db):
                 job = Job(jobname, jobid, user, db, get_description=True)
                 # Check if phase is PENDING
                 if job.phase not in ['PENDING']:
-                    raise RuntimeWarning('Job has to be in PENDING phase')
+                    raise UserWarning('Job has to be in PENDING phase')
                 # Start job
                 job.start()
                 logger.info(jobname + ' ' + jobid + ' STARTED with jobid_cluster=' + str(job.jobid_cluster))
@@ -505,18 +522,13 @@ def post_phase(jobname, jobid, db):
                 job.abort()
                 logger.info(jobname + ' ' + jobid + ' ABORTED by user ' + user)
             else:
-                raise RuntimeWarning('PHASE=' + new_phase + ' not expected')
+                raise UserWarning('PHASE=' + new_phase + ' not expected')
         else:
-            raise RuntimeWarning('PHASE keyword is not specified in POST')
-    except TypeError as e:
-        if 'NoneType' in e.message:
-            abort_404('Job "%s" NOT FOUND' % jobid)
-        else:
-            abort_500(e.message)
-    except RuntimeWarning as e:
+            raise UserWarning('PHASE keyword is not specified in POST')
+    except NotFoundWarning as e:
+        abort_404(e.message)
+    except UserWarning as e:
         abort_500(e.message)
-    except KeyError as e:
-        abort_500('Job cannot be aborted while in phase ' + e.args[0])
     except CalledProcessError as e:
         abort_500_except('STDERR output:\n' + e.output)
     except:
@@ -535,7 +547,7 @@ def get_executionduration(jobname, jobid, db):
 
     Returns:
         200 OK: text/plain: integer number of seconds (on success)
-        404 Not Found: Job not found (on TypeError)
+        404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
     try:
@@ -546,11 +558,8 @@ def get_executionduration(jobname, jobid, db):
         # Return value
         response.content_type = 'text/plain; charset=UTF8'
         return str(job.execution_duration)
-    except TypeError as e:
-        if 'NoneType' in e.message:
-            abort_404('Job "%s" NOT FOUND' % jobid)
-        else:
-            abort_500(e.message)
+    except NotFoundWarning as e:
+        abort_404(e.message)
     except:
         abort_500_except()
 
@@ -561,7 +570,7 @@ def post_executionduration(jobname, jobid, db):
 
     Returns:
         303 See other: /<jobname>/<jobid> (on success)
-        404 Not Found: Job not found (on TypeError)
+        404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
     try:
@@ -569,22 +578,23 @@ def post_executionduration(jobname, jobid, db):
         logger.info(jobname + ' ' + jobid)
         # Get value from POST
         if 'EXECUTIONDURATION' not in request.forms:
-            raise RuntimeWarning('EXECUTIONDURATION keyword required')
+            raise UserWarning('EXECUTIONDURATION keyword required')
         new_value = request.forms.get('EXECUTIONDURATION')
         # Check new value
-        if not isinstance(new_value, int) or isinstance(new_value, float):
-            raise RuntimeWarning('Execution duration must be an integer or a float')
+        try:
+            new_value = int(new_value)
+        except ValueError:
+            raise UserWarning('Execution duration must be an integer or a float')
         # Get job description from DB
         job = Job(jobname, jobid, user, db, get_description=True)
+        # TODO: check phase?
+
         # Change value
         job.set('execution_duration', new_value)
-        logger.info(jobname + ' ' + jobid + ' set execution_duration=' + new_value)
-    except TypeError as e:
-        if 'NoneType' in e.message:
-            abort_404('Job "%s" NOT FOUND' % jobid)
-        else:
-            abort_500(e.message)
-    except RuntimeWarning as e:
+        logger.info(jobname + ' ' + jobid + ' set execution_duration=' + str(new_value))
+    except NotFoundWarning as e:
+        abort_404(e.message)
+    except UserWarning as e:
         abort_500(e.message)
     except:
         abort_500_except()
@@ -602,7 +612,7 @@ def get_destruction(jobname, jobid, db):
 
     Returns:
         200 OK: text/plain: time in ISO8601 format (on success)
-        404 Not Found: Job not found (on TypeError)
+        404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
     try:
@@ -613,11 +623,8 @@ def get_destruction(jobname, jobid, db):
         # Return value
         response.content_type = 'text/plain; charset=UTF8'
         return job.destruction_time
-    except TypeError as e:
-        if 'NoneType' in e.message:
-            abort_404('Job "%s" NOT FOUND' % jobid)
-        else:
-            abort_500(e.message)
+    except NotFoundWarning as e:
+        abort_404(e.message)
     except:
         abort_500_except()
 
@@ -628,7 +635,7 @@ def post_destruction(jobname, jobid, db):
 
     Returns:
         303 See other: /<jobname>/<jobid> (on success)
-        404 Not Found: Job not found (on TypeError)
+        404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
     try:
@@ -636,7 +643,7 @@ def post_destruction(jobname, jobid, db):
         logger.info(jobname + ' ' + jobid)
         # Get value from POST
         if 'DESTRUCTION' not in request.forms:
-            raise RuntimeWarning('DESTRUCTION keyword required')
+            raise UserWarning('DESTRUCTION keyword required')
         new_value = request.forms.get('DESTRUCTION')
         # Check if ISO8601 format, truncate if unconverted data remains
         try:
@@ -645,22 +652,17 @@ def post_destruction(jobname, jobid, db):
             if len(e.args) > 0 and e.args[0].startswith('unconverted data remains:'):
                 new_value = new_value[:19]
             else:
-                raise e
+                raise UserWarning('Destruction time must be in ISO8601 format ({})'.format(e.message))
         # Get job description from DB
         job = Job(jobname, jobid, user, db, get_description=True)
         # Change value
         # job.set_destruction_time(new_value)
         job.set('destruction_time', new_value)
         logger.info(jobname + ' ' + jobid + ' set destruction_time=' + new_value)
-    except TypeError as e:
-        if 'NoneType' in e.message:
-            abort_404('Job "%s" NOT FOUND' % jobid)
-        else:
-            abort_500(e.message)
-    except RuntimeWarning as e:
+    except NotFoundWarning as e:
+        abort_404(e.message)
+    except UserWarning as e:
         abort_500(e.message)
-    except ValueError as e:
-        abort_500('Destruction time must be in ISO8601 format (%s)' % e.message)
     except:
         abort_500_except()
     # Response
@@ -678,7 +680,7 @@ def get_error(jobname, jobid, db):
     Returns:
         any representation appropriate to the implementing service
         200 OK: text/plain: error message (on success)
-        404 Not Found: Job not found (on TypeError)
+        404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
     try:
@@ -689,11 +691,8 @@ def get_error(jobname, jobid, db):
         # Return value
         response.content_type = 'text/plain; charset=UTF8'
         return job.error
-    except TypeError as e:
-        if 'NoneType' in e.message:
-            abort_404('Job "%s" NOT FOUND' % jobid)
-        else:
-            abort_500(e.message)
+    except NotFoundWarning as e:
+        abort_404(e.message)
     except:
         abort_500_except()
 
@@ -708,7 +707,7 @@ def get_quote(jobname, jobid, db):
 
     Returns:
         200 OK: text/plain: integer number of seconds (on success)
-        404 Not Found: Job not found (on TypeError)
+        404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
     try:
@@ -719,11 +718,8 @@ def get_quote(jobname, jobid, db):
         # Return value
         response.content_type = 'text/plain; charset=UTF8'
         return str(job.quote)
-    except TypeError as e:
-        if 'NoneType' in e.message:
-            abort_404('Job "%s" NOT FOUND' % jobid)
-        else:
-            abort_500(e.message)
+    except NotFoundWarning as e:
+        abort_404(e.message)
     except:
         abort_500_except()
 
@@ -739,7 +735,7 @@ def get_parameters(jobname, jobid, db):
     Returns:
         the <parameters> element in the UWS schema
         200 OK: text/xml (on success)
-        404 Not Found: Job not found (on TypeError)
+        404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
     try:
@@ -752,11 +748,8 @@ def get_parameters(jobname, jobid, db):
         xml = job.parameters_to_xml()
         response.content_type = 'text/xml; charset=UTF8'
         return xml
-    except TypeError as e:
-        if 'NoneType' in e.message:
-            abort_404('Job "%s" NOT FOUND' % jobid)
-        else:
-            abort_500(e.message)
+    except NotFoundWarning as e:
+        abort_404(e.message)
     except:
         abort_500_except()
 
@@ -767,8 +760,8 @@ def get_parameter(jobname, jobid, param, db):
 
     Returns:
         200 OK: text/plain (on success)
-        404 Not Found: Job not found (on TypeError)
-        404 Not Found: Parameter not found (on KeyError)
+        404 Not Found: Job not found (on NotFoundWarning)
+        404 Not Found: Parameter not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
     try:
@@ -776,16 +769,14 @@ def get_parameter(jobname, jobid, param, db):
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
         job = Job(jobname, jobid, user, db, get_params=True)
+        # Check if param exists
+        if param not in job.parameters:
+            raise NotFoundWarning('Parameter "{}" NOT FOUND for job "{}"'.format(param, jobid))
         # Return parameter
         response.content_type = 'text/plain; charset=UTF8'
         return str(job.parameters[param]['value'])
-    except TypeError as e:
-        if 'NoneType' in e.message:
-            abort_404('Job "%s" NOT FOUND' % jobid)
-        else:
-            abort_500(e.message)
-    except KeyError:
-        abort_404('Parameter "%s" NOT FOUND for job "%s"' % (param, jobid))
+    except NotFoundWarning as e:
+        abort_404(e.message)
     except:
         abort_500_except()
 
@@ -796,7 +787,7 @@ def post_parameter(jobname, jobid, param, db):
 
     Returns:
         303 See other: /<jobname>/<jobid>/parameters (on success)
-        404 Not Found: Job not found (on TypeError)
+        404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
     try:
@@ -804,7 +795,7 @@ def post_parameter(jobname, jobid, param, db):
         logger.info(jobname + ' ' + jobid)
         # Get value from POST
         if 'VALUE' not in request.forms:
-            raise RuntimeWarning('VALUE keyword required')
+            raise UserWarning('VALUE keyword required')
         new_value = request.forms.get('VALUE')
         # TODO: Check if new_value format is correct (from WADL?)
 
@@ -816,14 +807,11 @@ def post_parameter(jobname, jobid, param, db):
             job.save_parameter(param)
             logger.info(jobname + ' ' + jobid + ' set parameter ' + param + '=' + new_value)
         else:
-            raise RuntimeWarning('Job "%s" must be in PENDING state '
-                               '(currently %s) to change parameter' % (jobid, job.phase))
-    except TypeError as e:
-        if 'NoneType' in e.message:
-            abort_404('Job "%s" NOT FOUND' % jobid)
-        else:
-            abort_500(e.message)
-    except RuntimeWarning as e:
+            raise UserWarning('Job "{}" must be in PENDING state (currently {}) to change parameter'
+                              ''.format(jobid, job.phase))
+    except NotFoundWarning as e:
+        abort_404(e.message)
+    except UserWarning as e:
         abort_500(e.message)
     except:
         abort_500_except()
@@ -842,7 +830,7 @@ def get_results(jobname, jobid, db):
     Returns:
         the <results> element in the UWS schema
         200 OK: text/xml (on success)
-        404 Not Found: Job not found (on TypeError)
+        404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
     try:
@@ -854,11 +842,8 @@ def get_results(jobname, jobid, db):
         xml = job.results_to_xml()
         response.content_type = 'text/xml; charset=UTF8'
         return xml
-    except TypeError as e:
-        if 'NoneType' in e.message:
-            abort_404('Job "%s" NOT FOUND' % jobid)
-        else:
-            abort_500(e.message)
+    except NotFoundWarning as e:
+        abort_404(e.message)
     except:
         abort_500_except()
 
@@ -869,8 +854,8 @@ def get_result(jobname, jobid, result, db):
 
     Returns:
         200 OK: text/plain (on success)
-        404 Not Found: Job not found (on TypeError)
-        404 Not Found: Result not found (on KeyError)
+        404 Not Found: Job not found (on NotFoundWarning)
+        404 Not Found: Result not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
     try:
@@ -878,16 +863,14 @@ def get_result(jobname, jobid, result, db):
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
         job = Job(jobname, jobid, user, db, get_results=True)
+        # Check if result exists
+        if result not in job.results:
+            raise NotFoundWarning('Result "{}" NOT FOUND for job "{}"'.format(result, jobid))
         # Return result
         response.content_type = 'text/plain; charset=UTF8'
         return str(job.results[result]['url'])
-    except TypeError as e:
-        if 'NoneType' in e.message:
-            abort_404('Job "%s" NOT FOUND' % jobid)
-        else:
-            abort_500(e.message)
-    except KeyError:
-        abort_404('Result "%s" NOT FOUND for job "%s"' % (result, jobid))
+    except NotFoundWarning as e:
+        abort_404(e.message)
     except:
         abort_500_except()
 
@@ -902,7 +885,7 @@ def get_owner(jobname, jobid, db):
 
     Returns:
         200 OK: text/plain: an appropriate identifier as discussed in 3 (on success)
-        404 Not Found: Job not found (on TypeError)
+        404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
     try:
@@ -913,11 +896,8 @@ def get_owner(jobname, jobid, db):
         # Return value
         response.content_type = 'text/plain; charset=UTF8'
         return job.owner
-    except TypeError as e:
-        if 'NoneType' in e.message:
-            abort_404('Job "%s" NOT FOUND' % jobid)
-        else:
-            abort_500(e.message)
+    except NotFoundWarning as e:
+        abort_404(e.message)
     except:
         abort_500_except()
 

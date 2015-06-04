@@ -6,9 +6,11 @@ Created on Tue Apr 14 15:14:24 2015
 """
 
 import os
+import shutil
 import urllib
 import datetime
 import xml.etree.ElementTree
+from subprocess import CalledProcessError
 import managers
 from settings import *
 
@@ -36,6 +38,17 @@ phases = [
     'SUSPENDED'
 ]
 
+terminal_phases = [
+    'COMPLETED',
+    'ERROR',
+    'ABORTED',
+    'HELD',
+    # 'SUSPENDED'
+]
+
+
+class NotFoundWarning(Warning):
+    pass
 
 # ---------
 # Job class
@@ -146,23 +159,25 @@ class Job(object):
 
     def get_parameters(self):
         """Query db for job parameters"""
-        query = "SELECT * FROM job_parameters WHERE jobid='" + self.jobid + "';"
+        query = "SELECT * FROM job_parameters WHERE jobid='{}';".format(self.jobid)
         params = self.db.execute(query).fetchall()
         params_dict = {row['name']: {'value': row['value'], 'byref': row['byref']} for row in params}
         self.parameters = params_dict
 
     def get_results(self):
         """ Query db for job results"""
-        query = "SELECT * FROM job_results WHERE jobid='" + self.jobid + "';"
+        query = "SELECT * FROM job_results WHERE jobid='{}';".format(self.jobid)
         results = self.db.execute(query).fetchall()
         results_dict = {row['name']: {'url': row['url']} for row in results}
         self.results = results_dict
 
     def get_from_db(self):
         """Query db for job description"""
-        query = "SELECT * FROM jobs WHERE jobid='" + self.jobid + "';"
+        query = "SELECT * FROM jobs WHERE jobid='{}';".format(self.jobid)
         job = self.db.execute(query).fetchone()
-        # creation_time = datetime.datetime.strptime(job['creation_time'], "%Y-%m-%dT%H:%M:%S")
+        if not job:
+            raise NotFoundWarning('Job "{}" NOT FOUND'.format(self.jobid))
+        # creation_time = datetime.datetime.strptime(job['creation_time'], dt_fmt)
         start_time = datetime.datetime.strptime(job['start_time'], dt_fmt)
         end_time = datetime.datetime.strptime(job['end_time'], dt_fmt)
         destruction_time = datetime.datetime.strptime(job['destruction_time'], dt_fmt)
@@ -197,7 +212,7 @@ class Job(object):
         # Upload files for multipart/form-data
         print str(files.__dict__)
         for fname, f in files.iteritems():
-            upload_dir = 'uploads/' + self.jobid
+            upload_dir = UPLOAD_PATH + self.jobid
             if not os.path.isdir(upload_dir):
                 os.makedirs(upload_dir)
             f.save(upload_dir + '/' + f.filename)
@@ -209,8 +224,8 @@ class Job(object):
     # Methods to save job attributes to db
 
     def save_query(self, table_name, d):
-        query = "INSERT OR REPLACE INTO " + table_name + " (" + ", ".join(d.keys()) + ") " \
-                "VALUES ('" + "', '".join(map(str, d.values())) + "')"
+        query = "INSERT OR REPLACE INTO {} ({}) VALUES ('{}')" \
+                "".format(table_name, ", ".join(d.keys()), "', '".join(map(str, d.values())))
         query = query.replace("'None'", "NULL")
         self.db.execute(query)
 
@@ -284,7 +299,7 @@ class Job(object):
         """
         params = []
         for pname, pdict in self.parameters.iteritems():
-            params.append('"' + pname + '": "' + pdict['value'] + '"')
+            params.append('"{}": "{}"'.format(pname, pdict['value']))
         return '{' + ', '.join(params) + '}'
 
     def parameters_to_xml(self, add_xmlns=True):
@@ -305,7 +320,7 @@ class Job(object):
                 name = pname
                 value = urllib.quote_plus(p['value'])
                 by_ref = str(p['byref']).lower()
-                xml.append('<uws:parameter id="' + name + '" byReference="' + by_ref + '">')
+                xml.append('<uws:parameter id="{}" byReference="{}">'.format(name, by_ref))
                 xml.append(value)
                 xml.append('</uws:parameter>')
         xml.append('</uws:parameters>')
@@ -327,7 +342,7 @@ class Job(object):
         # Add each parameter that has a value
         for rname, r in self.results.iteritems():
             if r['url']:
-                xml.append('<uws:result id="' + rname + '" xlink:href="' + r['url'] + '"/>')
+                xml.append('<uws:result id="{}" xlink:href="{}"/>'.format(rname, r['url']))
         xml.append('</uws:results>')
         return ''.join(xml)
 
@@ -337,9 +352,9 @@ class Job(object):
         def add_xml_node(name, value):
             """Add XML node"""
             if value:
-                xml = '<uws:%s>%s</uws:%s>' % (name, value, name)
+                xml = '<uws:{}>{}</uws:{}>'.format(name, value, name)
             else:
-                xml = '<uws:%s xsi:nil=\"true\"/>' % name
+                xml = '<uws:{} xsi:nil=\"true\"/>'.format(name)
             return xml
 
         xml = list([
@@ -374,7 +389,7 @@ class Job(object):
         if self.phase == 'PENDING':
             jobid_cluster = self.manager.start(self)
         else:
-            raise RuntimeWarning('Job {} is not in the PENDING state'.format(self.jobid))
+            raise UserWarning('Job {} is not in the PENDING state'.format(self.jobid))
         try:
             # Test if jobid_cluster is an integer
             jobid_cluster = int(jobid_cluster)
@@ -407,7 +422,7 @@ class Job(object):
             # Send command to manager
             self.manager.abort(self)
         else:
-            raise RuntimeWarning('Job {} cannot be aborted while in phase {}'.format(self.jobid, self.phase))
+            raise UserWarning('Job {} cannot be aborted while in phase {}'.format(self.jobid, self.phase))
         # Change phase to ABORTED
         now = datetime.datetime.now()
         self.phase = 'ABORTED'
@@ -423,19 +438,22 @@ class Job(object):
         """
         # Send command to manager
         self.manager.delete(self)
-        # Clean db
+        # Remove job from db
         query = "DELETE FROM job_results WHERE jobid='" + self.jobid + "';"
         self.db.execute(query)
         query = "DELETE FROM job_parameters WHERE jobid='" + self.jobid + "';"
         self.db.execute(query)
         query = "DELETE FROM jobs WHERE jobid='" + self.jobid + "';"
         self.db.execute(query)
-        # TODO: Remove uploaded files corresponding to jobid if needed
+        # Remove uploaded files corresponding to jobid if needed
+        upload_dir = UPLOAD_PATH + self.jobid
+        if os.path.isdir(upload_dir):
+            shutil.rmtree(upload_dir)
 
     def get_status(self):
         """Get job status
 
-        Job can get its status if it has been started and it is not in a final phase:
+        Job can get its status from the manager if it has been started and it is not in a final phase:
         - QUEUED / HELD / SUSPENDED
         - EXECUTING
         """
@@ -444,40 +462,46 @@ class Job(object):
             new_phase = self.manager.get_status(self)
             if new_phase != self.phase:
                 # Change phase
-                self.phase = new_phase
-                if new_phase == 'COMPLETED':
-                    # TODO: copy results to the UWS server if job is COMPLETED (done by cluster for now)
-                    # Get end_time
-                    self.end_time = self.manager.get_end_time(self)
-                self.save_description()
+                self.change_status(new_phase)
+                # self.phase = new_phase
+                # if new_phase == 'COMPLETED':
+                #     # Get end_time
+                #     self.end_time = self.manager.get_end_time(self)
+                # self.save_description()
         return self.phase
 
     def change_status(self, phase, error=''):
-        """Update job object, e.g. from a job_event or from
+        """Update job object, e.g. from a job_event or from get_status if phase has changed
 
-        Job need to be updated if it has been started and it is not in a final phase:
+        Job can be updated if it has been started and it is not in a final phase:
         - QUEUED / HELD / SUSPENDED
         - EXECUTING
         """
-        # TODO: DEBUG: PENDING to be removed as a PENDING job can only change status through start()
+        # TODO: DEBUG: PENDING and COMPLETED to be removed
         if self.phase in ['PENDING', 'QUEUED', 'EXECUTING', 'HELD', 'SUSPENDED', 'COMPLETED']:
             # Change phase
             now = datetime.datetime.now()
             # destruction = datetime.timedelta(DESTRUCTION_INTERVAL)
-            self.phase = phase
 
             def nul(*args):
+                """Simply change phase"""
                 pass
 
             def phase_executing(job, error):
-                duration = datetime.timedelta(0, self.execution_duration)
-                job.start_time = now.strftime(dt_fmt)
+                try:
+                    job.start_time = job.manager.get_start_time()
+                except CalledProcessError:
+                    job.start_time = now.strftime(dt_fmt)
                 # Estimates end_time from start_time + duration
-                job.end_time = (now + duration).strftime(dt_fmt)
+                duration = datetime.timedelta(0, self.execution_duration)
+                end_time = datetime.datetime.strptime(job.start_time, dt_fmt) + duration
+                job.end_time = end_time.strftime(dt_fmt)
 
             def phase_completed(job, error):
-                job.end_time = now.strftime(dt_fmt)
-                # job.end_time = job.manager.get_end_time()
+                try:
+                    job.end_time = job.manager.get_end_time()
+                except CalledProcessError:
+                    job.end_time = now.strftime(dt_fmt)
                 # TODO: copy results to the UWS server if job is COMPLETED (done by cluster for now)
 
             def phase_error(job, error):
@@ -492,13 +516,17 @@ class Job(object):
                      'EXECUTING': phase_executing,
                      'COMPLETED': phase_completed,
                      'ERROR': phase_error}
+            if phase not in cases:
+                raise UserWarning('Unknown phase: ' + phase)
             # Run case
             cases[phase](self, error)
+            # Update phase
+            self.phase = phase
             # Save job description
             self.save_description()
         else:
-            raise RuntimeWarning('Job {} cannot be updated to {} while in phase {}'
-                                 ''.format(self.jobid, phase, self.phase))
+            raise UserWarning('Job {} cannot be updated to {} while in phase {}'
+                              ''.format(self.jobid, phase, self.phase))
 
 
 # -------------
@@ -520,8 +548,8 @@ class JobList(object):
     def get_from_db(self):
         """Query db for job list"""
         query = "SELECT jobid, phase FROM jobs"
-        where = ["jobname='" + self.jobname + "'",
-                 "owner='" + self.user + "'"]
+        where = ["jobname='{}'".format(self.jobname),
+                 "owner='{}'".format(self.user)]
         query += " WHERE " + " AND ".join(where) + ";"
         jobs = self.db.execute(query).fetchall()
         self.jobs = jobs
@@ -538,8 +566,8 @@ class JobList(object):
         ]
         for job in self.jobs:
             href = self.url + '/' + job['jobid']
-            xml.append('<uws:jobref id="' + job['jobid'] + '" xlink:href="' + href + '">')
-            xml.append('<uws:phase>' + job['phase'] + '</uws:phase>')
+            xml.append('<uws:jobref id="{}" xlink:href="{}">'.format(job['jobid'], href))
+            xml.append('<uws:phase>{}</uws:phase>'.format(job['phase']))
             xml.append('</uws:jobref>')
         xml.append('</uws:jobs>')
         return ''.join(xml)
@@ -554,13 +582,13 @@ class JobList(object):
             for k, v in dict(job).iteritems():
                 html += k + ' = ' + str(v) + '<br>'
             # Parameters
-            query = "select * from job_parameters where jobid = '" + jobid + "';"
+            query = "select * from job_parameters where jobid='{}';".format(jobid)
             params = self.db.execute(query).fetchall()
             html += '<h4>Parameters</h4>'
             for param in params:
                 html += param['name'] + ' = ' + param['value'] + '<br>'
             # Results
-            query = "select * from job_results where jobid = '" + jobid + "';"
+            query = "select * from job_results where jobid='{}';".format(jobid)
             results = self.db.execute(query).fetchall()
             html += '<h4>Results</h4>'
             for result in results:

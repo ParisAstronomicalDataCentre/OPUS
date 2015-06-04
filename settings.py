@@ -34,9 +34,13 @@ SLURM_SBATCH = [
     '#SBATCH --partition=def',  # for quadri12...'
 ]
 
-
-# Maximum or default destruction interval
+# Default destruction interval
 DESTRUCTION_INTERVAL = 30  # in days
 
-# Maximum or default wait time (UWS1.1)
-WAIT_TIME = 60  # in seconds
+# Maximum and default execution duration, 0 implies unlimited execution duration
+EXECUTION_DURATION_DEF = 120  # in seconds
+EXECUTION_DURATION_MAX = 3600  # in seconds
+
+# Maximum and default wait time (UWS1.1)
+WAIT_TIME_DEF = 60  # in seconds
+WAIT_TIME_MAX = 60  # in seconds
