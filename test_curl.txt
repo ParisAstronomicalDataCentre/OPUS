@@ -28,15 +28,15 @@ curl -d "evfile=test.fits" -d "enumbins=2" http://localhost:8080/ctbin
 curl -d "evfile=test.fits" -d "enumbins=2" -d "PHASE=RUN" http://localhost:8080/ctbin
 curl -F "evfile=test.fits" -F "enumbins=2" -F "file=@/home/mservillat/CTA/svn_voparis-cta/uws_server/events.fits" http://localhost:8080/ctbin
 
-# delete job
-curl -X DELETE http://localhost:8080/ctbin/6ce13bc5-dbf3-6b04-b1e7-28d47ad32794
-curl -d "ACTION=DELETE" http://localhost:8080/ctbin/6ce13bc5-dbf3-6b04-b1e7-28d47ad32794
-curl -d "BADKEY=DELETE" http://localhost:8080/ctbin/6ce13bc5-dbf3-6b04-b1e7-28d47ad32794
-
 # start job
 curl -d "PHASE=RUN" http://localhost:8080/ctbin/6ce13bc5-dbf3-6b04-b1e7-28d47ad32794/phase
 curl -d "BADKEY=RUN" http://localhost:8080/ctbin/6ce13bc5-dbf3-6b04-b1e7-28d47ad32794/phase
 curl -d "PHASE=BADVALUE" http://localhost:8080/ctbin/6ce13bc5-dbf3-6b04-b1e7-28d47ad32794/phase
+
+# delete job
+curl -X DELETE http://localhost:8080/ctbin/6ce13bc5-dbf3-6b04-b1e7-28d47ad32794
+curl -d "ACTION=DELETE" http://localhost:8080/ctbin/6ce13bc5-dbf3-6b04-b1e7-28d47ad32794
+curl -d "BADKEY=DELETE" http://localhost:8080/ctbin/6ce13bc5-dbf3-6b04-b1e7-28d47ad32794
 
 # abort job
 curl -d "PHASE=ABORT" http://localhost:8080/ctbin/6ce13bc5-dbf3-6b04-b1e7-28d47ad32794/phase

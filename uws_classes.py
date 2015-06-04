@@ -436,15 +436,16 @@ class Job(object):
 
         Job can be deleted at any time.
         """
-        # Send command to manager
-        self.manager.delete(self)
+        if self.phase not in ['PENDING']:
+            # Send command to manager
+            self.manager.delete(self)
         # Remove job from db
-        query = "DELETE FROM job_results WHERE jobid='" + self.jobid + "';"
-        self.db.execute(query)
-        query = "DELETE FROM job_parameters WHERE jobid='" + self.jobid + "';"
-        self.db.execute(query)
-        query = "DELETE FROM jobs WHERE jobid='" + self.jobid + "';"
-        self.db.execute(query)
+        query1 = "DELETE FROM job_results WHERE jobid='{}';".format(self.jobid)
+        self.db.execute(query1)
+        query2 = "DELETE FROM job_parameters WHERE jobid='{}';".format(self.jobid)
+        self.db.execute(query2)
+        query3 = "DELETE FROM jobs WHERE jobid='{}';".format(self.jobid)
+        self.db.execute(query3)
         # Remove uploaded files corresponding to jobid if needed
         upload_dir = UPLOAD_PATH + self.jobid
         if os.path.isdir(upload_dir):
@@ -489,8 +490,9 @@ class Job(object):
 
             def phase_executing(job, error):
                 try:
-                    job.start_time = job.manager.get_start_time()
+                    job.start_time = job.manager.get_start_time(job)
                 except CalledProcessError:
+                    print 'job.manager.get_start_time(job) error'
                     job.start_time = now.strftime(dt_fmt)
                 # Estimates end_time from start_time + duration
                 duration = datetime.timedelta(0, self.execution_duration)
@@ -499,8 +501,9 @@ class Job(object):
 
             def phase_completed(job, error):
                 try:
-                    job.end_time = job.manager.get_end_time()
+                    job.end_time = job.manager.get_end_time(job)
                 except CalledProcessError:
+                    print 'job.manager.get_end_time(job) error'
                     job.end_time = now.strftime(dt_fmt)
                 # TODO: copy results to the UWS server if job is COMPLETED (done by cluster for now)
 

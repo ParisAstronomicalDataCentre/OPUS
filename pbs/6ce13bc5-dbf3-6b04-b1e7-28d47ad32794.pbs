@@ -18,5 +18,5 @@
 ### Queue name (small, long)
 #SBATCH --account=obspm
 #SBATCH --partition=def
-### Script executed
+### Script execution
 /obs/vouws/uws_scripts/ctbin.pl 'voplus.obspm.fr/cta/events.fits' 5

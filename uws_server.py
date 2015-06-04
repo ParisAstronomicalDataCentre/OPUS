@@ -502,7 +502,6 @@ def post_phase(jobname, jobid, db):
     """
     try:
         set_user()
-        logger.info(jobname + ' ' + jobid)
         if 'PHASE' in request.forms:
             new_phase = request.forms.get('PHASE')
             logger.info('PHASE=' + new_phase + ' ' + jobname + ' ' + jobid)
