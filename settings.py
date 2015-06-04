@@ -11,22 +11,29 @@ LOG_FILE = 'uws_server.log'
 
 UPLOAD_PATH = 'upload/'
 
-PARAMS_PATH = '/home/mservillat/CTA/svn_voparis-cta/uws_server/params/'
+PARAMS_PATH = '/home/mservillat/CTA/git_voparis/uws-server/params/'
 
-WADL_PATH = '/home/mservillat/CTA/svn_voparis-cta/uws_server/wadl/'
+WADL_PATH = '/home/mservillat/CTA/git_voparis/uws-server/wadl/'
 
 # Those servers have access to /job_event/<jobid_manager> to change the phase or report an error
 JOB_SERVERS = {
     '127.0.0.1': 'localhost',
     '145.238.151.10': 'tycho.obspm.fr',
+    '145.238.151.72': 'quadri12.obspm.fr',
 }
 
 # Define a Manager and its properties
 MANAGER = 'SLURMManager'
-SLURM_URL = 'tycho.obspm.fr'
+SLURM_URL = 'quadri12.obspm.fr'  # 'tycho.obspm.fr'
 SLURM_USER = 'vouws'
 SLURM_USER_MAIL = 'mathieu.servillat@obspm.fr'
-SLURM_PBS_PATH = '/home/mservillat/CTA/svn_voparis-cta/uws_server/pbs/'
+SLURM_PBS_PATH = '/home/mservillat/CTA/git_voparis/uws-server/pbs/'
+SLURM_SBATCH = [
+    # '#SBATCH --partition=short',  # for tycho...
+    '#SBATCH --account=obspm',  # for quadri12...
+    '#SBATCH --partition=def',  # for quadri12...'
+]
+
 
 # Maximum or default destruction interval
 DESTRUCTION_INTERVAL = 30  # in days

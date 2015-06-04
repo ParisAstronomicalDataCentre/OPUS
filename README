@@ -36,3 +36,11 @@ To install
 sudo pip install bottle
 sudo pip install bottle-pgsql
 
+
+----------
+GIT
+----------
+
+git clone https://login@voparis-git.obspm.fr/git/obspm/mservillat/uws-server
+
+

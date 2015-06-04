@@ -271,23 +271,23 @@ def job_event(jobid_cluster, db):
             cur_phase = job.phase
             if phase == 'ERROR':
                 if 'ERROR' in request.GET:
-                    job.update_status(phase, request.GET['ERROR'])
+                    job.change_status(phase, request.GET['ERROR'])
                 else:
-                    job.update_status(phase)
+                    job.change_status(phase)
                 logger.info('%s %s ERROR reported (from %s)' % (job.jobname, job.jobid, user))
             elif phase != cur_phase:
-                job.update_status(phase)
+                job.change_status(phase)
                 logger.info('%s %s phase %s --> %s (from %s)' % (job.jobname, job.jobid, cur_phase, phase, user))
             else:
-                raise RuntimeError('Phase is already ' + phase)
+                raise RuntimeWarning('Phase is already ' + phase)
         else:
-            raise RuntimeError('Unknown event sent for job ' + job.jobid)
+            raise RuntimeWarning('Unknown event sent for job ' + job.jobid)
     except TypeError as e:
         if 'NoneType' in e.message:
             abort_404('Job with jobid_cluster=%s NOT FOUND' % jobid_cluster)
         else:
             abort_500(e.message)
-    except RuntimeError as e:
+    except RuntimeWarning as e:
         abort_500(e.message)
     except KeyError as e:
         abort_500('Unknown phase ' + e.args[0])
@@ -344,7 +344,7 @@ def create_job(jobname, db):
         if request.forms.get('PHASE') == 'RUN':
             job.start()
             logger.info(jobname + ' ' + jobid + ' started with jobid_cluster=' + str(job.jobid_cluster))
-    except RuntimeError as e:
+    except RuntimeWarning as e:
         abort_500(e.message)
     except CalledProcessError as e:
         abort_500_except('STDERR output:\n' + e.output)
@@ -429,7 +429,7 @@ def post_job(jobname, jobid, db):
             job.delete()
             logger.info(jobname + ' ' + jobid + ' DELETED')
         else:
-            raise RuntimeError('ACTION=DELETE is not specified in POST')
+            raise RuntimeWarning('ACTION=DELETE is not specified in POST')
     except TypeError as e:
         if 'NoneType' in e.message:
             abort_404('Job "%s" NOT FOUND' % jobid)
@@ -437,7 +437,7 @@ def post_job(jobname, jobid, db):
             abort_500(e.message)
     except CalledProcessError as e:
         abort_500_except('STDERR output:\n' + e.output)
-    except RuntimeError as e:
+    except RuntimeWarning as e:
         abort_500(e.message)
     except:
         abort_500_except()
@@ -494,7 +494,7 @@ def post_phase(jobname, jobid, db):
                 job = Job(jobname, jobid, user, db, get_description=True)
                 # Check if phase is PENDING
                 if job.phase not in ['PENDING']:
-                    raise RuntimeError('Job has to be in PENDING phase')
+                    raise RuntimeWarning('Job has to be in PENDING phase')
                 # Start job
                 job.start()
                 logger.info(jobname + ' ' + jobid + ' STARTED with jobid_cluster=' + str(job.jobid_cluster))
@@ -505,15 +505,15 @@ def post_phase(jobname, jobid, db):
                 job.abort()
                 logger.info(jobname + ' ' + jobid + ' ABORTED by user ' + user)
             else:
-                raise RuntimeError('PHASE=' + new_phase + ' not expected')
+                raise RuntimeWarning('PHASE=' + new_phase + ' not expected')
         else:
-            raise RuntimeError('PHASE keyword is not specified in POST')
+            raise RuntimeWarning('PHASE keyword is not specified in POST')
     except TypeError as e:
         if 'NoneType' in e.message:
             abort_404('Job "%s" NOT FOUND' % jobid)
         else:
             abort_500(e.message)
-    except RuntimeError as e:
+    except RuntimeWarning as e:
         abort_500(e.message)
     except KeyError as e:
         abort_500('Job cannot be aborted while in phase ' + e.args[0])
@@ -569,11 +569,11 @@ def post_executionduration(jobname, jobid, db):
         logger.info(jobname + ' ' + jobid)
         # Get value from POST
         if 'EXECUTIONDURATION' not in request.forms:
-            raise RuntimeError('EXECUTIONDURATION keyword required')
+            raise RuntimeWarning('EXECUTIONDURATION keyword required')
         new_value = request.forms.get('EXECUTIONDURATION')
         # Check new value
         if not isinstance(new_value, int) or isinstance(new_value, float):
-            raise RuntimeError('Execution duration must be an integer or a float')
+            raise RuntimeWarning('Execution duration must be an integer or a float')
         # Get job description from DB
         job = Job(jobname, jobid, user, db, get_description=True)
         # Change value
@@ -584,7 +584,7 @@ def post_executionduration(jobname, jobid, db):
             abort_404('Job "%s" NOT FOUND' % jobid)
         else:
             abort_500(e.message)
-    except RuntimeError as e:
+    except RuntimeWarning as e:
         abort_500(e.message)
     except:
         abort_500_except()
@@ -636,7 +636,7 @@ def post_destruction(jobname, jobid, db):
         logger.info(jobname + ' ' + jobid)
         # Get value from POST
         if 'DESTRUCTION' not in request.forms:
-            raise RuntimeError('DESTRUCTION keyword required')
+            raise RuntimeWarning('DESTRUCTION keyword required')
         new_value = request.forms.get('DESTRUCTION')
         # Check if ISO8601 format, truncate if unconverted data remains
         try:
@@ -657,7 +657,7 @@ def post_destruction(jobname, jobid, db):
             abort_404('Job "%s" NOT FOUND' % jobid)
         else:
             abort_500(e.message)
-    except RuntimeError as e:
+    except RuntimeWarning as e:
         abort_500(e.message)
     except ValueError as e:
         abort_500('Destruction time must be in ISO8601 format (%s)' % e.message)
@@ -804,7 +804,7 @@ def post_parameter(jobname, jobid, param, db):
         logger.info(jobname + ' ' + jobid)
         # Get value from POST
         if 'VALUE' not in request.forms:
-            raise RuntimeError('VALUE keyword required')
+            raise RuntimeWarning('VALUE keyword required')
         new_value = request.forms.get('VALUE')
         # TODO: Check if new_value format is correct (from WADL?)
 
@@ -816,14 +816,14 @@ def post_parameter(jobname, jobid, param, db):
             job.save_parameter(param)
             logger.info(jobname + ' ' + jobid + ' set parameter ' + param + '=' + new_value)
         else:
-            raise RuntimeError('Job "%s" must be in PENDING state '
+            raise RuntimeWarning('Job "%s" must be in PENDING state '
                                '(currently %s) to change parameter' % (jobid, job.phase))
     except TypeError as e:
         if 'NoneType' in e.message:
             abort_404('Job "%s" NOT FOUND' % jobid)
         else:
             abort_500(e.message)
-    except RuntimeError as e:
+    except RuntimeWarning as e:
         abort_500(e.message)
     except:
         abort_500_except()

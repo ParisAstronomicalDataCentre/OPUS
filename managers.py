@@ -22,16 +22,28 @@ class Manager(object):
     """
 
     def start(self, job):
-        pass
+        """Start job on cluster
+
+        Returns:
+            jobid_cluster: jobid on cluster
+        """
+        return 0
 
     def abort(self, job):
+        """Abort/Cancel job on cluster"""
         pass
 
     def delete(self, job):
+        """Delete job on cluster"""
         pass
 
     def get_status(self, job):
-        pass
+        """Get job status (phase) from cluster
+
+        Returns:
+            job status (phase)
+        """
+        return 'UNKNOWN'
 
 
 class SLURMManager(Manager):
@@ -42,6 +54,10 @@ class SLURMManager(Manager):
         self.user = user
         self.mail = mail
         self.ssh_arg = user + '@' + host
+        # self.sbatch = sbatch
+        self.pbs_path = 'uws_pbs/'
+        self.params_path = 'uws_params/'
+        self.uws_handler = 'uws_scripts/uws_handler.sh'
 
     def make_pbs(self, job):
         """Make PBS file content for given job
@@ -50,6 +66,7 @@ class SLURMManager(Manager):
             PBS as a string
         """
         duration = datetime.timedelta(0, job.execution_duration)
+        # duration format is 00:01:00 for 1 min
         duration_str = str(duration).replace(' days', '').replace(' day', '').replace(', ', '-')
         pbs = [
             "#!/bin/sh",
@@ -58,23 +75,25 @@ class SLURMManager(Manager):
             "### Declare job non-rerunable",
             "#SBATCH --no-requeue",
             "### Output files",
-            "#SBATCH --error=uwsdata/err.%j",
-            "#SBATCH --output=uwsdata/job.%j",
+            "#SBATCH --error=uws_logs/%j.err",
+            "#SBATCH --output=uws_logs/%j.job",
             "### Mail to user",
             "#SBATCH --mail-user=" + self.mail,
             "#SBATCH --mail-type=ALL",
-            "### Queue name (small, long)",
-            "#SBATCH --partition=short",
             "#Time",
             "#SBATCH --time=" + duration_str,
             "#Memory",
             "#SBATCH --mem=200mb",
             "#Define number of processors",
             "#SBATCH --nodes=1 --ntasks-per-node=1",
-            "/home/vouws/uws/ctbin.pl 'voplus.obspm.fr/cta/events.fits' 5",
+            "### Queue name (small, long)",
+            "### Script execution",
+            "/obs/vouws/uws_scripts/ctbin.pl 'voplus.obspm.fr/cta/events.fits' 5",
             #"/home/vouws/uws/%s.pl '%s'" % (job.jobname, job.jobid),
         ]
-        return "\n".join(pbs)
+        # Insert server specific sbatch commands before "### Script execution"
+        pbs[-2:1] = SLURM_SBATCH
+        return '\n'.join(pbs)
 
     def start(self, job):
         """Start job on SLURM server
@@ -88,32 +107,35 @@ class SLURMManager(Manager):
             pbs = self.make_pbs(job)
             f.write(pbs)
         # Copy PBS file: "scp pbs vouws@tycho:~/name > /dev/null"
-        cmd1 = ['scp', SLURM_PBS_PATH + pbs_file, self.ssh_arg + ':pbs/' + pbs_file]
+        cmd1 = ['scp', SLURM_PBS_PATH + pbs_file, self.ssh_arg + ':' + self.pbs_path + pbs_file]
         sp.check_output(cmd1, stderr=sp.STDOUT)
         # Create parameter file
         params_file = job.jobid + '.params'
         with open(PARAMS_PATH + params_file, 'w') as f:
-            # parameters are a list of key=value
+            # parameters are a list of key=value, may instead be a json file
             params = job.parameters_to_text()
+            # params = job.parameters_to_json()
             f.write(params)
         # Copy parameter file
-        cmd2 = ['scp', PARAMS_PATH + params_file, self.ssh_arg + ':params/' + params_file]
+        cmd2 = ['scp', PARAMS_PATH + params_file, self.ssh_arg + ':' + self.params_path + params_file]
         sp.check_output(cmd2, stderr=sp.STDOUT)
         # Start job: "ssh vouws@tycho.obspm.fr '~/uws/uwshandler.sh -x start -p ~/name'"
-        cmd3 = ['ssh', self.ssh_arg, 'uws/uws_handler.sh', '-x start', '-p pbs/' + pbs_file]
+        cmd3 = ['ssh', self.ssh_arg, self.uws_handler, '-x start', '-p ' + self.pbs_path + pbs_file]
         jobid_cluster = sp.check_output(cmd3, stderr=sp.STDOUT)
-        return jobid_cluster
+        # TODO: change start time here?
+        # Remove trailing \n from output
+        return jobid_cluster[:-1]
 
     def abort(self, job):
         """Abort job on SLURM server"""
         # "ssh vouws@tycho.obspm.fr '~/uws/uwshandler.sh -x abort -p jobid'"
-        cmd = ['ssh', self.ssh_arg, 'uws/uws_handler.sh', '-x abort', '-p ' + str(job.jobid_cluster)]
+        cmd = ['ssh', self.ssh_arg, self.uws_handler, '-x abort', '-p ' + str(job.jobid_cluster)]
         sp.check_output(cmd, stderr=sp.STDOUT)
 
     def delete(self, job):
         """Delete job on SLURM server"""
         # "ssh vouws@tycho.obspm.fr '~/uws/uwshandler.sh -x delete -p jobid'"
-        cmd = ['ssh', self.ssh_arg, 'uws/uws_handler.sh', '-x delete', '-p ' + str(job.jobid_cluster)]
+        cmd = ['ssh', self.ssh_arg, self.uws_handler, '-x delete', '-p ' + str(job.jobid_cluster)]
         sp.check_output(cmd, stderr=sp.STDOUT)
 
     def get_status(self, job):
@@ -123,6 +145,32 @@ class SLURMManager(Manager):
             job status (phase)
         """
         # "ssh vouws@tycho.obspm.fr '~/uws/uwshandler.sh -x status -p jobid'"
-        cmd = ['ssh', self.ssh_arg, 'uws/uws_handler.sh', '-x status', '-p ' + str(job.jobid_cluster)]
+        cmd = ['ssh', self.ssh_arg, self.uws_handler, '-x status', '-p ' + str(job.jobid_cluster)]
         phase = sp.check_output(cmd, stderr=sp.STDOUT)
-        return phase
+        # TODO: change end time here if phase is COMPLETED?
+        # Remove trailing \n from output
+        return phase[:-1]
+
+    def get_start_time(self, job):
+        """Get job start time from SLURM server
+
+        Returns:
+            start time in ISO format
+        """
+        # "ssh vouws@tycho.obspm.fr '~/uws/uwshandler.sh -x status -p jobid'"
+        cmd = ['ssh', self.ssh_arg, self.uws_handler, '-x start_time', '-p ' + str(job.jobid_cluster)]
+        end_time = sp.check_output(cmd, stderr=sp.STDOUT)
+        # Remove trailing \n from output,and replace ' ' by 'T' in ISO date
+        return end_time[:-1].replace(' ','T')
+
+    def get_end_time(self, job):
+        """Get job end time from SLURM server
+
+        Returns:
+            end time in ISO format
+        """
+        # "ssh vouws@tycho.obspm.fr '~/uws/uwshandler.sh -x status -p jobid'"
+        cmd = ['ssh', self.ssh_arg, self.uws_handler, '-x end_time', '-p ' + str(job.jobid_cluster)]
+        end_time = sp.check_output(cmd, stderr=sp.STDOUT)
+        # Remove trailing \n from output,and replace ' ' by 'T' in ISO date
+        return end_time[:-1].replace(' ','T')

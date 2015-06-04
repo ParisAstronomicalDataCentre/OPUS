@@ -55,11 +55,17 @@ class Job(object):
         self.jobname = jobname
         self.jobid = jobid
         self.user = user
-        # self.url = url
+        # Internal information:
+        # Connector to UWS database
         self.db = db
+        # Link to the job manager, e.g. SLURMManager, see settings.py
+        self.manager = managers.__dict__[manager]()
+        # Fill job attributes
         if get_description:
-            # TODO: update?
+            # Get from db
             self.get_from_db()
+            # Check status on cluster, and change if ncessary
+            self.get_status()
         elif from_post:
             now = datetime.datetime.now()
             destruction = datetime.timedelta(DESTRUCTION_INTERVAL)  # default interval for UWS server
@@ -101,8 +107,6 @@ class Job(object):
             self.get_parameters()
         if get_results:
             self.get_results()
-        # Internal information
-        self.manager = managers.__dict__[manager]()
 
     # ----------
     # Methods to read job description from WADL file
@@ -130,11 +134,11 @@ class Job(object):
             # if file does not exist, continue and return an empty dict
             return {}
         job_wadl['parameters'] = params
-        # TODO: Read results description
+        # TODO: Read results description from WADL
         job_wadl['results'] = results
-        # TODO: Read expected duration
+        # TODO: Read expected duration from WADL
         job_wadl['duration'] = 60
-        # TODO: Read expected quote?
+        # TODO: Read expected quote from WADL?
         return job_wadl
 
     # ----------
@@ -150,7 +154,6 @@ class Job(object):
     def get_results(self):
         """ Query db for job results"""
         query = "SELECT * FROM job_results WHERE jobid='" + self.jobid + "';"
-        # TODO: control access based on user ?
         results = self.db.execute(query).fetchall()
         results_dict = {row['name']: {'url': row['url']} for row in results}
         self.results = results_dict
@@ -198,8 +201,6 @@ class Job(object):
             if not os.path.isdir(upload_dir):
                 os.makedirs(upload_dir)
             f.save(upload_dir + '/' + f.filename)
-            # TODO: full URI to file on UWS server, will be wget by job server when needed
-            # TODO: or when writing parameters file when byref=True?
             value = f.filename
             self.parameters[fname] = {'value': value, 'byref': True}
 
@@ -271,6 +272,7 @@ class Job(object):
         """
         params = []
         for pname, pdict in self.parameters.iteritems():
+            # TODO: save URI on UWS server if byref=True
             params.append(pname + '=' + pdict['value'])
         return separator.join(params)
 
@@ -372,9 +374,13 @@ class Job(object):
         if self.phase == 'PENDING':
             jobid_cluster = self.manager.start(self)
         else:
-            raise RuntimeError('Job {} is not in the PENDING state'.format(self.jobid))
-        if not jobid_cluster:
-            raise RuntimeError('No jobid_cluster returned for job {}'.format(self.jobid))
+            raise RuntimeWarning('Job {} is not in the PENDING state'.format(self.jobid))
+        try:
+            # Test if jobid_cluster is an integer
+            jobid_cluster = int(jobid_cluster)
+        except ValueError:
+            raise RuntimeError('Bad jobid_cluster returned for job {}:\njobid_cluster:\n{}'
+                               ''.format(self.jobid, jobid_cluster))
         # Change phase to QUEUED
         now = datetime.datetime.now()
         duration = datetime.timedelta(0, self.execution_duration)
@@ -401,7 +407,7 @@ class Job(object):
             # Send command to manager
             self.manager.abort(self)
         else:
-            raise RuntimeError('Job {} cannot be aborted while in phase {}'.format(self.jobid, self.phase))
+            raise RuntimeWarning('Job {} cannot be aborted while in phase {}'.format(self.jobid, self.phase))
         # Change phase to ABORTED
         now = datetime.datetime.now()
         self.phase = 'ABORTED'
@@ -424,7 +430,7 @@ class Job(object):
         self.db.execute(query)
         query = "DELETE FROM jobs WHERE jobid='" + self.jobid + "';"
         self.db.execute(query)
-        # TODO: remove uploaded files if needed
+        # TODO: Remove uploaded files corresponding to jobid if needed
 
     def get_status(self):
         """Get job status
@@ -433,26 +439,28 @@ class Job(object):
         - QUEUED / HELD / SUSPENDED
         - EXECUTING
         """
-        if self.phase in ['QUEUED', 'EXECUTING', 'HELD', 'SUSPENDED']:
+        if self.phase not in ['PENDING', 'COMPLETED', 'ERROR', 'ABORTED', 'UNKNOWN']:
             # Send command to manager
-            phase = self.manager.get_status(self)
-            if phase != self.phase:
+            new_phase = self.manager.get_status(self)
+            if new_phase != self.phase:
                 # Change phase
-                self.phase = phase
+                self.phase = new_phase
+                if new_phase == 'COMPLETED':
+                    # TODO: copy results to the UWS server if job is COMPLETED (done by cluster for now)
+                    # Get end_time
+                    self.end_time = self.manager.get_end_time(self)
                 self.save_description()
-            return phase
-        else:
-            return self.phase
+        return self.phase
 
-    def update_status(self, phase, error=''):
-        """Update job object
+    def change_status(self, phase, error=''):
+        """Update job object, e.g. from a job_event or from
 
         Job need to be updated if it has been started and it is not in a final phase:
         - QUEUED / HELD / SUSPENDED
         - EXECUTING
         """
-        # TODO: PENDING is added to perform tests, to be removed
-        if self.phase in ['PENDING', 'QUEUED', 'EXECUTING', 'HELD', 'SUSPENDED']:
+        # TODO: DEBUG: PENDING to be removed as a PENDING job can only change status through start()
+        if self.phase in ['PENDING', 'QUEUED', 'EXECUTING', 'HELD', 'SUSPENDED', 'COMPLETED']:
             # Change phase
             now = datetime.datetime.now()
             # destruction = datetime.timedelta(DESTRUCTION_INTERVAL)
@@ -469,7 +477,8 @@ class Job(object):
 
             def phase_completed(job, error):
                 job.end_time = now.strftime(dt_fmt)
-                # TODO: retrieve results
+                # job.end_time = job.manager.get_end_time()
+                # TODO: copy results to the UWS server if job is COMPLETED (done by cluster for now)
 
             def phase_error(job, error):
                 if job.error:
@@ -488,8 +497,8 @@ class Job(object):
             # Save job description
             self.save_description()
         else:
-            raise RuntimeError('Job {} cannot be updated to {} while in phase {}'
-                               ''.format(self.jobid, phase, self.phase))
+            raise RuntimeWarning('Job {} cannot be updated to {} while in phase {}'
+                                 ''.format(self.jobid, phase, self.phase))
 
 
 # -------------
