@@ -12,11 +12,23 @@ See http://www.ivoa.net/documents/UWS/20101010/REC-UWS-1.0-20101010.html
 import sys
 import traceback
 import uuid
+from subprocess import CalledProcessError
 from bottle import Bottle, request, response, abort, redirect, run
 from uws_classes import *
 
 # Create a new application
 app = Bottle()
+
+# If imported from test.py, redefine variables
+main_dict = sys.modules['__main__'].__dict__
+if 'test.py' in main_dict.get('__file__', ''):
+    print '\nPerforming tests'
+    if 'LOG_FILE' in main_dict:
+        LOG_FILE = main_dict['LOG_FILE']
+    if 'DB_FILE' in main_dict:
+        DB_FILE = main_dict['DB_FILE']
+    if 'MANAGER' in main_dict:
+        MANAGER = main_dict['MANAGER']
 
 
 # ----------
@@ -38,7 +50,7 @@ logger = logging.getLogger(__name__)
 
 # Using SQLite
 import bottle_sqlite
-plugin = bottle_sqlite.Plugin(dbfile='uws_server.db')
+plugin = bottle_sqlite.Plugin(dbfile=DB_FILE)
 
 # Using PostgreSQL
 # import bottle_pgsql
@@ -63,10 +75,14 @@ user = 'anonymous'
 # REMOTE_USER set?
 # COOKIE set for Shibboleth auth in service? then redirect to institution
 
+
 def set_user():
     """Set user from request header"""
     global user
-    # TODO: Set user from REMOTE_USER (?)
+    # Set user from REMOTE_USER if not empty
+    remote_user = request.environ.get('REMOTE_USER', '')
+    if remote_user:
+        user = remote_user
     pass
 
 
@@ -164,6 +180,7 @@ def abort_500_except(msg=None):
 @app.route('/')
 def home():
     """Home page"""
+    response.content_type = 'text/html; charset=UTF-8'
     return "UWS v1.0 server implementation<br>(c) Observatoire de Paris 2015"
 
 
@@ -189,14 +206,14 @@ def init_db(db):
     if not is_localhost():
         abort_403()
     try:
-        filename = 'uws_db.sqlite'
+        filename = 'test_uws_db.sqlite'
         with open(filename) as f:
             sql = f.read()
         db.executescript(sql)
         logger.info('Database initialized using ' + filename)
     except:
         abort_500_except()
-    redirect('/show_db')
+    redirect('/show_db', 303)
 
 
 @app.route('/show_db')
@@ -268,7 +285,7 @@ def maintenance(db):
     except:
         abort_500_except()
     # Response
-    response.content_type = 'text/plain; charset=UTF8'
+    response.content_type = 'text/plain; charset=UTF-8'
     return ''
 
 
@@ -302,16 +319,16 @@ def job_event(jobid_cluster, db):
         # Update job with PHASE=, ERROR=
         if 'PHASE' in request.GET:
             new_phase = request.GET['PHASE']
-            phase = job.phase
+            cur_phase = job.phase
             if new_phase == 'ERROR':
                 if 'ERROR' in request.GET:
                     job.change_status(new_phase, request.GET['ERROR'])
                 else:
                     job.change_status(new_phase)
                 logger.info('{} {} ERROR reported (from {})'.format(job.jobname, job.jobid, user))
-            elif new_phase != phase:
+            elif new_phase != cur_phase:
                 job.change_status(new_phase)
-                logger.info('{} {} phase {} --> {} (from {})'.format(job.jobname, job.jobid, phase, new_phase, user))
+                logger.info('{} {} phase {} --> {} (from {})'.format(job.jobname, job.jobid, cur_phase, new_phase, user))
             else:
                 raise UserWarning('Phase is already ' + new_phase)
         else:
@@ -323,7 +340,7 @@ def job_event(jobid_cluster, db):
     except:
         abort_500_except()
     # Response
-    response.content_type = 'text/plain; charset=UTF8'
+    response.content_type = 'text/plain; charset=UTF-8'
     return ''
 
 
@@ -344,9 +361,9 @@ def get_joblist(jobname, db):
         set_user()
         logger.info(jobname)
         joblist = JobList(jobname, user, request.url, db)
-        xml = joblist.to_xml()
-        response.content_type = 'text/xml; charset=UTF8'
-        return xml
+        xml_out = joblist.to_xml()
+        response.content_type = 'text/xml; charset=UTF-8'
+        return xml_out
     except:
         abort_500_except()
 
@@ -380,7 +397,7 @@ def create_job(jobname, db):
     except:
         abort_500_except()
     # Response
-    redirect('/' + jobname + '/' + jobid)
+    redirect('/' + jobname + '/' + jobid, 303)
 
 
 # ----------
@@ -403,9 +420,9 @@ def get_job(jobname, jobid, db):
         # Get job description from DB
         job = Job(jobname, jobid, user, db, get_description=True, get_params=True, get_results=True)
         # Return job description in UWS format
-        xml = job.to_xml()
-        response.content_type = 'text/xml; charset=UTF8'
-        return xml
+        xml_out = job.to_xml()
+        response.content_type = 'text/xml; charset=UTF-8'
+        return xml_out
     except NotFoundWarning as e:
         abort_404(e.message)
     except:
@@ -436,7 +453,7 @@ def delete_job(jobname, jobid, db):
     except:
         abort_500_except()
     # Response
-    redirect('/' + jobname)
+    redirect('/' + jobname, 303)
 
 
 @app.post('/<jobname>/<jobid>')
@@ -461,7 +478,7 @@ def post_job(jobname, jobid, db):
         abort_500_except('STDERR output:\n' + e.output)
     except:
         abort_500_except()
-    redirect('/' + jobname)
+    redirect('/' + jobname, 303)
 
 
 # ----------
@@ -483,7 +500,7 @@ def get_phase(jobname, jobid, db):
         # Get job description from DB
         job = Job(jobname, jobid, user, db, get_description=True)
         # Return value
-        response.content_type = 'text/plain; charset=UTF8'
+        response.content_type = 'text/plain; charset=UTF-8'
         return job.phase
     except NotFoundWarning as e:
         abort_404(e.message)
@@ -533,7 +550,7 @@ def post_phase(jobname, jobid, db):
     except:
         abort_500_except()
     # Response
-    redirect('/' + jobname + '/' + jobid)
+    redirect('/' + jobname + '/' + jobid, 303)
 
 
 # ----------
@@ -555,7 +572,7 @@ def get_executionduration(jobname, jobid, db):
         # Get job description from DB
         job = Job(jobname, jobid, user, db, get_description=True)
         # Return value
-        response.content_type = 'text/plain; charset=UTF8'
+        response.content_type = 'text/plain; charset=UTF-8'
         return str(job.execution_duration)
     except NotFoundWarning as e:
         abort_404(e.message)
@@ -598,7 +615,7 @@ def post_executionduration(jobname, jobid, db):
     except:
         abort_500_except()
     # Response
-    redirect('/' + jobname + '/' + jobid)
+    redirect('/' + jobname + '/' + jobid, 303)
 
 
 # ----------
@@ -620,7 +637,7 @@ def get_destruction(jobname, jobid, db):
         # Get job description from DB
         job = Job(jobname, jobid, user, db, get_description=True)
         # Return value
-        response.content_type = 'text/plain; charset=UTF8'
+        response.content_type = 'text/plain; charset=UTF-8'
         return job.destruction_time
     except NotFoundWarning as e:
         abort_404(e.message)
@@ -646,7 +663,7 @@ def post_destruction(jobname, jobid, db):
         new_value = request.forms.get('DESTRUCTION')
         # Check if ISO8601 format, truncate if unconverted data remains
         try:
-            datetime.datetime.strptime(new_value, dt_fmt)
+            dt.datetime.strptime(new_value, dt_fmt)
         except ValueError as e:
             if len(e.args) > 0 and e.args[0].startswith('unconverted data remains:'):
                 new_value = new_value[:19]
@@ -665,7 +682,7 @@ def post_destruction(jobname, jobid, db):
     except:
         abort_500_except()
     # Response
-    redirect('/' + jobname + '/' + jobid)
+    redirect('/' + jobname + '/' + jobid, 303)
 
 
 # ----------
@@ -688,7 +705,7 @@ def get_error(jobname, jobid, db):
         # Get job description from DB
         job = Job(jobname, jobid, user, db, get_description=True)
         # Return value
-        response.content_type = 'text/plain; charset=UTF8'
+        response.content_type = 'text/plain; charset=UTF-8'
         return job.error
     except NotFoundWarning as e:
         abort_404(e.message)
@@ -715,7 +732,7 @@ def get_quote(jobname, jobid, db):
         # Get job description from DB
         job = Job(jobname, jobid, user, db, get_description=True)
         # Return value
-        response.content_type = 'text/plain; charset=UTF8'
+        response.content_type = 'text/plain; charset=UTF-8'
         return str(job.quote)
     except NotFoundWarning as e:
         abort_404(e.message)
@@ -744,9 +761,9 @@ def get_parameters(jobname, jobid, db):
         job = Job(jobname, jobid, user, db, get_params=True)
         job.get_parameters()
         # Return job parameters in UWS format
-        xml = job.parameters_to_xml()
-        response.content_type = 'text/xml; charset=UTF8'
-        return xml
+        xml_out = job.parameters_to_xml()
+        response.content_type = 'text/xml; charset=UTF-8'
+        return xml_out
     except NotFoundWarning as e:
         abort_404(e.message)
     except:
@@ -772,7 +789,7 @@ def get_parameter(jobname, jobid, param, db):
         if param not in job.parameters:
             raise NotFoundWarning('Parameter "{}" NOT FOUND for job "{}"'.format(param, jobid))
         # Return parameter
-        response.content_type = 'text/plain; charset=UTF8'
+        response.content_type = 'text/plain; charset=UTF-8'
         return str(job.parameters[param]['value'])
     except NotFoundWarning as e:
         abort_404(e.message)
@@ -815,7 +832,7 @@ def post_parameter(jobname, jobid, param, db):
     except:
         abort_500_except()
     # Response
-    redirect('/' + jobname + '/' + jobid + '/parameters')
+    redirect('/' + jobname + '/' + jobid + '/parameters', 303)
 
 
 # ----------
@@ -838,9 +855,9 @@ def get_results(jobname, jobid, db):
         # Get job description from DB
         job = Job(jobname, jobid, user, db, get_results=True)
         # Return job results in UWS format
-        xml = job.results_to_xml()
-        response.content_type = 'text/xml; charset=UTF8'
-        return xml
+        xml_out = job.results_to_xml()
+        response.content_type = 'text/xml; charset=UTF-8'
+        return xml_out
     except NotFoundWarning as e:
         abort_404(e.message)
     except:
@@ -866,7 +883,7 @@ def get_result(jobname, jobid, result, db):
         if result not in job.results:
             raise NotFoundWarning('Result "{}" NOT FOUND for job "{}"'.format(result, jobid))
         # Return result
-        response.content_type = 'text/plain; charset=UTF8'
+        response.content_type = 'text/plain; charset=UTF-8'
         return str(job.results[result]['url'])
     except NotFoundWarning as e:
         abort_404(e.message)
@@ -893,7 +910,7 @@ def get_owner(jobname, jobid, db):
         # Get job description from DB
         job = Job(jobname, jobid, user, db, get_description=True)
         # Return value
-        response.content_type = 'text/plain; charset=UTF8'
+        response.content_type = 'text/plain; charset=UTF-8'
         return job.owner
     except NotFoundWarning as e:
         abort_404(e.message)

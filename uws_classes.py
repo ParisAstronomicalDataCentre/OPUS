@@ -8,9 +8,8 @@ Created on Tue Apr 14 15:14:24 2015
 import os
 import shutil
 import urllib
-import datetime
+import datetime as dt
 import xml.etree.ElementTree
-from subprocess import CalledProcessError
 import managers
 from settings import *
 
@@ -18,14 +17,16 @@ from settings import *
 # ----------
 # Utility variables
 
-
-job_cols = ['jobid', 'jobname', 'phase', 'quote', 'execution_duration', 'error',
-            'start_time', 'end_time', 'destruction_time', 'owner', 'run_id', 'jobid_cluster']
+# Table columns defined in database
+jobs_cols = ['jobid', 'jobname', 'phase', 'quote', 'execution_duration', 'error',
+             'start_time', 'end_time', 'destruction_time', 'owner', 'run_id', 'jobid_cluster']
 job_params_cols = ['jobid', 'name', 'value', 'byref']
 job_results_cols = ['jobid', 'name', 'url']
 
+# ISO date format for datetime
 dt_fmt = '%Y-%m-%dT%H:%M:%S'
 
+# Known phases
 phases = [
     'PENDING',
     'QUEUED',
@@ -38,6 +39,7 @@ phases = [
     'SUSPENDED'
 ]
 
+# Terminal phases (no evolution expected)
 terminal_phases = [
     'COMPLETED',
     'ERROR',
@@ -47,8 +49,13 @@ terminal_phases = [
 ]
 
 
+# ---------
+# Exceptions/Warnings
+
+
 class NotFoundWarning(Warning):
     pass
+
 
 # ---------
 # Job class
@@ -80,9 +87,9 @@ class Job(object):
             # Check status on cluster, and change if ncessary
             self.get_status()
         elif from_post:
-            now = datetime.datetime.now()
-            destruction = datetime.timedelta(DESTRUCTION_INTERVAL)  # default interval for UWS server
-            duration = datetime.timedelta(0, 60)  # default duration of 60s, from wadl ?
+            now = dt.datetime.now()
+            destruction = dt.timedelta(DESTRUCTION_INTERVAL)  # default interval for UWS server
+            duration = dt.timedelta(0, 60)  # default duration of 60s, from wadl ?
             # Create a new PENDING job and save to db
             self.phase = 'PENDING'
             self.quote = None
@@ -131,7 +138,7 @@ class Job(object):
         params = {}
         results = {}
         try:
-            with open(filename,'r') as f:
+            with open(filename, 'r') as f:
                 wadl_string = f.read()
             wadl_tree = xml.etree.ElementTree.fromstring(wadl_string)
             # Read parameters description
@@ -177,10 +184,10 @@ class Job(object):
         job = self.db.execute(query).fetchone()
         if not job:
             raise NotFoundWarning('Job "{}" NOT FOUND'.format(self.jobid))
-        # creation_time = datetime.datetime.strptime(job['creation_time'], dt_fmt)
-        start_time = datetime.datetime.strptime(job['start_time'], dt_fmt)
-        end_time = datetime.datetime.strptime(job['end_time'], dt_fmt)
-        destruction_time = datetime.datetime.strptime(job['destruction_time'], dt_fmt)
+        # creation_time = dt.datetime.strptime(job['creation_time'], dt_fmt)
+        start_time = dt.datetime.strptime(job['start_time'], dt_fmt)
+        end_time = dt.datetime.strptime(job['end_time'], dt_fmt)
+        destruction_time = dt.datetime.strptime(job['destruction_time'], dt_fmt)
         self.jobname = job['jobname']
         self.phase = job['phase']
         self.quote = job['quote']
@@ -200,17 +207,14 @@ class Job(object):
         """Set attributes and parameters from POST"""
         # Read WADL
         wadl = self.read_wadl()
-        print str(wadl)
         # Pop attributes keywords from POST or WADL
-        self.execution_duration = post.pop('EXECUTION_DURATION', wadl.get('duration', None))
+        self.execution_duration = post.pop('EXECUTION_DURATION', wadl.get('duration', EXECUTION_DURATION_DEF))
         # Set parameters from POST
-        print str(post.__dict__)
         for pname, value in post.iteritems():
             if pname not in ['PHASE']:
                 # TODO: use WADL to check if value is valid
                 self.parameters[pname] = {'value': value, 'byref': False}
         # Upload files for multipart/form-data
-        print str(files.__dict__)
         for fname, f in files.iteritems():
             upload_dir = UPLOAD_PATH + self.jobid
             if not os.path.isdir(upload_dir):
@@ -218,7 +222,6 @@ class Job(object):
             f.save(upload_dir + '/' + f.filename)
             value = f.filename
             self.parameters[fname] = {'value': value, 'byref': True}
-
 
     # ----------
     # Methods to save job attributes to db
@@ -252,7 +255,7 @@ class Job(object):
 
     def save_description(self):
         """Save job description to db"""
-        d = {col: str(self.__dict__[col]) for col in job_cols}
+        d = {col: str(self.__dict__[col]) for col in jobs_cols}
         self.save_query('jobs', d)
 
     def save(self):
@@ -273,7 +276,7 @@ class Job(object):
             raise KeyError(attr)
 
     def set_destruction_time(self, destruction):
-        self.destruction_time = datetime.datetime.strptime(destruction, dt_fmt)
+        self.destruction_time = dt.datetime.strptime(destruction, dt_fmt)
         self.save_description()
 
     # ----------
@@ -305,7 +308,7 @@ class Job(object):
     def parameters_to_xml(self, add_xmlns=True):
         """Returns the XML representation of job parameters"""
         if add_xmlns:
-            xml = [
+            xml_out = [
                 '<?xml version="1.0" encoding="UTF-8"?>',
                 '<uws:parameters ',
                 'xmlns:uws="http://www.ivoa.net/xml/UWS/v1.0" ',
@@ -313,23 +316,23 @@ class Job(object):
                 'xsi:schemaLocation="http://www.ivoa.net/xml/UWS/v1.0 http://ivoa.net/xml/UWS/UWS-v1.0.xsd">',
             ]
         else:
-            xml = ['<uws:parameters>']
+            xml_out = ['<uws:parameters>']
         # Add each parameter that has a value
         for pname, p in self.parameters.iteritems():
             if p['value']:
                 name = pname
                 value = urllib.quote_plus(p['value'])
                 by_ref = str(p['byref']).lower()
-                xml.append('<uws:parameter id="{}" byReference="{}">'.format(name, by_ref))
-                xml.append(value)
-                xml.append('</uws:parameter>')
-        xml.append('</uws:parameters>')
-        return ''.join(xml)
+                xml_out.append('<uws:parameter id="{}" byReference="{}">'.format(name, by_ref))
+                xml_out.append(value)
+                xml_out.append('</uws:parameter>')
+        xml_out.append('</uws:parameters>')
+        return ''.join(xml_out)
 
     def results_to_xml(self, add_xmlns=True):
         """Returns the XML representation of job results"""
         if add_xmlns:
-            xml = [
+            xml_out = [
                 '<?xml version="1.0" encoding="UTF-8"?>',
                 '<uws:results ',
                 'xmlns:uws="http://www.ivoa.net/xml/UWS/v1.0" ',
@@ -338,13 +341,13 @@ class Job(object):
                 'xmlns:xlink="http://www.w3.org/1999/xlink">',
             ]
         else:
-            xml = ['<uws:results>']
+            xml_out = ['<uws:results>']
         # Add each parameter that has a value
         for rname, r in self.results.iteritems():
             if r['url']:
-                xml.append('<uws:result id="{}" xlink:href="{}"/>'.format(rname, r['url']))
-        xml.append('</uws:results>')
-        return ''.join(xml)
+                xml_out.append('<uws:result id="{}" xlink:href="{}"/>'.format(rname, r['url']))
+        xml_out.append('</uws:results>')
+        return ''.join(xml_out)
 
     def to_xml(self):
         """Returns the XML representation of a job (uws:job)"""
@@ -352,30 +355,30 @@ class Job(object):
         def add_xml_node(name, value):
             """Add XML node"""
             if value:
-                xml = '<uws:{}>{}</uws:{}>'.format(name, value, name)
+                xml_node = '<uws:{}>{}</uws:{}>'.format(name, value, name)
             else:
-                xml = '<uws:{} xsi:nil=\"true\"/>'.format(name)
-            return xml
+                xml_node = '<uws:{} xsi:nil=\"true\"/>'.format(name)
+            return xml_node
 
-        xml = list([
+        xml_out = list([
             '<uws:job ',
             'xmlns:uws="http://www.ivoa.net/xml/UWS/v1.0" ',
             'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ',
             'xsi:schemaLocation="http://www.ivoa.net/xml/UWS/v1.0 http://ivoa.net/xml/UWS/UWS-v1.0.xsd" ',
             'xmlns:xlink="http://www.w3.org/1999/xlink">',
         ])
-        xml.append(add_xml_node('jobId', self.jobid))
-        xml.append(add_xml_node('phase', self.phase))
-        xml.append(add_xml_node('executionduration', self.execution_duration))
-        xml.append(add_xml_node('quote', self.quote))
-        xml.append(add_xml_node('startTime', self.start_time))
-        xml.append(add_xml_node('endTime', self.end_time))
-        xml.append(add_xml_node('destruction', self.destruction_time))
-        xml.append(add_xml_node('ownerId', self.owner))
-        xml.append(self.parameters_to_xml(add_xmlns=False))
-        xml.append(self.results_to_xml(add_xmlns=False))
-        xml.append('</uws:job>')
-        return ''.join(xml)
+        xml_out.append(add_xml_node('jobId', self.jobid))
+        xml_out.append(add_xml_node('phase', self.phase))
+        xml_out.append(add_xml_node('executionduration', self.execution_duration))
+        xml_out.append(add_xml_node('quote', self.quote))
+        xml_out.append(add_xml_node('startTime', self.start_time))
+        xml_out.append(add_xml_node('endTime', self.end_time))
+        xml_out.append(add_xml_node('destruction', self.destruction_time))
+        xml_out.append(add_xml_node('ownerId', self.owner))
+        xml_out.append(self.parameters_to_xml(add_xmlns=False))
+        xml_out.append(self.results_to_xml(add_xmlns=False))
+        xml_out.append('</uws:job>')
+        return ''.join(xml_out)
 
     # ----------
     # Actions on a job
@@ -397,9 +400,9 @@ class Job(object):
             raise RuntimeError('Bad jobid_cluster returned for job {}:\njobid_cluster:\n{}'
                                ''.format(self.jobid, jobid_cluster))
         # Change phase to QUEUED
-        now = datetime.datetime.now()
-        duration = datetime.timedelta(0, self.execution_duration)
-        destruction = datetime.timedelta(DESTRUCTION_INTERVAL)
+        now = dt.datetime.now()
+        duration = dt.timedelta(0, self.execution_duration)
+        destruction = dt.timedelta(DESTRUCTION_INTERVAL)
         self.phase = 'QUEUED'
         self.start_time = now.strftime(dt_fmt)
         self.end_time = (now + duration).strftime(dt_fmt)
@@ -424,7 +427,7 @@ class Job(object):
         else:
             raise UserWarning('Job {} cannot be aborted while in phase {}'.format(self.jobid, self.phase))
         # Change phase to ABORTED
-        now = datetime.datetime.now()
+        now = dt.datetime.now()
         self.phase = 'ABORTED'
         self.end_time = now.strftime(dt_fmt)
         self.error = 'Job aborted by user ' + self.user
@@ -471,7 +474,7 @@ class Job(object):
                 # self.save_description()
         return self.phase
 
-    def change_status(self, phase, error=''):
+    def change_status(self, new_phase, error=''):
         """Update job object, e.g. from a job_event or from get_status if phase has changed
 
         Job can be updated if it has been started and it is not in a final phase:
@@ -481,37 +484,46 @@ class Job(object):
         # TODO: DEBUG: PENDING and COMPLETED to be removed
         if self.phase in ['PENDING', 'QUEUED', 'EXECUTING', 'HELD', 'SUSPENDED', 'COMPLETED']:
             # Change phase
-            now = datetime.datetime.now()
-            # destruction = datetime.timedelta(DESTRUCTION_INTERVAL)
+            now = dt.datetime.now()
+            # destruction = dt.timedelta(DESTRUCTION_INTERVAL)
 
             def nul(*args):
                 """Simply change phase"""
                 pass
 
-            def phase_executing(job, error):
+            def phase_executing(job, error_msg):
+                # Set job.start_time
                 try:
                     job.start_time = job.manager.get_start_time(job)
-                except CalledProcessError:
-                    print 'job.manager.get_start_time(job) error'
+                except:
+                    print 'Warning: job.manager.get_start_time(job) not responding, set start_time=now'
                     job.start_time = now.strftime(dt_fmt)
-                # Estimates end_time from start_time + duration
-                duration = datetime.timedelta(0, self.execution_duration)
-                end_time = datetime.datetime.strptime(job.start_time, dt_fmt) + duration
+                # Estimates job.end_time from job.start_time + duration
+                duration = dt.timedelta(0, self.execution_duration)
+                end_time = dt.datetime.strptime(job.start_time, dt_fmt) + duration
                 job.end_time = end_time.strftime(dt_fmt)
 
-            def phase_completed(job, error):
+            def phase_completed(job, error_msg):
+                # Set job.end_time
                 try:
                     job.end_time = job.manager.get_end_time(job)
-                except CalledProcessError:
-                    print 'job.manager.get_end_time(job) error'
+                except:
+                    print 'Warning: job.manager.get_end_time(job) not responding, set end_time=now'
                     job.end_time = now.strftime(dt_fmt)
-                # TODO: copy results to the UWS server if job is COMPLETED (done by cluster for now)
+                # TODO: Copy results to the UWS server if job is COMPLETED (done by cluster for now)
 
-            def phase_error(job, error):
+            def phase_error(job, error_msg):
+                # Set job.end_time
+                try:
+                    job.end_time = job.manager.get_end_time(job)
+                except:
+                    print 'Warning: job.manager.get_end_time(job) not responding, set end_time=now'
+                    job.end_time = now.strftime(dt_fmt)
+                # Set job.error or add
                 if job.error:
-                    job.error += '\n' + error
+                    job.error += '\n' + error_msg
                 else:
-                    job.error = error
+                    job.error = error_msg
 
             # Switch
             cases = {'HELD': nul,
@@ -519,17 +531,17 @@ class Job(object):
                      'EXECUTING': phase_executing,
                      'COMPLETED': phase_completed,
                      'ERROR': phase_error}
-            if phase not in cases:
-                raise UserWarning('Unknown phase: ' + phase)
+            if new_phase not in cases:
+                raise UserWarning('Phase change not allowed: {} --> {}'.format(self.phase, new_phase))
             # Run case
-            cases[phase](self, error)
+            cases[new_phase](self, error)
             # Update phase
-            self.phase = phase
+            self.phase = new_phase
             # Save job description
             self.save_description()
         else:
             raise UserWarning('Job {} cannot be updated to {} while in phase {}'
-                              ''.format(self.jobid, phase, self.phase))
+                              ''.format(self.jobid, new_phase, self.phase))
 
 
 # -------------
@@ -551,15 +563,16 @@ class JobList(object):
     def get_from_db(self):
         """Query db for job list"""
         query = "SELECT jobid, phase FROM jobs"
-        where = ["jobname='{}'".format(self.jobname),
-                 "owner='{}'".format(self.user)]
+        where = ["jobname='{}'".format(self.jobname)]
+        if self.user not in ['localhost']:
+            where.append("owner='{}'".format(self.user))
         query += " WHERE " + " AND ".join(where) + ";"
         jobs = self.db.execute(query).fetchall()
         self.jobs = jobs
 
     def to_xml(self):
         """Returns the XML representation of jobs (uws:jobs)"""
-        xml = [
+        xml_out = [
             '<?xml version="1.0" encoding="UTF-8"?>',
             '<uws:jobs ',
             'xmlns:uws="http://www.ivoa.net/xml/UWS/v1.0" ',
@@ -569,11 +582,11 @@ class JobList(object):
         ]
         for job in self.jobs:
             href = self.url + '/' + job['jobid']
-            xml.append('<uws:jobref id="{}" xlink:href="{}">'.format(job['jobid'], href))
-            xml.append('<uws:phase>{}</uws:phase>'.format(job['phase']))
-            xml.append('</uws:jobref>')
-        xml.append('</uws:jobs>')
-        return ''.join(xml)
+            xml_out.append('<uws:jobref id="{}" xlink:href="{}">'.format(job['jobid'], href))
+            xml_out.append('<uws:phase>{}</uws:phase>'.format(job['phase']))
+            xml_out.append('</uws:jobref>')
+        xml_out.append('</uws:jobs>')
+        return ''.join(xml_out)
 
     def to_html(self):
         """Returns the HTML representation of jobs"""

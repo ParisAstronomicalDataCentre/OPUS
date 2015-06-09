@@ -9,6 +9,8 @@ DEBUG = True
 
 LOG_FILE = 'uws_server.log'
 
+DB_FILE = 'uws_server.db'
+
 UPLOAD_PATH = 'upload/'
 
 PARAMS_PATH = '/home/mservillat/CTA/git_voparis/uws-server/params/'
@@ -23,7 +25,7 @@ JOB_SERVERS = {
 }
 
 # Define a Manager and its properties
-MANAGER = 'SLURMManager'
+MANAGER = 'Manager'  # 'SLURMManager'
 SLURM_URL = 'quadri12.obspm.fr'  # 'tycho.obspm.fr'
 SLURM_USER = 'vouws'
 SLURM_USER_MAIL = 'mathieu.servillat@obspm.fr'

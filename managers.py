@@ -5,7 +5,7 @@ Created on Tue May 11 2015
 @author: mservillat
 """
 
-import datetime
+import datetime as dt
 import subprocess as sp
 from settings import *
 
@@ -43,11 +43,19 @@ class Manager(object):
         Returns:
             job status (phase)
         """
-        return 'UNKNOWN'
+        return job.phase
+
+    def get_start_time(self, job):
+        """Get job start time from SLURM server"""
+        raise NotImplementedError('To be implemented')
+
+    def get_end_time(self, job):
+        """Get job end time from cluster"""
+        raise NotImplementedError('To be implemented')
 
 
 class SLURMManager(Manager):
-    """Manage interactions with SLURM (e.g. on tycho.obspm.fr)"""
+    """Manage interactions with SLURM queue manager (e.g. on tycho.obspm.fr)"""
 
     def __init__(self, host=SLURM_URL, user=SLURM_USER, mail=SLURM_USER_MAIL):
         self.host = host
@@ -65,7 +73,7 @@ class SLURMManager(Manager):
         Returns:
             PBS as a string
         """
-        duration = datetime.timedelta(0, job.execution_duration)
+        duration = dt.timedelta(0, job.execution_duration)
         # duration format is 00:01:00 for 1 min
         duration_str = str(duration).replace(' days', '').replace(' day', '').replace(', ', '-')
         pbs = [
