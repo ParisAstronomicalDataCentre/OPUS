@@ -10,6 +10,7 @@ import shutil
 import urllib
 import datetime as dt
 import xml.etree.ElementTree
+import storage
 import managers
 from settings import *
 
@@ -50,47 +51,49 @@ terminal_phases = [
 
 
 # ---------
-# Exceptions/Warnings
-
-
-class NotFoundWarning(Warning):
-    pass
-
-
-# ---------
 # Job class
 
 
 class Job(object):
     """Job with attributes and function to fetch from db and return as XML"""
 
-    def __init__(self, jobname, jobid, user, db, manager=MANAGER,
-                 get_description=False, get_params=False, get_results=False,
-                 from_post=None):
+    def __init__(self, jobname, jobid, user, db,
+                 get_attributes=False, get_parameters=False, get_results=False,
+                 from_post=None, from_jobid_cluster=False):
         """Initialize from db or from POST
 
         from_post should contain the request object if not None
         """
         # Job description
-        self.jobname = jobname
-        self.jobid = jobid
+        if from_jobid_cluster:
+            self.jobname = jobname
+            self.jobid = None
+            self.jobid_cluster = jobid
+        else:
+            self.jobname = jobname
+            self.jobid = jobid
+            self.jobid_cluster = None
         self.user = user
         # Internal information:
         # Connector to UWS database
         self.db = db
+        # Link to the storage, e.g. SQLiteStorage, see settings.py
+        self.storage = storage.__dict__[STORAGE]()
         # Link to the job manager, e.g. SLURMManager, see settings.py
-        self.manager = managers.__dict__[manager]()
+        self.manager = managers.__dict__[MANAGER]()
         # Fill job attributes
-        if get_description:
+        if get_attributes or get_parameters or get_results:
             # Get from db
-            self.get_from_db()
-            # Check status on cluster, and change if ncessary
-            self.get_status()
+            #self.get_from_db()
+            self.storage.read(self, get_attributes=get_attributes, get_parameters=get_parameters, get_results=get_results,
+                              from_jobid_cluster=from_jobid_cluster)
+            # TODO: Check status on cluster, and change if necessary?
+            # self.get_status()
         elif from_post:
+            # Create a new PENDING job and save to storage
             now = dt.datetime.now()
             destruction = dt.timedelta(DESTRUCTION_INTERVAL)  # default interval for UWS server
             duration = dt.timedelta(0, 60)  # default duration of 60s, from wadl ?
-            # Create a new PENDING job and save to db
             self.phase = 'PENDING'
             self.quote = None
             self.execution_duration = duration.total_seconds()
@@ -101,15 +104,15 @@ class Job(object):
             self.destruction_time = (now + destruction).strftime(dt_fmt)
             self.owner = user
             self.run_id = None
-            self.jobid_cluster = None
             self.parameters = {}
             self.results = {}
             # Set parameters from POSTed info
             self.set_from_post(from_post.POST, from_post.files)
-            # Save to db
-            self.save()
+            # Save to storage
+            #self.save()
+            self.storage.save(self, save_attributes=True, save_parameters=True)
         else:
-            # Create blank job with None values, do not save to db
+            # Create blank job with None values, do not save to storage
             self.phase = 'UNKONWN'
             self.quote = None
             self.execution_duration = None
@@ -120,13 +123,8 @@ class Job(object):
             self.destruction_time = None
             self.owner = None
             self.run_id = None
-            self.jobid_cluster = None
             self.parameters = {}
             self.results = {}
-        if get_params:
-            self.get_parameters()
-        if get_results:
-            self.get_results()
 
     # ----------
     # Methods to read job description from WADL file
@@ -135,7 +133,7 @@ class Job(object):
         """Read job description from WADL file"""
         filename = WADL_PATH + self.jobname + '.wadl'
         job_wadl = {}
-        params = {}
+        parameters = {}
         results = {}
         try:
             with open(filename, 'r') as f:
@@ -144,7 +142,7 @@ class Job(object):
             # Read parameters description
             params_block = wadl_tree.find(".//{http://wadl.dev.java.net/2009/02}representation[@id='parameters']")
             for p in params_block.getchildren():
-                params[p.get('name')] = {
+                parameters[p.get('name')] = {
                     'type': p.get('type'),
                     'required': p.get('required'),
                     'default': p.get('default'),
@@ -153,7 +151,7 @@ class Job(object):
         except IOError:
             # if file does not exist, continue and return an empty dict
             return {}
-        job_wadl['parameters'] = params
+        job_wadl['parameters'] = parameters
         # TODO: Read results description from WADL
         job_wadl['results'] = results
         # TODO: Read expected duration from WADL
@@ -162,7 +160,7 @@ class Job(object):
         return job_wadl
 
     # ----------
-    # Methods to get job attributes from db of POST
+    # Methods to get job attributes from db or POST
 
     def get_parameters(self):
         """Query db for job parameters"""
@@ -183,7 +181,7 @@ class Job(object):
         query = "SELECT * FROM jobs WHERE jobid='{}';".format(self.jobid)
         job = self.db.execute(query).fetchone()
         if not job:
-            raise NotFoundWarning('Job "{}" NOT FOUND'.format(self.jobid))
+            raise storage.NotFoundWarning('Job "{}" NOT FOUND'.format(self.jobid))
         # creation_time = dt.datetime.strptime(job['creation_time'], dt_fmt)
         start_time = dt.datetime.strptime(job['start_time'], dt_fmt)
         end_time = dt.datetime.strptime(job['end_time'], dt_fmt)
@@ -265,19 +263,22 @@ class Job(object):
         self.save_results()
 
     # ----------
-    # Methods to set a job attribute
+    # Methods to set a job attribute or parameter
 
-    def set(self, attr, value):
+    def set_attribute(self, attr, value):
         """Set job attribute and save to db"""
         if attr in self.__dict__:
             self.__dict__[attr] = value
-            self.save_description()
+            #self.save_description()
+            self.storage.save(self)
         else:
             raise KeyError(attr)
 
-    def set_destruction_time(self, destruction):
-        self.destruction_time = dt.datetime.strptime(destruction, dt_fmt)
-        self.save_description()
+    def set_parameter(self, pname, value):
+        """Set job attribute and save to db"""
+        self.parameters[pname]['value'] = value
+        #self.save_description()
+        self.storage.save(self, save_attributes=False, save_parameters=pname)
 
     # ----------
     # Methods to export a job description
@@ -409,7 +410,8 @@ class Job(object):
         self.destruction_time = (now + destruction).strftime(dt_fmt)
         self.jobid_cluster = jobid_cluster
         # Save changes to db
-        self.save_description()
+        #self.save_description()
+        self.storage.save(self)
 
     def abort(self):
         """Abort job
@@ -432,23 +434,19 @@ class Job(object):
         self.end_time = now.strftime(dt_fmt)
         self.error = 'Job aborted by user ' + self.user
         # Save job description
-        self.save_description()
+        #self.save_description()
+        self.storage.save(self)
 
     def delete(self):
         """Delete job
 
         Job can be deleted at any time.
         """
-        if self.phase not in ['PENDING']:
+        if self.phase not in ['PENDING', 'COMPLETED']:
             # Send command to manager
             self.manager.delete(self)
         # Remove job from db
-        query1 = "DELETE FROM job_results WHERE jobid='{}';".format(self.jobid)
-        self.db.execute(query1)
-        query2 = "DELETE FROM job_parameters WHERE jobid='{}';".format(self.jobid)
-        self.db.execute(query2)
-        query3 = "DELETE FROM jobs WHERE jobid='{}';".format(self.jobid)
-        self.db.execute(query3)
+        self.storage.delete(self)
         # Remove uploaded files corresponding to jobid if needed
         upload_dir = UPLOAD_PATH + self.jobid
         if os.path.isdir(upload_dir):
@@ -538,7 +536,8 @@ class Job(object):
             # Update phase
             self.phase = new_phase
             # Save job description
-            self.save_description()
+            #self.save_description()
+            self.storage.save(self)
         else:
             raise UserWarning('Job {} cannot be updated to {} while in phase {}'
                               ''.format(self.jobid, new_phase, self.phase))
@@ -557,8 +556,10 @@ class JobList(object):
         # The URL is required to include a link for each job in the XML representation
         self.url = url
         self.db = db
-        self.jobs = {}
-        self.get_from_db()
+        # Link to the storage, e.g. SQLiteStorage, see settings.py
+        self.storage = storage.__dict__[STORAGE]()
+        #self.get_from_db()
+        self.jobs = self.storage.get_job_list(self)
 
     def get_from_db(self):
         """Query db for job list"""

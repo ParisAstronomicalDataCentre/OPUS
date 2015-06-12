@@ -6,6 +6,7 @@ from webtest import TestApp
 
 # Redefine LOG_FILE, DB_FILE, MANAGER
 LOG_FILE = 'test_uws_server.log'
+STORAGE = 'SQLiteStorage'
 DB_FILE = 'test_uws_server.db'
 MANAGER = 'Manager'
 import uws_server

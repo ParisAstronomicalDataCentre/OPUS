@@ -19,17 +19,6 @@ from uws_classes import *
 # Create a new application
 app = Bottle()
 
-# If imported from test.py, redefine variables
-main_dict = sys.modules['__main__'].__dict__
-if 'test.py' in main_dict.get('__file__', ''):
-    print '\nPerforming tests'
-    if 'LOG_FILE' in main_dict:
-        LOG_FILE = main_dict['LOG_FILE']
-    if 'DB_FILE' in main_dict:
-        DB_FILE = main_dict['DB_FILE']
-    if 'MANAGER' in main_dict:
-        MANAGER = main_dict['MANAGER']
-
 
 # ----------
 # Set logging to a file
@@ -195,7 +184,7 @@ def favicon():
 
 
 @app.route('/init_db')
-def init_db(db):
+def init_db():
     """Initialize the database structure with test data
 
     Returns:
@@ -209,7 +198,9 @@ def init_db(db):
         filename = 'test_uws_db.sqlite'
         with open(filename) as f:
             sql = f.read()
-        db.executescript(sql)
+        db = storage.__dict__[STORAGE]()
+        db.cursor.executescript(sql)
+        db.conn.commit()
         logger.info('Database initialized using ' + filename)
     except:
         abort_500_except()
@@ -309,13 +300,8 @@ def job_event(jobid_cluster, db):
         logger.info('job_server connected ({}) on {}'.format(user, request.urlparts.path))
     try:
         logger.info('jobid_cluster={} GET={}'.format(jobid_cluster, str(request.GET.dict)))
-        # Query db for jobname and jobid
-        query = "SELECT jobname, jobid FROM jobs WHERE jobid_cluster='{}';".format(jobid_cluster)
-        j = db.execute(query).fetchone()
-        if not j:
-            raise NotFoundWarning('Job with jobid_cluster={} NOT FOUND'.format(jobid_cluster))
         # Get job description from DB
-        job = Job(j['jobname'], j['jobid'], user, db, get_description=True)
+        job = Job('', jobid_cluster, user, db, get_attributes=True, from_jobid_cluster=True)
         # Update job with PHASE=, ERROR=
         if 'PHASE' in request.GET:
             new_phase = request.GET['PHASE']
@@ -333,7 +319,7 @@ def job_event(jobid_cluster, db):
                 raise UserWarning('Phase is already ' + new_phase)
         else:
             raise UserWarning('Unknown event sent for job ' + job.jobid)
-    except NotFoundWarning as e:
+    except storage.NotFoundWarning as e:
         abort_404(e.message)
     except UserWarning as e:
         abort_500(e.message)
@@ -418,12 +404,12 @@ def get_job(jobname, jobid, db):
         set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
-        job = Job(jobname, jobid, user, db, get_description=True, get_params=True, get_results=True)
+        job = Job(jobname, jobid, user, db, get_attributes=True, get_parameters=True, get_results=True)
         # Return job description in UWS format
         xml_out = job.to_xml()
         response.content_type = 'text/xml; charset=UTF-8'
         return xml_out
-    except NotFoundWarning as e:
+    except storage.NotFoundWarning as e:
         abort_404(e.message)
     except:
         abort_500_except()
@@ -442,11 +428,11 @@ def delete_job(jobname, jobid, db):
         set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
-        job = Job(jobname, jobid, user, db, get_description=True)
+        job = Job(jobname, jobid, user, db, get_attributes=True)
         # Delete job
         job.delete()
         logger.info(jobname + ' ' + jobid + ' DELETED')
-    except NotFoundWarning as e:
+    except storage.NotFoundWarning as e:
         abort_404(e.message)
     except CalledProcessError as e:
         abort_500_except('STDERR output:\n' + e.output)
@@ -464,13 +450,13 @@ def post_job(jobname, jobid, db):
         logger.info('delete ' + jobname + ' ' + jobid)
         if request.forms.get('ACTION') == 'DELETE':
             # Get job description from DB
-            job = Job(jobname, jobid, user, db, get_description=True)
+            job = Job(jobname, jobid, user, db, get_attributes=True)
             # Delete job
             job.delete()
             logger.info(jobname + ' ' + jobid + ' DELETED')
         else:
             raise UserWarning('ACTION=DELETE is not specified in POST')
-    except NotFoundWarning as e:
+    except storage.NotFoundWarning as e:
         abort_404(e.message)
     except UserWarning as e:
         abort_500(e.message)
@@ -498,11 +484,11 @@ def get_phase(jobname, jobid, db):
         set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
-        job = Job(jobname, jobid, user, db, get_description=True)
+        job = Job(jobname, jobid, user, db, get_attributes=True)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return job.phase
-    except NotFoundWarning as e:
+    except storage.NotFoundWarning as e:
         abort_404(e.message)
     except:
         abort_500_except()
@@ -524,7 +510,7 @@ def post_phase(jobname, jobid, db):
             logger.info('PHASE=' + new_phase + ' ' + jobname + ' ' + jobid)
             if new_phase == 'RUN':
                 # Get job description from DB
-                job = Job(jobname, jobid, user, db, get_description=True)
+                job = Job(jobname, jobid, user, db, get_attributes=True, get_parameters=True)
                 # Check if phase is PENDING
                 if job.phase not in ['PENDING']:
                     raise UserWarning('Job has to be in PENDING phase')
@@ -533,7 +519,7 @@ def post_phase(jobname, jobid, db):
                 logger.info(jobname + ' ' + jobid + ' STARTED with jobid_cluster=' + str(job.jobid_cluster))
             elif new_phase == 'ABORT':
                 # Get job description from DB
-                job = Job(jobname, jobid, user, db, get_description=True)
+                job = Job(jobname, jobid, user, db, get_attributes=True)
                 # Abort job
                 job.abort()
                 logger.info(jobname + ' ' + jobid + ' ABORTED by user ' + user)
@@ -541,7 +527,7 @@ def post_phase(jobname, jobid, db):
                 raise UserWarning('PHASE=' + new_phase + ' not expected')
         else:
             raise UserWarning('PHASE keyword is not specified in POST')
-    except NotFoundWarning as e:
+    except storage.NotFoundWarning as e:
         abort_404(e.message)
     except UserWarning as e:
         abort_500(e.message)
@@ -570,11 +556,11 @@ def get_executionduration(jobname, jobid, db):
         set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
-        job = Job(jobname, jobid, user, db, get_description=True)
+        job = Job(jobname, jobid, user, db, get_attributes=True)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return str(job.execution_duration)
-    except NotFoundWarning as e:
+    except storage.NotFoundWarning as e:
         abort_404(e.message)
     except:
         abort_500_except()
@@ -602,13 +588,13 @@ def post_executionduration(jobname, jobid, db):
         except ValueError:
             raise UserWarning('Execution duration must be an integer or a float')
         # Get job description from DB
-        job = Job(jobname, jobid, user, db, get_description=True)
+        job = Job(jobname, jobid, user, db, get_attributes=True)
         # TODO: check phase?
 
         # Change value
-        job.set('execution_duration', new_value)
+        job.set_attribute('execution_duration', new_value)
         logger.info(jobname + ' ' + jobid + ' set execution_duration=' + str(new_value))
-    except NotFoundWarning as e:
+    except storage.NotFoundWarning as e:
         abort_404(e.message)
     except UserWarning as e:
         abort_500(e.message)
@@ -635,11 +621,11 @@ def get_destruction(jobname, jobid, db):
         set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
-        job = Job(jobname, jobid, user, db, get_description=True)
+        job = Job(jobname, jobid, user, db, get_attributes=True)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return job.destruction_time
-    except NotFoundWarning as e:
+    except storage.NotFoundWarning as e:
         abort_404(e.message)
     except:
         abort_500_except()
@@ -670,12 +656,12 @@ def post_destruction(jobname, jobid, db):
             else:
                 raise UserWarning('Destruction time must be in ISO8601 format ({})'.format(e.message))
         # Get job description from DB
-        job = Job(jobname, jobid, user, db, get_description=True)
+        job = Job(jobname, jobid, user, db, get_attributes=True)
         # Change value
         # job.set_destruction_time(new_value)
-        job.set('destruction_time', new_value)
+        job.set_attribute('destruction_time', new_value)
         logger.info(jobname + ' ' + jobid + ' set destruction_time=' + new_value)
-    except NotFoundWarning as e:
+    except storage.NotFoundWarning as e:
         abort_404(e.message)
     except UserWarning as e:
         abort_500(e.message)
@@ -703,11 +689,11 @@ def get_error(jobname, jobid, db):
         set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
-        job = Job(jobname, jobid, user, db, get_description=True)
+        job = Job(jobname, jobid, user, db, get_attributes=True)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return job.error
-    except NotFoundWarning as e:
+    except storage.NotFoundWarning as e:
         abort_404(e.message)
     except:
         abort_500_except()
@@ -730,11 +716,11 @@ def get_quote(jobname, jobid, db):
         set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
-        job = Job(jobname, jobid, user, db, get_description=True)
+        job = Job(jobname, jobid, user, db, get_attributes=True)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return str(job.quote)
-    except NotFoundWarning as e:
+    except storage.NotFoundWarning as e:
         abort_404(e.message)
     except:
         abort_500_except()
@@ -758,13 +744,12 @@ def get_parameters(jobname, jobid, db):
         set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
-        job = Job(jobname, jobid, user, db, get_params=True)
-        job.get_parameters()
+        job = Job(jobname, jobid, user, db, get_parameters=True)
         # Return job parameters in UWS format
         xml_out = job.parameters_to_xml()
         response.content_type = 'text/xml; charset=UTF-8'
         return xml_out
-    except NotFoundWarning as e:
+    except storage.NotFoundWarning as e:
         abort_404(e.message)
     except:
         abort_500_except()
@@ -784,21 +769,21 @@ def get_parameter(jobname, jobid, param, db):
         set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
-        job = Job(jobname, jobid, user, db, get_params=True)
+        job = Job(jobname, jobid, user, db, get_parameters=True)
         # Check if param exists
         if param not in job.parameters:
-            raise NotFoundWarning('Parameter "{}" NOT FOUND for job "{}"'.format(param, jobid))
+            raise storage.NotFoundWarning('Parameter "{}" NOT FOUND for job "{}"'.format(param, jobid))
         # Return parameter
         response.content_type = 'text/plain; charset=UTF-8'
         return str(job.parameters[param]['value'])
-    except NotFoundWarning as e:
+    except storage.NotFoundWarning as e:
         abort_404(e.message)
     except:
         abort_500_except()
 
 
-@app.post('/<jobname>/<jobid>/parameters/<param>')
-def post_parameter(jobname, jobid, param, db):
+@app.post('/<jobname>/<jobid>/parameters/<pname>')
+def post_parameter(jobname, jobid, pname, db):
     """Change the parameter value for job <jobid>
 
     Returns:
@@ -816,16 +801,15 @@ def post_parameter(jobname, jobid, param, db):
         # TODO: Check if new_value format is correct (from WADL?)
 
         # Get job description from DB
-        job = Job(jobname, jobid, user, db, get_description=True, get_params=True)
+        job = Job(jobname, jobid, user, db, get_attributes=True, get_parameters=True)
         # Change value
         if job.phase == 'PENDING':
-            job.parameters[param]['value'] = new_value
-            job.save_parameter(param)
-            logger.info(jobname + ' ' + jobid + ' set parameter ' + param + '=' + new_value)
+            job.set_parameter(pname, new_value)
+            logger.info(jobname + ' ' + jobid + ' set parameter ' + pname + '=' + new_value)
         else:
             raise UserWarning('Job "{}" must be in PENDING state (currently {}) to change parameter'
                               ''.format(jobid, job.phase))
-    except NotFoundWarning as e:
+    except storage.NotFoundWarning as e:
         abort_404(e.message)
     except UserWarning as e:
         abort_500(e.message)
@@ -858,7 +842,7 @@ def get_results(jobname, jobid, db):
         xml_out = job.results_to_xml()
         response.content_type = 'text/xml; charset=UTF-8'
         return xml_out
-    except NotFoundWarning as e:
+    except storage.NotFoundWarning as e:
         abort_404(e.message)
     except:
         abort_500_except()
@@ -881,11 +865,11 @@ def get_result(jobname, jobid, result, db):
         job = Job(jobname, jobid, user, db, get_results=True)
         # Check if result exists
         if result not in job.results:
-            raise NotFoundWarning('Result "{}" NOT FOUND for job "{}"'.format(result, jobid))
+            raise storage.NotFoundWarning('Result "{}" NOT FOUND for job "{}"'.format(result, jobid))
         # Return result
         response.content_type = 'text/plain; charset=UTF-8'
         return str(job.results[result]['url'])
-    except NotFoundWarning as e:
+    except storage.NotFoundWarning as e:
         abort_404(e.message)
     except:
         abort_500_except()
@@ -908,11 +892,11 @@ def get_owner(jobname, jobid, db):
         set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
-        job = Job(jobname, jobid, user, db, get_description=True)
+        job = Job(jobname, jobid, user, db, get_attributes=True)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return job.owner
-    except NotFoundWarning as e:
+    except storage.NotFoundWarning as e:
         abort_404(e.message)
     except:
         abort_500_except()

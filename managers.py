@@ -67,7 +67,7 @@ class SLURMManager(Manager):
         self.params_path = 'uws_params/'
         self.uws_handler = 'uws_scripts/uws_handler.sh'
 
-    def make_pbs(self, job):
+    def _make_pbs(self, job):
         """Make PBS file content for given job
 
         Returns:
@@ -112,7 +112,7 @@ class SLURMManager(Manager):
         # Create PBS file
         pbs_file = job.jobid + '.pbs'
         with open(SLURM_PBS_PATH + pbs_file, 'w') as f:
-            pbs = self.make_pbs(job)
+            pbs = self._make_pbs(job)
             f.write(pbs)
         # Copy PBS file: "scp pbs vouws@tycho:~/name > /dev/null"
         cmd1 = ['scp', SLURM_PBS_PATH + pbs_file, self.ssh_arg + ':' + self.pbs_path + pbs_file]
@@ -122,6 +122,7 @@ class SLURMManager(Manager):
         with open(PARAMS_PATH + params_file, 'w') as f:
             # parameters are a list of key=value, may instead be a json file
             params = job.parameters_to_text()
+            print params
             # params = job.parameters_to_json()
             f.write(params)
         # Copy parameter file
