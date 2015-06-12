@@ -34,24 +34,6 @@ logger = logging.getLogger(__name__)
 
 
 # ----------
-# Database plugin
-
-
-# Using SQLite
-import bottle_sqlite
-plugin = bottle_sqlite.Plugin(dbfile=DB_FILE)
-
-# Using PostgreSQL
-# import bottle_pgsql
-# db_user = 'uws'
-# db_pw = 'UW553RV3R'
-# db_str = 'dbname=uws user=%s password=%s host=localhost port=5432' % (db_user, db_pw)
-# plugin = bottle_pgsql.Plugin(db_str)
-
-app.install(plugin)
-
-
-# ----------
 # Set user
 
 
@@ -208,7 +190,7 @@ def init_db():
 
 
 @app.route('/show_db')
-def show_db(db):
+def show_db():
     """Show database in HTML
 
     Returns:
@@ -220,8 +202,12 @@ def show_db(db):
         abort_403()
     html = ''
     try:
+        joblist = JobList('ctbin', user, request.url)
+        return joblist.to_html()
+
+        db = storage.__dict__[STORAGE]()
         query = "select * from jobs;"
-        jobs = db.execute(query).fetchall()
+        jobs = db.cursor.execute(query).fetchall()
         cols = ['jobid', 'jobname', 'phase', 'quote', 'execution_duration', 'error',
                 'start_time', 'end_time', 'destruction_time', 'owner', 'run_id', 'jobid_cluster']
         for job in jobs:
@@ -233,13 +219,13 @@ def show_db(db):
                 html += k + ' = ' + str(job[k]) + '<br>'
             # Parameters
             query = "select * from job_parameters where jobid='{}';".format(jobid)
-            params = db.execute(query).fetchall()
+            params = db.cursor.execute(query).fetchall()
             html += '<strong>Parameters:</strong><br>'
             for param in params:
                 html += param['name'] + ' = ' + param['value'] + ' (byRef=' + str(param['byref']) + ')<br>'
             # Results
             query = "select * from job_results where jobid='{}';".format(jobid)
-            results = db.execute(query).fetchall()
+            results = db.cursor.execute(query).fetchall()
             html += '<strong>Results</strong><br>'
             for result in results:
                 html += str(result['name']) + ': ' + result['url'] + '<br>'
@@ -254,7 +240,7 @@ def show_db(db):
 
 
 @app.route('/maintenance')
-def maintenance(db):
+def maintenance():
     """Performs server maintenance, e.g. executed regularly by the server itself (localhost)
 
     Returns:
@@ -285,7 +271,7 @@ def maintenance(db):
 
 
 @app.route('/job_event/<jobid_cluster>')
-def job_event(jobid_cluster, db):
+def job_event(jobid_cluster):
     """New events for job with given jobid_cluster
 
     Returns:
@@ -301,7 +287,7 @@ def job_event(jobid_cluster, db):
     try:
         logger.info('jobid_cluster={} GET={}'.format(jobid_cluster, str(request.GET.dict)))
         # Get job description from DB
-        job = Job('', jobid_cluster, user, db, get_attributes=True, from_jobid_cluster=True)
+        job = Job('', jobid_cluster, user, get_attributes=True, from_jobid_cluster=True)
         # Update job with PHASE=, ERROR=
         if 'PHASE' in request.GET:
             new_phase = request.GET['PHASE']
@@ -314,7 +300,8 @@ def job_event(jobid_cluster, db):
                 logger.info('{} {} ERROR reported (from {})'.format(job.jobname, job.jobid, user))
             elif new_phase != cur_phase:
                 job.change_status(new_phase)
-                logger.info('{} {} phase {} --> {} (from {})'.format(job.jobname, job.jobid, cur_phase, new_phase, user))
+                logger.info('{} {} phase {} --> {} (from {})'
+                            ''.format(job.jobname, job.jobid, cur_phase, new_phase, user))
             else:
                 raise UserWarning('Phase is already ' + new_phase)
         else:
@@ -335,7 +322,7 @@ def job_event(jobid_cluster, db):
 
 
 @app.route('/<jobname>')
-def get_joblist(jobname, db):
+def get_joblist(jobname):
     """Get list for <jobname> jobs
 
     Returns:
@@ -346,7 +333,7 @@ def get_joblist(jobname, db):
     try:
         set_user()
         logger.info(jobname)
-        joblist = JobList(jobname, user, request.url, db)
+        joblist = JobList(jobname, user, request.url)
         xml_out = joblist.to_xml()
         response.content_type = 'text/xml; charset=UTF-8'
         return xml_out
@@ -355,7 +342,7 @@ def get_joblist(jobname, db):
 
 
 @app.post('/<jobname>')
-def create_job(jobname, db):
+def create_job(jobname):
     """Create a new job
 
     Returns:
@@ -370,7 +357,7 @@ def create_job(jobname, db):
         # TODO: Compare with WADL?
         # TODO: add attributes: execution_duration, mem, nodes, ntasks-per-node
         # Set new job description from POSTed parameters
-        job = Job(jobname, jobid, user, db, from_post=request)
+        job = Job(jobname, jobid, user, from_post=request)
         logger.info(jobname + ' ' + jobid + ' CREATED')
         # If PHASE=RUN, start job
         if request.forms.get('PHASE') == 'RUN':
@@ -391,7 +378,7 @@ def create_job(jobname, db):
 
 
 @app.route('/<jobname>/<jobid>')
-def get_job(jobname, jobid, db):
+def get_job(jobname, jobid):
     """Get description for job <jobid>
 
     Returns:
@@ -404,7 +391,7 @@ def get_job(jobname, jobid, db):
         set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
-        job = Job(jobname, jobid, user, db, get_attributes=True, get_parameters=True, get_results=True)
+        job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True, get_results=True)
         # Return job description in UWS format
         xml_out = job.to_xml()
         response.content_type = 'text/xml; charset=UTF-8'
@@ -416,7 +403,7 @@ def get_job(jobname, jobid, db):
 
 
 @app.delete('/<jobname>/<jobid>')
-def delete_job(jobname, jobid, db):
+def delete_job(jobname, jobid):
     """Delete job with <jobid>
 
     Returns:
@@ -428,7 +415,7 @@ def delete_job(jobname, jobid, db):
         set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
-        job = Job(jobname, jobid, user, db, get_attributes=True)
+        job = Job(jobname, jobid, user, get_attributes=True)
         # Delete job
         job.delete()
         logger.info(jobname + ' ' + jobid + ' DELETED')
@@ -443,14 +430,14 @@ def delete_job(jobname, jobid, db):
 
 
 @app.post('/<jobname>/<jobid>')
-def post_job(jobname, jobid, db):
+def post_job(jobname, jobid):
     """Alias for delete_job() if ACTION=DELETE"""
     try:
         set_user()
         logger.info('delete ' + jobname + ' ' + jobid)
         if request.forms.get('ACTION') == 'DELETE':
             # Get job description from DB
-            job = Job(jobname, jobid, user, db, get_attributes=True)
+            job = Job(jobname, jobid, user, get_attributes=True)
             # Delete job
             job.delete()
             logger.info(jobname + ' ' + jobid + ' DELETED')
@@ -472,7 +459,7 @@ def post_job(jobname, jobid, db):
 
 
 @app.route('/<jobname>/<jobid>/phase')
-def get_phase(jobname, jobid, db):
+def get_phase(jobname, jobid):
     """Get the phase of job <job-id>
 
     Returns:
@@ -484,7 +471,7 @@ def get_phase(jobname, jobid, db):
         set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
-        job = Job(jobname, jobid, user, db, get_attributes=True)
+        job = Job(jobname, jobid, user, get_attributes=True)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return job.phase
@@ -495,7 +482,7 @@ def get_phase(jobname, jobid, db):
 
 
 @app.post('/<jobname>/<jobid>/phase')
-def post_phase(jobname, jobid, db):
+def post_phase(jobname, jobid):
     """Change Phase of job <jobid> --> start or abort job
 
     Returns:
@@ -510,7 +497,7 @@ def post_phase(jobname, jobid, db):
             logger.info('PHASE=' + new_phase + ' ' + jobname + ' ' + jobid)
             if new_phase == 'RUN':
                 # Get job description from DB
-                job = Job(jobname, jobid, user, db, get_attributes=True, get_parameters=True)
+                job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True)
                 # Check if phase is PENDING
                 if job.phase not in ['PENDING']:
                     raise UserWarning('Job has to be in PENDING phase')
@@ -519,7 +506,7 @@ def post_phase(jobname, jobid, db):
                 logger.info(jobname + ' ' + jobid + ' STARTED with jobid_cluster=' + str(job.jobid_cluster))
             elif new_phase == 'ABORT':
                 # Get job description from DB
-                job = Job(jobname, jobid, user, db, get_attributes=True)
+                job = Job(jobname, jobid, user, get_attributes=True)
                 # Abort job
                 job.abort()
                 logger.info(jobname + ' ' + jobid + ' ABORTED by user ' + user)
@@ -544,7 +531,7 @@ def post_phase(jobname, jobid, db):
 
 
 @app.route('/<jobname>/<jobid>/executionduration')
-def get_executionduration(jobname, jobid, db):
+def get_executionduration(jobname, jobid):
     """Get the maximum execution duration of job <jobid>
 
     Returns:
@@ -556,7 +543,7 @@ def get_executionduration(jobname, jobid, db):
         set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
-        job = Job(jobname, jobid, user, db, get_attributes=True)
+        job = Job(jobname, jobid, user, get_attributes=True)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return str(job.execution_duration)
@@ -567,7 +554,7 @@ def get_executionduration(jobname, jobid, db):
 
 
 @app.post('/<jobname>/<jobid>/executionduration')
-def post_executionduration(jobname, jobid, db):
+def post_executionduration(jobname, jobid):
     """Change the maximum execution duration of job <jobid>
 
     Returns:
@@ -588,7 +575,7 @@ def post_executionduration(jobname, jobid, db):
         except ValueError:
             raise UserWarning('Execution duration must be an integer or a float')
         # Get job description from DB
-        job = Job(jobname, jobid, user, db, get_attributes=True)
+        job = Job(jobname, jobid, user, get_attributes=True)
         # TODO: check phase?
 
         # Change value
@@ -609,7 +596,7 @@ def post_executionduration(jobname, jobid, db):
 
 
 @app.route('/<jobname>/<jobid>/destruction')
-def get_destruction(jobname, jobid, db):
+def get_destruction(jobname, jobid):
     """Get the destruction instant for job <jobid>
 
     Returns:
@@ -621,7 +608,7 @@ def get_destruction(jobname, jobid, db):
         set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
-        job = Job(jobname, jobid, user, db, get_attributes=True)
+        job = Job(jobname, jobid, user, get_attributes=True)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return job.destruction_time
@@ -632,7 +619,7 @@ def get_destruction(jobname, jobid, db):
 
 
 @app.post('/<jobname>/<jobid>/destruction')
-def post_destruction(jobname, jobid, db):
+def post_destruction(jobname, jobid):
     """Change the destruction instant for job <jobid>
 
     Returns:
@@ -649,14 +636,14 @@ def post_destruction(jobname, jobid, db):
         new_value = request.forms.get('DESTRUCTION')
         # Check if ISO8601 format, truncate if unconverted data remains
         try:
-            dt.datetime.strptime(new_value, dt_fmt)
+            dt.datetime.strptime(new_value, DT_FMT)
         except ValueError as e:
             if len(e.args) > 0 and e.args[0].startswith('unconverted data remains:'):
                 new_value = new_value[:19]
             else:
                 raise UserWarning('Destruction time must be in ISO8601 format ({})'.format(e.message))
         # Get job description from DB
-        job = Job(jobname, jobid, user, db, get_attributes=True)
+        job = Job(jobname, jobid, user, get_attributes=True)
         # Change value
         # job.set_destruction_time(new_value)
         job.set_attribute('destruction_time', new_value)
@@ -676,7 +663,7 @@ def post_destruction(jobname, jobid, db):
 
 
 @app.route('/<jobname>/<jobid>/error')
-def get_error(jobname, jobid, db):
+def get_error(jobname, jobid):
     """Get any error message associated with job <jobid>
 
     Returns:
@@ -689,7 +676,7 @@ def get_error(jobname, jobid, db):
         set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
-        job = Job(jobname, jobid, user, db, get_attributes=True)
+        job = Job(jobname, jobid, user, get_attributes=True)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return job.error
@@ -704,7 +691,7 @@ def get_error(jobname, jobid, db):
 
 
 @app.route('/<jobname>/<jobid>/quote')
-def get_quote(jobname, jobid, db):
+def get_quote(jobname, jobid):
     """Get the Quote for job <jobid>
 
     Returns:
@@ -716,7 +703,7 @@ def get_quote(jobname, jobid, db):
         set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
-        job = Job(jobname, jobid, user, db, get_attributes=True)
+        job = Job(jobname, jobid, user, get_attributes=True)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return str(job.quote)
@@ -731,7 +718,7 @@ def get_quote(jobname, jobid, db):
 
 
 @app.route('/<jobname>/<jobid>/parameters')
-def get_parameters(jobname, jobid, db):
+def get_parameters(jobname, jobid):
     """Get parameters for job <jobid>
 
     Returns:
@@ -744,7 +731,7 @@ def get_parameters(jobname, jobid, db):
         set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
-        job = Job(jobname, jobid, user, db, get_parameters=True)
+        job = Job(jobname, jobid, user, get_parameters=True)
         # Return job parameters in UWS format
         xml_out = job.parameters_to_xml()
         response.content_type = 'text/xml; charset=UTF-8'
@@ -756,7 +743,7 @@ def get_parameters(jobname, jobid, db):
 
 
 @app.route('/<jobname>/<jobid>/parameters/<param>')
-def get_parameter(jobname, jobid, param, db):
+def get_parameter(jobname, jobid, param):
     """Get parameter <param> for job <jobid>
 
     Returns:
@@ -769,7 +756,7 @@ def get_parameter(jobname, jobid, param, db):
         set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
-        job = Job(jobname, jobid, user, db, get_parameters=True)
+        job = Job(jobname, jobid, user, get_parameters=True)
         # Check if param exists
         if param not in job.parameters:
             raise storage.NotFoundWarning('Parameter "{}" NOT FOUND for job "{}"'.format(param, jobid))
@@ -783,7 +770,7 @@ def get_parameter(jobname, jobid, param, db):
 
 
 @app.post('/<jobname>/<jobid>/parameters/<pname>')
-def post_parameter(jobname, jobid, pname, db):
+def post_parameter(jobname, jobid, pname):
     """Change the parameter value for job <jobid>
 
     Returns:
@@ -801,7 +788,7 @@ def post_parameter(jobname, jobid, pname, db):
         # TODO: Check if new_value format is correct (from WADL?)
 
         # Get job description from DB
-        job = Job(jobname, jobid, user, db, get_attributes=True, get_parameters=True)
+        job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True)
         # Change value
         if job.phase == 'PENDING':
             job.set_parameter(pname, new_value)
@@ -824,7 +811,7 @@ def post_parameter(jobname, jobid, pname, db):
 
 
 @app.route('/<jobname>/<jobid>/results')
-def get_results(jobname, jobid, db):
+def get_results(jobname, jobid):
     """Get results for job <jobid>
 
     Returns:
@@ -837,7 +824,7 @@ def get_results(jobname, jobid, db):
         set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
-        job = Job(jobname, jobid, user, db, get_results=True)
+        job = Job(jobname, jobid, user, get_results=True)
         # Return job results in UWS format
         xml_out = job.results_to_xml()
         response.content_type = 'text/xml; charset=UTF-8'
@@ -849,7 +836,7 @@ def get_results(jobname, jobid, db):
 
 
 @app.route('/<jobname>/<jobid>/results/<result>')
-def get_result(jobname, jobid, result, db):
+def get_result(jobname, jobid, result):
     """Get parameter <param> for job <jobid>
 
     Returns:
@@ -862,7 +849,7 @@ def get_result(jobname, jobid, result, db):
         set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
-        job = Job(jobname, jobid, user, db, get_results=True)
+        job = Job(jobname, jobid, user, get_results=True)
         # Check if result exists
         if result not in job.results:
             raise storage.NotFoundWarning('Result "{}" NOT FOUND for job "{}"'.format(result, jobid))
@@ -880,7 +867,7 @@ def get_result(jobname, jobid, result, db):
 
 
 @app.route('/<jobname>/<jobid>/owner')
-def get_owner(jobname, jobid, db):
+def get_owner(jobname, jobid):
     """Get the owner of the job <jobid>
 
     Returns:
@@ -892,7 +879,7 @@ def get_owner(jobname, jobid, db):
         set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
-        job = Job(jobname, jobid, user, db, get_attributes=True)
+        job = Job(jobname, jobid, user, get_attributes=True)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return job.owner

@@ -65,7 +65,7 @@ class Storage(object):
         """Delete job information from storage"""
         pass
 
-    def get_job_list(self):
+    def get_list(self):
         """Delete job information from storage"""
         pass
 
@@ -192,7 +192,7 @@ class SQLiteStorage(Storage):
         self.cursor.execute(query3)
         self.conn.commit()
 
-    def get_job_list(self, job_list):
+    def get_list(self, job_list):
         """Query storage for job list"""
         query = "SELECT jobid, phase FROM jobs"
         where = ["jobname='{}'".format(job_list.jobname)]

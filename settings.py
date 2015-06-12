@@ -55,6 +55,58 @@ EXECUTION_DURATION_MAX = 3600  # in seconds
 WAIT_TIME_DEF = 60  # in seconds
 WAIT_TIME_MAX = 60  # in seconds
 
+# ISO date format for datetime
+DT_FMT = '%Y-%m-%dT%H:%M:%S'
+
+# Table columns defined in database
+JOB_ATTRIBUTES = [
+    'jobid',
+    'jobname',
+    'phase',
+    'quote',
+    'execution_duration',
+    'error',
+    'start_time',
+    'end_time',
+    'destruction_time',
+    'owner',
+    'run_id',
+    'jobid_cluster'
+]
+JOB_PARAMETERS_ATTR = [
+    'jobid',
+    'name',
+    'value',
+    'byref'
+]
+JOB_RESULTS_ATTR = [
+    'jobid',
+    'name',
+    'url'
+]
+
+# Known phases
+PHASES = [
+    'PENDING',
+    'QUEUED',
+    'EXECUTING',
+    'COMPLETED',
+    'ERROR',
+    'ABORTED',
+    'UNKNOWN',
+    'HELD',
+    'SUSPENDED'
+]
+
+# Terminal phases (no evolution expected for job)
+TERMINAL_PHASES = [
+    'COMPLETED',
+    'ERROR',
+    'ABORTED',
+    'HELD',
+    # 'SUSPENDED'
+]
+
 # If imported from test.py, redefine settings
 main_dict = sys.modules['__main__'].__dict__
 if 'test.py' in main_dict.get('__file__', ''):

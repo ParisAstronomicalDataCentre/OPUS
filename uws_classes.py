@@ -15,52 +15,17 @@ import managers
 from settings import *
 
 
-# ----------
-# Utility variables
-
-# Table columns defined in database
-jobs_cols = ['jobid', 'jobname', 'phase', 'quote', 'execution_duration', 'error',
-             'start_time', 'end_time', 'destruction_time', 'owner', 'run_id', 'jobid_cluster']
-job_params_cols = ['jobid', 'name', 'value', 'byref']
-job_results_cols = ['jobid', 'name', 'url']
-
-# ISO date format for datetime
-dt_fmt = '%Y-%m-%dT%H:%M:%S'
-
-# Known phases
-phases = [
-    'PENDING',
-    'QUEUED',
-    'EXECUTING',
-    'COMPLETED',
-    'ERROR',
-    'ABORTED',
-    'UNKNOWN',
-    'HELD',
-    'SUSPENDED'
-]
-
-# Terminal phases (no evolution expected)
-terminal_phases = [
-    'COMPLETED',
-    'ERROR',
-    'ABORTED',
-    'HELD',
-    # 'SUSPENDED'
-]
-
-
 # ---------
 # Job class
 
 
 class Job(object):
-    """Job with attributes and function to fetch from db and return as XML"""
+    """Job with UWS attributes and methods to create, set and shows job information"""
 
-    def __init__(self, jobname, jobid, user, db,
+    def __init__(self, jobname, jobid, user,
                  get_attributes=False, get_parameters=False, get_results=False,
                  from_post=None, from_jobid_cluster=False):
-        """Initialize from db or from POST
+        """Initialize from storage or from POST
 
         from_post should contain the request object if not None
         """
@@ -74,18 +39,17 @@ class Job(object):
             self.jobid = jobid
             self.jobid_cluster = None
         self.user = user
-        # Internal information:
-        # Connector to UWS database
-        self.db = db
         # Link to the storage, e.g. SQLiteStorage, see settings.py
         self.storage = storage.__dict__[STORAGE]()
         # Link to the job manager, e.g. SLURMManager, see settings.py
         self.manager = managers.__dict__[MANAGER]()
         # Fill job attributes
         if get_attributes or get_parameters or get_results:
-            # Get from db
-            #self.get_from_db()
-            self.storage.read(self, get_attributes=get_attributes, get_parameters=get_parameters, get_results=get_results,
+            # Get from storage
+            self.storage.read(self,
+                              get_attributes=get_attributes,
+                              get_parameters=get_parameters,
+                              get_results=get_results,
                               from_jobid_cluster=from_jobid_cluster)
             # TODO: Check status on cluster, and change if necessary?
             # self.get_status()
@@ -98,10 +62,10 @@ class Job(object):
             self.quote = None
             self.execution_duration = duration.total_seconds()
             self.error = None
-            self.creation_time = now.strftime(dt_fmt)
-            self.start_time = now.strftime(dt_fmt)
-            self.end_time = (now + duration).strftime(dt_fmt)
-            self.destruction_time = (now + destruction).strftime(dt_fmt)
+            self.creation_time = now.strftime(DT_FMT)
+            self.start_time = now.strftime(DT_FMT)
+            self.end_time = (now + duration).strftime(DT_FMT)
+            self.destruction_time = (now + destruction).strftime(DT_FMT)
             self.owner = user
             self.run_id = None
             self.parameters = {}
@@ -160,46 +124,7 @@ class Job(object):
         return job_wadl
 
     # ----------
-    # Methods to get job attributes from db or POST
-
-    def get_parameters(self):
-        """Query db for job parameters"""
-        query = "SELECT * FROM job_parameters WHERE jobid='{}';".format(self.jobid)
-        params = self.db.execute(query).fetchall()
-        params_dict = {row['name']: {'value': row['value'], 'byref': row['byref']} for row in params}
-        self.parameters = params_dict
-
-    def get_results(self):
-        """ Query db for job results"""
-        query = "SELECT * FROM job_results WHERE jobid='{}';".format(self.jobid)
-        results = self.db.execute(query).fetchall()
-        results_dict = {row['name']: {'url': row['url']} for row in results}
-        self.results = results_dict
-
-    def get_from_db(self):
-        """Query db for job description"""
-        query = "SELECT * FROM jobs WHERE jobid='{}';".format(self.jobid)
-        job = self.db.execute(query).fetchone()
-        if not job:
-            raise storage.NotFoundWarning('Job "{}" NOT FOUND'.format(self.jobid))
-        # creation_time = dt.datetime.strptime(job['creation_time'], dt_fmt)
-        start_time = dt.datetime.strptime(job['start_time'], dt_fmt)
-        end_time = dt.datetime.strptime(job['end_time'], dt_fmt)
-        destruction_time = dt.datetime.strptime(job['destruction_time'], dt_fmt)
-        self.jobname = job['jobname']
-        self.phase = job['phase']
-        self.quote = job['quote']
-        self.execution_duration = job['execution_duration']
-        self.error = job['error']
-        # self.creation_time = creation_time.strftime(dt_fmt)
-        self.start_time = start_time.strftime(dt_fmt)
-        self.end_time = end_time.strftime(dt_fmt)
-        self.destruction_time = destruction_time.strftime(dt_fmt)
-        self.owner = job['owner']
-        self.run_id = job['run_id']
-        self.jobid_cluster = job['jobid_cluster']
-        self.parameters = {}
-        self.results = {}
+    # Methods to get job attributes from storage or POST
 
     def set_from_post(self, post, files):
         """Set attributes and parameters from POST"""
@@ -222,51 +147,10 @@ class Job(object):
             self.parameters[fname] = {'value': value, 'byref': True}
 
     # ----------
-    # Methods to save job attributes to db
-
-    def save_query(self, table_name, d):
-        query = "INSERT OR REPLACE INTO {} ({}) VALUES ('{}')" \
-                "".format(table_name, ", ".join(d.keys()), "', '".join(map(str, d.values())))
-        query = query.replace("'None'", "NULL")
-        self.db.execute(query)
-
-    def save_parameter(self, pname):
-        """Save job parameters to db"""
-        d = {'jobid': self.jobid,
-             'name': pname,
-             'value': self.parameters[pname]['value'],
-             'byref': self.parameters[pname]['byref']}
-        self.save_query('job_parameters', d)
-
-    def save_parameters(self):
-        """Save job parameters to db"""
-        for pname in self.parameters.keys():
-            self.save_parameter(pname)
-
-    def save_results(self):
-        """Save job results to db"""
-        for rname, r in self.results.iteritems():
-            d = {'jobid': self.jobid,
-                 'name': rname,
-                 'url': r['url']}
-            self.save_query('job_results', d)
-
-    def save_description(self):
-        """Save job description to db"""
-        d = {col: str(self.__dict__[col]) for col in jobs_cols}
-        self.save_query('jobs', d)
-
-    def save(self):
-        """Save job to db"""
-        self.save_description()
-        self.save_parameters()
-        self.save_results()
-
-    # ----------
     # Methods to set a job attribute or parameter
 
     def set_attribute(self, attr, value):
-        """Set job attribute and save to db"""
+        """Set job attribute and save to storage"""
         if attr in self.__dict__:
             self.__dict__[attr] = value
             #self.save_description()
@@ -275,7 +159,7 @@ class Job(object):
             raise KeyError(attr)
 
     def set_parameter(self, pname, value):
-        """Set job attribute and save to db"""
+        """Set job attribute and save to storage"""
         self.parameters[pname]['value'] = value
         #self.save_description()
         self.storage.save(self, save_attributes=False, save_parameters=pname)
@@ -405,11 +289,11 @@ class Job(object):
         duration = dt.timedelta(0, self.execution_duration)
         destruction = dt.timedelta(DESTRUCTION_INTERVAL)
         self.phase = 'QUEUED'
-        self.start_time = now.strftime(dt_fmt)
-        self.end_time = (now + duration).strftime(dt_fmt)
-        self.destruction_time = (now + destruction).strftime(dt_fmt)
+        self.start_time = now.strftime(DT_FMT)
+        self.end_time = (now + duration).strftime(DT_FMT)
+        self.destruction_time = (now + destruction).strftime(DT_FMT)
         self.jobid_cluster = jobid_cluster
-        # Save changes to db
+        # Save changes to storage
         #self.save_description()
         self.storage.save(self)
 
@@ -431,7 +315,7 @@ class Job(object):
         # Change phase to ABORTED
         now = dt.datetime.now()
         self.phase = 'ABORTED'
-        self.end_time = now.strftime(dt_fmt)
+        self.end_time = now.strftime(DT_FMT)
         self.error = 'Job aborted by user ' + self.user
         # Save job description
         #self.save_description()
@@ -445,7 +329,7 @@ class Job(object):
         if self.phase not in ['PENDING', 'COMPLETED']:
             # Send command to manager
             self.manager.delete(self)
-        # Remove job from db
+        # Remove job from storage
         self.storage.delete(self)
         # Remove uploaded files corresponding to jobid if needed
         upload_dir = UPLOAD_PATH + self.jobid
@@ -495,11 +379,11 @@ class Job(object):
                     job.start_time = job.manager.get_start_time(job)
                 except:
                     print 'Warning: job.manager.get_start_time(job) not responding, set start_time=now'
-                    job.start_time = now.strftime(dt_fmt)
+                    job.start_time = now.strftime(DT_FMT)
                 # Estimates job.end_time from job.start_time + duration
                 duration = dt.timedelta(0, self.execution_duration)
-                end_time = dt.datetime.strptime(job.start_time, dt_fmt) + duration
-                job.end_time = end_time.strftime(dt_fmt)
+                end_time = dt.datetime.strptime(job.start_time, DT_FMT) + duration
+                job.end_time = end_time.strftime(DT_FMT)
 
             def phase_completed(job, error_msg):
                 # Set job.end_time
@@ -507,7 +391,7 @@ class Job(object):
                     job.end_time = job.manager.get_end_time(job)
                 except:
                     print 'Warning: job.manager.get_end_time(job) not responding, set end_time=now'
-                    job.end_time = now.strftime(dt_fmt)
+                    job.end_time = now.strftime(DT_FMT)
                 # TODO: Copy results to the UWS server if job is COMPLETED (done by cluster for now)
 
             def phase_error(job, error_msg):
@@ -516,7 +400,7 @@ class Job(object):
                     job.end_time = job.manager.get_end_time(job)
                 except:
                     print 'Warning: job.manager.get_end_time(job) not responding, set end_time=now'
-                    job.end_time = now.strftime(dt_fmt)
+                    job.end_time = now.strftime(DT_FMT)
                 # Set job.error or add
                 if job.error:
                     job.error += '\n' + error_msg
@@ -548,28 +432,16 @@ class Job(object):
 
 
 class JobList(object):
-    """JobList with attributes and function to fetch from db and return as XML"""
+    """JobList with attributes and function to fetch from storage and return as XML"""
 
-    def __init__(self, jobname, user, url, db):
+    def __init__(self, jobname, user, url):
         self.jobname = jobname
         self.user = user
         # The URL is required to include a link for each job in the XML representation
         self.url = url
-        self.db = db
         # Link to the storage, e.g. SQLiteStorage, see settings.py
         self.storage = storage.__dict__[STORAGE]()
-        #self.get_from_db()
-        self.jobs = self.storage.get_job_list(self)
-
-    def get_from_db(self):
-        """Query db for job list"""
-        query = "SELECT jobid, phase FROM jobs"
-        where = ["jobname='{}'".format(self.jobname)]
-        if self.user not in ['localhost']:
-            where.append("owner='{}'".format(self.user))
-        query += " WHERE " + " AND ".join(where) + ";"
-        jobs = self.db.execute(query).fetchall()
-        self.jobs = jobs
+        self.jobs = self.storage.get_list(self)
 
     def to_xml(self):
         """Returns the XML representation of jobs (uws:jobs)"""
@@ -592,22 +464,19 @@ class JobList(object):
     def to_html(self):
         """Returns the HTML representation of jobs"""
         html = ''
-        for job in self.jobs:
+        for row in self.jobs:
             # Job ID
-            jobid = job['jobid']
+            jobid = row['jobid']
+            job = Job(self.jobname, jobid, self.user, get_attributes=True, get_parameters=True, get_results=True)
             html += '<h3>Job ' + jobid + '</h3>'
-            for k, v in dict(job).iteritems():
-                html += k + ' = ' + str(v) + '<br>'
+            for k in JOB_ATTRIBUTES:
+                html += k + ' = ' + str(job.__dict__[k]) + '<br>'
             # Parameters
-            query = "select * from job_parameters where jobid='{}';".format(jobid)
-            params = self.db.execute(query).fetchall()
-            html += '<h4>Parameters</h4>'
-            for param in params:
-                html += param['name'] + ' = ' + param['value'] + '<br>'
+            html += '<strong>Parameters:</strong><br>'
+            for pname, p in job.parameters.iteritems():
+                html += pname + ' = ' + p['value'] + '<br>'
             # Results
-            query = "select * from job_results where jobid='{}';".format(jobid)
-            results = self.db.execute(query).fetchall()
-            html += '<h4>Results</h4>'
-            for result in results:
-                html += str(result['name']) + ': ' + result['url'] + '<br>'
+            html += '<strong>Results</strong><br>'
+            for rname, r in job.results.iteritems():
+                html += str(rname) + ': ' + r['url'] + '<br>'
         return html
