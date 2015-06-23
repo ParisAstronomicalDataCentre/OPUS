@@ -5,6 +5,7 @@ Created on Apr 29 2015
 @author: mservillat
 """
 
+import os
 import sys
 
 # Set debug mode, HTTP 500 Errors include traceback
@@ -106,6 +107,12 @@ TERMINAL_PHASES = [
     'HELD',
     # 'SUSPENDED'
 ]
+
+#--- Include host-specific settings ------------------------------------------------------------------------------------
+if os.path.exists('settings_local.py'):
+    from settings_local import *
+#--- Include host-specific settings ------------------------------------------------------------------------------------
+
 
 # If imported from test.py, redefine settings
 main_dict = sys.modules['__main__'].__dict__
