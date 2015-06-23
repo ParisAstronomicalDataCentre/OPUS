@@ -9,7 +9,6 @@ See http://www.ivoa.net/documents/UWS/20101010/REC-UWS-1.0-20101010.html
 @author: mservillat
 """
 
-import sys
 import traceback
 import uuid
 from subprocess import CalledProcessError
@@ -18,19 +17,6 @@ from uws_classes import *
 
 # Create a new application
 app = Bottle()
-
-
-# ----------
-# Set logging to a file
-
-
-import logging
-logging.basicConfig(
-    filename=LOG_FILE,
-    format='[%(asctime)s] %(levelname)s %(module)s.%(funcName)s: %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S',
-    level=logging.DEBUG)
-logger = logging.getLogger(__name__)
 
 
 # ----------
@@ -158,7 +144,7 @@ def home():
 @app.route('/favicon.ico')
 def favicon():
     """/favicon.ico not provided"""
-    abort(500)
+    abort(404)
 
 
 # ----------
@@ -204,31 +190,6 @@ def show_db():
     try:
         joblist = JobList('ctbin', user, request.url)
         return joblist.to_html()
-
-        db = storage.__dict__[STORAGE]()
-        query = "select * from jobs;"
-        jobs = db.cursor.execute(query).fetchall()
-        cols = ['jobid', 'jobname', 'phase', 'quote', 'execution_duration', 'error',
-                'start_time', 'end_time', 'destruction_time', 'owner', 'run_id', 'jobid_cluster']
-        for job in jobs:
-            # Job ID
-            jobid = job['jobid']
-            html += '<h3>Job ' + jobid + '</h3>'
-            # for k, v in dict(job).iteritems():
-            for k in cols:
-                html += k + ' = ' + str(job[k]) + '<br>'
-            # Parameters
-            query = "select * from job_parameters where jobid='{}';".format(jobid)
-            params = db.cursor.execute(query).fetchall()
-            html += '<strong>Parameters:</strong><br>'
-            for param in params:
-                html += param['name'] + ' = ' + param['value'] + ' (byRef=' + str(param['byref']) + ')<br>'
-            # Results
-            query = "select * from job_results where jobid='{}';".format(jobid)
-            results = db.cursor.execute(query).fetchall()
-            html += '<strong>Results</strong><br>'
-            for result in results:
-                html += str(result['name']) + ': ' + result['url'] + '<br>'
         logger.info('Show Database for localhost')
     except:
         abort_500_except()
@@ -354,7 +315,6 @@ def create_job(jobname):
     try:
         set_user()
         # TODO: Check if form submitted correctly, detect file size overflow?
-        # TODO: Compare with WADL?
         # TODO: add attributes: execution_duration, mem, nodes, ntasks-per-node
         # Set new job description from POSTed parameters
         job = Job(jobname, jobid, user, from_post=request)

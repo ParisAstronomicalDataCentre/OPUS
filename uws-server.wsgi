@@ -1,9 +1,11 @@
-import sys, os
+import os
+import sys
 
-sys.path.append('/var/www/bottle/uws_server/')
+curdir = os.path.dirname(__file__)
+sys.path.append(curdir)
 
 # Change working directory so relative paths (and template lookup) work again
-os.chdir(os.path.dirname(__file__))
+os.chdir(curdir)
 
 import bottle
 import uws_server

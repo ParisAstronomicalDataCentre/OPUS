@@ -47,11 +47,11 @@ class Manager(object):
 
     def get_start_time(self, job):
         """Get job start time from SLURM server"""
-        raise NotImplementedError('To be implemented')
+        raise NotImplementedError('Manager does not support get_start_time()')
 
     def get_end_time(self, job):
         """Get job end time from cluster"""
-        raise NotImplementedError('To be implemented')
+        raise NotImplementedError('Manager does not support get_end_time()')
 
 
 class SLURMManager(Manager):

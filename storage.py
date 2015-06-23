@@ -22,23 +22,14 @@ import sqlite3
 import datetime as dt
 from settings import *
 
-# ISO date format for datetime
-dt_fmt = '%Y-%m-%dT%H:%M:%S'
-
 
 # ---------
 # Exceptions/Warnings
 
 
 class NotFoundWarning(Warning):
+    """Warning used if Storage does not contain the information"""
     pass
-
-
-# Table columns defined in database
-jobs_cols = ['jobid', 'jobname', 'phase', 'quote', 'execution_duration', 'error',
-             'start_time', 'end_time', 'destruction_time', 'owner', 'run_id', 'jobid_cluster']
-job_params_cols = ['jobid', 'name', 'value', 'byref']
-job_results_cols = ['jobid', 'name', 'url']
 
 
 # ---------
@@ -65,7 +56,7 @@ class Storage(object):
         """Delete job information from storage"""
         pass
 
-    def get_list(self):
+    def get_list(self, joblist):
         """Delete job information from storage"""
         pass
 
@@ -113,7 +104,7 @@ class SQLiteStorage(Storage):
 
         if save_attributes:
             # Save job description to db
-            d = {col: str(job.__dict__[col]) for col in jobs_cols}
+            d = {col: str(job.__dict__[col]) for col in JOB_ATTRIBUTES}
             self._save_query('jobs', d)
         if save_parameters:
             if isinstance(save_parameters, str):
@@ -132,6 +123,7 @@ class SQLiteStorage(Storage):
                      'url': r['url']}
                 self._save_query('job_results', d)
 
+    # noinspection PyTypeChecker
     def read(self, job, get_attributes=True, get_parameters=False, get_results=False, from_jobid_cluster=False):
         """Read job from storage"""
         if from_jobid_cluster:
@@ -148,19 +140,19 @@ class SQLiteStorage(Storage):
             row = self.cursor.execute(query).fetchone()
             if not row:
                 raise NotFoundWarning('Job "{}" NOT FOUND'.format(job.jobid))
-            # creation_time = dt.datetime.strptime(job['creation_time'], dt_fmt)
-            start_time = dt.datetime.strptime(row['start_time'], dt_fmt)
-            end_time = dt.datetime.strptime(row['end_time'], dt_fmt)
-            destruction_time = dt.datetime.strptime(row['destruction_time'], dt_fmt)
+            # creation_time = dt.datetime.strptime(job['creation_time'], DT_FMT)
+            start_time = dt.datetime.strptime(row['start_time'], DT_FMT)
+            end_time = dt.datetime.strptime(row['end_time'], DT_FMT)
+            destruction_time = dt.datetime.strptime(row['destruction_time'], DT_FMT)
             job.jobname = row['jobname']
             job.phase = row['phase']
             job.quote = row['quote']
             job.execution_duration = row['execution_duration']
             job.error = row['error']
-            # self.creation_time = creation_time.strftime(dt_fmt)
-            job.start_time = start_time.strftime(dt_fmt)
-            job.end_time = end_time.strftime(dt_fmt)
-            job.destruction_time = destruction_time.strftime(dt_fmt)
+            # self.creation_time = creation_time.strftime(DT_FMT)
+            job.start_time = start_time.strftime(DT_FMT)
+            job.end_time = end_time.strftime(DT_FMT)
+            job.destruction_time = destruction_time.strftime(DT_FMT)
             job.owner = row['owner']
             job.run_id = row['run_id']
             job.jobid_cluster = row['jobid_cluster']
@@ -192,12 +184,12 @@ class SQLiteStorage(Storage):
         self.cursor.execute(query3)
         self.conn.commit()
 
-    def get_list(self, job_list):
+    def get_list(self, joblist):
         """Query storage for job list"""
         query = "SELECT jobid, phase FROM jobs"
-        where = ["jobname='{}'".format(job_list.jobname)]
-        if job_list.user not in ['localhost']:
-            where.append("owner='{}'".format(job_list.user))
+        where = ["jobname='{}'".format(joblist.jobname)]
+        if joblist.user not in ['localhost']:
+            where.append("owner='{}'".format(joblist.user))
         query += " WHERE " + " AND ".join(where) + ";"
         jobs = self.cursor.execute(query).fetchall()
         return jobs

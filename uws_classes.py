@@ -15,6 +15,19 @@ import managers
 from settings import *
 
 
+# ----------
+# Set logger
+
+
+import logging
+logging.basicConfig(
+    filename=LOG_FILE,
+    format='[%(asctime)s] %(levelname)s %(module)s.%(funcName)s: %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+    level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+
 # ---------
 # Job class
 
@@ -378,6 +391,7 @@ class Job(object):
                 try:
                     job.start_time = job.manager.get_start_time(job)
                 except:
+                    logger.warning('job.manager.get_start_time(job) not responding, set start_time=now')
                     print 'Warning: job.manager.get_start_time(job) not responding, set start_time=now'
                     job.start_time = now.strftime(DT_FMT)
                 # Estimates job.end_time from job.start_time + duration
@@ -390,6 +404,7 @@ class Job(object):
                 try:
                     job.end_time = job.manager.get_end_time(job)
                 except:
+                    logger.warning('job.manager.get_end_time(job) not responding, set end_time=now')
                     print 'Warning: job.manager.get_end_time(job) not responding, set end_time=now'
                     job.end_time = now.strftime(DT_FMT)
                 # TODO: Copy results to the UWS server if job is COMPLETED (done by cluster for now)
@@ -399,6 +414,7 @@ class Job(object):
                 try:
                     job.end_time = job.manager.get_end_time(job)
                 except:
+                    logger.warning('job.manager.get_end_time(job) not responding, set end_time=now')
                     print 'Warning: job.manager.get_end_time(job) not responding, set end_time=now'
                     job.end_time = now.strftime(DT_FMT)
                 # Set job.error or add
