@@ -231,9 +231,12 @@ def maintenance():
 # Interface with job queue manager
 
 
-@app.route('/job_event/<jobid_cluster>')
-def job_event(jobid_cluster):
+@app.post('/job_event')
+def job_event():
     """New events for job with given jobid_cluster
+
+    This hook expects POST commands that must come from a referenced job server
+    POST should include: jobid=, phase=, error_msg=
 
     Returns:
         200 OK: text/plain (on success)
@@ -243,30 +246,38 @@ def job_event(jobid_cluster):
     """
     if not is_job_server():
         abort_403()
-    else:
-        logger.info('job_server connected ({}) on {}'.format(user, request.urlparts.path))
     try:
-        logger.info('jobid_cluster={} GET={}'.format(jobid_cluster, str(request.GET.dict)))
-        # Get job description from DB
-        job = Job('', jobid_cluster, user, get_attributes=True, from_jobid_cluster=True)
-        # Update job with PHASE=, ERROR=
-        if 'PHASE' in request.GET:
-            new_phase = request.GET['PHASE']
-            cur_phase = job.phase
-            if new_phase == 'ERROR':
-                if 'ERROR' in request.GET:
-                    job.change_status(new_phase, request.GET['ERROR'])
-                else:
+        logger.info('from {} with POST={}'.format(user, str(request.POST.dict)))
+        if 'jobid' in request.POST:
+            jobid_cluster = request.POST['jobid']
+            # Get job description from DB based on jobid_cluster
+            job = Job('', jobid_cluster, user, get_attributes=True, from_jobid_cluster=True)
+            # Update job
+            if 'phase' in request.POST:
+                new_phase = request.POST['phase']
+                if new_phase not in PHASES:
+                    if new_phase in PHASE_CONVERT:
+                        new_phase = PHASE_CONVERT[new_phase]
+                    else:
+                        raise UserWarning('Unknown phase ' + new_phase)
+                cur_phase = job.phase
+                # If phase=ERROR, add error message if available
+                if new_phase == 'ERROR':
+                    if 'error_msg' in request.POST:
+                        job.change_status('ERROR', request.POST['error_msg'])
+                    else:
+                        job.change_status('ERROR')
+                    logger.info('{} {} ERROR reported (from {})'.format(job.jobname, job.jobid, user))
+                elif new_phase != cur_phase:
                     job.change_status(new_phase)
-                logger.info('{} {} ERROR reported (from {})'.format(job.jobname, job.jobid, user))
-            elif new_phase != cur_phase:
-                job.change_status(new_phase)
-                logger.info('{} {} phase {} --> {} (from {})'
-                            ''.format(job.jobname, job.jobid, cur_phase, new_phase, user))
+                    logger.info('{} {} phase {} --> {} (from {})'
+                                ''.format(job.jobname, job.jobid, cur_phase, new_phase, user))
+                else:
+                    raise UserWarning('Phase is already ' + new_phase)
             else:
-                raise UserWarning('Phase is already ' + new_phase)
+                raise UserWarning('Unknown event sent for job ' + job.jobid)
         else:
-            raise UserWarning('Unknown event sent for job ' + job.jobid)
+            raise UserWarning('jobid is not defined in POST')
     except storage.NotFoundWarning as e:
         abort_404(e.message)
     except UserWarning as e:

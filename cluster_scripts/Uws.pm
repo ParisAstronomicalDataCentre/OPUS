@@ -30,7 +30,10 @@ sub init {
    my ($this) = @_;
 
    # prepare the directory where to save the results and log 
-   my $cmd0 = "mkdir -p $this->{_results_path}";
+   # Now done by uws_handler
+   #my $cmd0 = "mkdir -p $this->{_results_path}";
+   # Replaced by touching a start file (keeps the date)
+   my $cmd0 = "touch $this->{_results_path}/start";
    system($cmd0);
    print STDOUT $cmd0 . "\n";
 
@@ -40,9 +43,11 @@ sub init {
    print STDOUT $cmd1 . "\n";
 
    # prepare the working directory and chdir to it
-   my $cmd2 = "mkdir -p $this->{_working_path}";
-   system($cmd2);
-   print STDOUT $cmd2 . "\n";
+   # Now done by uws_handler
+   #my $cmd2 = "mkdir -p $this->{_working_path}";
+   #system($cmd2);
+   #print STDOUT $cmd2 . "\n";
+
    chdir($this->{_working_path});
 
    $SIG{__DIE__} = \&errorhandler;

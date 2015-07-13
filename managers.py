@@ -90,17 +90,17 @@ class SLURMManager(Manager):
             "#SBATCH --mail-type=ALL",
             "#Time",
             "#SBATCH --time=" + duration_str,
-            "#Memory",
-            "#SBATCH --mem=200mb",
-            "#Define number of processors",
-            "#SBATCH --nodes=1 --ntasks-per-node=1",
-            "### Queue name (small, long)",
+            #"#SLURM_SBATCH_ADD",
+        ]
+        # Insert server specific sbatch commands instead of "#SLURM_SBATCH_ADD"
+        #i = pbs.index("#SLURM_SBATCH_ADD")
+        #pbs[i:i+1] = SLURM_SBATCH_ADD
+        pbs.extend(SLURM_SBATCH_ADD)
+        pbs.extend([
             "### Script execution",
             "/obs/vouws/uws_scripts/ctbin.pl 'voplus.obspm.fr/cta/events.fits' 5",
             #"/home/vouws/uws/{}.pl '{}'".format(job.jobname, job.jobid),
-        ]
-        # Insert server specific sbatch commands before "### Script execution"
-        pbs[-2:1] = SLURM_SBATCH
+        ])
         return '\n'.join(pbs)
 
     def start(self, job):

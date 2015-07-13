@@ -39,11 +39,20 @@ SLURM_URL = 'quadri12.obspm.fr'  # 'tycho.obspm.fr'
 SLURM_USER = 'vouws'
 SLURM_USER_MAIL = 'mathieu.servillat@obspm.fr'
 SLURM_PBS_PATH = '/home/mservillat/CTA/git_voparis/uws-server/pbs/'
-SLURM_SBATCH = [
+SLURM_SBATCH_ADD = [
+    "### Memory",
+    "#SBATCH --mem=200mb",
+    "### Define number of processors",
+    "#SBATCH --nodes=1 --ntasks-per-node=1",
+    "### Queue name (small, long)",
     # '#SBATCH --partition=short',  # for tycho...
     '#SBATCH --account=obspm',  # for quadri12...
     '#SBATCH --partition=def',  # for quadri12...'
 ]
+PHASE_CONVERT = {
+    'RUNNING': 'EXECUTING',
+    'FAILED': 'ERROR',
+}
 
 # Default destruction interval
 DESTRUCTION_INTERVAL = 30  # in days
@@ -72,13 +81,13 @@ JOB_ATTRIBUTES = [
     'destruction_time',
     'owner',
     'run_id',
-    'jobid_cluster'
+    'jobid_cluster',
 ]
 JOB_PARAMETERS_ATTR = [
     'jobid',
     'name',
     'value',
-    'byref'
+    'byref',
 ]
 JOB_RESULTS_ATTR = [
     'jobid',
@@ -96,7 +105,7 @@ PHASES = [
     'ABORTED',
     'UNKNOWN',
     'HELD',
-    'SUSPENDED'
+    'SUSPENDED',
 ]
 
 # Terminal phases (no evolution expected for job)
@@ -105,7 +114,7 @@ TERMINAL_PHASES = [
     'ERROR',
     'ABORTED',
     'HELD',
-    # 'SUSPENDED'
+    # 'SUSPENDED',
 ]
 
 #--- Include host-specific settings ------------------------------------------------------------------------------------

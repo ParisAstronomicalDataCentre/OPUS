@@ -60,11 +60,11 @@ curl -d "VAL=5" http://localhost:8080/ctbin/00000000-dbf3-6b04-b1e7-28d47ad32794
 curl -d "VALUE=AA" http://localhost:8080/ctbin/00000000-dbf3-6b04-b1e7-28d47ad32794/parameters/enumbins
 
 # job_events
-curl http://localhost:8080/job_event/badid
-curl http://localhost:8080/job_event/123456
-curl http://localhost:8080/job_event/123456?PHASE=BADVALUE
-curl http://localhost:8080/job_event/123456?PHASE=HELD
-curl http://localhost:8080/job_event/123456?PHASE=SUSPENDED
-curl http://localhost:8080/job_event/123456?PHASE=EXECUTING
-curl http://localhost:8080/job_event/123456?PHASE=COMPLETED
-curl 'http://localhost:8080/job_event/123456?PHASE=ERROR&ERROR=error_message'
+curl http://localhost:8080/job_event
+curl -d "jobid=1234" http://localhost:8080/job_event
+curl -d "jobid=1234" -d "phase=badvalue" http://localhost:8080/job_event
+curl -d "jobid=1234" -d "phase=HELD" http://localhost:8080/job_event
+curl -d "jobid=1234" -d "phase=SUSPENDED" http://localhost:8080/job_event
+curl -d "jobid=1234" -d "phase=EXECUTING" http://localhost:8080/job_event
+curl -d "jobid=1234" -d "phase=COMPLETED" http://localhost:8080/job_event
+curl -d "jobid=1234" -d "phase=ERROR" -d "error_msg=error_message" http://localhost:8080/job_event
