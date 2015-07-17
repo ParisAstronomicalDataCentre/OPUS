@@ -229,7 +229,7 @@ def maintenance():
 # Interface with job queue manager
 
 
-@app.route('/handler/job_event')
+@app.post('/handler/job_event')
 def job_event():
     """New events for job with given jobid_cluster
 
