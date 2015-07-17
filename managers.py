@@ -80,8 +80,8 @@ class SLURMManager(Manager):
             '#!/bin/sh',
             '#SBATCH --job-name={}'.format(job.jobname),
             #'#SBATCH --workdir=/obs/vouws/scratch/',
-            '#SBATCH --error=uws_logs/%j.err',
-            '#SBATCH --output=uws_logs/%j.job',
+            '#SBATCH --error=/obs/vouws/uws_logs/%j.err',
+            '#SBATCH --output=/obs/vouws/uws_logs/%j.job',
             '#SBATCH --mail-user=' + self.mail,
             '#SBATCH --mail-type=ALL',
             '#SBATCH --no-requeue',
@@ -101,8 +101,9 @@ class SLURMManager(Manager):
             'rd=/obs/vouws/poubelle/{}'.format(job.jobid),
             'mkdir $wd',
             'mkdir $rd',
+            'mkdir $rd/logs',
             'cd $wd',
-            'curl -d "jobid=$SLURM_JOBID" -d "phase=RUNNING" https://voparis-uws-test.obspm.fr/handler/job_event',
+            'curl –silent –output $rd/logs/start_signal -d "jobid=$SLURM_JOBID" -d "phase=RUNNING" https://voparis-uws-test.obspm.fr/handler/job_event',
             'touch $rd/start',
             # Load variables from params file
             '. /obs/vouws/uws_params/{}.params'.format(job.jobid),
@@ -110,7 +111,7 @@ class SLURMManager(Manager):
             '. /obs/vouws/uws_scripts/{}.sh'.format(job.jobname),
             # TODO: Close job execution, but may be done by SLURM in /usr/local/sbin/completion_script.sh
             'touch $rd/done',
-            'curl -d "jobid=$SLURM_JOBID" -d "phase=COMPLETED" https://voparis-uws-test.obspm.fr/handler/job_event',
+            #'curl –silent –output $rd/logs/done_signal -d "jobid=$SLURM_JOBID" -d "phase=COMPLETED" https://voparis-uws-test.obspm.fr/handler/job_event',
             # TODO: move logs
             # TODO: move results
         ])
