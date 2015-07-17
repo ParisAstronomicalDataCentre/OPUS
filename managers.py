@@ -97,18 +97,17 @@ class SLURMManager(Manager):
             # Initially:
             #'/obs/vouws/uws_scripts/ctbin.pl 'voplus.obspm.fr/cta/events.fits' 5',
             # TODO: Init job execution, but maybe simply set workdir with SBATCH and create dir
-            'echo `pwd`',
             'wd=/obs/vouws/scratch/{}'.format(job.jobid),
+            'rd=/obs/vouws/poubelle/{}'.format(job.jobid),
             'mkdir $wd',
             'cd $wd',
-            'echo `pwd`',
-            'echo $SLURM_JOBID',
             'curl -d "jobid=$SLURM_JOBID" -d "phase=RUNNING" https://voparis-uws-test.obspm.fr/handler/job_event',
             # Load variables from param file
             '. /obs/vouws/uws_params/{}.params'.format(job.jobid),
             # Run script in the current environment (with SLURM_JOBID defined)
             '. /obs/vouws/uws_scripts/{}.sh'.format(job.jobname),
             # TODO: Close job execution, but maybe done by SLURM in /usr/local/sbin/completion_script.sh
+            'curl -d "jobid=$SLURM_JOBID" -d "phase=COMPLETED" https://voparis-uws-test.obspm.fr/handler/job_event',
         ])
         return '\n'.join(pbs)
 
