@@ -135,7 +135,7 @@ class SQLiteStorage(Storage):
             job.jobname = row['jobname']
             job.jobid = row['jobid']
         if get_attributes:
-            """Query db for job description"""
+            # Query db for job description
             query = "SELECT * FROM jobs WHERE jobid='{}';".format(job.jobid)
             row = self.cursor.execute(query).fetchone()
             if not row:

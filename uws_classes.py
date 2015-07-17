@@ -85,9 +85,6 @@ class Job(object):
             self.results = {}
             # Set parameters from POSTed info
             self.set_from_post(from_post.POST, from_post.files)
-            # Save to storage
-            #self.save()
-            self.storage.save(self, save_attributes=True, save_parameters=True)
         else:
             # Create blank job with None values, do not save to storage
             self.phase = 'UNKONWN'
@@ -158,6 +155,8 @@ class Job(object):
             f.save(upload_dir + '/' + f.filename)
             value = f.filename
             self.parameters[fname] = {'value': value, 'byref': True}
+        # Save to storage
+        self.storage.save(self, save_attributes=True, save_parameters=True)
 
     # ----------
     # Methods to set a job attribute or parameter

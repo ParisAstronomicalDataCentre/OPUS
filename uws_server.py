@@ -231,7 +231,7 @@ def maintenance():
 # Interface with job queue manager
 
 
-@app.post('/job_event')
+@app.route('/job_event')
 def job_event():
     """New events for job with given jobid_cluster
 
@@ -254,13 +254,13 @@ def job_event():
             job = Job('', jobid_cluster, user, get_attributes=True, from_jobid_cluster=True)
             # Update job
             if 'phase' in request.POST:
+                cur_phase = job.phase
                 new_phase = request.POST['phase']
                 if new_phase not in PHASES:
                     if new_phase in PHASE_CONVERT:
                         new_phase = PHASE_CONVERT[new_phase]
                     else:
                         raise UserWarning('Unknown phase ' + new_phase)
-                cur_phase = job.phase
                 # If phase=ERROR, add error message if available
                 if new_phase == 'ERROR':
                     if 'error_msg' in request.POST:
