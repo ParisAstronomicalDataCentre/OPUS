@@ -32,31 +32,3 @@ CREATE TABLE IF NOT EXISTS job_results (
     url   varchar(255),
     PRIMARY KEY (jobid, name)
 );
-
-INSERT INTO jobs (jobid, jobname, phase, quote, execution_duration, error, start_time, end_time, destruction_time, owner, run_id, jobid_cluster)
- VALUES ('00000000-dbf3-6b04-b1e7-28d47ad32794', 'ctbin', 'PENDING', NULL, 60, NULL,
- '2015-02-25T12:06:24', '2015-02-25T12:06:58', '2015-03-04T12:06:20', 'anonymous', NULL, '1234');
-INSERT INTO job_parameters (jobid, name, value)
- VALUES ('00000000-dbf3-6b04-b1e7-28d47ad32794', 'evfile', 'http://voplus.obspm.fr/cta/events.fits');
-INSERT INTO job_parameters (jobid, name, value)
- VALUES ('00000000-dbf3-6b04-b1e7-28d47ad32794', 'enumbins', '1');
-
-INSERT INTO jobs (jobid, jobname, phase, quote, execution_duration, error, start_time, end_time, destruction_time, owner, run_id, jobid_cluster)
- VALUES ('11111111-9c85-4873-a4b1-8d7e5e91ed57', 'ctbin', 'EXECUTING', NULL, 60, NULL,
- '2015-04-25T12:06:24', '2015-04-25T12:06:58', '2015-06-04T12:06:20', 'anonymous', NULL, '5678');
-INSERT INTO job_parameters (jobid, name, value)
- VALUES ('11111111-9c85-4873-a4b1-8d7e5e91ed57', 'evfile', 'http://voplus.obspm.fr/cta/events.fits');
-INSERT INTO job_parameters (jobid, name, value)
- VALUES ('11111111-9c85-4873-a4b1-8d7e5e91ed57', 'enumbins', '1');
-
-INSERT INTO jobs (jobid, jobname, phase, quote, execution_duration, error, start_time, end_time, destruction_time, owner, run_id)
- VALUES ('22222222-e656-b924-c14a-fbd02f9ebaa9', 'ctbin', 'COMPLETED', NULL, 60, NULL,
- '2015-02-25T12:06:24', '2015-02-25T12:06:58', '2015-03-04T12:06:20', 'anonymous', NULL);
-INSERT INTO job_parameters (jobid, name, value)
- VALUES ('22222222-e656-b924-c14a-fbd02f9ebaa9', 'evfile', 'http://voplus.obspm.fr/cta/events.fits');
-INSERT INTO job_parameters (jobid, name, value)
- VALUES ('22222222-e656-b924-c14a-fbd02f9ebaa9', 'enumbins', '1');
-INSERT INTO job_results (jobid, name, url)
- VALUES ('22222222-e656-b924-c14a-fbd02f9ebaa9', '0', 'http://voparis-uws.obspm.fr/data/uwsdata/644029/results/outfile.fits');
-INSERT INTO job_results (jobid, name, url)
- VALUES ('22222222-e656-b924-c14a-fbd02f9ebaa9', '1', 'http://voparis-uws.obspm.fr/data/uwsdata/644029/results/ctbin.log');

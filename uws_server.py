@@ -155,6 +155,31 @@ def init_db():
     #if not is_localhost():
     #    abort_403()
     try:
+        filename = 'uws_db.sqlite'
+        with open(filename) as f:
+            sql = f.read()
+        db = storage.__dict__[STORAGE]()
+        db.cursor.executescript(sql)
+        db.conn.commit()
+        logger.info('Database initialized using ' + filename)
+    except:
+        abort_500_except()
+    redirect('/show_db', 303)
+
+
+@app.route('/test_db')
+def test_db():
+    """Initialize the database structure with test data
+
+    Returns:
+        303 See other (on success)
+        403 Forbidden (if not super_user)
+        500 Internal Server Error
+    """
+    user = set_user()
+    #if not is_localhost():
+    #    abort_403()
+    try:
         filename = 'test_uws_db.sqlite'
         with open(filename) as f:
             sql = f.read()
