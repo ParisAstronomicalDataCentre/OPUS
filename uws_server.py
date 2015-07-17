@@ -188,9 +188,9 @@ def show_db():
     #    abort_403()
     html = ''
     try:
+        logger.info('Show Database for ' + user)
         joblist = JobList('ctbin', user, request.url)
         return joblist.to_html()
-        logger.info('Show Database for localhost')
     except:
         abort_500_except()
     return html
