@@ -102,6 +102,7 @@ class SLURMManager(Manager):
             'mkdir $wd',
             'cd $wd',
             'echo `pwd`',
+            'echo `which curl`',
             # Load variables from param file
             '. /obs/vouws/uws_params/{}.params'.format(job.jobid),
             # Run script in the current environment (with SLURM_JOBID defined)

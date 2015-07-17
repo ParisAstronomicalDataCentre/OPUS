@@ -26,6 +26,7 @@ http://localhost:8080/ctbin/22222222-e656-b924-c14a-fbd02f9ebaa9/owner
 # create job
 curl -d "evfile=test.fits" -d "enumbins=2" http://localhost:8080/ctbin
 curl -d "evfile=test.fits" -d "enumbins=2" -d "PHASE=RUN" http://localhost:8080/ctbin
+curl -d "evfile=test.fits" -d "enumbins=2" -d "PHASE=RUN" https://voparis-uws-test.obspm.fr/ctbin
 curl -F "evfile=test.fits" -F "enumbins=2" -F "file=@/home/mservillat/CTA/svn_voparis-cta/uws_server/events.fits" http://localhost:8080/ctbin
 
 # start job
