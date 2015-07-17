@@ -103,7 +103,7 @@ class SLURMManager(Manager):
             'mkdir $rd',
             'mkdir $rd/logs',
             'cd $wd',
-            'curl –silent –output $rd/logs/start_signal -d "jobid=$SLURM_JOBID" -d "phase=RUNNING" https://voparis-uws-test.obspm.fr/handler/job_event',
+            'curl -s -o $rd/logs/start_signal -d "jobid=$SLURM_JOBID" -d "phase=RUNNING" https://voparis-uws-test.obspm.fr/handler/job_event',
             'touch $rd/start',
             # Load variables from params file
             '. /obs/vouws/uws_params/{}.params'.format(job.jobid),
