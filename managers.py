@@ -96,18 +96,23 @@ class SLURMManager(Manager):
             '### Script execution',
             # Initially:
             #'/obs/vouws/uws_scripts/ctbin.pl 'voplus.obspm.fr/cta/events.fits' 5',
-            # TODO: Init job execution, but maybe simply set workdir with SBATCH and create dir
+            # Init job execution
             'wd=/obs/vouws/scratch/{}'.format(job.jobid),
             'rd=/obs/vouws/poubelle/{}'.format(job.jobid),
             'mkdir $wd',
+            'mkdir $rd',
             'cd $wd',
             'curl -d "jobid=$SLURM_JOBID" -d "phase=RUNNING" https://voparis-uws-test.obspm.fr/handler/job_event',
-            # Load variables from param file
+            'touch $rd/start',
+            # Load variables from params file
             '. /obs/vouws/uws_params/{}.params'.format(job.jobid),
             # Run script in the current environment (with SLURM_JOBID defined)
             '. /obs/vouws/uws_scripts/{}.sh'.format(job.jobname),
-            # TODO: Close job execution, but maybe done by SLURM in /usr/local/sbin/completion_script.sh
+            # TODO: Close job execution, but may be done by SLURM in /usr/local/sbin/completion_script.sh
+            'touch $rd/done',
             'curl -d "jobid=$SLURM_JOBID" -d "phase=COMPLETED" https://voparis-uws-test.obspm.fr/handler/job_event',
+            # TODO: move logs
+            # TODO: move results
         ])
         return '\n'.join(pbs)
 
@@ -130,8 +135,8 @@ class SLURMManager(Manager):
         with open(PARAMS_PATH + params_file, 'w') as f:
             # parameters are a list of key=value, may instead be a json file
             params = job.parameters_to_text()
-            print params
             # params = job.parameters_to_json()
+            # TODO: wget files if param starts with http://
             f.write(params)
         # Copy parameter file
         cmd2 = ['scp', PARAMS_PATH + params_file, self.ssh_arg + ':' + self.params_path + params_file]

@@ -48,6 +48,7 @@ def set_user():
 def is_job_server():
     """Test if request comes from a job server"""
     ip = request.environ.get('REMOTE_ADDR', '')
+    logger.info('{} wants to access {}'.format(ip, request.urlparts.path))
     if ip in JOB_SERVERS:
         return True
     else:
