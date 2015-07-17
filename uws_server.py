@@ -42,6 +42,8 @@ def set_user():
     # Test if localhost (e.g. for debug)
     if ip == '127.0.0.1':
         user = 'localhost'
+    if 'user' in request.GET:
+        user = request.GET['user']
     return user
 
 
