@@ -23,11 +23,6 @@ app = Bottle()
 # Set user
 
 
-# used to set the attribute "owner" to a job,
-# then this variable is needed when asking for the job list...
-
-user = 'anonymous'
-
 # Send user/pwd in GET?
 # REMOTE_USER set?
 # COOKIE set for Shibboleth auth in service? then redirect to institution
@@ -35,33 +30,34 @@ user = 'anonymous'
 
 def set_user():
     """Set user from request header"""
-    global user
+    user = 'anonymous'
     # Set user from REMOTE_USER if not empty
     remote_user = request.environ.get('REMOTE_USER', '')
     if remote_user:
         user = remote_user
-    pass
-
-
-def is_job_server():
-    """Test if super-user"""
-    global user
-    # Request comes from a job server:
+    # Test if request comes from a job server
     ip = request.environ.get('REMOTE_ADDR', '')
     if ip in JOB_SERVERS:
         user = JOB_SERVERS[ip]
+    # Test if localhost (e.g. for debug)
+    if ip == '127.0.0.1':
+        user = 'localhost'
+    return user
+
+
+def is_job_server():
+    """Test if request comes from a job server"""
+    ip = request.environ.get('REMOTE_ADDR', '')
+    if ip in JOB_SERVERS:
         return True
     else:
         return False
 
 
 def is_localhost():
-    """Test if super-user"""
-    global user
-    # Request comes from a job server:
+    """Test if localhost"""
     ip = request.environ.get('REMOTE_ADDR', '')
     if ip == '127.0.0.1':
-        user = 'localhost'
         return True
     else:
         return False
@@ -160,6 +156,7 @@ def init_db():
         403 Forbidden (if not super_user)
         500 Internal Server Error
     """
+    user = set_user()
     #if not is_localhost():
     #    abort_403()
     try:
@@ -184,6 +181,7 @@ def show_db():
         403 Forbidden (if not super_user)
         500 Internal Server Error (on error)
     """
+    user = set_user()
     #if not is_localhost():
     #    abort_403()
     html = ''
@@ -247,6 +245,7 @@ def job_event():
     if not is_job_server():
         abort_403()
     try:
+        user = set_user()
         logger.info('from {} with POST={}'.format(user, str(request.POST.dict)))
         if 'jobid' in request.POST:
             jobid_cluster = request.POST['jobid']
@@ -303,7 +302,7 @@ def get_joblist(jobname):
         500 Internal Server Error (on error)
     """
     try:
-        set_user()
+        user = set_user()
         logger.info(jobname)
         joblist = JobList(jobname, user, request.url)
         xml_out = joblist.to_xml()
@@ -324,7 +323,7 @@ def create_job(jobname):
     # Create new jobid for new job
     jobid = str(uuid.uuid4())
     try:
-        set_user()
+        user = set_user()
         # TODO: Check if form submitted correctly, detect file size overflow?
         # TODO: add attributes: execution_duration, mem, nodes, ntasks-per-node
         # Set new job description from POSTed parameters
@@ -359,7 +358,7 @@ def get_job(jobname, jobid):
         500 Internal Server Error (on error)
     """
     try:
-        set_user()
+        user = set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
         job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True, get_results=True)
@@ -383,7 +382,7 @@ def delete_job(jobname, jobid):
         500 Internal Server Error (on error)
     """
     try:
-        set_user()
+        user = set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
         job = Job(jobname, jobid, user, get_attributes=True)
@@ -404,7 +403,7 @@ def delete_job(jobname, jobid):
 def post_job(jobname, jobid):
     """Alias for delete_job() if ACTION=DELETE"""
     try:
-        set_user()
+        user = set_user()
         logger.info('delete ' + jobname + ' ' + jobid)
         if request.forms.get('ACTION') == 'DELETE':
             # Get job description from DB
@@ -439,7 +438,7 @@ def get_phase(jobname, jobid):
         500 Internal Server Error (on error)
     """
     try:
-        set_user()
+        user = set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
         job = Job(jobname, jobid, user, get_attributes=True)
@@ -462,7 +461,7 @@ def post_phase(jobname, jobid):
         500 Internal Server Error (on error)
     """
     try:
-        set_user()
+        user = set_user()
         if 'PHASE' in request.forms:
             new_phase = request.forms.get('PHASE')
             logger.info('PHASE=' + new_phase + ' ' + jobname + ' ' + jobid)
@@ -511,7 +510,7 @@ def get_executionduration(jobname, jobid):
         500 Internal Server Error (on error)
     """
     try:
-        set_user()
+        user = set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
         job = Job(jobname, jobid, user, get_attributes=True)
@@ -534,7 +533,7 @@ def post_executionduration(jobname, jobid):
         500 Internal Server Error (on error)
     """
     try:
-        set_user()
+        user = set_user()
         logger.info(jobname + ' ' + jobid)
         # Get value from POST
         if 'EXECUTIONDURATION' not in request.forms:
@@ -576,7 +575,7 @@ def get_destruction(jobname, jobid):
         500 Internal Server Error (on error)
     """
     try:
-        set_user()
+        user = set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
         job = Job(jobname, jobid, user, get_attributes=True)
@@ -599,7 +598,7 @@ def post_destruction(jobname, jobid):
         500 Internal Server Error (on error)
     """
     try:
-        set_user()
+        user = set_user()
         logger.info(jobname + ' ' + jobid)
         # Get value from POST
         if 'DESTRUCTION' not in request.forms:
@@ -644,7 +643,7 @@ def get_error(jobname, jobid):
         500 Internal Server Error (on error)
     """
     try:
-        set_user()
+        user = set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
         job = Job(jobname, jobid, user, get_attributes=True)
@@ -671,7 +670,7 @@ def get_quote(jobname, jobid):
         500 Internal Server Error (on error)
     """
     try:
-        set_user()
+        user = set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
         job = Job(jobname, jobid, user, get_attributes=True)
@@ -699,7 +698,7 @@ def get_parameters(jobname, jobid):
         500 Internal Server Error (on error)
     """
     try:
-        set_user()
+        user = set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
         job = Job(jobname, jobid, user, get_parameters=True)
@@ -724,7 +723,7 @@ def get_parameter(jobname, jobid, param):
         500 Internal Server Error (on error)
     """
     try:
-        set_user()
+        user = set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
         job = Job(jobname, jobid, user, get_parameters=True)
@@ -750,7 +749,7 @@ def post_parameter(jobname, jobid, pname):
         500 Internal Server Error (on error)
     """
     try:
-        set_user()
+        user = set_user()
         logger.info(jobname + ' ' + jobid)
         # Get value from POST
         if 'VALUE' not in request.forms:
@@ -792,7 +791,7 @@ def get_results(jobname, jobid):
         500 Internal Server Error (on error)
     """
     try:
-        set_user()
+        user = set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
         job = Job(jobname, jobid, user, get_results=True)
@@ -817,7 +816,7 @@ def get_result(jobname, jobid, result):
         500 Internal Server Error (on error)
     """
     try:
-        set_user()
+        user = set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
         job = Job(jobname, jobid, user, get_results=True)
@@ -847,7 +846,7 @@ def get_owner(jobname, jobid):
         500 Internal Server Error (on error)
     """
     try:
-        set_user()
+        user = set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
         job = Job(jobname, jobid, user, get_attributes=True)
