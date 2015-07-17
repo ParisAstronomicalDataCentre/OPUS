@@ -79,7 +79,7 @@ class SLURMManager(Manager):
         pbs = [
             '#!/bin/sh',
             '#SBATCH --job-name={}'.format(job.jobname),
-            '#SBATCH --workdir=/obs/vouws/scratch/' + job.jobid,
+            #'#SBATCH --workdir=/obs/vouws/scratch/',
             '#SBATCH --error=uws_logs/%j.err',
             '#SBATCH --output=uws_logs/%j.job',
             '#SBATCH --mail-user=' + self.mail,
@@ -96,11 +96,16 @@ class SLURMManager(Manager):
             '### Script execution',
             # Initially:
             #'/obs/vouws/uws_scripts/ctbin.pl 'voplus.obspm.fr/cta/events.fits' 5',
-            # TODO: Init job execution, but maybe simply set workingdir with SBATCH and create dir
+            # TODO: Init job execution, but maybe simply set workdir with SBATCH and create dir
+            'echo `pwd`',
+            'wd=/obs/vouws/scratch/{}'.format(job.jobid),
+            'mkdir $wd',
+            'cd $wd',
+            'echo `pwd`',
             # Load variables from param file
-            '. /home/vouws/uws_params/{}.params'.format(job.jobid),
+            '. /obs/vouws/uws_params/{}.params'.format(job.jobid),
             # Run script in the current environment (with SLURM_JOBID defined)
-            '. /home/vouws/uws_scripts/{}.sh'.format(job.jobname),
+            '. /obs/vouws/uws_scripts/{}.sh'.format(job.jobname),
             # TODO: Close job execution, but maybe done by SLURM in /usr/local/sbin/completion_script.sh
         ])
         return '\n'.join(pbs)
