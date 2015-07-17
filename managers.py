@@ -65,6 +65,8 @@ class SLURMManager(Manager):
         # self.sbatch = sbatch
         self.pbs_path = 'uws_pbs/'
         self.params_path = 'uws_params/'
+        self.working_path = '/obs/vouws/scratch/'
+        self.results_path = '/obs/vouws/poubelle/'
         self.uws_handler = 'uws_scripts/uws_handler.sh'
 
     def _make_pbs(self, job):
@@ -90,12 +92,12 @@ class SLURMManager(Manager):
         pbs.extend(SLURM_SBATCH_ADD)
         # Script init and execution
         pbs.extend([
-            '### Script init',
+            '### INIT',
             # Initially:
             #'/obs/vouws/uws_scripts/ctbin.pl 'voplus.obspm.fr/cta/events.fits' 5',
             # Init job execution
-            'wd=/obs/vouws/scratch/{}'.format(job.jobid),
-            'rd=/obs/vouws/poubelle/{}'.format(job.jobid),
+            'wd={}{}'.format(self.working_path, job.jobid),
+            'rd={}{}'.format(self.results_path, job.jobid),
             'mkdir $wd',
             'mkdir $rd',
             'mkdir $rd/logs',
@@ -105,17 +107,19 @@ class SLURMManager(Manager):
             'curl -s -o $rd/logs/start_signal -d "jobid=$SLURM_JOBID" -d "phase=RUNNING" https://voparis-uws-test.obspm.fr/handler/job_event',
             'echo "Job started"',
             'touch $rd/start',
-            '### Script execution',
+            '### EXEC',
             # Load variables from params file
             '. /obs/vouws/uws_params/{}.params'.format(job.jobid),
             # Run script in the current environment (with SLURM_JOBID defined)
             '. /obs/vouws/uws_scripts/{}.sh'.format(job.jobname),
-            # TODO: Close job execution, but may be done by SLURM in /usr/local/sbin/completion_script.sh
+            '### CLEAN',
+            # TODO: Move logs to $rd/logs
+            # TODO: Move results to $rd
+            'mkdir $rd/results',
+            # TODO: Remove $wd
             'touch $rd/done',
             'echo "Job done"',
             #'curl -s -o $rd/logs/done_signal -d "jobid=$SLURM_JOBID" -d "phase=COMPLETED" https://voparis-uws-test.obspm.fr/handler/job_event',
-            # TODO: move logs
-            # TODO: move results
         ])
         return '\n'.join(pbs)
 
@@ -146,7 +150,8 @@ class SLURMManager(Manager):
         sp.check_output(cmd2, stderr=sp.STDOUT)
         # Start job using uws_handler
         # 'ssh vouws@tycho.obspm.fr '~/uws/uwshandler.sh -x start -p ~/name''
-        cmd3 = ['ssh', self.ssh_arg, self.uws_handler, '-x start', '-p ' + self.pbs_path + pbs_file]
+        cmd3 = ['ssh', self.ssh_arg, self.uws_handler,
+                '-x start', '-p ' + self.pbs_path + pbs_file]
         jobid_cluster = sp.check_output(cmd3, stderr=sp.STDOUT)
         # Remove trailing \n from output
         return jobid_cluster[:-1]
@@ -154,13 +159,20 @@ class SLURMManager(Manager):
     def abort(self, job):
         """Abort job on SLURM server"""
         # 'ssh vouws@tycho.obspm.fr '~/uws/uwshandler.sh -x abort -p jobid''
-        cmd = ['ssh', self.ssh_arg, self.uws_handler, '-x abort', '-p ' + str(job.jobid_cluster)]
+        cmd = ['ssh', self.ssh_arg, self.uws_handler,
+               '-x abort',
+               '-i ' + str(job.jobid_cluster),
+               '-r ' + self.results_path + job.jobid]
         sp.check_output(cmd, stderr=sp.STDOUT)
 
     def delete(self, job):
         """Delete job on SLURM server"""
         # 'ssh vouws@tycho.obspm.fr '~/uws/uwshandler.sh -x delete -p jobid''
-        cmd = ['ssh', self.ssh_arg, self.uws_handler, '-x delete', '-p ' + str(job.jobid_cluster)]
+        cmd = ['ssh', self.ssh_arg, self.uws_handler,
+               '-x delete',
+               '-i ' + str(job.jobid_cluster),
+               '-r ' + self.results_path + job.jobid,
+               '-w ' + self.working_path + job.jobid]
         sp.check_output(cmd, stderr=sp.STDOUT)
 
     def get_status(self, job):
@@ -170,7 +182,10 @@ class SLURMManager(Manager):
             job status (phase)
         """
         # 'ssh vouws@tycho.obspm.fr '~/uws/uwshandler.sh -x status -p jobid''
-        cmd = ['ssh', self.ssh_arg, self.uws_handler, '-x status', '-p ' + str(job.jobid_cluster)]
+        cmd = ['ssh', self.ssh_arg, self.uws_handler,
+               '-x status',
+               '-i ' + str(job.jobid_cluster),
+               '-r ' + self.results_path + job.jobid]
         phase = sp.check_output(cmd, stderr=sp.STDOUT)
         # TODO: change end time here if phase is COMPLETED?
         # Remove trailing \n from output
@@ -183,7 +198,9 @@ class SLURMManager(Manager):
             start time in ISO format
         """
         # 'ssh vouws@tycho.obspm.fr '~/uws/uwshandler.sh -x status -p jobid''
-        cmd = ['ssh', self.ssh_arg, self.uws_handler, '-x start_time', '-p ' + str(job.jobid_cluster)]
+        cmd = ['ssh', self.ssh_arg, self.uws_handler,
+               '-x start_time',
+               '-r ' + self.results_path + job.jobid]
         start_time = sp.check_output(cmd, stderr=sp.STDOUT)
         # Remove trailing \n from output,and replace ' ' by 'T' in ISO date
         return start_time[:-1].replace(' ','T')
@@ -195,7 +212,9 @@ class SLURMManager(Manager):
             end time in ISO format
         """
         # 'ssh vouws@tycho.obspm.fr '~/uws/uwshandler.sh -x status -p jobid''
-        cmd = ['ssh', self.ssh_arg, self.uws_handler, '-x end_time', '-p ' + str(job.jobid_cluster)]
+        cmd = ['ssh', self.ssh_arg, self.uws_handler,
+               '-x end_time',
+               '-r ' + self.results_path + job.jobid]
         end_time = sp.check_output(cmd, stderr=sp.STDOUT)
         # Remove trailing \n from output,and replace ' ' by 'T' in ISO date
         return end_time[:-1].replace(' ','T')
