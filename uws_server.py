@@ -35,21 +35,13 @@ def set_user():
     remote_user = request.environ.get('REMOTE_USER', '')
     if remote_user:
         user = remote_user
-    # Test if request comes from a job server
-    ip = request.environ.get('REMOTE_ADDR', '')
-    if ip in JOB_SERVERS:
-        user = JOB_SERVERS[ip]
-    # Test if localhost (e.g. for debug)
-    if ip == '127.0.0.1':
-        user = 'localhost'
     if 'user' in request.GET:
         user = request.GET['user']
     return user
 
 
-def is_job_server():
+def is_job_server(ip):
     """Test if request comes from a job server"""
-    ip = request.environ.get('REMOTE_ADDR', '')
     if ip in JOB_SERVERS:
         return True
     else:
@@ -245,11 +237,12 @@ def job_event():
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
-    if not is_job_server():
+    ip = request.environ.get('REMOTE_ADDR', '')
+    if not is_job_server(ip):
         abort_403()
     try:
         user = set_user()
-        logger.info('from {} with POST={}'.format(user, str(request.POST.dict)))
+        logger.info('from {} ({}) with POST={}'.format(ip, JOB_SERVERS[ip], str(request.POST.dict)))
         if 'jobid' in request.POST:
             jobid_cluster = request.POST['jobid']
             # Get job description from DB based on jobid_cluster
