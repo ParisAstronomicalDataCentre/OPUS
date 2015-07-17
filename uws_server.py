@@ -160,8 +160,8 @@ def init_db():
         403 Forbidden (if not super_user)
         500 Internal Server Error
     """
-    if not is_localhost():
-        abort_403()
+    #if not is_localhost():
+    #    abort_403()
     try:
         filename = 'test_uws_db.sqlite'
         with open(filename) as f:
@@ -184,8 +184,8 @@ def show_db():
         403 Forbidden (if not super_user)
         500 Internal Server Error (on error)
     """
-    if not is_localhost():
-        abort_403()
+    #if not is_localhost():
+    #    abort_403()
     html = ''
     try:
         joblist = JobList('ctbin', user, request.url)
