@@ -114,9 +114,11 @@ class SLURMManager(Manager):
             '. /obs/vouws/uws_scripts/{}.sh'.format(job.jobname),
             '### CLEAN',
             # TODO: Move logs to $rd/logs
+            'cp /obs/vouws/uws_logs/$SLURM_JOBID.job $rd/logs',
+            'cp /obs/vouws/uws_logs/$SLURM_JOBID.err $rd/logs',
             # TODO: Move results to $rd
             'mkdir $rd/results',
-            # TODO: Remove $wd
+            'rm -rf $wd',
             'touch $rd/done',
             'echo "Job done"',
             #'curl -s -o $rd/logs/done_signal -d "jobid=$SLURM_JOBID" -d "phase=COMPLETED" https://voparis-uws-test.obspm.fr/handler/job_event',

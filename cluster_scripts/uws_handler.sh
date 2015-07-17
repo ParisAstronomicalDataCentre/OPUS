@@ -1,13 +1,5 @@
 #!/bin/bash
 
-parameter='undefined'
-# For tycho
-#wd='/scratch/vouws/uwsdata'
-#rd='/poubelle/vouws/uwsdata'
-# For quadri12
-wd='/obs/vouws/scratch'
-rd='/obs/vouws/poubelle'
-
 while getopts "x:i:p:w:r:" opt; do
    case $opt in
       x)
@@ -63,6 +55,7 @@ fi
 if [ ${action} = 'delete' ]; then
    if [ -f ${rd}/start ]; then
       scancel ${jobid}
+      touch ${rd}/deleted
       rm -rf ${wd}
       exit 0
    else
