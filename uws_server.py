@@ -198,7 +198,7 @@ def show_db():
 # Server maintenance
 
 
-@app.route('/maintenance')
+@app.route('/handler/maintenance')
 def maintenance():
     """Performs server maintenance, e.g. executed regularly by the server itself (localhost)
 
@@ -229,7 +229,7 @@ def maintenance():
 # Interface with job queue manager
 
 
-@app.route('/job_event')
+@app.route('/handler/job_event')
 def job_event():
     """New events for job with given jobid_cluster
 
