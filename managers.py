@@ -79,7 +79,7 @@ class SLURMManager(Manager):
         pbs = [
             '#!/bin/sh',
             '#SBATCH --job-name={}'.format(job.jobname),
-            '#SBATCH --workdir=/obs/vouws/scratch/%j',
+            '#SBATCH --workdir=/obs/vouws/scratch/' + job.jobid,
             '#SBATCH --error=uws_logs/%j.err',
             '#SBATCH --output=uws_logs/%j.job',
             '#SBATCH --mail-user=' + self.mail,
@@ -100,7 +100,7 @@ class SLURMManager(Manager):
             # Load variables from param file
             '. /home/vouws/uws_params/{}.params'.format(job.jobid),
             # Run script in the current environment (with SLURM_JOBID defined)
-            '. /home/vouws/uws_scripts/{}.sh'.format(job.jobid),
+            '. /home/vouws/uws_scripts/{}.sh'.format(job.jobname),
             # TODO: Close job execution, but maybe done by SLURM in /usr/local/sbin/completion_script.sh
         ])
         return '\n'.join(pbs)
