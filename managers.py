@@ -79,21 +79,18 @@ class SLURMManager(Manager):
         pbs = [
             '#!/bin/sh',
             '#SBATCH --job-name={}'.format(job.jobname),
-            #'#SBATCH --workdir=/obs/vouws/scratch/',
             '#SBATCH --error=/obs/vouws/uws_logs/%j.err',
             '#SBATCH --output=/obs/vouws/uws_logs/%j.job',
             '#SBATCH --mail-user=' + self.mail,
             '#SBATCH --mail-type=ALL',
             '#SBATCH --no-requeue',
             '#SBATCH --time=' + duration_str,
-            #'#SLURM_SBATCH_ADD',
         ]
-        # Insert server specific sbatch commands instead of '#SLURM_SBATCH_ADD'
-        #i = pbs.index('#SLURM_SBATCH_ADD')
-        #pbs[i:i+1] = SLURM_SBATCH_ADD
+        # Insert server specific sbatch commands
         pbs.extend(SLURM_SBATCH_ADD)
+        # Script init and execution
         pbs.extend([
-            '### Script execution',
+            '### Script init',
             # Initially:
             #'/obs/vouws/uws_scripts/ctbin.pl 'voplus.obspm.fr/cta/events.fits' 5',
             # Init job execution
@@ -103,15 +100,20 @@ class SLURMManager(Manager):
             'mkdir $rd',
             'mkdir $rd/logs',
             'cd $wd',
+            'echo "Working dir is $wd"',
+            'echo "Results dir is $rd"',
             'curl -s -o $rd/logs/start_signal -d "jobid=$SLURM_JOBID" -d "phase=RUNNING" https://voparis-uws-test.obspm.fr/handler/job_event',
+            'echo "Job started"',
             'touch $rd/start',
+            '### Script execution',
             # Load variables from params file
             '. /obs/vouws/uws_params/{}.params'.format(job.jobid),
             # Run script in the current environment (with SLURM_JOBID defined)
             '. /obs/vouws/uws_scripts/{}.sh'.format(job.jobname),
             # TODO: Close job execution, but may be done by SLURM in /usr/local/sbin/completion_script.sh
             'touch $rd/done',
-            #'curl –silent –output $rd/logs/done_signal -d "jobid=$SLURM_JOBID" -d "phase=COMPLETED" https://voparis-uws-test.obspm.fr/handler/job_event',
+            'echo "Job done"',
+            #'curl -s -o $rd/logs/done_signal -d "jobid=$SLURM_JOBID" -d "phase=COMPLETED" https://voparis-uws-test.obspm.fr/handler/job_event',
             # TODO: move logs
             # TODO: move results
         ])

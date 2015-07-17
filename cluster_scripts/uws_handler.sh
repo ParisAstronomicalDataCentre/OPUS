@@ -28,8 +28,6 @@ if [ ${action} = 'start' ]; then
    if [ -f ${parameter} ]; then
       run_id=`sbatch ${parameter} | awk '{print $4}'`
       if [ $? = 0 ]; then
-         mkdir $wd/$run_id
-         mkdir $rd/$run_id
          echo $run_id
          exit 0
       else
