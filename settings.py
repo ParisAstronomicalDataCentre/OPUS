@@ -40,11 +40,8 @@ SLURM_USER = 'vouws'
 SLURM_USER_MAIL = 'mathieu.servillat@obspm.fr'
 SLURM_PBS_PATH = '/home/mservillat/CTA/git_voparis/uws-server/pbs/'
 SLURM_SBATCH_ADD = [
-    "### Memory",
     "#SBATCH --mem=200mb",
-    "### Define number of processors",
     "#SBATCH --nodes=1 --ntasks-per-node=1",
-    "### Queue name (small, long)",
     # '#SBATCH --partition=short',  # for tycho...
     '#SBATCH --account=obspm',  # for quadri12...
     '#SBATCH --partition=def',  # for quadri12...'

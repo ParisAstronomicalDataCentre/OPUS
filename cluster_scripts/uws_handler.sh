@@ -23,6 +23,7 @@ while getopts "x:p:" opt; do
    esac
 done
 
+
 if [ ${action} = 'start' ]; then
    if [ -f ${parameter} ]; then
       run_id=`sbatch ${parameter} | awk '{print $4}'`

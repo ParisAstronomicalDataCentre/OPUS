@@ -259,7 +259,7 @@ def job_event():
                     if new_phase in PHASE_CONVERT:
                         new_phase = PHASE_CONVERT[new_phase]
                     else:
-                        raise UserWarning('Unknown phase ' + new_phase)
+                        raise UserWarning('Unknown new phase ' + new_phase + ' for job ' + job.jobid)
                 # If phase=ERROR, add error message if available
                 if new_phase == 'ERROR':
                     if 'error_msg' in request.POST:

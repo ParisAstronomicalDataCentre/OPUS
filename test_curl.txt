@@ -74,6 +74,6 @@ curl -d "jobid=1234" https://voparis-uws-test.obspm.fr/handler/job_event
 curl -d "jobid=1234" -d "phase=badvalue" https://voparis-uws-test.obspm.fr/handler/job_event
 curl -d "jobid=1234" -d "phase=HELD" https://voparis-uws-test.obspm.fr/handler/job_event
 curl -d "jobid=1234" -d "phase=SUSPENDED" https://voparis-uws-test.obspm.fr/handler/job_event
-curl -d "jobid=1234" -d "phase=EXECUTING" https://voparis-uws-test.obspm.fr/handler/job_event
+curl -d "jobid=1234" -d "phase=RUNNING" https://voparis-uws-test.obspm.fr/handler/job_event
 curl -d "jobid=1234" -d "phase=COMPLETED" https://voparis-uws-test.obspm.fr/handler/job_event
 curl -d "jobid=1234" -d "phase=ERROR" -d "error_msg=error_message" https://voparis-uws-test.obspm.fr/handler/job_event
