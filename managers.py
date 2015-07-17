@@ -102,7 +102,8 @@ class SLURMManager(Manager):
             'mkdir $wd',
             'cd $wd',
             'echo `pwd`',
-            'echo `which curl`',
+            'echo $SLURM_JOBID',
+            'curl -d "jobid=$SLURM_JOBID" -d "phase=RUNNING" https://voparis-uws-test.obspm.fr/handler/job_event',
             # Load variables from param file
             '. /obs/vouws/uws_params/{}.params'.format(job.jobid),
             # Run script in the current environment (with SLURM_JOBID defined)
