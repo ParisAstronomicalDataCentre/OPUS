@@ -1,0 +1,2 @@
+scp *.* quadri12:/home/vouws/uws_scripts/
+scp *.* quadri12.obspm.fr:/home/vouws/uws_scripts/
