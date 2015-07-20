@@ -96,10 +96,10 @@ class SLURMManager(Manager):
             # Initially:
             #'/obs/vouws/uws_scripts/ctbin.pl 'voplus.obspm.fr/cta/events.fits' 5',
             # Init job execution
-            'echo "Set die and trap"',
+            'echo "Set trap"',
             'error_handler()',
             '{',
-            '    echo "${BASH_SOURCE[1]}: line ${BASH_LINENO[0]}: ${FUNCNAME[1]}"',
+            '    echo "${BASH_SOURCE[1]}: line ${BASH_LINENO[0]}: ${FUNCNAME[1]}" >&2',
             '    exit 1',
             '}',
             'trap error_handler 1',
