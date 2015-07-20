@@ -100,7 +100,12 @@ class SLURMManager(Manager):
             'set -e ',
             'error_handler()',
             '{',
-            '    echo "${BASH_SOURCE[1]}: line ${BASH_LINENO[0]}: ${FUNCNAME[1]}" >&2',
+            '    msg="${BASH_SOURCE[1]}: line ${BASH_LINENO[0]}: ${FUNCNAME[1]}"'
+            '    echo $msg >&2',
+            '    cp /obs/vouws/uws_logs/$SLURM_JOBID.job $rd/logs',
+            '    cp /obs/vouws/uws_logs/$SLURM_JOBID.err $rd/logs',
+            '    curl -s -o $rd/logs/start_signal -d "jobid=$SLURM_JOBID" -d "phase=ERROR" -d "error_msg=$msg" '
+            '        https://voparis-uws-test.obspm.fr/handler/job_event',
             '    exit 1',
             '}',
             'trap error_handler 1',
@@ -112,7 +117,8 @@ class SLURMManager(Manager):
             'cd $wd',
             'echo "Working dir is $wd"',
             'echo "Results dir is $rd"',
-            'curl -s -o $rd/logs/start_signal -d "jobid=$SLURM_JOBID" -d "phase=RUNNING" https://voparis-uws-test.obspm.fr/handler/job_event',
+            'curl -s -o $rd/logs/start_signal -d "jobid=$SLURM_JOBID" -d "phase=RUNNING" '
+            '    https://voparis-uws-test.obspm.fr/handler/job_event',
             'echo "Job started"',
             'touch $rd/start',
             '### EXEC',
