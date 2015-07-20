@@ -268,6 +268,7 @@ class Job(object):
         xml_out.append(add_xml_node('phase', self.phase))
         xml_out.append(add_xml_node('executionduration', self.execution_duration))
         xml_out.append(add_xml_node('quote', self.quote))
+        xml_out.append(add_xml_node('error', self.error))
         xml_out.append(add_xml_node('startTime', self.start_time))
         xml_out.append(add_xml_node('endTime', self.end_time))
         xml_out.append(add_xml_node('destruction', self.destruction_time))
@@ -391,7 +392,6 @@ class Job(object):
                     job.start_time = job.manager.get_start_time(job)
                 except:
                     logger.warning('job.manager.get_start_time(job) not responding, set start_time=now')
-                    print 'Warning: job.manager.get_start_time(job) not responding, set start_time=now'
                     job.start_time = now.strftime(DT_FMT)
                 # Estimates job.end_time from job.start_time + duration
                 duration = dt.timedelta(0, self.execution_duration)
@@ -404,7 +404,6 @@ class Job(object):
                     job.end_time = job.manager.get_end_time(job)
                 except:
                     logger.warning('job.manager.get_end_time(job) not responding, set end_time=now')
-                    print 'Warning: job.manager.get_end_time(job) not responding, set end_time=now'
                     job.end_time = now.strftime(DT_FMT)
                 # TODO: Copy results to the UWS server if job is COMPLETED (done by cluster for now)
 
@@ -414,7 +413,6 @@ class Job(object):
                     job.end_time = job.manager.get_end_time(job)
                 except:
                     logger.warning('job.manager.get_end_time(job) not responding, set end_time=now')
-                    print 'Warning: job.manager.get_end_time(job) not responding, set end_time=now'
                     job.end_time = now.strftime(DT_FMT)
                 # Set job.error or add
                 if job.error:

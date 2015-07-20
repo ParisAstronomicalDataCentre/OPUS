@@ -104,7 +104,7 @@ class SLURMManager(Manager):
             '    echo $msg >&2',
             '    cp /obs/vouws/uws_logs/$SLURM_JOBID.job $rd/logs',
             '    cp /obs/vouws/uws_logs/$SLURM_JOBID.err $rd/logs',
-            '    curl -s -o $rd/logs/start_signal -d "jobid=$SLURM_JOBID" -d "phase=ERROR" -d "error_msg=$msg" '
+            '    curl -s -o $rd/logs/error_signal -d "jobid=$SLURM_JOBID" -d "phase=ERROR" -d "error_msg=error" '
             '        https://voparis-uws-test.obspm.fr/handler/job_event',
             '    exit 1',
             '}',
