@@ -97,8 +97,8 @@ class SLURMManager(Manager):
             #'/obs/vouws/uws_scripts/ctbin.pl 'voplus.obspm.fr/cta/events.fits' 5',
             # Init job execution
             'echo "Set die and trap"',
-            'alias die=\'echo "${BASH_SOURCE[1]}: line ${BASH_LINENO[0]}: ${FUNCNAME[1]}" >&2\'',
-            'trap die ERR',
+            'function error_handler { echo "${BASH_SOURCE[1]}: line ${BASH_LINENO[0]}: ${FUNCNAME[1]}"; exit 1 }',
+            'trap error_handler ERR',
             'wd={}{}'.format(self.working_path, job.jobid),
             'rd={}{}'.format(self.results_path, job.jobid),
             'mkdir $wd',
