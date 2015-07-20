@@ -97,6 +97,7 @@ class SLURMManager(Manager):
             #'/obs/vouws/uws_scripts/ctbin.pl 'voplus.obspm.fr/cta/events.fits' 5',
             # Init job execution
             'echo "Set trap"',
+            'set -e',
             'error_handler()',
             '{',
             '    echo "${BASH_SOURCE[1]}: line ${BASH_LINENO[0]}: ${FUNCNAME[1]}" >&2',
