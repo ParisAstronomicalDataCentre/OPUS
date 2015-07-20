@@ -102,7 +102,7 @@ class SLURMManager(Manager):
             '    echo "${BASH_SOURCE[1]}: line ${BASH_LINENO[0]}: ${FUNCNAME[1]}"',
             '    exit 1',
             '}',
-            'trap error_handler ERR',
+            'trap error_handler 1',
             'wd={}{}'.format(self.working_path, job.jobid),
             'rd={}{}'.format(self.results_path, job.jobid),
             'mkdir $wd',
