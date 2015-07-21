@@ -79,7 +79,7 @@ class SLURMManager(Manager):
         # duration format is 00:01:00 for 1 min
         duration_str = str(duration).replace(' days', '').replace(' day', '').replace(', ', '-')
         pbs = [
-            '#!/bin/sh',
+            '#!/bin/bash',
             '#SBATCH --job-name={}'.format(job.jobname),
             '#SBATCH --error=/obs/vouws/uws_logs/%j.err',
             '#SBATCH --output=/obs/vouws/uws_logs/%j.job',
@@ -98,15 +98,20 @@ class SLURMManager(Manager):
             'set -e ',
             'error_handler()',
             '{',
+            '    wd=$1',
+            '    rd=$2',
+            '    touch $rd/error'
             '    msg="${BASH_SOURCE[1]}: line ${BASH_LINENO[0]}: ${FUNCNAME[1]}"'
             '    echo $msg >&2',
             '    cp /obs/vouws/uws_logs/$SLURM_JOBID.job $rd/logs',
             '    cp /obs/vouws/uws_logs/$SLURM_JOBID.err $rd/logs',
-            '    curl -s -o $rd/logs/error_signal -d "jobid=$SLURM_JOBID" -d "phase=ERROR" -d "error_msg=error" '
+            '    rm -rf $wd',
+            '    curl -s -o $rd/logs/error_signal -d "jobid=$SLURM_JOBID" -d "phase=ERROR" '
+            '        --data-urlencode "error_msg=$msg" '
             '        https://voparis-uws-test.obspm.fr/handler/job_event',
-            '    exit 1',
+            '    [[ $sig == EXIT ]] || kill -$sig $$',
             '}',
-            'trap error_handler 1',
+            'trap "error_handler $wd $rd" INT TERM EXIT',
             'wd={}{}'.format(self.working_path, job.jobid),
             'rd={}{}'.format(self.results_path, job.jobid),
             'mkdir $wd',

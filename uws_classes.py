@@ -408,7 +408,7 @@ class Job(object):
                 # TODO: Copy results to the UWS server if job is COMPLETED (done by cluster for now)
 
             def phase_error(job, error_msg):
-                # Set job.end_time
+                # Set job.end_time if not already in ERROR phase
                 if job.phase != 'ERROR':
                     try:
                         job.end_time = job.manager.get_end_time(job)
@@ -417,7 +417,7 @@ class Job(object):
                         job.end_time = now.strftime(DT_FMT)
                 # Set job.error or add
                 if job.error:
-                    job.error += '\n' + error_msg
+                    job.error += '. \n' + error_msg
                 else:
                     job.error = error_msg
 
