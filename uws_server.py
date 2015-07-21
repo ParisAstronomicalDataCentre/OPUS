@@ -277,6 +277,7 @@ def job_event():
                 cur_phase = job.phase
                 new_phase = request.POST['phase']
                 if new_phase not in PHASES:
+                    # TODO: remove PHASE_CONVERT, will be handled by cluster uws_oncompletion.sh
                     if new_phase in PHASE_CONVERT:
                         new_phase = PHASE_CONVERT[new_phase]
                     else:

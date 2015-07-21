@@ -93,8 +93,6 @@ class SLURMManager(Manager):
         # Script init and execution
         pbs.extend([
             '### INIT',
-            # Initially:
-            #'/obs/vouws/uws_scripts/ctbin.pl 'voplus.obspm.fr/cta/events.fits' 5',
             # Init job execution
             'echo "Set trap"',
             'set -e ',
@@ -127,11 +125,11 @@ class SLURMManager(Manager):
             # Run script in the current environment (with SLURM_JOBID defined)
             '. /obs/vouws/uws_scripts/{}.sh'.format(job.jobname),
             '### CLEAN',
-            # TODO: Move logs to $rd/logs
+            # Move logs to $rd/logs
             'cp /obs/vouws/uws_logs/$SLURM_JOBID.job $rd/logs',
             'cp /obs/vouws/uws_logs/$SLURM_JOBID.err $rd/logs',
-            # TODO: Move results to $rd
             'mkdir $rd/results',
+            # TODO: Move results to $rd
             'rm -rf $wd',
             'touch $rd/done',
             'echo "Job done"',
