@@ -94,10 +94,13 @@ class SLURMManager(Manager):
         pbs.extend([
             '### INIT',
             # Init job execution
+            'wd={}{}'.format(self.working_path, job.jobid),
+            'rd={}{}'.format(self.results_path, job.jobid),
             'echo "Set trap"',
             'set -e ',
             'error_handler()',
             '{',
+            '    echo "error_handler called!"',
             '    wd=$1',
             '    rd=$2',
             '    touch $rd/error'
@@ -112,8 +115,6 @@ class SLURMManager(Manager):
             '    [[ $sig == EXIT ]] || kill -$sig $$',
             '}',
             'trap "error_handler $wd $rd" INT TERM EXIT',
-            'wd={}{}'.format(self.working_path, job.jobid),
-            'rd={}{}'.format(self.results_path, job.jobid),
             'mkdir $wd',
             'mkdir $rd',
             'mkdir $rd/logs',
