@@ -377,7 +377,7 @@ class Job(object):
         - EXECUTING
         """
         # TODO: DEBUG: PENDING and COMPLETED to be removed
-        if self.phase in ['PENDING', 'QUEUED', 'EXECUTING', 'HELD', 'SUSPENDED', 'COMPLETED']:
+        if self.phase in ['PENDING', 'QUEUED', 'EXECUTING', 'HELD', 'SUSPENDED', 'COMPLETED', 'ERROR']:
             # Change phase
             now = dt.datetime.now()
             # destruction = dt.timedelta(DESTRUCTION_INTERVAL)
@@ -409,11 +409,12 @@ class Job(object):
 
             def phase_error(job, error_msg):
                 # Set job.end_time
-                try:
-                    job.end_time = job.manager.get_end_time(job)
-                except:
-                    logger.warning('job.manager.get_end_time(job) not responding, set end_time=now')
-                    job.end_time = now.strftime(DT_FMT)
+                if job.phase != 'ERROR':
+                    try:
+                        job.end_time = job.manager.get_end_time(job)
+                    except:
+                        logger.warning('job.manager.get_end_time(job) not responding, set end_time=now')
+                        job.end_time = now.strftime(DT_FMT)
                 # Set job.error or add
                 if job.error:
                     job.error += '\n' + error_msg
