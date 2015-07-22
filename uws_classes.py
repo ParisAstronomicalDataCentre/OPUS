@@ -151,12 +151,12 @@ class Job(object):
         if not self.wadl:
             self.wadl = self.read_wadl()
         # Pop attributes keywords from POST or WADL
-        self.execution_duration = post.pop('EXECUTION_DURATION', wadl.get('duration', EXECUTION_DURATION_DEF))
+        self.execution_duration = post.pop('EXECUTION_DURATION', self.wadl.get('duration', EXECUTION_DURATION_DEF))
         # Set parameters from POST
         for pname, value in post.iteritems():
             if pname not in ['PHASE']:
                 # TODO: use WADL to check if value is valid
-                if pname not in wadl['parameters']:
+                if pname not in self.wadl['parameters']:
                     logger.warning('Parameter {} not found in WADL'.format(pname))
                 self.parameters[pname] = {'value': value, 'byref': False}
         # Upload files for multipart/form-data
