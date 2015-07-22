@@ -109,6 +109,7 @@ class SLURMManager(Manager):
             '    curl -s -o $rd/logs/error_signal -d "jobid=$SLURM_JOBID" -d "phase=ERROR" '
             '        --data-urlencode "error_msg=$msg" '
             '        https://voparis-uws-test.obspm.fr/handler/job_event',
+            '    echo "$msg"',
             '}',
             'trap "error_handler" INT TERM EXIT',
             'mkdir $wd',
