@@ -101,11 +101,9 @@ class SLURMManager(Manager):
             'error_handler()',
             '{',
             '    echo "error_handler called!"',
-            #'    wd=$1',
-            #'    rd=$2',
             '    echo "Working dir is $wd"',
             '    echo "Results dir is $rd"',
-            '    msg="${BASH_SOURCE[1]}"',  # ${BASH_SOURCE[1]}: line ${BASH_LINENO[0]}: ${FUNCNAME[1]}"'
+            '    msg="Error in ${BASH_SOURCE[1]} (line ${BASH_LINENO[0]}): $BASH_COMMAND: $@"',  # ${BASH_SOURCE[1]}: line ${BASH_LINENO[0]}: ${FUNCNAME[1]}"'
             '    touch $rd/error'
             '    echo $msg',
             '    echo $msg >&2',
