@@ -114,6 +114,7 @@ class SLURMManager(Manager):
             'rd={}{}'.format(self.results_path, job.jobid),
             'mkdir $wd',
             'mkdir $rd',
+            'mkdir $rd/logs',
             'cd $wd',
             'echo "Working dir is $wd"',
             'echo "Results dir is $rd"',
@@ -129,7 +130,6 @@ class SLURMManager(Manager):
             '        --data-urlencode "error_msg=$msg" '
             '        https://voparis-uws-test.obspm.fr/handler/job_event',
             '    rm -rf $wd',
-            '    mkdir $rd/logs',
             '    cp /obs/vouws/uws_logs/$SLURM_JOBID.job $rd/logs/stdout.log',
             '    cp /obs/vouws/uws_logs/$SLURM_JOBID.err $rd/logs/stderr.log',
             '    exit 1',
@@ -155,7 +155,6 @@ class SLURMManager(Manager):
             'touch $rd/done',
             'echo "Job done"',
             # Move logs to $rd/logs
-            'mkdir $rd/logs',
             'cp /obs/vouws/uws_logs/$SLURM_JOBID.job $rd/logs/stdout.log',
             'cp /obs/vouws/uws_logs/$SLURM_JOBID.err $rd/logs/stderr.log',
             #'curl -s -o $rd/logs/done_signal -d "jobid=$SLURM_JOBID" -d "phase=COMPLETED" https://voparis-uws-test.obspm.fr/handler/job_event',
