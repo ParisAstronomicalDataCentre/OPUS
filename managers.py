@@ -132,6 +132,7 @@ class SLURMManager(Manager):
             '    mkdir $rd/logs',
             '    cp /obs/vouws/uws_logs/$SLURM_JOBID.job $rd/logs/stdout.log',
             '    cp /obs/vouws/uws_logs/$SLURM_JOBID.err $rd/logs/stderr.log',
+            '    exit 1',
             '}',
             'trap "error_handler" INT TERM EXIT',
             'echo "Signal start"',
