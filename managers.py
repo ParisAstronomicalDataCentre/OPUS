@@ -105,7 +105,7 @@ class SLURMManager(Manager):
             #'    rd=$2',
             '    echo "Working dir is $wd"',
             '    echo "Results dir is $rd"',
-            '    msg="Test message"',  # ${BASH_SOURCE[1]}: line ${BASH_LINENO[0]}: ${FUNCNAME[1]}"'
+            '    msg="${BASH_SOURCE[1]}"',  # ${BASH_SOURCE[1]}: line ${BASH_LINENO[0]}: ${FUNCNAME[1]}"'
             '    touch $rd/error'
             '    echo $msg',
             '    echo $msg >&2',
@@ -115,7 +115,6 @@ class SLURMManager(Manager):
             '    curl -s -o $rd/logs/error_signal -d "jobid=$SLURM_JOBID" -d "phase=ERROR" '
             '        --data-urlencode "error_msg=$msg" '
             '        https://voparis-uws-test.obspm.fr/handler/job_event',
-            '    [[ $sig == EXIT ]] || kill -$sig $$',
             '}',
             'trap "error_handler" INT TERM EXIT',
             'mkdir $wd',
