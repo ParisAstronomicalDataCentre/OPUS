@@ -132,6 +132,7 @@ class SLURMManager(Manager):
             '    rm -rf $wd',
             '    cp /obs/vouws/uws_logs/$SLURM_JOBID.job $rd/logs/stdout.log',
             '    cp /obs/vouws/uws_logs/$SLURM_JOBID.err $rd/logs/stderr.log',
+            '    trap - INT TERM EXIT',
             '    exit 1',
             '}',
             'trap "error_handler" INT TERM EXIT',
@@ -157,6 +158,7 @@ class SLURMManager(Manager):
             # Move logs to $rd/logs
             'cp /obs/vouws/uws_logs/$SLURM_JOBID.job $rd/logs/stdout.log',
             'cp /obs/vouws/uws_logs/$SLURM_JOBID.err $rd/logs/stderr.log',
+            'exit 0',
             #'curl -s -o $rd/logs/done_signal -d "jobid=$SLURM_JOBID" -d "phase=COMPLETED" https://voparis-uws-test.obspm.fr/handler/job_event',
         ])
         return '\n'.join(pbs)
