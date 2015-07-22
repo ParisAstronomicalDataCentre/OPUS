@@ -103,8 +103,11 @@ class SLURMManager(Manager):
             '    echo "error_handler called!"',
             '    wd=$1',
             '    rd=$2',
+            '    echo "Working dir is $wd"',
+            '    echo "Results dir is $rd"',
+            '    msg="Test message"',  # ${BASH_SOURCE[1]}: line ${BASH_LINENO[0]}: ${FUNCNAME[1]}"'
             '    touch $rd/error'
-            '    msg="${BASH_SOURCE[1]}: line ${BASH_LINENO[0]}: ${FUNCNAME[1]}"'
+            '    echo $msg',
             '    echo $msg >&2',
             '    cp /obs/vouws/uws_logs/$SLURM_JOBID.job $rd/logs',
             '    cp /obs/vouws/uws_logs/$SLURM_JOBID.err $rd/logs',
