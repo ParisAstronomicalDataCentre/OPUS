@@ -100,17 +100,9 @@ class SLURMManager(Manager):
             #'set -e ',
             'error_handler()',
             '{',
-            '    echo "error_handler called!"',
-            '    echo "Working dir is $wd"',
-            '    echo "Results dir is $rd"',
-            '    local frame=0',
-            '    while caller $frame; do',
-            '        ((frame++));',
-            '    done',
-            '    msg="Error in ${BASH_SOURCE[1]}: $BASH_COMMAND"',  # ${BASH_SOURCE[1]}: line ${BASH_LINENO[0]}: ${FUNCNAME[1]}"'
             '    touch $rd/error'
-            '    echo $msg',
-            '    echo $msg >&2',
+            '    error_string < /obs/vouws/uws_logs/$SLURM_JOBID.err',
+            '    msg="Error in ${BASH_SOURCE[1]##*/} running command: $BASH_COMMAND: ${error_string}"',  # ${BASH_SOURCE[1]}: line ${BASH_LINENO[0]}: ${FUNCNAME[1]}"'
             '    cp /obs/vouws/uws_logs/$SLURM_JOBID.job $rd/logs',
             '    cp /obs/vouws/uws_logs/$SLURM_JOBID.err $rd/logs',
             '    rm -rf $wd',
