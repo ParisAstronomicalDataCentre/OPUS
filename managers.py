@@ -78,7 +78,22 @@ class SLURMManager(Manager):
         duration = dt.timedelta(0, job.execution_duration)
         # duration format is 00:01:00 for 1 min
         duration_str = str(duration).replace(' days', '').replace(' day', '').replace(', ', '-')
-        wadl = job.read_wadl()
+        if not job.wadl:
+            job.wadl = job.read_wadl()
+        # Identify result filenames
+        cp_results = []
+        for rname, r in job.wadl['results'].iteritems():
+            if rname in job.parameters:
+                # The expected result filename is also a defined parameter
+                fname = job.parameters[rname]['value']
+            elif rname in job.wadl['parameters']:
+                # The expected result filename is a parameter listed in the WADL with a default value
+                fname = job.wadl['parameters'][rname]['default']
+            else:
+                # The result filename is directly the name given as default in the WADL
+                fname = r['default']
+            cp_results.append('cp $wd/{} $rd/results'.format(fname))
+        # Create PBS
         pbs = [
             '#!/bin/bash',
             '#SBATCH --job-name={}'.format(job.jobname),
@@ -129,9 +144,12 @@ class SLURMManager(Manager):
             '. /obs/vouws/uws_params/{}.params'.format(job.jobid),
             # Run script in the current environment (with SLURM_JOBID defined)
             '. /obs/vouws/uws_scripts/{}.sh'.format(job.jobname),
-            '### CLEAN',
+            '### CP RESULTS',
             'mkdir $rd/results',
-            # TODO: Move results to $rd
+        ])
+        pbs.extend(cp_results)
+        pbs.extend([
+            '### CLEAN',
             'rm -rf $wd',
             'touch $rd/done',
             'echo "Job done"',

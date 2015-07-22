@@ -52,6 +52,7 @@ class Job(object):
             self.jobid = jobid
             self.jobid_cluster = None
         self.user = user
+        self.wadl = None
         # Link to the storage, e.g. SQLiteStorage, see settings.py
         self.storage = storage.__dict__[STORAGE]()
         # Link to the job manager, e.g. SLURMManager, see settings.py
@@ -126,6 +127,7 @@ class Job(object):
             for r in results_block.getchildren():
                 results[r.get('value')] = {
                     'mediaType': r.get('mediaType'),
+                    'default': r.get('default'),
                     'doc': r.getchildren()[0].text,
                 }
             logger.info('WADL read!')
@@ -146,7 +148,8 @@ class Job(object):
     def set_from_post(self, post, files):
         """Set attributes and parameters from POST"""
         # Read WADL
-        wadl = self.read_wadl()
+        if not self.wadl:
+            self.wadl = self.read_wadl()
         # Pop attributes keywords from POST or WADL
         self.execution_duration = post.pop('EXECUTION_DURATION', wadl.get('duration', EXECUTION_DURATION_DEF))
         # Set parameters from POST

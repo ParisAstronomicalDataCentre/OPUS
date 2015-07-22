@@ -285,10 +285,10 @@
 	                <param style="template" name="job-id" type="xs:string" required="true"/>
 	                <param style="template" name="result-id" type="xs:string" required="true">
 <!-- INSERT RESULTS NAME -->
-<option value="outfile" mediaType="image/fits">
+<option value="outfile" mediaType="image/fits" default="cntmap.fits">
     <doc>Output counts map or observation definition file</doc>
 </option>
-<option value="logfile" mediaType="text/plain">
+<option value="logfile" mediaType="text/plain" default="ctbin.log">
     <doc>Log filename</doc>
 </option>
 <!-- END: results name -->
