@@ -97,19 +97,19 @@ class SLURMManager(Manager):
             'wd={}{}'.format(self.working_path, job.jobid),
             'rd={}{}'.format(self.results_path, job.jobid),
             'echo "Set trap"',
-            #'set -e ',
+            'set -e ',
             'error_handler()',
             '{',
             '    touch $rd/error'
-            '    error_string < /obs/vouws/uws_logs/$SLURM_JOBID.err',
+            '    error_string=`tac /obs/vouws/uws_logs/$SLURM_JOBID.err | grep -m 1 .`',
             '    msg="Error in ${BASH_SOURCE[1]##*/} running command: $BASH_COMMAND: ${error_string}"',  # ${BASH_SOURCE[1]}: line ${BASH_LINENO[0]}: ${FUNCNAME[1]}"'
-            '    cp /obs/vouws/uws_logs/$SLURM_JOBID.job $rd/logs',
-            '    cp /obs/vouws/uws_logs/$SLURM_JOBID.err $rd/logs',
-            '    rm -rf $wd',
             '    curl -s -o $rd/logs/error_signal -d "jobid=$SLURM_JOBID" -d "phase=ERROR" '
             '        --data-urlencode "error_msg=$msg" '
             '        https://voparis-uws-test.obspm.fr/handler/job_event',
             '    echo "$msg"',
+            '    rm -rf $wd',
+            '    cp /obs/vouws/uws_logs/$SLURM_JOBID.job $rd/logs',
+            '    cp /obs/vouws/uws_logs/$SLURM_JOBID.err $rd/logs',
             '}',
             'trap "error_handler" INT TERM EXIT',
             'mkdir $wd',
@@ -128,14 +128,14 @@ class SLURMManager(Manager):
             # Run script in the current environment (with SLURM_JOBID defined)
             '. /obs/vouws/uws_scripts/{}.sh'.format(job.jobname),
             '### CLEAN',
-            # Move logs to $rd/logs
-            'cp /obs/vouws/uws_logs/$SLURM_JOBID.job $rd/logs',
-            'cp /obs/vouws/uws_logs/$SLURM_JOBID.err $rd/logs',
             'mkdir $rd/results',
             # TODO: Move results to $rd
             'rm -rf $wd',
             'touch $rd/done',
             'echo "Job done"',
+            # Move logs to $rd/logs
+            'cp /obs/vouws/uws_logs/$SLURM_JOBID.job $rd/logs',
+            'cp /obs/vouws/uws_logs/$SLURM_JOBID.err $rd/logs',
             #'curl -s -o $rd/logs/done_signal -d "jobid=$SLURM_JOBID" -d "phase=COMPLETED" https://voparis-uws-test.obspm.fr/handler/job_event',
         ])
         return '\n'.join(pbs)
