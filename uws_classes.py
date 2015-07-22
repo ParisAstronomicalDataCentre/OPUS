@@ -120,8 +120,15 @@ class Job(object):
                     'type': p.get('type'),
                     'required': p.get('required'),
                     'default': p.get('default'),
-                    'prompt': p.getchildren()[0].text
+                    'doc': p.getchildren()[0].text,
                 }
+            results_block = wadl_tree.find(".//{http://wadl.dev.java.net/2009/02}param[@name='result-id']")
+            for r in results_block.getchildren():
+                results[r.get('value')] = {
+                    'mediaType': r.get('mediaType'),
+                    'doc': r.getchildren()[0].text,
+                }
+            logger.info('WADL read!')
         except IOError:
             # if file does not exist, continue and return an empty dict
             return {}
@@ -146,6 +153,8 @@ class Job(object):
         for pname, value in post.iteritems():
             if pname not in ['PHASE']:
                 # TODO: use WADL to check if value is valid
+                if pname not in wadl['parameters']:
+                    logger.warning('Parameter {} not found in WADL'.format(pname))
                 self.parameters[pname] = {'value': value, 'byref': False}
         # Upload files for multipart/form-data
         for fname, f in files.iteritems():
@@ -153,6 +162,7 @@ class Job(object):
             if not os.path.isdir(upload_dir):
                 os.makedirs(upload_dir)
             f.save(upload_dir + '/' + f.filename)
+            # Parameter value is set to the file name on server
             value = f.filename
             self.parameters[fname] = {'value': value, 'byref': True}
         # Save to storage

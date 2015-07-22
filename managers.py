@@ -63,11 +63,11 @@ class SLURMManager(Manager):
         self.mail = mail
         self.ssh_arg = user + '@' + host
         # self.sbatch = sbatch
-        self.pbs_path = 'uws_pbs/'
-        self.params_path = 'uws_params/'
+        self.pbs_path = '/obs/vouws/uws_pbs/'
+        self.params_path = '/obs/vouws/uws_params/'
         self.working_path = '/obs/vouws/scratch/'
         self.results_path = '/obs/vouws/poubelle/'
-        self.uws_handler = 'uws_scripts/uws_handler.sh'
+        self.uws_handler = '/obs/vouws/uws_scripts/uws_handler.sh'
 
     def _make_pbs(self, job):
         """Make PBS file content for given job
@@ -78,6 +78,7 @@ class SLURMManager(Manager):
         duration = dt.timedelta(0, job.execution_duration)
         # duration format is 00:01:00 for 1 min
         duration_str = str(duration).replace(' days', '').replace(' day', '').replace(', ', '-')
+        wadl = job.read_wadl()
         pbs = [
             '#!/bin/bash',
             '#SBATCH --job-name={}'.format(job.jobname),
@@ -96,28 +97,29 @@ class SLURMManager(Manager):
             # Init job execution
             'wd={}{}'.format(self.working_path, job.jobid),
             'rd={}{}'.format(self.results_path, job.jobid),
+            'mkdir $wd',
+            'mkdir $rd',
+            'cd $wd',
+            'echo "Working dir is $wd"',
+            'echo "Results dir is $rd"',
             'echo "Set trap"',
             'set -e ',
             'error_handler()',
             '{',
-            '    touch $rd/error'
-            '    error_string=`tac /obs/vouws/uws_logs/$SLURM_JOBID.err | grep -m 1 .`',
-            '    msg="Error in ${BASH_SOURCE[1]##*/} running command: $BASH_COMMAND: ${error_string}"',  # ${BASH_SOURCE[1]}: line ${BASH_LINENO[0]}: ${FUNCNAME[1]}"'
+            '    touch $rd/error',
+            #'    error_string=`tac /obs/vouws/uws_logs/$SLURM_JOBID.err | grep -m 1 .`',
+            '    msg="Error in ${BASH_SOURCE[1]##*/} running command: $BASH_COMMAND"',  # ${BASH_SOURCE[1]}: line ${BASH_LINENO[0]}: ${FUNCNAME[1]}"'
+            '    echo "$msg"',
             '    curl -s -o $rd/logs/error_signal -d "jobid=$SLURM_JOBID" -d "phase=ERROR" '
             '        --data-urlencode "error_msg=$msg" '
             '        https://voparis-uws-test.obspm.fr/handler/job_event',
-            '    echo "$msg"',
             '    rm -rf $wd',
-            '    cp /obs/vouws/uws_logs/$SLURM_JOBID.job $rd/logs',
-            '    cp /obs/vouws/uws_logs/$SLURM_JOBID.err $rd/logs',
+            '    mkdir $rd/logs',
+            '    cp /obs/vouws/uws_logs/$SLURM_JOBID.job $rd/logs/stdout.log',
+            '    cp /obs/vouws/uws_logs/$SLURM_JOBID.err $rd/logs/stderr.log',
             '}',
             'trap "error_handler" INT TERM EXIT',
-            'mkdir $wd',
-            'mkdir $rd',
-            'mkdir $rd/logs',
-            'cd $wd',
-            'echo "Working dir is $wd"',
-            'echo "Results dir is $rd"',
+            'echo "Signal start"',
             'curl -s -o $rd/logs/start_signal -d "jobid=$SLURM_JOBID" -d "phase=RUNNING" '
             '    https://voparis-uws-test.obspm.fr/handler/job_event',
             'echo "Job started"',
@@ -134,8 +136,9 @@ class SLURMManager(Manager):
             'touch $rd/done',
             'echo "Job done"',
             # Move logs to $rd/logs
-            'cp /obs/vouws/uws_logs/$SLURM_JOBID.job $rd/logs',
-            'cp /obs/vouws/uws_logs/$SLURM_JOBID.err $rd/logs',
+            'mkdir $rd/logs',
+            'cp /obs/vouws/uws_logs/$SLURM_JOBID.job $rd/logs/stdout.log',
+            'cp /obs/vouws/uws_logs/$SLURM_JOBID.err $rd/logs/stderr.log',
             #'curl -s -o $rd/logs/done_signal -d "jobid=$SLURM_JOBID" -d "phase=COMPLETED" https://voparis-uws-test.obspm.fr/handler/job_event',
         ])
         return '\n'.join(pbs)
@@ -162,6 +165,8 @@ class SLURMManager(Manager):
             # params = job.parameters_to_json()
             # TODO: wget files if param starts with http://
             f.write(params)
+            # TODO: set results as file names, to be copied after job completion
+
         # Copy parameter file
         cmd2 = ['scp', PARAMS_PATH + params_file, self.ssh_arg + ':' + self.params_path + params_file]
         sp.check_output(cmd2, stderr=sp.STDOUT)

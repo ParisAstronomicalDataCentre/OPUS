@@ -50,6 +50,7 @@ SLURM_SBATCH_ADD = [
 PHASE_CONVERT = {
     'RUNNING': 'EXECUTING',
     'FAILED': 'ERROR',
+    'TIMEOUT': 'ERROR',
 }
 
 # Default destruction interval
