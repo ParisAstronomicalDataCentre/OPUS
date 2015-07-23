@@ -438,7 +438,7 @@ class Job(object):
                     logger.info('add result ' + rname + ' ' + str(r))
                     url = '{}/{}/{}/results/{}'.format(BASE_URL, job.jobname, job.jobid, rname)
                     job.results[rname] = {'url': url, 'mediaType': r['mediaType']}
-                job.storage.save(self, save_attributes=False, save_parameters=False, save_results=True)
+                job.storage.save(job, save_attributes=False, save_parameters=False, save_results=True)
                 # Set job.end_time
                 try:
                     job.end_time = job.manager.get_end_time(job)
