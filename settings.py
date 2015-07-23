@@ -16,8 +16,8 @@ LOG_FILE = 'uws_server.log'
 BASE_URL = 'http://localhost:8080'
 
 # If parameters are files they are uploaded onthe UWS server
-UPLOAD_PATH = 'uploads/'
-DATA_PATH = 'uws_data/'
+UPLOAD_PATH = '/home/mservillat/CTA/git_voparis/uws-server/uploads/'
+DATA_PATH = '/home/mservillat/CTA/git_voparis/uws-server/uws_data/'
 
 # params files are first created locally then scp to cluster
 PARAMS_PATH = '/home/mservillat/CTA/git_voparis/uws-server/params/'
