@@ -169,7 +169,7 @@ class SQLiteStorage(Storage):
             # Query db for job results
             query = "SELECT * FROM job_results WHERE jobid='{}';".format(job.jobid)
             results = self.cursor.execute(query).fetchall()
-            results_dict = {row['name']: {'url': row['url']} for row in results}
+            results_dict = {row['name']: {'url': row['url'], 'mediaType': row['mediaType']} for row in results}
             job.results = results_dict
         else:
             job.results = {}

@@ -27,9 +27,10 @@ CREATE TABLE IF NOT EXISTS job_parameters (
 );
 
 CREATE TABLE IF NOT EXISTS job_results (
-    jobid varchar(36) not null,
-    name  varchar(255),
-    url   varchar(255),
+    jobid       varchar(36) not null,
+    name        varchar(64),
+    url         varchar(255),
+    mediaType   varchar(64),
     PRIMARY KEY (jobid, name)
 );
 

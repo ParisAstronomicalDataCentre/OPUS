@@ -207,7 +207,7 @@ def show_db():
     html = ''
     try:
         logger.info('Show Database for ' + user)
-        joblist = JobList('ctbin', user, request.url)
+        joblist = JobList('ctbin', user)
         return joblist.to_html()
     except:
         abort_500_except()
@@ -295,6 +295,10 @@ def job_event():
                                 ''.format(job.jobname, job.jobid, cur_phase, new_phase, ip))
                 else:
                     raise UserWarning('Phase is already ' + new_phase)
+            elif 'result' in request.POST:
+                # TODO: get result from job.manager
+                # TODO: add result to job.results and save to storage
+                pass
             else:
                 raise UserWarning('Unknown event sent for job ' + job.jobid)
         else:
@@ -326,7 +330,7 @@ def get_joblist(jobname):
     try:
         user = set_user()
         logger.info(jobname)
-        joblist = JobList(jobname, user, request.url)
+        joblist = JobList(jobname, user)
         xml_out = joblist.to_xml()
         response.content_type = 'text/xml; charset=UTF-8'
         return xml_out

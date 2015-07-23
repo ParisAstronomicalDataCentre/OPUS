@@ -79,7 +79,7 @@ class SLURMManager(Manager):
         # duration format is 00:01:00 for 1 min
         duration_str = str(duration).replace(' days', '').replace(' day', '').replace(', ', '-')
         if not job.wadl:
-            job.wadl = job.read_wadl()
+            job.read_wadl()
         # Identify result filenames
         cp_results = []
         for rname, r in job.wadl['results'].iteritems():

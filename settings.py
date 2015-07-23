@@ -13,6 +13,8 @@ DEBUG = True
 
 LOG_FILE = 'uws_server.log'
 
+BASE_URL = 'http://localhost:8080'
+
 # If parameters are files they are uploaded onthe UWS server
 UPLOAD_PATH = 'upload/'
 

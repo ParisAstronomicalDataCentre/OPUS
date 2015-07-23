@@ -52,6 +52,7 @@ class Job(object):
             self.jobid = jobid
             self.jobid_cluster = None
         self.user = user
+        # Prepare wadl attribute
         self.wadl = None
         # Link to the storage, e.g. SQLiteStorage, see settings.py
         self.storage = storage.__dict__[STORAGE]()
@@ -140,7 +141,7 @@ class Job(object):
         # TODO: Read expected duration from WADL
         job_wadl['duration'] = 60
         # TODO: Read expected quote from WADL?
-        return job_wadl
+        self.wadl = job_wadl
 
     # ----------
     # Methods to get job attributes from storage or POST
@@ -149,7 +150,7 @@ class Job(object):
         """Set attributes and parameters from POST"""
         # Read WADL
         if not self.wadl:
-            self.wadl = self.read_wadl()
+            self.read_wadl()
         # Pop attributes keywords from POST or WADL
         self.execution_duration = post.pop('EXECUTION_DURATION', self.wadl.get('duration', EXECUTION_DURATION_DEF))
         # Set parameters from POST
@@ -419,6 +420,11 @@ class Job(object):
                     logger.warning('job.manager.get_end_time(job) not responding, set end_time=now')
                     job.end_time = now.strftime(DT_FMT)
                 # TODO: Copy results to the UWS server if job is COMPLETED (done by cluster for now)
+                if not job.wadl:
+                    job.read_wadl()
+                for rname, r in job.wadl['results'].iteritems():
+                    url = '{}/{}/{}/results/{}'.format(BASE_URL, job.jobname, job.jobid, rname)
+                    job.results[rname] = {'url': url, 'mediaType': r['mediaType']}
 
             def phase_error(job, error_msg):
                 # Set job.end_time if not already in ERROR phase
@@ -447,7 +453,6 @@ class Job(object):
             # Update phase
             self.phase = new_phase
             # Save job description
-            #self.save_description()
             self.storage.save(self)
         else:
             raise UserWarning('Job {} cannot be updated to {} while in phase {}'
@@ -461,11 +466,10 @@ class Job(object):
 class JobList(object):
     """JobList with attributes and function to fetch from storage and return as XML"""
 
-    def __init__(self, jobname, user, url):
+    def __init__(self, jobname, user):
         self.jobname = jobname
         self.user = user
         # The URL is required to include a link for each job in the XML representation
-        self.url = url
         # Link to the storage, e.g. SQLiteStorage, see settings.py
         self.storage = storage.__dict__[STORAGE]()
         self.jobs = self.storage.get_list(self)
@@ -481,7 +485,7 @@ class JobList(object):
             'xmlns:xlink="http://www.w3.org/1999/xlink">',
         ]
         for job in self.jobs:
-            href = self.url + '/' + job['jobid']
+            href = '{}/{}/{}'.format(BASE_URL, self.jobname, job['jobid'])
             xml_out.append('<uws:jobref id="{}" xlink:href="{}">'.format(job['jobid'], href))
             xml_out.append('<uws:phase>{}</uws:phase>'.format(job['phase']))
             xml_out.append('</uws:jobref>')
