@@ -435,7 +435,7 @@ class Job(object):
                 if not job.wadl:
                     job.read_wadl()
                 for rname, r in job.wadl['results'].iteritems():
-                    logger.info('add result ' + rname)
+                    logger.info('add result ' + rname + ' ' + str(r))
                     url = '{}/{}/{}/results/{}'.format(BASE_URL, job.jobname, job.jobid, rname)
                     job.results[rname] = {'url': url, 'mediaType': r['mediaType']}
                 self.storage.save(self, save_attributes=False, save_parameters=False, save_results=True)
