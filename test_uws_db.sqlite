@@ -57,7 +57,7 @@ INSERT INTO job_parameters (jobid, name, value)
  VALUES ('22222222-e656-b924-c14a-fbd02f9ebaa9', 'evfile', 'http://voplus.obspm.fr/cta/events.fits');
 INSERT INTO job_parameters (jobid, name, value)
  VALUES ('22222222-e656-b924-c14a-fbd02f9ebaa9', 'enumbins', '1');
-INSERT INTO job_results (jobid, name, url)
- VALUES ('22222222-e656-b924-c14a-fbd02f9ebaa9', '0', 'http://voparis-uws.obspm.fr/data/uwsdata/644029/results/outfile.fits');
-INSERT INTO job_results (jobid, name, url)
- VALUES ('22222222-e656-b924-c14a-fbd02f9ebaa9', '1', 'http://voparis-uws.obspm.fr/data/uwsdata/644029/results/ctbin.log');
+INSERT INTO job_results (jobid, name, url, mediaType)
+ VALUES ('22222222-e656-b924-c14a-fbd02f9ebaa9', 'outfile', 'http://voparis-uws.obspm.fr/data/uwsdata/644029/results/outfile', 'image/fits');
+INSERT INTO job_results (jobid, name, url, mediaType)
+ VALUES ('22222222-e656-b924-c14a-fbd02f9ebaa9', 'logfile', 'http://voparis-uws.obspm.fr/data/uwsdata/644029/results/logfile', 'text/plain');

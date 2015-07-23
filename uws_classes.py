@@ -423,6 +423,7 @@ class Job(object):
                 if not job.wadl:
                     job.read_wadl()
                 for rname, r in job.wadl['results'].iteritems():
+                    logger.info('add result ' + rname)
                     url = '{}/{}/{}/results/{}'.format(BASE_URL, job.jobname, job.jobid, rname)
                     job.results[rname] = {'url': url, 'mediaType': r['mediaType']}
 
@@ -509,5 +510,5 @@ class JobList(object):
             # Results
             html += '<strong>Results</strong><br>'
             for rname, r in job.results.iteritems():
-                html += str(rname) + ': ' + r['url'] + '<br>'
+                html += '{} ({}): {} <br>'.format(str(rname), r['mediaType'], r['url'])
         return html
