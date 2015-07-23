@@ -856,7 +856,10 @@ def get_result(jobname, jobid, rname):
         logger.debug(fname)
         logger.debug(fname)
         response.set_header('Content-type', job.results[rname]['mediaType'])
-        return static_file(fname, root='{}/{}'.format(DATA_PATH, job.jobid), download=fname)
+        if 'text' in job.results[rname]['mediaType']:
+            return static_file(fname, root='{}/{}'.format(DATA_PATH, job.jobid))
+        else:
+            return static_file(fname, root='{}/{}'.format(DATA_PATH, job.jobid), download=fname)
     except storage.NotFoundWarning as e:
         abort_404(e.message)
     except:
