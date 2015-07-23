@@ -413,19 +413,21 @@ class Job(object):
                 job.end_time = end_time.strftime(DT_FMT)
 
             def phase_completed(job, error_msg):
-                # Set job.end_time
-                try:
-                    job.end_time = job.manager.get_end_time(job)
-                except:
-                    logger.warning('job.manager.get_end_time(job) not responding, set end_time=now')
-                    job.end_time = now.strftime(DT_FMT)
-                # TODO: Copy results to the UWS server if job is COMPLETED (done by cluster for now)
+                # Add results links to db
                 if not job.wadl:
                     job.read_wadl()
                 for rname, r in job.wadl['results'].iteritems():
                     logger.info('add result ' + rname)
                     url = '{}/{}/{}/results/{}'.format(BASE_URL, job.jobname, job.jobid, rname)
                     job.results[rname] = {'url': url, 'mediaType': r['mediaType']}
+                self.storage.save(self, save_attributes=False, save_parameters=False, save_results=True)
+                # Set job.end_time
+                try:
+                    job.end_time = job.manager.get_end_time(job)
+                except:
+                    logger.warning('job.manager.get_end_time(job) not responding, set end_time=now')
+                    job.end_time = now.strftime(DT_FMT)
+
 
             def phase_error(job, error_msg):
                 # Set job.end_time if not already in ERROR phase
