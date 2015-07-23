@@ -12,7 +12,7 @@ See http://www.ivoa.net/documents/UWS/20101010/REC-UWS-1.0-20101010.html
 import traceback
 import uuid
 from subprocess import CalledProcessError
-from bottle import Bottle, request, response, abort, redirect, run
+from bottle import Bottle, request, response, abort, redirect, run, static_file
 from uws_classes import *
 
 # Create a new application
@@ -738,8 +738,8 @@ def get_parameters(jobname, jobid):
         abort_500_except()
 
 
-@app.route('/<jobname>/<jobid>/parameters/<param>')
-def get_parameter(jobname, jobid, param):
+@app.route('/<jobname>/<jobid>/parameters/<pname>')
+def get_parameter(jobname, jobid, pname):
     """Get parameter <param> for job <jobid>
 
     Returns:
@@ -750,15 +750,15 @@ def get_parameter(jobname, jobid, param):
     """
     try:
         user = set_user()
-        logger.info(jobname + ' ' + jobid)
+        logger.info('param=' + pname + ' ' + jobname + ' ' + jobid)
         # Get job description from DB
         job = Job(jobname, jobid, user, get_parameters=True)
         # Check if param exists
-        if param not in job.parameters:
-            raise storage.NotFoundWarning('Parameter "{}" NOT FOUND for job "{}"'.format(param, jobid))
+        if pname not in job.parameters:
+            raise storage.NotFoundWarning('Parameter "{}" NOT FOUND for job "{}"'.format(pname, jobid))
         # Return parameter
         response.content_type = 'text/plain; charset=UTF-8'
-        return str(job.parameters[param]['value'])
+        return str(job.parameters[pname]['value'])
     except storage.NotFoundWarning as e:
         abort_404(e.message)
     except:
@@ -776,7 +776,7 @@ def post_parameter(jobname, jobid, pname):
     """
     try:
         user = set_user()
-        logger.info(jobname + ' ' + jobid)
+        logger.info('pname=' + pname + ' ' + jobname + ' ' + jobid)
         # Get value from POST
         if 'VALUE' not in request.forms:
             raise UserWarning('VALUE keyword required')
@@ -831,8 +831,8 @@ def get_results(jobname, jobid):
         abort_500_except()
 
 
-@app.route('/<jobname>/<jobid>/results/<result>')
-def get_result(jobname, jobid, result):
+@app.route('/<jobname>/<jobid>/results/<rname>')
+def get_result(jobname, jobid, rname):
     """Get parameter <param> for job <jobid>
 
     Returns:
@@ -843,15 +843,20 @@ def get_result(jobname, jobid, result):
     """
     try:
         user = set_user()
-        logger.info(jobname + ' ' + jobid)
+        logger.info('rname=' + rname + ' ' + jobname + ' ' + jobid)
         # Get job description from DB
-        job = Job(jobname, jobid, user, get_results=True)
+        job = Job(jobname, jobid, user, get_parameters=True, get_results=True)
         # Check if result exists
-        if result not in job.results:
-            raise storage.NotFoundWarning('Result "{}" NOT FOUND for job "{}"'.format(result, jobid))
+        if rname not in job.results:
+            raise storage.NotFoundWarning('Result "{}" NOT FOUND for job "{}"'.format(rname, jobid))
         # Return result
-        response.content_type = 'text/plain; charset=UTF-8'
-        return str(job.results[result]['url'])
+        #response.content_type = 'text/plain; charset=UTF-8'
+        #return str(job.results[result]['url'])
+        fname = job.get_result_filename(rname)
+        logger.debug(fname)
+        logger.debug(fname)
+        response.set_header('Content-type', job.results[rname]['mediaType'])
+        return static_file(fname, root='{}/{}'.format(DATA_PATH, job.jobid), download=fname)
     except storage.NotFoundWarning as e:
         abort_404(e.message)
     except:

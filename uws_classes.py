@@ -143,6 +143,24 @@ class Job(object):
         # TODO: Read expected quote from WADL?
         self.wadl = job_wadl
 
+    def get_result_filename(self, rname):
+        """Get the filename corresponding to the result name"""
+        if not self.wadl:
+            self.read_wadl()
+        if not self.parameters:
+            # need to read all parameters
+            self.storage.read(self, get_attributes=False, get_parameters=True, get_results=False)
+        if rname in self.parameters:
+            # The result filename is a defined parameter of the job
+            fname = self.parameters[rname]['value']
+        elif rname in self.wadl['parameters']:
+            # The result filename is a parameter with a default value in the WADL
+            fname = self.wadl['parameters'][rname]['default']
+        else:
+            # The result filename is the name given as default in the WADL
+            fname = self.wadl['results'][rname]['default']
+        return fname
+
     # ----------
     # Methods to get job attributes from storage or POST
 

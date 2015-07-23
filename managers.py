@@ -83,16 +83,9 @@ class SLURMManager(Manager):
         # Identify result filenames
         cp_results = []
         for rname, r in job.wadl['results'].iteritems():
-            if rname in job.parameters:
-                # The expected result filename is also a defined parameter
-                fname = job.parameters[rname]['value']
-            elif rname in job.wadl['parameters']:
-                # The expected result filename is a parameter listed in the WADL with a default value
-                fname = job.wadl['parameters'][rname]['default']
-            else:
-                # The result filename is directly the name given as default in the WADL
-                fname = r['default']
+            fname = job.get_result_filename(rname)
             cp_results.append('cp $wd/{} $rd/results'.format(fname))
+            cp_results.append('scp $rd/results/{} www@{}:{}/{}'.format(fname, BASE_URL, DATA_PATH, job.jobid))
         # Create PBS
         pbs = [
             '#!/bin/bash',
