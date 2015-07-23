@@ -853,8 +853,7 @@ def get_result(jobname, jobid, rname):
         #response.content_type = 'text/plain; charset=UTF-8'
         #return str(job.results[result]['url'])
         fname = job.get_result_filename(rname)
-        logger.debug(fname)
-        logger.debug(fname)
+        logger.debug(fname + ' ' + job.results[rname]['mediaType'])
         response.set_header('Content-type', job.results[rname]['mediaType'])
         if 'text' in job.results[rname]['mediaType']:
             return static_file(fname, root='{}/{}'.format(DATA_PATH, job.jobid))
