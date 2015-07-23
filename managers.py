@@ -85,7 +85,7 @@ class SLURMManager(Manager):
         for rname, r in job.wadl['results'].iteritems():
             fname = job.get_result_filename(rname)
             cp_results.append('cp $wd/{} $rd/results'.format(fname))
-        cp_results.append('scp -r $rd/results www@{}:{}/{}'.format(fname, BASE_URL, DATA_PATH, job.jobid))
+        cp_results.append('scp -r $rd/results www@{}:{}/{}'.format(BASE_URL.split('//')[-1], DATA_PATH, job.jobid))
         # Create PBS
         pbs = [
             '#!/bin/bash',
