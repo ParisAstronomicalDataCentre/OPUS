@@ -438,7 +438,6 @@ class Job(object):
                     logger.info('add result ' + rname + ' ' + str(r))
                     url = '{}/{}/{}/results/{}'.format(BASE_URL, job.jobname, job.jobid, rname)
                     job.results[rname] = {'url': url, 'mediaType': r['mediaType']}
-                job.storage.save(job, save_attributes=False, save_parameters=False, save_results=True)
                 # Set job.end_time
                 try:
                     job.end_time = job.manager.get_end_time(job)
@@ -473,7 +472,7 @@ class Job(object):
             # Update phase
             self.phase = new_phase
             # Save job description
-            self.storage.save(self)
+            self.storage.save(self, save_results=True)
         else:
             raise UserWarning('Job {} cannot be updated to {} while in phase {}'
                               ''.format(self.jobid, new_phase, self.phase))
