@@ -438,14 +438,13 @@ class Job(object):
                     logger.info('add result ' + rname + ' ' + str(r))
                     url = '{}/{}/{}/results/{}'.format(BASE_URL, job.jobname, job.jobid, rname)
                     job.results[rname] = {'url': url, 'mediaType': r['mediaType']}
-                self.storage.save(self, save_attributes=False, save_parameters=False, save_results=True)
+                job.storage.save(self, save_attributes=False, save_parameters=False, save_results=True)
                 # Set job.end_time
                 try:
                     job.end_time = job.manager.get_end_time(job)
                 except:
                     logger.warning('job.manager.get_end_time(job) not responding, set end_time=now')
                     job.end_time = now.strftime(DT_FMT)
-
 
             def phase_error(job, error_msg):
                 # Set job.end_time if not already in ERROR phase
