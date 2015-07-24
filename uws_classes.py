@@ -473,6 +473,7 @@ class Job(object):
             self.phase = new_phase
             # Save job description
             self.storage.save(self, save_results=True)
+            logger.debug(str(self.results))
         else:
             raise UserWarning('Job {} cannot be updated to {} while in phase {}'
                               ''.format(self.jobid, new_phase, self.phase))

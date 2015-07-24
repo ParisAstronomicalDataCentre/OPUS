@@ -99,6 +99,14 @@ class SQLiteStorage(Storage):
              'byref': job.parameters[pname]['byref']}
         self._save_query('job_parameters', d)
 
+    def _save_result(self, job, rname):
+        # Save job parameter to db
+        d = {'jobid': job.jobid,
+             'name': rname,
+             'url': job.results[rname]['url'],
+             'mediaType': job.results[rname]['mediaType']}
+        self._save_query('job_results', d)
+
     def save(self, job, save_attributes=True, save_parameters=False, save_results=False):
         """Save job information to storage (attributes, parameters and results)"""
 
@@ -117,11 +125,8 @@ class SQLiteStorage(Storage):
                     self._save_parameter(job, pname)
         if save_results:
             # Save job results to db
-            for rname, r in job.results.iteritems():
-                d = {'jobid': job.jobid,
-                     'name': rname,
-                     'url': r['url']}
-                self._save_query('job_results', d)
+            for rname in job.results.keys():
+                self._save_result(job, rname)
 
     # noinspection PyTypeChecker
     def read(self, job, get_attributes=True, get_parameters=False, get_results=False, from_jobid_cluster=False):
