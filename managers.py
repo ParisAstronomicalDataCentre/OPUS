@@ -86,6 +86,8 @@ class SLURMManager(Manager):
             fname = job.get_result_filename(rname)
             cp_results.append('cp $wd/{} $rd/results'.format(fname))
         cp_results.append('scp -r $rd/results www@{}:{}/{}'.format(BASE_URL.split('//')[-1], DATA_PATH, job.jobid))
+        # TODO: Identify parameters that need to be downloaded before processing
+        #wget_filenames = { k: v['id1'] for k,v in a.items() if 'id1' in v }
         # Create PBS
         pbs = [
             '#!/bin/bash',

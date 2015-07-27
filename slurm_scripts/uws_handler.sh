@@ -119,3 +119,5 @@ if [ ${action} = 'end_time' ]; then
    fi
 fi
 
+
+#sacct -j 9000 -o jobid,start,end,elapsed,state -P -n

@@ -219,7 +219,6 @@ class Job(object):
         """
         params = []
         for pname, pdict in self.parameters.iteritems():
-            # TODO: save URI on UWS server if byref=True
             params.append(pname + '=' + pdict['value'])
         return separator.join(params)
 
