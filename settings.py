@@ -10,20 +10,17 @@ import sys
 
 # Set debug mode, HTTP 500 Errors include traceback
 DEBUG = True
-
 LOG_FILE = 'app.log'
 
 BASE_URL = 'http://localhost:8080'
 
-# If parameters are files they are uploaded onthe UWS server
-UPLOAD_PATH = '/home/mservillat/CTA/git_voparis/uws-server/uploads/'
-DATA_PATH = '/home/mservillat/CTA/git_voparis/uws-server/uws_data/'
-
-# params files are first created locally then scp to cluster
-PARAMS_PATH = '/home/mservillat/CTA/git_voparis/uws-server/params/'
-
-# path for WADL files, should probably be accessed through a URL
-WADL_PATH = '/home/mservillat/CTA/git_voparis/uws-server/wadl/'
+APP_PATH = '/home/mservillat/CTA/git_voparis/uws-server'
+# If POST contains files they are uploaded on the UWS server
+UPLOAD_PATH = APP_PATH + '/uploads'
+# Path for job results and logs
+DATA_PATH = APP_PATH + '/uws_data'
+# Path for WADL files, should probably be accessed through a URL as static files
+WADL_PATH = APP_PATH + '/wadl'
 
 # Those servers have access to /job_event/<jobid_manager> to change the phase or report an error
 JOB_SERVERS = {
@@ -42,7 +39,7 @@ MANAGER = 'SLURMManager'
 SLURM_URL = 'quadri12.obspm.fr'  # 'tycho.obspm.fr'
 SLURM_USER = 'vouws'
 SLURM_USER_MAIL = 'mathieu.servillat@obspm.fr'
-SLURM_PBS_PATH = '/home/mservillat/CTA/git_voparis/uws-server/pbs/'
+SLURM_SBATCH_PATH = APP_PATH + '/sbatch'
 SLURM_SBATCH_ADD = [
     "#SBATCH --mem=200mb",
     "#SBATCH --nodes=1 --ntasks-per-node=1",
@@ -50,10 +47,19 @@ SLURM_SBATCH_ADD = [
     '#SBATCH --account=obspm',  # for quadri12...
     '#SBATCH --partition=def',  # for quadri12...'
 ]
+# Conversions for SLURM job state codes
 PHASE_CONVERT = {
-    'RUNNING': 'EXECUTING',
-    'FAILED': 'ERROR',
-    'TIMEOUT': 'ERROR',
+    'RUNNING': dict(phase='EXECUTING', msg='Job currently has an allocation.'),
+    'PENDING': dict(phase='QUEUED', msg='Job is awaiting resource allocation.'),
+    'CONFIGURING': dict(phase='QUEUED', msg='Job has been allocated resources, but are waiting for them '
+                                            'to become ready for use'),
+    'FAILED': dict(phase='ERROR', msg='Job terminated with non-zero exit code or other failure condition.'),
+    'NODE_FAIL': dict(phase='ERROR', msg='Job terminated due to failure of one or more allocated nodes.'),
+    'TIMEOUT': dict(phase='ERROR', msg='Job terminated upon reaching its time limit.'),
+    'PREEMPTED': dict(phase='ERROR', msg='Job terminated due to preemption.'),
+    'CANCELLED': dict(phase='ABORTED', msg='Job was explicitly cancelled by the user or system '
+                                           'administrator. The job may or may not have been initiated.'),
+    'SUSPENDED': dict(phase='SUSPENDED', msg='Job has an allocation, but execution has been suspended.'),
 }
 
 # Default destruction interval

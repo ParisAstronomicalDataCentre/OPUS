@@ -91,6 +91,11 @@ if [ ${action} = 'status' ]; then
    exit 0
 fi
 
+if [ ${action} = 'info' ]; then
+   sacct -j ${jobid} -o jobid,state,start,end,elapsed -P -n | head -1
+   exit $?
+fi
+
 if [ ${action} = 'start_time' ]; then
    if [ -f ${rd}/start ]; then
       start_time=`stat -c %y ${rd}/start | cut -d'.' -f1`

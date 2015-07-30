@@ -63,13 +63,13 @@ class SLURMManager(Manager):
         self.mail = mail
         self.ssh_arg = user + '@' + host
         # self.sbatch = sbatch
-        self.pbs_path = '/obs/vouws/uws_pbs/'
-        self.params_path = '/obs/vouws/uws_params/'
+        self.scripts_path = '/obs/vouws/uws_scripts/'
+        self.sbatch_path = '/obs/vouws/uws_sbatch/'
         self.working_path = '/obs/vouws/scratch/'
         self.results_path = '/obs/vouws/poubelle/'
         self.uws_handler = '/obs/vouws/uws_scripts/uws_handler.sh'
 
-    def _make_pbs(self, job):
+    def _make_sbatch(self, job):
         """Make PBS file content for given job
 
         Returns:
@@ -85,11 +85,12 @@ class SLURMManager(Manager):
         for rname, r in job.wadl['results'].iteritems():
             fname = job.get_result_filename(rname)
             cp_results.append('cp $wd/{} $rd/results'.format(fname))
-        cp_results.append('scp -r $rd/results www@{}:{}/{}'.format(BASE_URL.split('//')[-1], DATA_PATH, job.jobid))
+        uws_url = BASE_URL.split('//')[-1]
+        cp_results.append('scp -r $rd/results www@{}:{}/{}'.format(uws_url, DATA_PATH, job.jobid))
         # TODO: Identify parameters that need to be downloaded before processing
         #wget_filenames = { k: v['id1'] for k,v in a.items() if 'id1' in v }
         # Create PBS
-        pbs = [
+        sbatch = [
             '#!/bin/bash',
             '#SBATCH --job-name={}'.format(job.jobname),
             '#SBATCH --error=/obs/vouws/uws_logs/%j.err',
@@ -100,9 +101,9 @@ class SLURMManager(Manager):
             '#SBATCH --time=' + duration_str,
         ]
         # Insert server specific sbatch commands
-        pbs.extend(SLURM_SBATCH_ADD)
+        sbatch.extend(SLURM_SBATCH_ADD)
         # Script init and execution
-        pbs.extend([
+        sbatch.extend([
             '### INIT',
             # Init job execution
             'wd={}{}'.format(self.working_path, job.jobid),
@@ -138,14 +139,14 @@ class SLURMManager(Manager):
             'touch $rd/start',
             '### EXEC',
             # Load variables from params file
-            '. /obs/vouws/uws_params/{}.params'.format(job.jobid),
+            '. {}/{}_parameters.sh'.format(self.sbatch_path, job.jobid),
             # Run script in the current environment (with SLURM_JOBID defined)
-            '. /obs/vouws/uws_scripts/{}.sh'.format(job.jobname),
+            '. {}/{}.sh'.format(self.scripts_path, job.jobname),
             '### CP RESULTS',
             'mkdir $rd/results',
         ])
-        pbs.extend(cp_results)
-        pbs.extend([
+        sbatch.extend(cp_results)
+        sbatch.extend([
             '### CLEAN',
             'rm -rf $wd',
             'touch $rd/done',
@@ -157,7 +158,7 @@ class SLURMManager(Manager):
             'exit 0',
             #'curl -s -o $rd/logs/done_signal -d "jobid=$SLURM_JOBID" -d "phase=COMPLETED" https://voparis-uws-test.obspm.fr/handler/job_event',
         ])
-        return '\n'.join(pbs)
+        return '\n'.join(sbatch)
 
     def start(self, job):
         """Start job on SLURM server
@@ -166,30 +167,35 @@ class SLURMManager(Manager):
             jobid_cluster on SLURM server
         """
         # Create PBS file
-        pbs_file = job.jobid + '.pbs'
-        with open(SLURM_PBS_PATH + pbs_file, 'w') as f:
-            pbs = self._make_pbs(job)
-            f.write(pbs)
-        # Copy PBS file: 'scp pbs vouws@tycho:~/name > /dev/null'
-        cmd1 = ['scp', SLURM_PBS_PATH + pbs_file, self.ssh_arg + ':' + self.pbs_path + pbs_file]
+        sbatch_file_distant = '{}/{}.sh'.format(self.sbatch_path, job.jobid)
+        sbatch_file_local = '{}/{}.sh'.format(SLURM_SBATCH_PATH, job.jobid)
+        with open(sbatch_file_local, 'w') as f:
+            sbatch = self._make_sbatch(job)
+            f.write(sbatch)
+        # Copy PBS file: 'scp sbatch vouws@tycho:~/name > /dev/null'
+        cmd1 = ['scp',
+                sbatch_file_local,
+                '{}:{}/{}'.format(self.ssh_arg, sbatch_file_distant)]
         sp.check_output(cmd1, stderr=sp.STDOUT)
         # Create parameter file
-        params_file = job.jobid + '.params'
-        with open(PARAMS_PATH + params_file, 'w') as f:
-            # parameters are a list of key=value, may instead be a json file
+        param_file_distant = '{}/{}_parameters.sh'.format(self.sbatch_path, job.jobid)
+        param_file_local = '{}/{}_parameters.sh'.format(SLURM_SBATCH_PATH, job.jobid)
+        with open(param_file_local, 'w') as f:
+            # parameters are a list of key=value (easier for bash sourcing)
             params = job.parameters_to_text()
-            # params = job.parameters_to_json()
-            # TODO: wget files if param starts with http://
+            # TODO: scp files if param starts with http:// or file://
             f.write(params)
             # TODO: set results as file names, to be copied after job completion
-
         # Copy parameter file
-        cmd2 = ['scp', PARAMS_PATH + params_file, self.ssh_arg + ':' + self.params_path + params_file]
+        cmd2 = ['scp',
+                param_file_local,
+                '{}:{}/{}'.format(self.ssh_arg, param_file_distant)]
         sp.check_output(cmd2, stderr=sp.STDOUT)
         # Start job using uws_handler
         # 'ssh vouws@tycho.obspm.fr '~/uws/uwshandler.sh -x start -p ~/name''
         cmd3 = ['ssh', self.ssh_arg, self.uws_handler,
-                '-x start', '-p ' + self.pbs_path + pbs_file]
+                '-x start',
+                '-p {}/{}'.format(self.sbatch_path, sbatch_file)]
         jobid_cluster = sp.check_output(cmd3, stderr=sp.STDOUT)
         # Remove trailing \n from output
         return jobid_cluster[:-1]
@@ -200,7 +206,7 @@ class SLURMManager(Manager):
         cmd = ['ssh', self.ssh_arg, self.uws_handler,
                '-x abort',
                '-i ' + str(job.jobid_cluster),
-               '-r ' + self.results_path + job.jobid]
+               '-r {}/{}'.format(self.results_path, job.jobid)]
         sp.check_output(cmd, stderr=sp.STDOUT)
 
     def delete(self, job):
@@ -209,8 +215,8 @@ class SLURMManager(Manager):
         cmd = ['ssh', self.ssh_arg, self.uws_handler,
                '-x delete',
                '-i ' + str(job.jobid_cluster),
-               '-r ' + self.results_path + job.jobid,
-               '-w ' + self.working_path + job.jobid]
+               '-r {}/{}'.format(self.results_path, job.jobid),
+               '-w {}/{}'.format(self.working_path, job.jobid)]
         sp.check_output(cmd, stderr=sp.STDOUT)
 
     def get_status(self, job):
@@ -223,7 +229,7 @@ class SLURMManager(Manager):
         cmd = ['ssh', self.ssh_arg, self.uws_handler,
                '-x status',
                '-i ' + str(job.jobid_cluster),
-               '-r ' + self.results_path + job.jobid]
+               '-r {}/{}'.format(self.results_path, job.jobid)]
         phase = sp.check_output(cmd, stderr=sp.STDOUT)
         # TODO: change end time here if phase is COMPLETED?
         # Remove trailing \n from output

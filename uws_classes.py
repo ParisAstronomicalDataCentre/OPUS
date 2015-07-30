@@ -107,7 +107,7 @@ class Job(object):
 
     def read_wadl(self):
         """Read job description from WADL file"""
-        filename = WADL_PATH + self.jobname + '.wadl'
+        filename = '{}/{}.wadl'.format(WADL_PATH, self.jobname)
         job_wadl = {}
         parameters = {}
         results = {}
@@ -180,7 +180,7 @@ class Job(object):
                 self.parameters[pname] = {'value': value, 'byref': False}
         # Upload files for multipart/form-data
         for fname, f in files.iteritems():
-            upload_dir = UPLOAD_PATH + self.jobid
+            upload_dir = '{}/{}'.format(UPLOAD_PATH, self.jobid)
             if not os.path.isdir(upload_dir):
                 os.makedirs(upload_dir)
             f.save(upload_dir + '/' + f.filename)
@@ -376,7 +376,7 @@ class Job(object):
         # Remove job from storage
         self.storage.delete(self)
         # Remove uploaded files corresponding to jobid if needed
-        upload_dir = UPLOAD_PATH + self.jobid
+        upload_dir = '{}/{}'.format(UPLOAD_PATH, self.jobid)
         if os.path.isdir(upload_dir):
             shutil.rmtree(upload_dir)
 
@@ -407,7 +407,7 @@ class Job(object):
         - QUEUED / HELD / SUSPENDED
         - EXECUTING
         """
-        # TODO: DEBUG: PENDING and COMPLETED to be removed
+        # TODO: DEBUG: PENDING and COMPLETED to be removed, as no signals are expected for those phases
         if self.phase in ['PENDING', 'QUEUED', 'EXECUTING', 'HELD', 'SUSPENDED', 'COMPLETED', 'ERROR']:
             # Change phase
             now = dt.datetime.now()

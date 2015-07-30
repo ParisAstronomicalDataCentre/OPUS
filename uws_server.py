@@ -276,21 +276,22 @@ def job_event():
             if 'phase' in request.POST:
                 cur_phase = job.phase
                 new_phase = request.POST['phase']
+                msg = ''
                 if new_phase not in PHASES:
                     # TODO: remove PHASE_CONVERT, will be handled by cluster uws_oncompletion.sh
                     if new_phase in PHASE_CONVERT:
-                        new_phase = PHASE_CONVERT[new_phase]
+                        new_phase = PHASE_CONVERT[new_phase]['phase']
+                        msg = PHASE_CONVERT[new_phase]['msg']
                     else:
                         raise UserWarning('Unknown new phase ' + new_phase + ' for job ' + job.jobid)
                 # If phase=ERROR, add error message if available
                 if new_phase == 'ERROR':
                     if 'error_msg' in request.POST:
-                        job.change_status('ERROR', request.POST['error_msg'])
-                    else:
-                        job.change_status('ERROR')
+                        msg = request.POST['error_msg']
+                    job.change_status('ERROR', msg)
                     logger.info('{} {} ERROR reported (from {})'.format(job.jobname, job.jobid, ip))
                 elif new_phase != cur_phase:
-                    job.change_status(new_phase)
+                    job.change_status(new_phase, msg)
                     logger.info('{} {} phase {} --> {} (from {})'
                                 ''.format(job.jobname, job.jobid, cur_phase, new_phase, ip))
                 else:
