@@ -11,7 +11,7 @@ import sys
 # Set debug mode, HTTP 500 Errors include traceback
 DEBUG = True
 
-LOG_FILE = 'uws_server.log'
+LOG_FILE = 'app.log'
 
 BASE_URL = 'http://localhost:8080'
 
@@ -35,7 +35,7 @@ JOB_SERVERS = {
 
 # Storage of job information
 STORAGE = 'SQLiteStorage'
-DB_FILE = 'uws_server.db'
+DB_FILE = 'job_database.db'
 
 # Define a Manager and its properties
 MANAGER = 'SLURMManager'

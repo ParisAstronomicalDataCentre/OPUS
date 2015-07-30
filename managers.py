@@ -256,3 +256,8 @@ class SLURMManager(Manager):
         end_time = sp.check_output(cmd, stderr=sp.STDOUT)
         # Remove trailing \n from output,and replace ' ' by 'T' in ISO date
         return end_time[:-1].replace(' ','T')
+
+    # TODO: get info
+    # sacct -j 9000 -o jobid,start,end,elapsed,state -P -n
+
+    # TODO: get result?

@@ -5,9 +5,9 @@ import unittest
 from webtest import TestApp
 
 # Redefine LOG_FILE, DB_FILE, MANAGER
-LOG_FILE = 'test_uws_server.log'
 STORAGE = 'SQLiteStorage'
-DB_FILE = 'test_uws_server.db'
+DB_FILE = 'job_database_test.db'
+LOG_FILE = 'app_test.log'
 MANAGER = 'Manager'
 import uws_server
 

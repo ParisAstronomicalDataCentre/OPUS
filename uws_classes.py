@@ -433,6 +433,7 @@ class Job(object):
                 # Add results links to db
                 if not job.wadl:
                     job.read_wadl()
+                # TODO: scp results from cluster if not already done
                 for rname, r in job.wadl['results'].iteritems():
                     logger.info('add result ' + rname + ' ' + str(r))
                     url = '{}/{}/{}/results/{}'.format(BASE_URL, job.jobname, job.jobid, rname)
