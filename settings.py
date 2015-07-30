@@ -15,12 +15,6 @@ LOG_FILE = 'app.log'
 BASE_URL = 'http://localhost:8080'
 
 APP_PATH = '/home/mservillat/CTA/git_voparis/uws-server'
-# If POST contains files they are uploaded on the UWS server
-UPLOAD_PATH = APP_PATH + '/uploads'
-# Path for job results and logs
-DATA_PATH = APP_PATH + '/uws_data'
-# Path for WADL files, should probably be accessed through a URL as static files
-WADL_PATH = APP_PATH + '/wadl'
 
 # Those servers have access to /job_event/<jobid_manager> to change the phase or report an error
 JOB_SERVERS = {
@@ -39,7 +33,7 @@ MANAGER = 'SLURMManager'
 SLURM_URL = 'quadri12.obspm.fr'  # 'tycho.obspm.fr'
 SLURM_USER = 'vouws'
 SLURM_USER_MAIL = 'mathieu.servillat@obspm.fr'
-SLURM_SBATCH_PATH = APP_PATH + '/sbatch'
+SLURM_HOME_PATH = '/obs/vouws'
 SLURM_SBATCH_ADD = [
     "#SBATCH --mem=200mb",
     "#SBATCH --nodes=1 --ntasks-per-node=1",
@@ -47,8 +41,8 @@ SLURM_SBATCH_ADD = [
     '#SBATCH --account=obspm',  # for quadri12...
     '#SBATCH --partition=def',  # for quadri12...'
 ]
-# Conversions for SLURM job state codes
 PHASE_CONVERT = {
+    # Conversions for SLURM job state codes
     'RUNNING': dict(phase='EXECUTING', msg='Job currently has an allocation.'),
     'PENDING': dict(phase='QUEUED', msg='Job is awaiting resource allocation.'),
     'CONFIGURING': dict(phase='QUEUED', msg='Job has been allocated resources, but are waiting for them '
@@ -130,8 +124,7 @@ if os.path.exists('settings_local.py'):
     from settings_local import *
 #--- Include host-specific settings ------------------------------------------------------------------------------------
 
-
-# If imported from test.py, redefine settings
+#--- If imported from test.py, redefine settings -----------------------------------------------------------------------
 main_dict = sys.modules['__main__'].__dict__
 if 'test.py' in main_dict.get('__file__', ''):
     print '\nPerforming tests'
@@ -143,3 +136,15 @@ if 'test.py' in main_dict.get('__file__', ''):
         DB_FILE = main_dict['DB_FILE']
     if 'MANAGER' in main_dict:
         MANAGER = main_dict['MANAGER']
+#--- If imported from test.py, redefine settings -----------------------------------------------------------------------
+    
+#--- Set all _PATH based on APP_PATH -----------------------------------------------------------------------------------
+# If POST contains files they are uploaded on the UWS server
+UPLOAD_PATH = APP_PATH + '/uploads'
+# Path for job results and logs
+RESULTS_PATH = APP_PATH + '/results'
+# Path for WADL files, should probably be accessed through a URL as static files
+WADL_PATH = APP_PATH + '/wadl'
+# Path for SLURM sbatch files created by SLURMManager
+SLURM_SBATCH_PATH = APP_PATH + '/sbatch'
+#--- Set all _PATH based on APP_PATH -----------------------------------------------------------------------------------

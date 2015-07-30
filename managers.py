@@ -57,17 +57,18 @@ class Manager(object):
 class SLURMManager(Manager):
     """Manage interactions with SLURM queue manager (e.g. on tycho.obspm.fr)"""
 
-    def __init__(self, host=SLURM_URL, user=SLURM_USER, mail=SLURM_USER_MAIL):
+    def __init__(self, host=SLURM_URL, user=SLURM_USER, home=SLURM_HOME_PATH, mail=SLURM_USER_MAIL):
         self.host = host
         self.user = user
         self.mail = mail
         self.ssh_arg = user + '@' + host
-        # self.sbatch = sbatch
-        self.scripts_path = '/obs/vouws/uws_scripts/'
-        self.sbatch_path = '/obs/vouws/uws_sbatch/'
-        self.working_path = '/obs/vouws/scratch/'
-        self.results_path = '/obs/vouws/poubelle/'
-        self.uws_handler = '/obs/vouws/uws_scripts/uws_handler.sh'
+        # PATHs
+        self.log_path = '{}/logs'.format(home)
+        self.scripts_path = '{}/scripts'.format(home)
+        self.sbatch_path = '{}/sbatch'.format(home)
+        self.working_path = '{}/workdir'.format(home)  # may be a link on host
+        self.results_path = '{}/results'.format(home)  # may be a link on host
+        self.uws_handler = '{}/uws_handler.sh'.format(self.scripts_path)
 
     def _make_sbatch(self, job):
         """Make PBS file content for given job
@@ -86,7 +87,7 @@ class SLURMManager(Manager):
             fname = job.get_result_filename(rname)
             cp_results.append('cp $wd/{} $rd/results'.format(fname))
         uws_url = BASE_URL.split('//')[-1]
-        cp_results.append('scp -r $rd/results www@{}:{}/{}'.format(uws_url, DATA_PATH, job.jobid))
+        cp_results.append('scp -r $rd/results www@{}:{}/{}'.format(uws_url, RESULTS_PATH, job.jobid))
         # TODO: Identify parameters that need to be downloaded before processing
         #wget_filenames = { k: v['id1'] for k,v in a.items() if 'id1' in v }
         # Create PBS
@@ -106,8 +107,8 @@ class SLURMManager(Manager):
         sbatch.extend([
             '### INIT',
             # Init job execution
-            'wd={}{}'.format(self.working_path, job.jobid),
-            'rd={}{}'.format(self.results_path, job.jobid),
+            'wd={}/{}'.format(self.working_path, job.jobid),
+            'rd={}/{}'.format(self.results_path, job.jobid),
             'mkdir $wd',
             'mkdir $rd',
             'mkdir $rd/logs',
@@ -175,7 +176,7 @@ class SLURMManager(Manager):
         # Copy PBS file: 'scp sbatch vouws@tycho:~/name > /dev/null'
         cmd1 = ['scp',
                 sbatch_file_local,
-                '{}:{}/{}'.format(self.ssh_arg, sbatch_file_distant)]
+                '{}:{}'.format(self.ssh_arg, sbatch_file_distant)]
         sp.check_output(cmd1, stderr=sp.STDOUT)
         # Create parameter file
         param_file_distant = '{}/{}_parameters.sh'.format(self.sbatch_path, job.jobid)
@@ -189,13 +190,13 @@ class SLURMManager(Manager):
         # Copy parameter file
         cmd2 = ['scp',
                 param_file_local,
-                '{}:{}/{}'.format(self.ssh_arg, param_file_distant)]
+                '{}:{}'.format(self.ssh_arg, param_file_distant)]
         sp.check_output(cmd2, stderr=sp.STDOUT)
         # Start job using uws_handler
         # 'ssh vouws@tycho.obspm.fr '~/uws/uwshandler.sh -x start -p ~/name''
         cmd3 = ['ssh', self.ssh_arg, self.uws_handler,
                 '-x start',
-                '-p {}/{}'.format(self.sbatch_path, sbatch_file)]
+                '-p {}'.format(sbatch_file_distant)]
         jobid_cluster = sp.check_output(cmd3, stderr=sp.STDOUT)
         # Remove trailing \n from output
         return jobid_cluster[:-1]
@@ -244,7 +245,7 @@ class SLURMManager(Manager):
         # 'ssh vouws@tycho.obspm.fr '~/uws/uwshandler.sh -x status -p jobid''
         cmd = ['ssh', self.ssh_arg, self.uws_handler,
                '-x start_time',
-               '-r ' + self.results_path + job.jobid]
+               '-r {}/{}'.format(self.results_path, job.jobid)]
         start_time = sp.check_output(cmd, stderr=sp.STDOUT)
         # Remove trailing \n from output,and replace ' ' by 'T' in ISO date
         return start_time[:-1].replace(' ','T')
@@ -258,7 +259,7 @@ class SLURMManager(Manager):
         # 'ssh vouws@tycho.obspm.fr '~/uws/uwshandler.sh -x status -p jobid''
         cmd = ['ssh', self.ssh_arg, self.uws_handler,
                '-x end_time',
-               '-r ' + self.results_path + job.jobid]
+               '-r {}/{}'.format(self.results_path, job.jobid)]
         end_time = sp.check_output(cmd, stderr=sp.STDOUT)
         # Remove trailing \n from output,and replace ' ' by 'T' in ISO date
         return end_time[:-1].replace(' ','T')
