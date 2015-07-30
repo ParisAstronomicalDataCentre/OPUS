@@ -280,8 +280,8 @@ def job_event():
                 if new_phase not in PHASES:
                     # TODO: remove PHASE_CONVERT, will be handled by cluster uws_oncompletion.sh
                     if new_phase in PHASE_CONVERT:
-                        new_phase = PHASE_CONVERT[new_phase]['phase']
                         msg = PHASE_CONVERT[new_phase]['msg']
+                        new_phase = PHASE_CONVERT[new_phase]['phase']
                     else:
                         raise UserWarning('Unknown new phase ' + new_phase + ' for job ' + job.jobid)
                 # If phase=ERROR, add error message if available
