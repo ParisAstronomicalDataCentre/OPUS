@@ -60,6 +60,7 @@ class SLURMManager(Manager):
     def __init__(self, host=SLURM_URL, user=SLURM_USER, home=SLURM_HOME_PATH, mail=SLURM_USER_MAIL):
         self.host = host
         self.user = user
+        self.home = home
         self.mail = mail
         self.ssh_arg = user + '@' + host
         # PATHs
@@ -94,8 +95,8 @@ class SLURMManager(Manager):
         sbatch = [
             '#!/bin/bash',
             '#SBATCH --job-name={}'.format(job.jobname),
-            '#SBATCH --error=/obs/vouws/uws_logs/%j.err',
-            '#SBATCH --output=/obs/vouws/uws_logs/%j.job',
+            '#SBATCH --error={}/%j.err'.format(self.log_path),
+            '#SBATCH --output={}/%j.job'.format(self.log_path),
             '#SBATCH --mail-user=' + self.mail,
             '#SBATCH --mail-type=ALL',
             '#SBATCH --no-requeue',
