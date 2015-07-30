@@ -124,9 +124,9 @@ class SLURMManager(Manager):
             #'    error_string=`tac /obs/vouws/uws_logs/$SLURM_JOBID.err | grep -m 1 .`',
             '    msg="Error in ${BASH_SOURCE[1]##*/} running command: $BASH_COMMAND"',  # ${BASH_SOURCE[1]}: line ${BASH_LINENO[0]}: ${FUNCNAME[1]}"'
             '    echo "$msg"',
-            '    curl -s -o $rd/logs/error_signal -d "jobid=$SLURM_JOBID" -d "phase=ERROR" '
-            '        --data-urlencode "error_msg=$msg" '
-            '        https://voparis-uws-test.obspm.fr/handler/job_event',
+            '    curl -s -o $rd/logs/error_signal '
+            '        -d "jobid=$SLURM_JOBID" -d "phase=ERROR" --data-urlencode "error_msg=$msg" '
+            '        {}/handler/job_event'.format(BASE_URL),
             '    rm -rf $wd',
             '    cp {}/$SLURM_JOBID.job $rd/logs/stdout.log'.format(self.log_path),
             '    cp {}/$SLURM_JOBID.err $rd/logs/stderr.log'.format(self.log_path),
@@ -135,8 +135,9 @@ class SLURMManager(Manager):
             '}',
             'trap "error_handler" INT TERM EXIT',
             'echo "Signal start"',
-            'curl -s -o $rd/logs/start_signal -d "jobid=$SLURM_JOBID" -d "phase=RUNNING" '
-            '    https://voparis-uws-test.obspm.fr/handler/job_event',
+            'curl -s -o $rd/logs/start_signal '
+            '    -d "jobid=$SLURM_JOBID" -d "phase=RUNNING" '
+            '    {}/handler/job_event'.format(BASE_URL),
             'echo "Job started"',
             'touch $rd/start',
             '### EXEC',
