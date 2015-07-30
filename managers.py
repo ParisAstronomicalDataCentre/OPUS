@@ -128,8 +128,8 @@ class SLURMManager(Manager):
             '        --data-urlencode "error_msg=$msg" '
             '        https://voparis-uws-test.obspm.fr/handler/job_event',
             '    rm -rf $wd',
-            '    cp /obs/vouws/uws_logs/$SLURM_JOBID.job $rd/logs/stdout.log',
-            '    cp /obs/vouws/uws_logs/$SLURM_JOBID.err $rd/logs/stderr.log',
+            '    cp {}/$SLURM_JOBID.job $rd/logs/stdout.log'.format(self.log_path),
+            '    cp {}/$SLURM_JOBID.err $rd/logs/stderr.log'.format(self.log_path),
             '    trap - INT TERM EXIT',
             '    exit 1',
             '}',
@@ -154,8 +154,8 @@ class SLURMManager(Manager):
             'touch $rd/done',
             'echo "Job done"',
             # Move logs to $rd/logs
-            'cp /obs/vouws/uws_logs/$SLURM_JOBID.job $rd/logs/stdout.log',
-            'cp /obs/vouws/uws_logs/$SLURM_JOBID.err $rd/logs/stderr.log',
+            'cp {}/$SLURM_JOBID.job $rd/logs/stdout.log'.format(self.log_path),
+            'cp {}/$SLURM_JOBID.err $rd/logs/stderr.log'.format(self.log_path),
             'trap - INT TERM EXIT',
             'exit 0',
             #'curl -s -o $rd/logs/done_signal -d "jobid=$SLURM_JOBID" -d "phase=COMPLETED" https://voparis-uws-test.obspm.fr/handler/job_event',

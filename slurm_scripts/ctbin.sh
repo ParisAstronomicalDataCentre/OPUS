@@ -7,4 +7,4 @@
 wget -q "$evfile" -O ${evfile##*/} >/dev/null 2>&1
 cp ${evfile##*/} cntmap.fits
 echo "log" > ctbin.log
-sleep 10
+sleep 20
