@@ -249,7 +249,7 @@ class Job(object):
         for pname, p in self.parameters.iteritems():
             if p['value']:
                 name = pname
-                value = urllib.quote_plus(p['value'])
+                value = urllib.quote_plus(urllib.unquote_plus(p['value']))
                 by_ref = str(p['byref']).lower()
                 xml_out.append('<uws:parameter id="{}" byReference="{}">'.format(name, by_ref))
                 xml_out.append(value)
