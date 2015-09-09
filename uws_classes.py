@@ -299,7 +299,7 @@ class Job(object):
         xml_out.append(add_xml_node('phase', self.phase))
         xml_out.append(add_xml_node('executionduration', self.execution_duration))
         xml_out.append(add_xml_node('quote', self.quote))
-        xml_out.append(add_xml_node('error', self.error))
+        xml_out.append(add_xml_node('error', self.error.replace('\n', '')))
         xml_out.append(add_xml_node('startTime', self.start_time))
         xml_out.append(add_xml_node('endTime', self.end_time))
         xml_out.append(add_xml_node('destruction', self.destruction_time))
@@ -455,7 +455,7 @@ class Job(object):
                         job.end_time = now.strftime(DT_FMT)
                 # Set job.error or add
                 if job.error:
-                    job.error += '. \n' + error_msg
+                    job.error += '. ' + error_msg
                 else:
                     job.error = error_msg
 
