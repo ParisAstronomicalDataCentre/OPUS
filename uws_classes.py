@@ -299,7 +299,7 @@ class Job(object):
         xml_out.append(add_xml_node('phase', self.phase))
         xml_out.append(add_xml_node('executionduration', self.execution_duration))
         xml_out.append(add_xml_node('quote', self.quote))
-        xml_out.append(add_xml_node('error', self.error))
+        xml_out.append(add_xml_node('error', '"' + self.error + '"'))
         xml_out.append(add_xml_node('startTime', self.start_time))
         xml_out.append(add_xml_node('endTime', self.end_time))
         xml_out.append(add_xml_node('destruction', self.destruction_time))
