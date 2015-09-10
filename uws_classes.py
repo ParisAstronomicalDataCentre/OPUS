@@ -233,44 +233,45 @@ class Job(object):
             params.append('"{}": "{}"'.format(pname, pdict['value']))
         return '{' + ', '.join(params) + '}'
 
-    def parameters_to_xml(self, add_xmlns=True):
-        """Returns the XML representation of job parameters"""
-        if add_xmlns:
-            xmlns_uris = {'xmlns:uws': 'http://www.ivoa.net/xml/UWS/v1.0',
-                          'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
-                          'xmlns:xlink': 'http://www.w3.org/1999/xlink',
-                          'xsi:schemaLocation': 'http://www.ivoa.net/xml/UWS/v1.0 http://ivoa.net/xml/UWS/UWS-v1.0.xsd'}
-            xml_params = ET.Element('uws:parameters', attrib=xmlns_uris)
-        else:
-            xml_params = ET.Element('uws:parameters')
+    def _parameters_to_xml_fill(self, xml_params):
         # Add each parameter that has a value
         for pname, p in self.parameters.iteritems():
             if p['value']:
                 value = urllib.quote_plus(urllib.unquote_plus(p['value']))
                 by_ref = str(p['byref']).lower()
                 ET.SubElement(xml_params, 'uws:parameter', attrib={'id': pname,'byReference': by_ref}).text = value
+
+    def parameters_to_xml(self):
+        """Returns the XML representation of job parameters"""
+        xmlns_uris = {'xmlns:uws': 'http://www.ivoa.net/xml/UWS/v1.0',
+                      'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+                      'xmlns:xlink': 'http://www.w3.org/1999/xlink',
+                      'xsi:schemaLocation': 'http://www.ivoa.net/xml/UWS/v1.0 http://ivoa.net/xml/UWS/UWS-v1.0.xsd'}
+        xml_params = ET.Element('uws:parameters', attrib=xmlns_uris)
+        # Add each parameter that has a value
+        self._parameters_to_xml_fill(xml_params)
         return ET.tostring(xml_params)
 
-    def results_to_xml(self, add_xmlns=True):
-        """Returns the XML representation of job results"""
-        if add_xmlns:
-            xmlns_uris = {'xmlns:uws': 'http://www.ivoa.net/xml/UWS/v1.0',
-                          'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
-                          'xmlns:xlink': 'http://www.w3.org/1999/xlink',
-                          'xsi:schemaLocation': 'http://www.ivoa.net/xml/UWS/v1.0 http://ivoa.net/xml/UWS/UWS-v1.0.xsd'}
-            xml_results = ET.Element('uws:results', attrib=xmlns_uris)
-        else:
-            xml_results = ET.Element('uws:results')
-        # Add each result that has a value
+    def _results_to_xml_fill(self, xml_results):
         for rname, r in self.results.iteritems():
             if r['url']:
                 ET.SubElement(xml_results, 'uws:result', attrib={'id': rname,'xlink:href': r['url']})
+
+    def results_to_xml(self, add_xmlns=True):
+        """Returns the XML representation of job results"""
+        xmlns_uris = {'xmlns:uws': 'http://www.ivoa.net/xml/UWS/v1.0',
+                      'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+                      'xmlns:xlink': 'http://www.w3.org/1999/xlink',
+                      'xsi:schemaLocation': 'http://www.ivoa.net/xml/UWS/v1.0 http://ivoa.net/xml/UWS/UWS-v1.0.xsd'}
+        xml_results = ET.Element('uws:results', attrib=xmlns_uris)
+        # Add each result that has a value
+        self._results_to_xml_fill(xml_results)
         return ET.tostring(xml_results)
 
     def to_xml(self):
         """Returns the XML representation of a job (uws:job)"""
 
-        def add_subelt(root, tag, value, attrib={}):
+        def add_sub_elt(root, tag, value, attrib={}):
             if value:
                 ET.SubElement(root, tag, attrib=attrib).text = str(value)
             else:
@@ -281,20 +282,17 @@ class Job(object):
                       'xmlns:xlink': 'http://www.w3.org/1999/xlink',
                       'xsi:schemaLocation': 'http://www.ivoa.net/xml/UWS/v1.0 http://ivoa.net/xml/UWS/UWS-v1.0.xsd'}
         xml_job = ET.Element('uws:job', attrib=xmlns_uris)
-        add_subelt(xml_job, 'uws:jobId', self.jobid)
-        add_subelt(xml_job, 'uws:phase', self.phase)
-        add_subelt(xml_job, 'uws:executionduration', self.execution_duration)
-        add_subelt(xml_job, 'uws:quote', self.quote)
-        add_subelt(xml_job, 'uws:error', self.error)
-        add_subelt(xml_job, 'uws:startTime', self.start_time)
-        add_subelt(xml_job, 'uws:endTime', self.end_time)
-        add_subelt(xml_job, 'uws:destruction', self.destruction_time)
-        add_subelt(xml_job, 'uws:ownerId', self.owner)
-        xml_params = ET.fromstring(self.parameters_to_xml(add_xmlns=False))
-        logger.debug(str(xml_params))
-        xml_job.append(xml_params)
-        xml_results = ET.fromstring(self.results_to_xml(add_xmlns=False))
-        xml_job.append(xml_results)
+        add_sub_elt(xml_job, 'uws:jobId', self.jobid)
+        add_sub_elt(xml_job, 'uws:phase', self.phase)
+        add_sub_elt(xml_job, 'uws:executionduration', self.execution_duration)
+        add_sub_elt(xml_job, 'uws:quote', self.quote)
+        add_sub_elt(xml_job, 'uws:error', self.error)
+        add_sub_elt(xml_job, 'uws:startTime', self.start_time)
+        add_sub_elt(xml_job, 'uws:endTime', self.end_time)
+        add_sub_elt(xml_job, 'uws:destruction', self.destruction_time)
+        add_sub_elt(xml_job, 'uws:ownerId', self.owner)
+        xml_params = ET.Element('uws:parameters')
+        self._parameters_to_xml_fill(xml_params)
         return ET.tostring(xml_job)
 
     # ----------
