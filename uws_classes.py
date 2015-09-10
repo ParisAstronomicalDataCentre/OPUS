@@ -338,7 +338,7 @@ class Job(object):
                 add_subelt(xml_params, 'uws:parameter', value, attrib={'id': pname,'byReference': by_ref})
         for rname, r in self.results.iteritems():
             if r['url']:
-                add_subelt(xml_results, 'uws:result', value, attrib={'id': rname,'xlink:href': r['url']})
+                ET.SubElement(xml_results, 'uws:result', attrib={'id': rname,'xlink:href': r['url']})
         return ET.tostring(xml_job)
 
     # ----------
