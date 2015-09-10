@@ -311,7 +311,7 @@ class Job(object):
 
         def add_subelt(root, tag, value, attrib={}):
             if value:
-                ET.SubElement(root, tag, attrib=attrib).text = value
+                ET.SubElement(root, tag, attrib=attrib).text = str(value)
             else:
                 ET.SubElement(root, tag, attrib={'xsi:nil': 'true'})
 
