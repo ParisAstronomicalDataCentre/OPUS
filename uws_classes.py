@@ -280,35 +280,6 @@ class Job(object):
     def to_xml(self):
         """Returns the XML representation of a job (uws:job)"""
 
-        def add_xml_node(name, value):
-            """Add XML node"""
-            if value:
-                xml_node = '<uws:{}>{}</uws:{}>'.format(name, value, name)
-            else:
-                xml_node = '<uws:{} xsi:nil=\"true\"/>'.format(name)
-            return xml_node
-
-        xml_out = list([
-            '<uws:job ',
-            'xmlns:uws="http://www.ivoa.net/xml/UWS/v1.0" ',
-            'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ',
-            'xsi:schemaLocation="http://www.ivoa.net/xml/UWS/v1.0 http://ivoa.net/xml/UWS/UWS-v1.0.xsd" ',
-            'xmlns:xlink="http://www.w3.org/1999/xlink">',
-        ])
-        xml_out.append(add_xml_node('jobId', self.jobid))
-        xml_out.append(add_xml_node('phase', self.phase))
-        xml_out.append(add_xml_node('executionduration', self.execution_duration))
-        xml_out.append(add_xml_node('quote', self.quote))
-        xml_out.append(add_xml_node('error', ''))  # self.error))
-        xml_out.append(add_xml_node('startTime', self.start_time))
-        xml_out.append(add_xml_node('endTime', self.end_time))
-        xml_out.append(add_xml_node('destruction', self.destruction_time))
-        xml_out.append(add_xml_node('ownerId', self.owner))
-        xml_out.append(self.parameters_to_xml(add_xmlns=False))
-        xml_out.append(self.results_to_xml(add_xmlns=False))
-        xml_out.append('</uws:job>')
-        #return ''.join(xml_out)
-
         def add_subelt(root, tag, value, attrib={}):
             if value:
                 ET.SubElement(root, tag, attrib=attrib).text = str(value)
@@ -335,7 +306,7 @@ class Job(object):
             if p['value']:
                 value = urllib.quote_plus(urllib.unquote_plus(p['value']))
                 by_ref = str(p['byref']).lower()
-                add_subelt(xml_params, 'uws:parameter', value, attrib={'id': pname,'byReference': by_ref})
+                ET.SubElement(xml_params, 'uws:parameter', attrib={'id': pname,'byReference': by_ref}).text = value
         for rname, r in self.results.iteritems():
             if r['url']:
                 ET.SubElement(xml_results, 'uws:result', attrib={'id': rname,'xlink:href': r['url']})
