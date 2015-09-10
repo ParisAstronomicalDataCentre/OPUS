@@ -315,13 +315,11 @@ class Job(object):
             else:
                 ET.SubElement(root, tag, attrib={'xsi:nil': 'true'})
 
-        xmlns_uris = {'uws': 'http://www.ivoa.net/xml/UWS/v1.0',
-                      'xsi': 'http://www.w3.org/2001/XMLSchema-instance',
-                      'xlink': 'http://www.w3.org/1999/xlink',
+        xmlns_uris = {'xmlns:uws': 'http://www.ivoa.net/xml/UWS/v1.0',
+                      'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+                      'xmlns:xlink': 'http://www.w3.org/1999/xlink',
                       'xsi:schemaLocation': 'http://www.ivoa.net/xml/UWS/v1.0 http://ivoa.net/xml/UWS/UWS-v1.0.xsd'}
-        for prefix, uri in xmlns_uris.iteritems():
-            ET.register_namespace(prefix, uri)
-        xml_job = ET.Element('uws:job')
+        xml_job = ET.Element('uws:job', attrib=xmlns_uris)
         add_subelt(xml_job, 'uws:jobId', self.jobid)
         add_subelt(xml_job, 'uws:phase', self.phase)
         add_subelt(xml_job, 'uws:executionduration', self.execution_duration)
