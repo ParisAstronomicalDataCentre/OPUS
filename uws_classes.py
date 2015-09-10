@@ -341,7 +341,7 @@ class Job(object):
         for rname, r in self.results.iteritems():
             if r['url']:
                 add_subelt(xml_results, 'uws:result', value, attrib={'id': rname,'xlink:href': r['url']})
-        return ET.tostring(xml_job, xml_declaration=True)
+        return ET.tostring(xml_job)
 
     # ----------
     # Actions on a job
