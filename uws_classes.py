@@ -290,8 +290,11 @@ class Job(object):
         add_subelt(xml_job, 'uws:endTime', self.end_time)
         add_subelt(xml_job, 'uws:destruction', self.destruction_time)
         add_subelt(xml_job, 'uws:ownerId', self.owner)
-        xml_job.append(ET.fromstring(self.parameters_to_xml(add_xmlns=False)))
-        xml_job.append(ET.fromstring(self.results_to_xml(add_xmlns=False)))
+        xml_params = ET.fromstring(self.parameters_to_xml(add_xmlns=False))
+        logger.debug(str(xml_params))
+        xml_job.append(xml_params)
+        xml_results = ET.fromstring(self.results_to_xml(add_xmlns=False))
+        xml_job.append(xml_results)
         return ET.tostring(xml_job)
 
     # ----------
