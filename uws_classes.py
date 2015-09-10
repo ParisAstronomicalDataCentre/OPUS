@@ -290,17 +290,8 @@ class Job(object):
         add_subelt(xml_job, 'uws:endTime', self.end_time)
         add_subelt(xml_job, 'uws:destruction', self.destruction_time)
         add_subelt(xml_job, 'uws:ownerId', self.owner)
-
-        xml_params = ET.SubElement(xml_job, 'uws:parameters')
-        xml_results = ET.SubElement(xml_job, 'uws:results')
-        for pname, p in self.parameters.iteritems():
-            if p['value']:
-                value = urllib.quote_plus(urllib.unquote_plus(p['value']))
-                by_ref = str(p['byref']).lower()
-                ET.SubElement(xml_params, 'uws:parameter', attrib={'id': pname,'byReference': by_ref}).text = value
-        for rname, r in self.results.iteritems():
-            if r['url']:
-                ET.SubElement(xml_results, 'uws:result', attrib={'id': rname,'xlink:href': r['url']})
+        xml_job.append(ET.Element.fromstring(self.parameters_to_xml(add_xmlns=True)))
+        xml_job.append(ET.Element.fromstring(self.results_to_xml(add_xmlns=True)))
         return ET.tostring(xml_job)
 
     # ----------
