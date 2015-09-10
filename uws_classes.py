@@ -291,8 +291,10 @@ class Job(object):
         add_sub_elt(xml_job, 'uws:endTime', self.end_time)
         add_sub_elt(xml_job, 'uws:destruction', self.destruction_time)
         add_sub_elt(xml_job, 'uws:ownerId', self.owner)
-        xml_params = ET.Element('uws:parameters')
+        xml_params = ET.SubElement(xml_job, 'uws:parameters')
         self._parameters_to_xml_fill(xml_params)
+        xml_results = ET.SubElement(xml_job, 'uws:results')
+        self._results_to_xml_fill(xml_results)
         return ET.tostring(xml_job)
 
     # ----------
