@@ -9,7 +9,7 @@ import os
 import shutil
 import urllib
 import datetime as dt
-import xml.etree.ElementTree
+import xml.etree.ElementTree as ET
 import storage
 import managers
 from settings import *
@@ -114,7 +114,7 @@ class Job(object):
         try:
             with open(filename, 'r') as f:
                 wadl_string = f.read()
-            wadl_tree = xml.etree.ElementTree.fromstring(wadl_string)
+            wadl_tree = ET.fromstring(wadl_string)
             # Read parameters description
             params_block = wadl_tree.find(".//{http://wadl.dev.java.net/2009/02}representation[@id='parameters']")
             for p in params_block.getchildren():
@@ -307,7 +307,41 @@ class Job(object):
         xml_out.append(self.parameters_to_xml(add_xmlns=False))
         xml_out.append(self.results_to_xml(add_xmlns=False))
         xml_out.append('</uws:job>')
-        return ''.join(xml_out)
+        #return ''.join(xml_out)
+
+        def add_subelt(root, tag, value, attrib={}):
+            if value:
+                ET.SubElement(root, tag, attrib=attrib).text = value
+            else:
+                ET.SubElement(root, tag, attrib={'xsi:nil': 'true'})
+
+        xmlns_uris = {'uws': 'http://www.ivoa.net/xml/UWS/v1.0',
+                      'xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+                      'xlink': 'http://www.w3.org/1999/xlink',
+                      'xsi:schemaLocation': 'http://www.ivoa.net/xml/UWS/v1.0 http://ivoa.net/xml/UWS/UWS-v1.0.xsd'}
+        for prefix, uri in xmlns_uris.iteritems():
+            ET.register_namespace(prefix, uri)
+        xml_job = ET.Element('uws:job')
+        add_subelt(xml_job, 'jobId', self.jobid)
+        add_subelt(xml_job, 'phase', self.phase)
+        add_subelt(xml_job, 'executionduration', self.execution_duration)
+        add_subelt(xml_job, 'quote', self.quote)
+        add_subelt(xml_job, 'error', self.error)
+        add_subelt(xml_job, 'startTime', self.start_time)
+        add_subelt(xml_job, 'endTime', self.end_time)
+        add_subelt(xml_job, 'destruction', self.destruction_time)
+        add_subelt(xml_job, 'ownerId', self.owner)
+        xml_params = ET.SubElement(xml_job, 'uws:parameters')
+        xml_results = ET.SubElement(xml_job, 'uws:results')
+        for pname, p in self.parameters.iteritems():
+            if p['value']:
+                value = urllib.quote_plus(urllib.unquote_plus(p['value']))
+                by_ref = str(p['byref']).lower()
+                add_subelt(xml_params, 'uws:parameter', value, attrib={'id': pname,'byReference': by_ref})
+        for rname, r in self.results.iteritems():
+            if r['url']:
+                add_subelt(xml_results, 'uws:result', value, attrib={'id': rname,'xlink:href': r['url']})
+        return ET.tostring(xml_job, xml_declaration=True)
 
     # ----------
     # Actions on a job
