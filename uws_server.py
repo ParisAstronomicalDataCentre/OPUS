@@ -134,7 +134,7 @@ def home():
 
 @app.route('/favicon.ico')
 def favicon():
-    """/favicon.ico not provided"""
+    """/favicon.ico not provided, maybe later"""
     abort(404)
 
 
