@@ -206,7 +206,7 @@ class SLURMManager(Manager):
                 '-x start',
                 '-p {}'.format(sbatch_file_distant)]
         cmd3 = ['ssh', self.ssh_arg,
-                '"sbatch {} | awk \'{{print $4}}\'"'.format(sbatch_file_distant)]
+                '"sbatch {} | awk \'{{print \$4}}\'"'.format(sbatch_file_distant)]
         logger.debug(' '.join(cmd2))
         jobid_cluster = sp.check_output(cmd3, stderr=sp.STDOUT)
         # Remove trailing \n from output
