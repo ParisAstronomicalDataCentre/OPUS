@@ -283,4 +283,5 @@ class SLURMManager(Manager):
         cmd = ['scp -rp',
                '{}:{}/results/{}'.format(self.ssh_arg, SLURM_HOME_PATH, job.jobid),
                RESULTS_PATH]
+        logger.debug(' '.join(cmd))
         sp.check_output(cmd, stderr=sp.STDOUT)
