@@ -282,8 +282,8 @@ class SLURMManager(Manager):
             list of results?
         """
         # cp_results.append('scp -r $rd/results www@{}:{}/{}'.format(uws_url, RESULTS_PATH, job.jobid))
-        cmd = ['scp -rp',
+        cmd = ['scp', '-rp',
                '{}:{}/results/{}'.format(self.ssh_arg, SLURM_HOME_PATH, job.jobid),
                RESULTS_PATH]
         logger.debug(' '.join(cmd))
-        sp.check_output(cmd, stderr=sp.STDOUT, shell=True)
+        sp.check_output(cmd, stderr=sp.STDOUT)
