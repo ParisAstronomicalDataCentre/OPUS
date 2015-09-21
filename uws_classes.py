@@ -413,10 +413,10 @@ class Job(object):
                 # Check results and all links to db (maybe not all results in WADL have been created)
                 for rname, r in job.wadl['results'].iteritems():
                     fname = job.get_result_filename(rname)
-                    # TODO: Test if result exists in RESULTS_PATH
-                    url = '{}/{}/{}/results/{}'.format(BASE_URL, job.jobname, job.jobid, rname)
-                    job.results[rname] = {'url': url, 'mediaType': r['mediaType']}
-                    logger.info('add result ' + rname + ' ' + str(r))
+                    if os.path.isfile('{}/{}/results'.format(JOBDATA_PATH, job.jobid)):
+                        url = '{}/{}/{}/results/{}'.format(BASE_URL, job.jobname, job.jobid, rname)
+                        job.results[rname] = {'url': url, 'mediaType': r['mediaType']}
+                        logger.info('add result ' + rname + ' ' + str(r))
                 # Set job.end_time
                 try:
                     job.end_time = job.manager.get_end_time(job)

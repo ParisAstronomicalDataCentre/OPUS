@@ -143,7 +143,9 @@ if 'test.py' in main_dict.get('__file__', ''):
 # If POST contains files they are uploaded on the UWS server
 UPLOAD_PATH = APP_PATH + '/uploads'
 # Path for job results and logs
-RESULTS_PATH = APP_PATH + '/results'
+JOBDATA_PATH = APP_PATH + '/jobdata'
+# Path for job results and logs
+RESULTS_PATH = JOBDATA_PATH + '/results'
 # Path for WADL files, should probably be accessed through a URL as static files
 WADL_PATH = APP_PATH + '/wadl'
 # Path for SLURM sbatch files created by SLURMManager

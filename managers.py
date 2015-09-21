@@ -71,7 +71,7 @@ class SLURMManager(Manager):
         self.scripts_path = '{}/scripts'.format(home)
         self.sbatch_path = '{}/sbatch'.format(home)
         self.working_path = '{}/workdir'.format(home)  # may be a link on host
-        self.results_path = '{}/results'.format(home)  # may be a link on host
+        self.jobdata_path = '{}/jobdata'.format(home)  # may be a link on host
         self.uws_handler = '{}/uws_handler.sh'.format(self.scripts_path)
 
     def _make_sbatch(self, job):
@@ -113,7 +113,7 @@ class SLURMManager(Manager):
             '### INIT',
             # Init job execution
             'wd={}/{}'.format(self.working_path, job.jobid),
-            'rd={}/{}'.format(self.results_path, job.jobid),
+            'rd={}/{}'.format(self.jobdata_path, job.jobid),
             'mkdir $wd',
             'mkdir $rd',
             'mkdir $rd/logs',
@@ -183,7 +183,7 @@ class SLURMManager(Manager):
         cmd1 = ['scp',
                 sbatch_file_local,
                 '{}:{}'.format(self.ssh_arg, sbatch_file_distant)]
-        logger.debug(' '.join(cmd1))
+        # logger.debug(' '.join(cmd1))
         sp.check_output(cmd1, stderr=sp.STDOUT)
         # Create parameter file
         param_file_distant = '{}/{}_parameters.sh'.format(self.sbatch_path, job.jobid)
@@ -198,7 +198,7 @@ class SLURMManager(Manager):
         cmd2 = ['scp',
                 param_file_local,
                 '{}:{}'.format(self.ssh_arg, param_file_distant)]
-        logger.debug(' '.join(cmd2))
+        # logger.debug(' '.join(cmd2))
         sp.check_output(cmd2, stderr=sp.STDOUT)
         # Start job using uws_handler
         # 'ssh vouws@tycho.obspm.fr '~/uws/uwshandler.sh -x start -p ~/name''
@@ -215,7 +215,7 @@ class SLURMManager(Manager):
         cmd = ['ssh', self.ssh_arg, self.uws_handler,
                '-x abort',
                '-i ' + str(job.jobid_cluster),
-               '-r {}/{}'.format(self.results_path, job.jobid)]
+               '-r {}/{}'.format(self.jobdata_path, job.jobid)]
         sp.check_output(cmd, stderr=sp.STDOUT)
 
     def delete(self, job):
@@ -224,7 +224,7 @@ class SLURMManager(Manager):
         cmd = ['ssh', self.ssh_arg, self.uws_handler,
                '-x delete',
                '-i ' + str(job.jobid_cluster),
-               '-r {}/{}'.format(self.results_path, job.jobid),
+               '-r {}/{}'.format(self.jobdata_path, job.jobid),
                '-w {}/{}'.format(self.working_path, job.jobid)]
         sp.check_output(cmd, stderr=sp.STDOUT)
 
@@ -238,7 +238,7 @@ class SLURMManager(Manager):
         cmd = ['ssh', self.ssh_arg, self.uws_handler,
                '-x status',
                '-i ' + str(job.jobid_cluster),
-               '-r {}/{}'.format(self.results_path, job.jobid)]
+               '-r {}/{}'.format(self.jobdata_path, job.jobid)]
         phase = sp.check_output(cmd, stderr=sp.STDOUT)
         # TODO: change end time here if phase is COMPLETED?
         # Remove trailing \n from output
@@ -253,7 +253,7 @@ class SLURMManager(Manager):
         # 'ssh vouws@tycho.obspm.fr '~/uws/uwshandler.sh -x status -p jobid''
         cmd = ['ssh', self.ssh_arg, self.uws_handler,
                '-x start_time',
-               '-r {}/{}'.format(self.results_path, job.jobid)]
+               '-r {}/{}'.format(self.jobdata_path, job.jobid)]
         start_time = sp.check_output(cmd, stderr=sp.STDOUT)
         # Remove trailing \n from output,and replace ' ' by 'T' in ISO date
         return start_time[:-1].replace(' ','T')
@@ -267,7 +267,7 @@ class SLURMManager(Manager):
         # 'ssh vouws@tycho.obspm.fr '~/uws/uwshandler.sh -x status -p jobid''
         cmd = ['ssh', self.ssh_arg, self.uws_handler,
                '-x end_time',
-               '-r {}/{}'.format(self.results_path, job.jobid)]
+               '-r {}/{}'.format(self.jobdata_path, job.jobid)]
         end_time = sp.check_output(cmd, stderr=sp.STDOUT)
         # Remove trailing \n from output,and replace ' ' by 'T' in ISO date
         return end_time[:-1].replace(' ','T')
@@ -281,9 +281,9 @@ class SLURMManager(Manager):
         Returns:
             list of results?
         """
-        # cp_results.append('scp -r $rd/results www@{}:{}/{}'.format(uws_url, RESULTS_PATH, job.jobid))
+        # cp_results.append('scp -r $rd/results www@{}:{}/{}'.format(uws_url, JOBDATA_PATH, job.jobid))
         cmd = ['scp', '-rp',
-               '{}:{}/results/{}'.format(self.ssh_arg, SLURM_HOME_PATH, job.jobid),
-               RESULTS_PATH]
-        logger.debug(' '.join(cmd))
+               '{}:{}/jobdata/{}'.format(self.ssh_arg, SLURM_HOME_PATH, job.jobid),
+               JOBDATA_PATH]
+        # logger.debug(' '.join(cmd))
         sp.check_output(cmd, stderr=sp.STDOUT)
