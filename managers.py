@@ -183,6 +183,7 @@ class SLURMManager(Manager):
         cmd1 = ['scp',
                 sbatch_file_local,
                 '{}:{}'.format(self.ssh_arg, sbatch_file_distant)]
+        logger.debug(' '.join(cmd1))
         sp.check_output(cmd1, stderr=sp.STDOUT)
         # Create parameter file
         param_file_distant = '{}/{}_parameters.sh'.format(self.sbatch_path, job.jobid)
@@ -197,6 +198,7 @@ class SLURMManager(Manager):
         cmd2 = ['scp',
                 param_file_local,
                 '{}:{}'.format(self.ssh_arg, param_file_distant)]
+        logger.debug(' '.join(cmd2))
         sp.check_output(cmd2, stderr=sp.STDOUT)
         # Start job using uws_handler
         # 'ssh vouws@tycho.obspm.fr '~/uws/uwshandler.sh -x start -p ~/name''
