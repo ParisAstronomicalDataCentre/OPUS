@@ -206,11 +206,11 @@ class SLURMManager(Manager):
                 '-x start',
                 '-p {}'.format(sbatch_file_distant)]
         cmd3 = ['ssh', self.ssh_arg,
-                '"sbatch {} | awk \'{{print \$4}}\'"'.format(sbatch_file_distant)]
+                'sbatch {}'.format(sbatch_file_distant)]
         logger.debug(' '.join(cmd2))
         jobid_cluster = sp.check_output(cmd3, stderr=sp.STDOUT)
         # Remove trailing \n from output
-        return jobid_cluster[:-1]
+        return jobid_cluster.split(' ')[-1]
 
     def abort(self, job):
         """Abort job on SLURM server"""
