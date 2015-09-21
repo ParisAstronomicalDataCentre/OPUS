@@ -85,14 +85,14 @@ class SLURMManager(Manager):
         duration_str = str(duration).replace(' days', '').replace(' day', '').replace(', ', '-')
         if not job.wadl:
             job.read_wadl()
-        # Identify result filenames to move to $rd
+        # Identify result filenames to move to $jd/results
         cp_results = []
         for rname, r in job.wadl['results'].iteritems():
             fname = job.get_result_filename(rname)
-            cp_results.append('cp $wd/{} $rd/results'.format(fname))
+            cp_results.append('cp $wd/{} $jd/results'.format(fname))
         # scp results from cluster
         # uws_url = BASE_URL.split('//')[-1]
-        # cp_results.append('scp -r $rd/results www@{}:{}/{}'.format(uws_url, RESULTS_PATH, job.jobid))
+        # cp_results.append('scp -r $jd/results www@{}:{}/{}'.format(uws_url, RESULTS_PATH, job.jobid))
         # TODO: Identify parameters that need to be downloaded before processing
         #wget_filenames = { k: v['id1'] for k,v in a.items() if 'id1' in v }
         # Create PBS
@@ -113,57 +113,57 @@ class SLURMManager(Manager):
             '### INIT',
             # Init job execution
             'wd={}/{}'.format(self.working_path, job.jobid),
-            'rd={}/{}'.format(self.jobdata_path, job.jobid),
+            'jd={}/{}'.format(self.jobdata_path, job.jobid),
             'mkdir $wd',
-            'mkdir $rd',
-            'mkdir $rd/logs',
+            'mkdir $jd',
+            'mkdir $jd/logs',
             'cd $wd',
             'echo "Working dir is $wd"',
-            'echo "Results dir is $rd"',
+            'echo "JobData dir is $jd"',
             'echo "Set trap"',
             'set -e ',
             'error_handler()',
             '{',
-            '    touch $rd/error',
+            '    touch $jd/error',
             #'    error_string=`tac /obs/vouws/uws_logs/$SLURM_JOBID.err | grep -m 1 .`',
             '    msg="Error in ${BASH_SOURCE[1]##*/} running command: $BASH_COMMAND"',  # ${BASH_SOURCE[1]}: line ${BASH_LINENO[0]}: ${FUNCNAME[1]}"'
             '    echo "$msg"',
-            '    curl -s -o $rd/logs/error_signal '
+            '    curl -s -o $jd/logs/error_signal '
             '        -d "jobid=$SLURM_JOBID" -d "phase=ERROR" --data-urlencode "error_msg=$msg" '
             '        {}/handler/job_event'.format(BASE_URL),
             '    rm -rf $wd',
-            '    cp {}/$SLURM_JOBID.job $rd/logs/stdout.log'.format(self.log_path),
-            '    cp {}/$SLURM_JOBID.err $rd/logs/stderr.log'.format(self.log_path),
+            '    cp {}/$SLURM_JOBID.job $jd/logs/stdout.log'.format(self.log_path),
+            '    cp {}/$SLURM_JOBID.err $jd/logs/stderr.log'.format(self.log_path),
             '    trap - INT TERM EXIT',
             '    exit 1',
             '}',
             'trap "error_handler" INT TERM EXIT',
             'echo "Signal start"',
-            'curl -s -o $rd/logs/start_signal '
+            'curl -s -o $jd/logs/start_signal '
             '    -d "jobid=$SLURM_JOBID" -d "phase=RUNNING" '
             '    {}/handler/job_event'.format(BASE_URL),
             'echo "Job started"',
-            'touch $rd/start',
+            'touch $jd/start',
             '### EXEC',
             # Load variables from params file
             '. {}/{}_parameters.sh'.format(self.sbatch_path, job.jobid),
             # Run script in the current environment (with SLURM_JOBID defined)
             '. {}/{}.sh'.format(self.scripts_path, job.jobname),
             '### CP RESULTS',
-            'mkdir $rd/results',
+            'mkdir $jd/results',
         ])
         sbatch.extend(cp_results)
         sbatch.extend([
             '### CLEAN',
             'rm -rf $wd',
-            'touch $rd/done',
+            'touch $jd/done',
             'echo "Job done"',
-            # Move logs to $rd/logs
-            'cp {}/$SLURM_JOBID.job $rd/logs/stdout.log'.format(self.log_path),
-            'cp {}/$SLURM_JOBID.err $rd/logs/stderr.log'.format(self.log_path),
+            # Move logs to $jd/logs
+            'cp {}/$SLURM_JOBID.job $jd/logs/stdout.log'.format(self.log_path),
+            'cp {}/$SLURM_JOBID.err $jd/logs/stderr.log'.format(self.log_path),
             'trap - INT TERM EXIT',
             'exit 0',
-            #'curl -s -o $rd/logs/done_signal -d "jobid=$SLURM_JOBID" -d "phase=COMPLETED" https://voparis-uws-test.obspm.fr/handler/job_event',
+            #'curl -s -o $jd/logs/done_signal -d "jobid=$SLURM_JOBID" -d "phase=COMPLETED" https://voparis-uws-test.obspm.fr/handler/job_event',
         ])
         return '\n'.join(sbatch)
 
@@ -205,6 +205,9 @@ class SLURMManager(Manager):
         cmd3 = ['ssh', self.ssh_arg, self.uws_handler,
                 '-x start',
                 '-p {}'.format(sbatch_file_distant)]
+        cmd3 = ['ssh', self.ssh_arg,
+                '"sbatch {} | awk \'{print $4}\'"'.format(sbatch_file_distant)]
+        logger.debug(' '.join(cmd2))
         jobid_cluster = sp.check_output(cmd3, stderr=sp.STDOUT)
         # Remove trailing \n from output
         return jobid_cluster[:-1]
@@ -274,6 +277,19 @@ class SLURMManager(Manager):
 
     # TODO: get info
     # sacct -j 9000 -o jobid,start,end,elapsed,state -P -n
+    def get_info(self, job):
+        """Get job info from SLURM server
+
+        Returns:
+            dictionnary with info (jobid, start, end, elapsed, state)
+        """
+        cmd = ['ssh', self.ssh_arg, self.uws_handler,
+               'sacct -j {}'.format(job.jobid_cluster),
+               '-o jobid,start,end,elapsed,state -P -n']
+        logger.debug(' '.join(cmd))
+        info = sp.check_output(cmd, stderr=sp.STDOUT)
+        info_dict = info.split('|')
+        return info_dict
 
     def get_results(self, job):
         """Get job results from SLURM server
@@ -281,7 +297,7 @@ class SLURMManager(Manager):
         Returns:
             list of results?
         """
-        # cp_results.append('scp -r $rd/results www@{}:{}/{}'.format(uws_url, JOBDATA_PATH, job.jobid))
+        # cp_results.append('scp -r $jd/results www@{}:{}/{}'.format(uws_url, JOBDATA_PATH, job.jobid))
         cmd = ['scp', '-rp',
                '{}:{}/jobdata/{}'.format(self.ssh_arg, SLURM_HOME_PATH, job.jobid),
                JOBDATA_PATH]
