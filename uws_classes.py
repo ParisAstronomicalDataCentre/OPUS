@@ -15,18 +15,6 @@ import managers
 from settings import *
 
 
-# ----------
-# Set logger
-
-
-import logging
-logging.basicConfig(
-    filename=LOG_FILE,
-    format='[%(asctime)s] %(levelname)s %(module)s.%(funcName)s: %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S',
-    level=logging.DEBUG)
-logger = logging.getLogger(__name__)
-
 
 # ---------
 # Job class

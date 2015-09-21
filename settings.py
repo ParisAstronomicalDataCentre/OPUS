@@ -7,6 +7,7 @@ Created on Apr 29 2015
 
 import os
 import sys
+import logging
 
 # Set debug mode, HTTP 500 Errors include traceback
 DEBUG = True
@@ -148,3 +149,11 @@ WADL_PATH = APP_PATH + '/wadl'
 # Path for SLURM sbatch files created by SLURMManager
 SLURM_SBATCH_PATH = APP_PATH + '/sbatch'
 #--- Set all _PATH based on APP_PATH -----------------------------------------------------------------------------------
+
+# Set logger
+logging.basicConfig(
+    filename=LOG_FILE,
+    format='[%(asctime)s] %(levelname)s %(module)s.%(funcName)s: %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+    level=logging.DEBUG)
+logger = logging.getLogger(__name__)
