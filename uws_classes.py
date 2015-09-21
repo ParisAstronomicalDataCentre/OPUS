@@ -412,8 +412,8 @@ class Job(object):
                 job.manager.get_results(job)
                 # Check results and all links to db (maybe not all results in WADL have been created)
                 for rname, r in job.wadl['results'].iteritems():
-                    fname = job.get_result_filename(rname)
-                    if os.path.isfile('{}/{}/results'.format(JOBDATA_PATH, job.jobid)):
+                    rfname = job.get_result_filename(rname)
+                    if os.path.isfile('{}/{}/results/{}'.format(JOBDATA_PATH, job.jobid, rfname)):
                         url = '{}/{}/{}/results/{}'.format(BASE_URL, job.jobname, job.jobid, rname)
                         job.results[rname] = {'url': url, 'mediaType': r['mediaType']}
                         logger.info('add result ' + rname + ' ' + str(r))
@@ -452,7 +452,6 @@ class Job(object):
             self.phase = new_phase
             # Save job description
             self.storage.save(self, save_results=True)
-            logger.debug(str(self.results))
         else:
             raise UserWarning('Job {} cannot be updated to {} while in phase {}'
                               ''.format(self.jobid, new_phase, self.phase))
