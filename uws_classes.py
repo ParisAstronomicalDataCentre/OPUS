@@ -418,14 +418,17 @@ class Job(object):
                 job.end_time = end_time.strftime(DT_FMT)
 
             def phase_completed(job, error_msg):
-                # Add results links to db
                 if not job.wadl:
                     job.read_wadl()
-                # TODO: scp results from cluster if not already done
+                # Copy back results from cluster
+                job.manager.get_results(job)
+                # Check results and all links to db (maybe not all results in WADL have been created)
                 for rname, r in job.wadl['results'].iteritems():
-                    logger.info('add result ' + rname + ' ' + str(r))
+                    fname = job.get_result_filename(rname)
+                    # TODO: Test if result exists in RESULTS_PATH
                     url = '{}/{}/{}/results/{}'.format(BASE_URL, job.jobname, job.jobid, rname)
                     job.results[rname] = {'url': url, 'mediaType': r['mediaType']}
+                    logger.info('add result ' + rname + ' ' + str(r))
                 # Set job.end_time
                 try:
                     job.end_time = job.manager.get_end_time(job)

@@ -46,12 +46,15 @@ class Manager(object):
         return job.phase
 
     def get_start_time(self, job):
-        """Get job start time from SLURM server"""
+        """Get job start time from cluster"""
         raise NotImplementedError('Manager does not support get_start_time()')
 
     def get_end_time(self, job):
         """Get job end time from cluster"""
         raise NotImplementedError('Manager does not support get_end_time()')
+
+    def get_results(self, job):
+        """Get job results from cluster"""
 
 
 class SLURMManager(Manager):
@@ -82,13 +85,14 @@ class SLURMManager(Manager):
         duration_str = str(duration).replace(' days', '').replace(' day', '').replace(', ', '-')
         if not job.wadl:
             job.read_wadl()
-        # Identify result filenames
+        # Identify result filenames to move to $rd
         cp_results = []
         for rname, r in job.wadl['results'].iteritems():
             fname = job.get_result_filename(rname)
             cp_results.append('cp $wd/{} $rd/results'.format(fname))
-        uws_url = BASE_URL.split('//')[-1]
-        cp_results.append('scp -r $rd/results www@{}:{}/{}'.format(uws_url, RESULTS_PATH, job.jobid))
+        # scp results from cluster
+        # uws_url = BASE_URL.split('//')[-1]
+        # cp_results.append('scp -r $rd/results www@{}:{}/{}'.format(uws_url, RESULTS_PATH, job.jobid))
         # TODO: Identify parameters that need to be downloaded before processing
         #wget_filenames = { k: v['id1'] for k,v in a.items() if 'id1' in v }
         # Create PBS
@@ -269,4 +273,14 @@ class SLURMManager(Manager):
     # TODO: get info
     # sacct -j 9000 -o jobid,start,end,elapsed,state -P -n
 
-    # TODO: get result?
+    def get_results(self, job):
+        """Get job results from SLURM server
+
+        Returns:
+            list of results?
+        """
+        # cp_results.append('scp -r $rd/results www@{}:{}/{}'.format(uws_url, RESULTS_PATH, job.jobid))
+        cmd = ['scp -rp',
+               '{}:{}/results/{}'.format(self.ssh_arg, SLURM_HOME_PATH, job.jobid),
+               RESULTS_PATH]
+        sp.check_output(cmd, stderr=sp.STDOUT)
