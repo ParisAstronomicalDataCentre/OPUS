@@ -12,7 +12,7 @@ See http://www.ivoa.net/documents/UWS/20101010/REC-UWS-1.0-20101010.html
 import traceback
 import uuid
 from subprocess import CalledProcessError
-from bottle import Bottle, request, response, abort, redirect, run, static_file
+from bottle import Bottle, request, response, abort, redirect, run, static_file, parse_auth
 from uws_classes import *
 
 # Create a new application
@@ -30,17 +30,26 @@ app = Bottle()
 
 def set_user():
     """Set user from request header"""
-    user = 'anonymous'
-    # Set user from REMOTE_USER if not empty
-    remote_user = request.environ.get('REMOTE_USER', '')
-    # Use Basic access authentication
-    auth = request.headers.get('authorization')
-    logger.debug(auth)
-    if remote_user:
-        user = remote_user
+    user, user_pid = 'anonymous'
+    user_pid = 'anonymous'
+    # Set user from GET
     if 'user' in request.GET:
-        user = request.GET['user']
-    return user
+        user, user_pid = request.GET['user']
+        if 'user_pid' in request.GET:
+            user_pid = request.GET['user_pid']
+        else:
+            user_pid = request.GET['user']
+    # Set user from REMOTE_USER if not empty
+    remote_user, user_pid = request.environ.get('REMOTE_USER', '')
+    if remote_user:
+        user, user_pid = remote_user
+        user_pid = remote_user
+    # Use Basic access authentication
+    auth = request.headers.get('Authorization')
+    if auth:
+        user, user_pid = parse_auth(auth)
+        logger.debug('Authorization: {} ({}:{})'.format(auth, user, user_pid))
+    return user, user_pid
 
 
 def is_job_server(ip):
@@ -154,7 +163,7 @@ def init_db():
         403 Forbidden (if not super_user)
         500 Internal Server Error
     """
-    user = set_user()
+    user, user_pid = set_user()
     #if not is_localhost():
     #    abort_403()
     try:
@@ -179,7 +188,7 @@ def test_db():
         403 Forbidden (if not super_user)
         500 Internal Server Error
     """
-    user = set_user()
+    user, user_pid = set_user()
     #if not is_localhost():
     #    abort_403()
     try:
@@ -204,7 +213,7 @@ def show_db():
         403 Forbidden (if not super_user)
         500 Internal Server Error (on error)
     """
-    user = set_user()
+    user, user_pid = set_user()
     #if not is_localhost():
     #    abort_403()
     html = ''
@@ -269,7 +278,7 @@ def job_event():
     if not is_job_server(ip):
         abort_403()
     try:
-        user = set_user()
+        user, user_pid = set_user()
         logger.info('from {} ({}) with POST={}'.format(ip, JOB_SERVERS[ip], str(request.POST.dict)))
         if 'jobid' in request.POST:
             jobid_cluster = request.POST['jobid']
@@ -332,7 +341,7 @@ def get_joblist(jobname):
         500 Internal Server Error (on error)
     """
     try:
-        user = set_user()
+        user, user_pid = set_user()
         logger.info(jobname)
         joblist = JobList(jobname, user)
         xml_out = joblist.to_xml()
@@ -353,7 +362,7 @@ def create_job(jobname):
     # Create new jobid for new job
     jobid = str(uuid.uuid4())
     try:
-        user = set_user()
+        user, user_pid = set_user()
         # TODO: Check if form submitted correctly, detect file size overflow?
         # TODO: add attributes: execution_duration, mem, nodes, ntasks-per-node
         # Set new job description from POSTed parameters
@@ -388,7 +397,7 @@ def get_job(jobname, jobid):
         500 Internal Server Error (on error)
     """
     try:
-        user = set_user()
+        user, user_pid = set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
         job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True, get_results=True)
@@ -412,7 +421,7 @@ def delete_job(jobname, jobid):
         500 Internal Server Error (on error)
     """
     try:
-        user = set_user()
+        user, user_pid = set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
         job = Job(jobname, jobid, user, get_attributes=True)
@@ -433,7 +442,7 @@ def delete_job(jobname, jobid):
 def post_job(jobname, jobid):
     """Alias for delete_job() if ACTION=DELETE"""
     try:
-        user = set_user()
+        user, user_pid = set_user()
         logger.info('delete ' + jobname + ' ' + jobid)
         if request.forms.get('ACTION') == 'DELETE':
             # Get job description from DB
@@ -468,7 +477,7 @@ def get_phase(jobname, jobid):
         500 Internal Server Error (on error)
     """
     try:
-        user = set_user()
+        user, user_pid = set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
         job = Job(jobname, jobid, user, get_attributes=True)
@@ -491,7 +500,7 @@ def post_phase(jobname, jobid):
         500 Internal Server Error (on error)
     """
     try:
-        user = set_user()
+        user, user_pid = set_user()
         if 'PHASE' in request.forms:
             new_phase = request.forms.get('PHASE')
             logger.info('PHASE=' + new_phase + ' ' + jobname + ' ' + jobid)
@@ -540,7 +549,7 @@ def get_executionduration(jobname, jobid):
         500 Internal Server Error (on error)
     """
     try:
-        user = set_user()
+        user, user_pid = set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
         job = Job(jobname, jobid, user, get_attributes=True)
@@ -563,7 +572,7 @@ def post_executionduration(jobname, jobid):
         500 Internal Server Error (on error)
     """
     try:
-        user = set_user()
+        user, user_pid = set_user()
         logger.info(jobname + ' ' + jobid)
         # Get value from POST
         if 'EXECUTIONDURATION' not in request.forms:
@@ -605,7 +614,7 @@ def get_destruction(jobname, jobid):
         500 Internal Server Error (on error)
     """
     try:
-        user = set_user()
+        user, user_pid = set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
         job = Job(jobname, jobid, user, get_attributes=True)
@@ -628,7 +637,7 @@ def post_destruction(jobname, jobid):
         500 Internal Server Error (on error)
     """
     try:
-        user = set_user()
+        user, user_pid = set_user()
         logger.info(jobname + ' ' + jobid)
         # Get value from POST
         if 'DESTRUCTION' not in request.forms:
@@ -673,7 +682,7 @@ def get_error(jobname, jobid):
         500 Internal Server Error (on error)
     """
     try:
-        user = set_user()
+        user, user_pid = set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
         job = Job(jobname, jobid, user, get_attributes=True)
@@ -700,7 +709,7 @@ def get_quote(jobname, jobid):
         500 Internal Server Error (on error)
     """
     try:
-        user = set_user()
+        user, user_pid = set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
         job = Job(jobname, jobid, user, get_attributes=True)
@@ -728,7 +737,7 @@ def get_parameters(jobname, jobid):
         500 Internal Server Error (on error)
     """
     try:
-        user = set_user()
+        user, user_pid = set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
         job = Job(jobname, jobid, user, get_parameters=True)
@@ -753,7 +762,7 @@ def get_parameter(jobname, jobid, pname):
         500 Internal Server Error (on error)
     """
     try:
-        user = set_user()
+        user, user_pid = set_user()
         logger.info('param=' + pname + ' ' + jobname + ' ' + jobid)
         # Get job description from DB
         job = Job(jobname, jobid, user, get_parameters=True)
@@ -779,7 +788,7 @@ def post_parameter(jobname, jobid, pname):
         500 Internal Server Error (on error)
     """
     try:
-        user = set_user()
+        user, user_pid = set_user()
         logger.info('pname=' + pname + ' ' + jobname + ' ' + jobid)
         # Get value from POST
         if 'VALUE' not in request.forms:
@@ -821,7 +830,7 @@ def get_results(jobname, jobid):
         500 Internal Server Error (on error)
     """
     try:
-        user = set_user()
+        user, user_pid = set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
         job = Job(jobname, jobid, user, get_results=True)
@@ -846,7 +855,7 @@ def get_result(jobname, jobid, rname):
         500 Internal Server Error (on error)
     """
     try:
-        user = set_user()
+        user, user_pid = set_user()
         logger.info('rname=' + rname + ' ' + jobname + ' ' + jobid)
         # Get job description from DB
         job = Job(jobname, jobid, user, get_parameters=True, get_results=True)
@@ -883,7 +892,7 @@ def get_owner(jobname, jobid):
         500 Internal Server Error (on error)
     """
     try:
-        user = set_user()
+        user, user_pid = set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job description from DB
         job = Job(jobname, jobid, user, get_attributes=True)

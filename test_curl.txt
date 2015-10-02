@@ -8,6 +8,7 @@ https://voparis-uws-test.obspm.fr/show_db
 
 # job list
 https://voparis-uws-test.obspm.fr/ctbin
+curl --user name:password https://voparis-uws-test.obspm.fr/ctbin
 
 # job
 curl https://voparis-uws-test.obspm.fr/ctbin/non_valid_id
