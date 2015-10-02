@@ -30,6 +30,7 @@ app = Bottle()
 
 def set_user():
     """Set user from request header"""
+    logger.debug(str(request.environ))
     user = 'anonymous'
     user_pid = 'anonymous'
     # Set user from GET
