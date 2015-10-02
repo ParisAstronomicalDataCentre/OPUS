@@ -33,6 +33,9 @@ def set_user():
     user = 'anonymous'
     # Set user from REMOTE_USER if not empty
     remote_user = request.environ.get('REMOTE_USER', '')
+    # Use Basic access authentication
+    auth = request.headers.get('authorization')
+    logger.debug(auth)
     if remote_user:
         user = remote_user
     if 'user' in request.GET:
@@ -45,7 +48,7 @@ def is_job_server(ip):
     if ip in JOB_SERVERS:
         return True
     else:
-        logger.info('{} wants to access {}'.format(ip, request.urlparts.path))
+        logger.warning('{} wants to access {}'.format(ip, request.urlparts.path))
         return False
 
 

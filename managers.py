@@ -173,13 +173,13 @@ class SLURMManager(Manager):
         Returns:
             jobid_cluster on SLURM server
         """
-        # Create PBS file
+        # Create sbatch file
         sbatch_file_distant = '{}/{}.sh'.format(self.sbatch_path, job.jobid)
         sbatch_file_local = '{}/{}.sh'.format(SLURM_SBATCH_PATH, job.jobid)
         with open(sbatch_file_local, 'w') as f:
             sbatch = self._make_sbatch(job)
             f.write(sbatch)
-        # Copy PBS file: 'scp sbatch vouws@tycho:~/name > /dev/null'
+        # Copy sbatch file: 'scp sbatch vouws@tycho:~/name > /dev/null'
         cmd1 = ['scp',
                 sbatch_file_local,
                 '{}:{}'.format(self.ssh_arg, sbatch_file_distant)]
@@ -207,7 +207,7 @@ class SLURMManager(Manager):
         #         '-p {}'.format(sbatch_file_distant)]
         cmd3 = ['ssh', self.ssh_arg,
                 'sbatch {}'.format(sbatch_file_distant)]
-        logger.debug(' '.join(cmd2))
+        # logger.debug(' '.join(cmd2))
         jobid_cluster = sp.check_output(cmd3, stderr=sp.STDOUT)
         # Get jobid_cluster from output (e.g. "Submitted batch job 9421")
         return jobid_cluster.split(' ')[-1]
