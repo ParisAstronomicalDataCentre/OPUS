@@ -237,8 +237,8 @@ class SLURMManager(Manager):
             try:
                 sp.check_output(cmd1, stderr=sp.STDOUT)
             except sp.CalledProcessError as e:
-                logger.warning(e.message)
-                if 'Invalid job id specified' in e.message:
+                logger.warning(e.output)
+                if 'Invalid job id specified' in e.output:
                     logger.warning('force delete')
         # Delete workdir
         cmd2 = ['ssh', self.ssh_arg,
