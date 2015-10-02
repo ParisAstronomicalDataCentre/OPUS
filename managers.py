@@ -234,14 +234,20 @@ class SLURMManager(Manager):
         if job.phase not in ['COMPLETED', 'ERROR']:
             cmd1 = ['ssh', self.ssh_arg,
                     'scancel {}'.format(job.jobid_cluster)]
-            sp.check_output(cmd1, stderr=sp.STDOUT)
+            try:
+                sp.check_output(cmd1, stderr=sp.STDOUT)
+            except sp.CalledProcessError as e:
+                if 'Invalid job id specified' in e.message:
+                    logger.warning('force delete')
+                else:
+                    raise
         # Delete workdir
         cmd2 = ['ssh', self.ssh_arg,
-                'rm -rf {}/{}'.format(self.working_path, job.jobid),]
+                'rm -rf {}/{}'.format(self.working_path, job.jobid)]
         sp.check_output(cmd2, stderr=sp.STDOUT)
         # Delete jobdata
         cmd3 = ['ssh', self.ssh_arg,
-                'rm -rf {}/{}'.format(self.jobdata_path, job.jobid),]
+                'rm -rf {}/{}'.format(self.jobdata_path, job.jobid)]
         sp.check_output(cmd3, stderr=sp.STDOUT)
 
     def get_status(self, job):
