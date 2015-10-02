@@ -50,7 +50,7 @@ def set_user():
     auth = request.headers.get('Authorization')
     if auth:
         user, user_pid = parse_auth(auth)
-        logger.debug('Authorization: {} ({}:{})'.format(auth, user, user_pid))
+    logger.debug('Authorization: {} ({}:{})'.format(auth, user, user_pid))
     return user, user_pid
 
 
