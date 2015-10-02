@@ -39,11 +39,13 @@ def set_user():
             user_pid = request.GET['user_pid']
         else:
             user_pid = request.GET['user']
+        logger.debug('user information from GET ({}:{})'.format(user, user_pid))
     # Set user from REMOTE_USER if not empty
     remote_user = request.environ.get('REMOTE_USER', '')
     if remote_user:
         user = remote_user
         user_pid = remote_user
+        logger.debug('REMOTE_USER is set: {}'.format(user))
     # Use Basic access authentication
     auth = request.headers.get('Authorization')
     if auth:
