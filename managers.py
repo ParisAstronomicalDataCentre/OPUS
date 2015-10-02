@@ -231,9 +231,10 @@ class SLURMManager(Manager):
         #        '-i ' + str(job.jobid_cluster),
         #        '-r {}/{}'.format(self.jobdata_path, job.jobid),
         #        '-w {}/{}'.format(self.working_path, job.jobid)]
-        cmd1 = ['ssh', self.ssh_arg,
-                'scancel {}'.format(job.jobid_cluster)]
-        sp.check_output(cmd1, stderr=sp.STDOUT)
+        if job.phase not in ['COMPLETED', 'ERROR']:
+            cmd1 = ['ssh', self.ssh_arg,
+                    'scancel {}'.format(job.jobid_cluster)]
+            sp.check_output(cmd1, stderr=sp.STDOUT)
         # Delete workdir
         cmd2 = ['ssh', self.ssh_arg,
                 'rm -rf {}/{}'.format(self.working_path, job.jobid),]
