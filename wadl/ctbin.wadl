@@ -14,7 +14,7 @@
    
    <representation id="parameters" mediaType="application/x-www-form-urlencoded">
 <!-- Job parameters -->
-<param style="query" name="evfile" type="xs:string" required="true" default="events.fits">
+<param style="query" name="evfile" type="xs:anyURI" required="true" default="events.fits">
     <doc>Input event list or observation definition file</doc>
 </param>
 <param style="query" name="outfile" type="xs:string" required="false" default="cntmap.fits">

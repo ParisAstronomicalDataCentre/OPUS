@@ -15,7 +15,6 @@ import managers
 from settings import *
 
 
-
 # ---------
 # Job class
 
@@ -163,17 +162,23 @@ class Job(object):
         for pname, value in post.iteritems():
             if pname not in ['PHASE']:
                 # TODO: use WADL to check if value is valid
+                byref = False
                 if pname not in self.wadl['parameters']:
                     logger.warning('Parameter {} not found in WADL'.format(pname))
-                self.parameters[pname] = {'value': value, 'byref': False}
+                else:
+                    ptype = self.wadl['parameters'][pname]['type']
+                    if 'anyURI' in ptype:
+                        byref = True
+                self.parameters[pname] = {'value': value, 'byref': byref}
         # Upload files for multipart/form-data
         for fname, f in files.iteritems():
             upload_dir = '{}/{}'.format(UPLOAD_PATH, self.jobid)
             if not os.path.isdir(upload_dir):
                 os.makedirs(upload_dir)
             f.save(upload_dir + '/' + f.filename)
+            logger.info('Parameter {} is a file and was downloaded ({})'.format(fname, f.filename))
             # Parameter value is set to the file name on server
-            value = f.filename
+            value = 'file://' + f.filename
             self.parameters[fname] = {'value': value, 'byref': True}
         # Save to storage
         self.storage.save(self, save_attributes=True, save_parameters=True)
@@ -227,7 +232,7 @@ class Job(object):
             if p['value']:
                 value = urllib.quote_plus(urllib.unquote_plus(p['value']))
                 by_ref = str(p['byref']).lower()
-                ET.SubElement(xml_params, 'uws:parameter', attrib={'id': pname,'byReference': by_ref}).text = value
+                ET.SubElement(xml_params, 'uws:parameter', attrib={'id': pname, 'byReference': by_ref}).text = value
 
     def parameters_to_xml(self):
         """Returns the XML representation of job parameters"""
@@ -243,7 +248,7 @@ class Job(object):
     def _results_to_xml_fill(self, xml_results):
         for rname, r in self.results.iteritems():
             if r['url']:
-                ET.SubElement(xml_results, 'uws:result', attrib={'id': rname,'xlink:href': r['url']})
+                ET.SubElement(xml_results, 'uws:result', attrib={'id': rname, 'xlink:href': r['url']})
 
     def results_to_xml(self, add_xmlns=True):
         """Returns the XML representation of job results"""
@@ -314,7 +319,6 @@ class Job(object):
         self.destruction_time = (now + destruction).strftime(DT_FMT)
         self.jobid_cluster = jobid_cluster
         # Save changes to storage
-        #self.save_description()
         self.storage.save(self)
 
     def abort(self):
@@ -338,7 +342,6 @@ class Job(object):
         self.end_time = now.strftime(DT_FMT)
         self.error = 'Job aborted by user ' + self.user
         # Save job description
-        #self.save_description()
         self.storage.save(self)
 
     def delete(self):
@@ -369,11 +372,6 @@ class Job(object):
             if new_phase != self.phase:
                 # Change phase
                 self.change_status(new_phase)
-                # self.phase = new_phase
-                # if new_phase == 'COMPLETED':
-                #     # Get end_time
-                #     self.end_time = self.manager.get_end_time(self)
-                # self.save_description()
         return self.phase
 
     def change_status(self, new_phase, error=''):
@@ -395,11 +393,7 @@ class Job(object):
 
             def phase_executing(job, error_msg):
                 # Set job.start_time
-                try:
-                    job.start_time = job.manager.get_start_time(job)
-                except:
-                    logger.warning('job.manager.get_start_time(job) not responding, set start_time=now')
-                    job.start_time = now.strftime(DT_FMT)
+                job.start_time = now.strftime(DT_FMT)
                 # Estimates job.end_time from job.start_time + duration
                 duration = dt.timedelta(0, self.execution_duration)
                 end_time = dt.datetime.strptime(job.start_time, DT_FMT) + duration
@@ -418,20 +412,12 @@ class Job(object):
                         job.results[rname] = {'url': url, 'mediaType': r['mediaType']}
                         logger.info('add result ' + rname + ' ' + str(r))
                 # Set job.end_time
-                try:
-                    job.end_time = job.manager.get_end_time(job)
-                except:
-                    logger.warning('job.manager.get_end_time(job) not responding, set end_time=now')
-                    job.end_time = now.strftime(DT_FMT)
+                job.end_time = now.strftime(DT_FMT)
 
             def phase_error(job, error_msg):
                 # Set job.end_time if not already in ERROR phase
                 if job.phase != 'ERROR':
-                    try:
-                        job.end_time = job.manager.get_end_time(job)
-                    except:
-                        logger.warning('job.manager.get_end_time(job) not responding, set end_time=now')
-                        job.end_time = now.strftime(DT_FMT)
+                    job.end_time = now.strftime(DT_FMT)
                 # Set job.error or add
                 if job.error:
                     job.error += '. ' + error_msg
