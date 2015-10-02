@@ -48,9 +48,12 @@ def set_user():
         logger.debug('REMOTE_USER is set: {}'.format(user))
     # Use Basic access authentication
     auth = request.headers.get('Authorization')
+    # Using WSGI, the header is changed to HTTP_AUTHORIZATION
+    if not auth:
+        auth = request.headers.get('HTTP_AUTHORIZATION')
     if auth:
         user, user_pid = parse_auth(auth)
-    logger.debug('Authorization: {} ({}:{})'.format(auth, user, user_pid))
+        logger.debug('Authorization: {} ({}:{})'.format(auth, user, user_pid))
     return user, user_pid
 
 
