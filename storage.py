@@ -159,7 +159,7 @@ class SQLiteStorage(Storage):
             job.end_time = end_time.strftime(DT_FMT)
             job.destruction_time = destruction_time.strftime(DT_FMT)
             job.owner = row['owner']
-            job.owner_PID = row['owner_PID']
+            job.owner_PID = row['owner_pid']
             job.run_id = row['run_id']
             job.jobid_cluster = row['jobid_cluster']
         if get_parameters:

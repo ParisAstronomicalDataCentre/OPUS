@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     end_time           timestamp,
     destruction_time   timestamp,
     owner              varchar(64),
-    owner_PID          varchar(128),
+    owner_pid          varchar(128),
     run_id             varchar(64),
     jobid_cluster      int,
     PRIMARY KEY (jobid)

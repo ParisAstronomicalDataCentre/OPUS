@@ -83,7 +83,7 @@ JOB_ATTRIBUTES = [
     'quote',
     'error',
     'owner',
-    'owner_PID',
+    'owner_pid',
     'run_id',
     'jobid_cluster',
 ]
