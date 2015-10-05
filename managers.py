@@ -105,7 +105,7 @@ class SLURMManager(Manager):
             'jd={}/{}'.format(self.jobdata_path, job.jobid),
             'cd $wd',
             'echo "Working dir is $wd"',
-            'echo "Current dir is $pwd"',
+            'echo "Current dir is `pwd`"',
             'echo "JobData dir is $jd"',
             'timestamp() {',
             '    date +"%Y-%m-%dT%H:%M:%S"',
