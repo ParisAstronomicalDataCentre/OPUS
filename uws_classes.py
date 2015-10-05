@@ -362,6 +362,7 @@ class Job(object):
         - QUEUED / HELD / SUSPENDED
         - EXECUTING
         """
+        # TODO: check if user has rights to abort job! (i.e. is owner or super_user)
         if self.phase in ['PENDING']:
             pass
         elif self.phase in ['QUEUED', 'HELD', 'SUSPENDED', 'EXECUTING']:
@@ -382,7 +383,8 @@ class Job(object):
 
         Job can be deleted at any time.
         """
-        if self.phase not in ['PENDING', 'COMPLETED']:
+        # TODO: check if user has rights to delete job! (i.e. is owner or super_user)
+        if self.phase not in ['PENDING']:
             # Send command to manager
             self.manager.delete(self)
         # Remove job from storage

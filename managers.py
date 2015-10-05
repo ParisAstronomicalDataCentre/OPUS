@@ -18,7 +18,7 @@ class Manager(object):
     """Manage job execution on cluster
 
     This class defines required functions executed by the UWS server:
-    start(), abort(), delete() and get_status()
+    start(), abort(), delete(), get_status(), get_info() and get_results()
     """
 
     def start(self, job):
@@ -51,7 +51,7 @@ class Manager(object):
         Returns:
             dictionary with job info
         """
-        return job.phase
+        return {'phase': job.phase}
 
     def get_results(self, job):
         """Get job results from cluster"""
@@ -61,6 +61,7 @@ class SLURMManager(Manager):
     """Manage interactions with SLURM queue manager (e.g. on tycho.obspm.fr)"""
 
     def __init__(self, host=SLURM_URL, user=SLURM_USER, home=SLURM_HOME_PATH, mail=SLURM_USER_MAIL):
+        # Set basic attributes
         self.host = host
         self.user = user
         self.home = home
@@ -69,8 +70,7 @@ class SLURMManager(Manager):
         # PATHs
         self.scripts_path = '{}/scripts'.format(home)
         self.jobdata_path = '{}/jobdata'.format(home)  # may be a link on host
-        self.working_path = '{}/workdir'.format(home)  # may be a link on host
-        # self.uws_handler = '{}/uws_handler.sh'.format(self.scripts_path)  # not used anymore (testing)
+        self.working_path = '{}/workdir'.format(home)  # may be a link on host, will be current dir
 
     def _make_sbatch(self, job):
         """Make PBS file content for given job
@@ -78,12 +78,12 @@ class SLURMManager(Manager):
         Returns:
             PBS as a string
         """
+        # Need WADL for results description
+        if not job.wadl:
+            job.read_wadl()
         duration = dt.timedelta(0, job.execution_duration)
         # duration format is 00:01:00 for 1 min
         duration_str = str(duration).replace(' days', '').replace(' day', '').replace(', ', '-')
-        # Need WADL fro results description
-        if not job.wadl:
-            job.read_wadl()
         # Create sbatch
         sbatch = [
             '#!/bin/bash',
@@ -105,19 +105,18 @@ class SLURMManager(Manager):
             'jd={}/{}'.format(self.jobdata_path, job.jobid),
             'cd $wd',
             'echo "Working dir is $wd"',
-            # 'echo "Current dir is `pwd`"',
             'echo "JobData dir is $jd"',
             'timestamp() {',
             '    date +"%Y-%m-%dT%H:%M:%S"',
             '}',
-            # 'echo "Set trap"',
-            'set -e ',
             # Error handler (send signal on error, in addition to job completion by SLURM)
+            'set -e ',
             'error_handler()',
             '{',
             '    touch $jd/error',
-            #'    error_string=`tac /obs/vouws/uws_logs/$SLURM_JOBID.err | grep -m 1 .`',
-            '    msg="Error in ${BASH_SOURCE[1]##*/} running command: $BASH_COMMAND"',  # ${BASH_SOURCE[1]}: line ${BASH_LINENO[0]}: ${FUNCNAME[1]}"'
+            # '    error_string=`tac /obs/vouws/uws_logs/$SLURM_JOBID.err | grep -m 1 .`',
+            # '    msg="${BASH_SOURCE[1]}: line ${BASH_LINENO[0]}: ${FUNCNAME[1]}"',
+            '    msg="Error in ${BASH_SOURCE[1]##*/} running command: $BASH_COMMAND"',
             '    echo "$msg"', # echo in stdout log
             # '    echo "Signal error"',
             '    curl -s -o $jd/curl_error_signal.log '
@@ -130,7 +129,6 @@ class SLURMManager(Manager):
             '}',
             'trap "error_handler" INT TERM EXIT',
             # Start job
-            # 'echo "Signal start"',
             'curl -s -o $jd/curl_start_signal.log '
             '    -d "jobid=$SLURM_JOBID" -d "phase=RUNNING" '
             '    {}/handler/job_event'.format(BASE_URL),
@@ -144,7 +142,7 @@ class SLURMManager(Manager):
             '### CP RESULTS',
             'mkdir $jd/results',
         ])
-        # Identify result filenames to move to $jd/results
+        # Identify results to be moved to $jd/results
         cp_results = []
         for rname, r in job.wadl['results'].iteritems():
             fname = job.get_result_filename(rname)
@@ -156,11 +154,17 @@ class SLURMManager(Manager):
             'rm -rf $wd',
             'touch $jd/done',
             'echo "[`timestamp`] Job done"',
-            # 'echo "Remove trap"',
             'trap - INT TERM EXIT',
             'exit 0',
-            #'curl -s -o $jd/logs/done_signal -d "jobid=$SLURM_JOBID" -d "phase=COMPLETED" https://voparis-uws-test.obspm.fr/handler/job_event',
         ])
+        # On completion, SLURM executes the script /usr/local/sbin/completion_script.sh
+        # """
+        # # vouws
+        # if [[ "$UID" -eq 1834 ]]; then
+        #     curl --max-time 10 -d jobid="$JOBID" -d phase="$JOBSTATE" https://voparis-uws-test.obspm.fr/handler/job_event
+        # fi
+        # """
+
         return '\n'.join(sbatch)
 
     def start(self, job):
@@ -213,17 +217,13 @@ class SLURMManager(Manager):
         with open(sbatch_file_local, 'w') as f:
             sbatch = self._make_sbatch(job)
             f.write(sbatch)
-        # Copy sbatch file: 'scp sbatch vouws@tycho:~/name > /dev/null'
+        # Copy sbatch file
         cmd = ['scp',
                sbatch_file_local,
                '{}:{}'.format(self.ssh_arg, sbatch_file_distant)]
         logger.debug(' '.join(cmd))
         sp.check_output(cmd, stderr=sp.STDOUT)
-        # Start job using uws_handler
-        # 'ssh vouws@tycho.obspm.fr '~/uws/uwshandler.sh -x start -p ~/name''
-        # cmd3 = ['ssh', self.ssh_arg, self.uws_handler,
-        #         '-x start',
-        #         '-p {}'.format(sbatch_file_distant)]
+        # Start job using sbatch
         cmd = ['ssh', self.ssh_arg,
                'sbatch {}'.format(sbatch_file_distant)]
         logger.debug(' '.join(cmd))
@@ -233,23 +233,12 @@ class SLURMManager(Manager):
 
     def abort(self, job):
         """Abort job on SLURM server"""
-        # 'ssh vouws@tycho.obspm.fr '~/uws/uwshandler.sh -x abort -p jobid''
-        # cmd = ['ssh', self.ssh_arg, self.uws_handler,
-        #        '-x abort',
-        #        '-i ' + str(job.jobid_cluster),
-        #        '-r {}/{}'.format(self.jobdata_path, job.jobid)]
         cmd = ['ssh', self.ssh_arg,
                'scancel {}'.format(job.jobid_cluster)]
         sp.check_output(cmd, stderr=sp.STDOUT)
 
     def delete(self, job):
         """Delete job on SLURM server"""
-        # 'ssh vouws@tycho.obspm.fr '~/uws/uwshandler.sh -x delete -p jobid''
-        # cmd = ['ssh', self.ssh_arg, self.uws_handler,
-        #        '-x delete',
-        #        '-i ' + str(job.jobid_cluster),
-        #        '-r {}/{}'.format(self.jobdata_path, job.jobid),
-        #        '-w {}/{}'.format(self.working_path, job.jobid)]
         if job.phase not in ['COMPLETED', 'ERROR']:
             cmd = ['ssh', self.ssh_arg,
                    'scancel {}'.format(job.jobid_cluster)]
@@ -262,13 +251,13 @@ class SLURMManager(Manager):
                 else:
                     raise
         # Delete workdir
-        cmd2 = ['ssh', self.ssh_arg,
-                'rm -rf {}/{}'.format(self.working_path, job.jobid)]
-        sp.check_output(cmd2, stderr=sp.STDOUT)
+        cmd = ['ssh', self.ssh_arg,
+               'rm -rf {}/{}'.format(self.working_path, job.jobid)]
+        sp.check_output(cmd, stderr=sp.STDOUT)
         # Delete jobdata
-        cmd3 = ['ssh', self.ssh_arg,
-                'rm -rf {}/{}'.format(self.jobdata_path, job.jobid)]
-        sp.check_output(cmd3, stderr=sp.STDOUT)
+        cmd = ['ssh', self.ssh_arg,
+               'rm -rf {}/{}'.format(self.jobdata_path, job.jobid)]
+        sp.check_output(cmd, stderr=sp.STDOUT)
 
     def get_status(self, job):
         """Get job status (phase) from SLURM server
@@ -276,16 +265,10 @@ class SLURMManager(Manager):
         Returns:
             job status (phase)
         """
-        # 'ssh vouws@tycho.obspm.fr '~/uws/uwshandler.sh -x status -p jobid''
-        # cmd = ['ssh', self.ssh_arg, self.uws_handler,
-        #        '-x status',
-        #        '-i ' + str(job.jobid_cluster),
-        #        '-r {}/{}'.format(self.jobdata_path, job.jobid)]
         cmd = ['ssh', self.ssh_arg,
                'sacct -j {}'.format(job.jobid_cluster),
                '-o state -P -n']
         phase = sp.check_output(cmd, stderr=sp.STDOUT)
-        # TODO: change end time here if phase is COMPLETED?
         # Remove trailing \n from output
         return phase[:-1]
 
@@ -310,9 +293,8 @@ class SLURMManager(Manager):
         Returns:
             list of results?
         """
-        # cp_results.append('scp -r $jd/results www@{}:{}/{}'.format(uws_url, JOBDATA_PATH, job.jobid))
         cmd = ['scp', '-rp',
                '{}:{}/jobdata/{}'.format(self.ssh_arg, SLURM_HOME_PATH, job.jobid),
                JOBDATA_PATH]
-        # logger.debug(' '.join(cmd))
+        logger.debug(' '.join(cmd))
         sp.check_output(cmd, stderr=sp.STDOUT)
