@@ -178,7 +178,7 @@ class SLURMManager(Manager):
         except sp.CalledProcessError as e:
             logger.warning('{}: {}'.format(e.cmd, e.output))
             if 'File exists' in e.output:
-                logger.warning('force start {} {}'.format(job.jobname, job.jobid))
+                logger.warning('force start {} {} (directories exist)'.format(job.jobname, job.jobid))
             else:
                 raise
         # Create parameter file
@@ -186,16 +186,16 @@ class SLURMManager(Manager):
         param_file_local = '{}/{}_parameters.sh'.format(SLURM_SBATCH_PATH, job.jobid)
         with open(param_file_local, 'w') as f:
             # parameters are a list of key=value (easier for bash sourcing)
-            params, files = job.parameters_to_text(get_files=True)
+            params, files = job.parameters_to_text(handle_files=True)
             f.write(params)
-        # TODO: scp files if param starts with http:// or file://
-        for fname in files['scp']:
+        # Copy files (scp if uploaded from form, or wget if given as a URI)
+        for fname in files['form']:
             cmd = ['scp',
                    '{}/{}/{}'.format(UPLOAD_PATH, job.jobid, fname),
                    '{}:{}/{}/{}'.format(self.ssh_arg, self.working_path, job.jobid, fname)]
             logger.debug(' '.join(cmd))
             sp.check_output(cmd, stderr=sp.STDOUT)
-        for furl in files['wget']:
+        for furl in files['URI']:
             fname = furl.split('/')[-1]
             cmd = ['ssh', self.ssh_arg,
                    'wget -q {} -O {}/{}/{}'.format(furl, self.working_path, job.jobid, fname)]

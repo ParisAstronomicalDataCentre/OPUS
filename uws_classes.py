@@ -222,23 +222,25 @@ class Job(object):
     # ----------
     # Methods to export a job description
 
-    def parameters_to_text(self, separator='\n', get_files=False):
+    def parameters_to_text(self, separator='\n', handle_files=False):
         """Make parameter file content for given job
 
         Returns:
             parameter list as a string
         """
         params = []
-        files = {'wget': [], 'scp': []}
-        if get_files:
+        files = {'URI': [], 'form': []}
+        if handle_files:
             for pname, pdict in self.parameters.iteritems():
                 pvalue = pdict['value']
+                # Test if file is given as a URI, prefixed by http*
                 if any(s in pvalue for s in ['http://', 'https://']):
-                    files['wget'].append(pvalue)
+                    files['URI'].append(pvalue)
                     pvalue = pvalue.split('/')[-1]
+                # Test if file was uploaded from the form, and given the file:// prefix (see self.set_from_post())
                 if 'file://' in pvalue:
                     pvalue = pvalue.split('/')[-1]
-                    files['scp'].append(pvalue)
+                    files['form'].append(pvalue)
                 params.append(pname + '=' + pvalue)
             return separator.join(params), files
         else:
