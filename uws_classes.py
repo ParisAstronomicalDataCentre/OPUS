@@ -16,6 +16,22 @@ from settings import *
 
 
 # ---------
+# User class
+
+
+class User(object):
+    """A user is defined by a name and a persistent ID (PID) or token
+    The PID remains constant for a given user using a given client.
+    Ideally it is a more general PID set during the authentication (e.g with eduGain/Shibboleth).
+    The user name/pid can be sent via Basic access authentication
+    """
+
+    def __init__(self, name='anonymous', pid='anonymous'):
+        self.name = name
+        self.pid = pid
+
+
+# ---------
 # Job class
 
 
@@ -68,7 +84,8 @@ class Job(object):
             self.start_time = now.strftime(DT_FMT)
             self.end_time = (now + duration).strftime(DT_FMT)
             self.destruction_time = (now + destruction).strftime(DT_FMT)
-            self.owner = user
+            self.owner = user.name
+            self.owner_pid = user.pid
             self.run_id = None
             self.parameters = {}
             self.results = {}
@@ -85,6 +102,7 @@ class Job(object):
             self.end_time = None
             self.destruction_time = None
             self.owner = None
+            self.owner_pid = None
             self.run_id = None
             self.parameters = {}
             self.results = {}
