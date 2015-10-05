@@ -204,16 +204,29 @@ class Job(object):
     # ----------
     # Methods to export a job description
 
-    def parameters_to_text(self, separator='\n'):
+    def parameters_to_text(self, separator='\n', get_files=False):
         """Make parameter file content for given job
 
         Returns:
             parameter list as a string
         """
         params = []
-        for pname, pdict in self.parameters.iteritems():
-            params.append(pname + '=' + pdict['value'])
-        return separator.join(params)
+        files = {'wget': [], 'scp': []}
+        if get_files:
+            for pname, pdict in self.parameters.iteritems():
+                pvalue = pdict['value']
+                if any(s in pvalue for s in ['http://', 'https://']):
+                    files['wget'].append(pvalue)
+                    pvalue = pvalue.split('/')[-1]
+                if 'file://' in pvalue:
+                    files['scp'].append(pvalue)
+                    pvalue = pvalue.split('/')[-1]
+                params.append(pname + '=' + pvalue)
+            return separator.join(params), files
+        else:
+            for pname, pdict in self.parameters.iteritems():
+                params.append(pname + '=' + pdict['value'])
+            return separator.join(params)
 
     def parameters_to_json(self):
         """Make parameter file content for given job
