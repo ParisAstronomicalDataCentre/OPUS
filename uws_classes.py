@@ -371,7 +371,7 @@ class Job(object):
         now = dt.datetime.now()
         self.phase = 'ABORTED'
         self.end_time = now.strftime(DT_FMT)
-        self.error = 'Job aborted by user ' + self.user
+        self.error = 'Job aborted by user ' + self.user.name
         # Save job description
         self.storage.save(self)
 
