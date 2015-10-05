@@ -171,9 +171,16 @@ class SLURMManager(Manager):
         """
         # Create workdir and jobdata dir (to upload the scripts, parameters and input files)
         cmd = ['ssh', self.ssh_arg,
-               'mkdir {}/{}; mkdir {}/{}'.format(self.working_path, job.jobid, self.jobdata_path, job.jobid)]
+               '"mkdir {}/{}; mkdir {}/{}"'.format(self.working_path, job.jobid, self.jobdata_path, job.jobid)]
         logger.debug(' '.join(cmd))
-        sp.check_output(cmd, stderr=sp.STDOUT)
+        try:
+            sp.check_output(cmd, stderr=sp.STDOUT)
+        except sp.CalledProcessError as e:
+            logger.warning('{}: {}'.format(e.cmd, e.output))
+            if 'File exists' in e.output:
+                logger.warning('force start {} {}'.format(job.jobname, job.jobid))
+            else:
+                raise
         # Create parameter file
         param_file_distant = '{}/{}/parameters.sh'.format(self.jobdata_path, job.jobid)
         param_file_local = '{}/{}_parameters.sh'.format(SLURM_SBATCH_PATH, job.jobid)
@@ -244,10 +251,10 @@ class SLURMManager(Manager):
         #        '-r {}/{}'.format(self.jobdata_path, job.jobid),
         #        '-w {}/{}'.format(self.working_path, job.jobid)]
         if job.phase not in ['COMPLETED', 'ERROR']:
-            cmd1 = ['ssh', self.ssh_arg,
-                    'scancel {}'.format(job.jobid_cluster)]
+            cmd = ['ssh', self.ssh_arg,
+                   'scancel {}'.format(job.jobid_cluster)]
             try:
-                sp.check_output(cmd1, stderr=sp.STDOUT)
+                sp.check_output(cmd, stderr=sp.STDOUT)
             except sp.CalledProcessError as e:
                 logger.warning('{}: {}'.format(e.cmd, e.output))
                 if 'Invalid job id specified' in e.output:
