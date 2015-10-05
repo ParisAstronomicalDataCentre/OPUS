@@ -226,7 +226,7 @@ def show_db():
     #    abort_403()
     html = ''
     try:
-        logger.info('Show Database for ' + user)
+        logger.info('Show Database for ' + user.name)
         joblist = JobList('ctbin', user)
         return joblist.to_html()
     except:
@@ -526,7 +526,7 @@ def post_phase(jobname, jobid):
                 job = Job(jobname, jobid, user, get_attributes=True)
                 # Abort job
                 job.abort()
-                logger.info(jobname + ' ' + jobid + ' ABORTED by user ' + user)
+                logger.info(jobname + ' ' + jobid + ' ABORTED by user ' + user.name)
             else:
                 raise UserWarning('PHASE=' + new_phase + ' not expected')
         else:
