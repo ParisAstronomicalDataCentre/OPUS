@@ -29,6 +29,7 @@ https://voparis-uws-test.obspm.fr/ctbin/22222222-e656-b924-c14a-fbd02f9ebaa9/own
 curl -d "evfile=http://voplus.obspm.fr/cta/events.fits" -d "enumbins=2" https://voparis-uws-test.obspm.fr/ctbin
 curl -d "evfile=http://voplus.obspm.fr/cta/events.fits" -d "enumbins=2" -d "PHASE=RUN" https://voparis-uws-test.obspm.fr/ctbin
 curl -F "evfile=@/home/mservillat/CTA/svn_voparis-cta/data_processing/ctools/tutorial/events.fits" -F "enumbins=2" https://voparis-uws-test.obspm.fr/ctbin
+curl -F "evfile=@/home/mservillat/CTA/svn_voparis-cta/data_processing/ctools/tutorial/events.fits" -F "enumbins=2" -F "PHASE=RUN" https://voparis-uws-test.obspm.fr/ctbin
 
 # start job
 curl -d "PHASE=RUN" https://voparis-uws-test.obspm.fr/ctbin/00000000-dbf3-6b04-b1e7-28d47ad32794/phase

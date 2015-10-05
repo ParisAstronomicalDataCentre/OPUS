@@ -237,8 +237,8 @@ class Job(object):
                     files['wget'].append(pvalue)
                     pvalue = pvalue.split('/')[-1]
                 if 'file://' in pvalue:
-                    files['scp'].append(pvalue)
                     pvalue = pvalue.split('/')[-1]
+                    files['scp'].append(pvalue)
                 params.append(pname + '=' + pvalue)
             return separator.join(params), files
         else:

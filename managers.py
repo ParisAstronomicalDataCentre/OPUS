@@ -105,12 +105,12 @@ class SLURMManager(Manager):
             'jd={}/{}'.format(self.jobdata_path, job.jobid),
             'cd $wd',
             'echo "Working dir is $wd"',
-            'echo "Current dir is `pwd`"',
+            # 'echo "Current dir is `pwd`"',
             'echo "JobData dir is $jd"',
             'timestamp() {',
             '    date +"%Y-%m-%dT%H:%M:%S"',
             '}',
-            'echo "Set trap"',
+            # 'echo "Set trap"',
             'set -e ',
             # Error handler (send signal on error, in addition to job completion by SLURM)
             'error_handler()',
@@ -119,17 +119,18 @@ class SLURMManager(Manager):
             #'    error_string=`tac /obs/vouws/uws_logs/$SLURM_JOBID.err | grep -m 1 .`',
             '    msg="Error in ${BASH_SOURCE[1]##*/} running command: $BASH_COMMAND"',  # ${BASH_SOURCE[1]}: line ${BASH_LINENO[0]}: ${FUNCNAME[1]}"'
             '    echo "$msg"', # echo in stdout log
-            '    echo "Signal Error"',
+            # '    echo "Signal error"',
             '    curl -s -o $jd/curl_error_signal.log '
             '        -d "jobid=$SLURM_JOBID" -d "phase=ERROR" --data-urlencode "error_msg=$msg" '
             '        {}/handler/job_event'.format(BASE_URL),
             '    rm -rf $wd',
+            # '    echo "Remove trap"',
             '    trap - INT TERM EXIT',
             '    exit 1',
             '}',
             'trap "error_handler" INT TERM EXIT',
             # Start job
-            'echo "Signal start"',
+            # 'echo "Signal start"',
             'curl -s -o $jd/curl_start_signal.log '
             '    -d "jobid=$SLURM_JOBID" -d "phase=RUNNING" '
             '    {}/handler/job_event'.format(BASE_URL),
@@ -155,7 +156,7 @@ class SLURMManager(Manager):
             'rm -rf $wd',
             'touch $jd/done',
             'echo "[`timestamp`] Job done"',
-            'echo "Remove trap"',
+            # 'echo "Remove trap"',
             'trap - INT TERM EXIT',
             'exit 0',
             #'curl -s -o $jd/logs/done_signal -d "jobid=$SLURM_JOBID" -d "phase=COMPLETED" https://voparis-uws-test.obspm.fr/handler/job_event',
