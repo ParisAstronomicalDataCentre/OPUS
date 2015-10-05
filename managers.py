@@ -81,6 +81,7 @@ class SLURMManager(Manager):
         duration = dt.timedelta(0, job.execution_duration)
         # duration format is 00:01:00 for 1 min
         duration_str = str(duration).replace(' days', '').replace(' day', '').replace(', ', '-')
+        # Need WADL fro results description
         if not job.wadl:
             job.read_wadl()
         # Create sbatch
@@ -88,7 +89,7 @@ class SLURMManager(Manager):
             '#!/bin/bash',
             '#SBATCH --job-name={}'.format(job.jobname),
             '#SBATCH --error={}/{}/stderr.log'.format(self.jobdata_path, job.jobid),
-            '#SBATCH --output={}/{}/stdout.job'.format(self.jobdata_path, job.jobid),
+            '#SBATCH --output={}/{}/stdout.log'.format(self.jobdata_path, job.jobid),
             '#SBATCH --mail-user=' + self.mail,
             '#SBATCH --mail-type=ALL',
             '#SBATCH --no-requeue',
@@ -104,6 +105,7 @@ class SLURMManager(Manager):
             'jd={}/{}'.format(self.jobdata_path, job.jobid),
             'cd $wd',
             'echo "Working dir is $wd"',
+            'echo "Current dir is $pwd"',
             'echo "JobData dir is $jd"',
             'echo "Set trap"',
             'set -e ',
@@ -114,7 +116,8 @@ class SLURMManager(Manager):
             #'    error_string=`tac /obs/vouws/uws_logs/$SLURM_JOBID.err | grep -m 1 .`',
             '    msg="Error in ${BASH_SOURCE[1]##*/} running command: $BASH_COMMAND"',  # ${BASH_SOURCE[1]}: line ${BASH_LINENO[0]}: ${FUNCNAME[1]}"'
             '    echo "$msg"', # echo in stdout log
-            '    curl -s -o $jd/curl_error_signal '
+            '    echo "Signal Error"',
+            '    curl -s -o $jd/curl_error_signal.log '
             '        -d "jobid=$SLURM_JOBID" -d "phase=ERROR" --data-urlencode "error_msg=$msg" '
             '        {}/handler/job_event'.format(BASE_URL),
             '    rm -rf $wd',
@@ -124,10 +127,10 @@ class SLURMManager(Manager):
             'trap "error_handler" INT TERM EXIT',
             # Start job
             'echo "Signal start"',
-            'curl -s -o $jd/curl_start_signal '
+            'curl -s -o $jd/curl_start_signal.log '
             '    -d "jobid=$SLURM_JOBID" -d "phase=RUNNING" '
             '    {}/handler/job_event'.format(BASE_URL),
-            'echo "Job started"',
+            'echo "Start job"',
             'touch $jd/start',
             '### EXEC',
             # Load variables from params file
@@ -149,6 +152,7 @@ class SLURMManager(Manager):
             'rm -rf $wd',
             'touch $jd/done',
             'echo "Job done"',
+            'echo "Remove trap"',
             'trap - INT TERM EXIT',
             'exit 0',
             #'curl -s -o $jd/logs/done_signal -d "jobid=$SLURM_JOBID" -d "phase=COMPLETED" https://voparis-uws-test.obspm.fr/handler/job_event',
