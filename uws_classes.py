@@ -121,14 +121,15 @@ class Job(object):
                 wadl_string = f.read()
             wadl_tree = ET.fromstring(wadl_string)
             # Read parameters description
-            params_block = wadl_tree.find(".//{http://wadl.dev.java.net/2009/02}representation[@id='parameters']")
+            params_block = wadl_tree.find(".//{http://wadl.dev.java.net/2009/02}request[@id='create_job_parameters']")
             for p in params_block.getchildren():
-                parameters[p.get('name')] = {
-                    'type': p.get('type'),
-                    'required': p.get('required'),
-                    'default': p.get('default'),
-                    'doc': p.getchildren()[0].text,
-                }
+                if p.get('name') not in ['PHASE']:
+                    parameters[p.get('name')] = {
+                        'type': p.get('type'),
+                        'required': p.get('required'),
+                        'default': p.get('default'),
+                        'doc': p.getchildren()[0].text,
+                    }
             results_block = wadl_tree.find(".//{http://wadl.dev.java.net/2009/02}param[@name='result-id']")
             for r in results_block.getchildren():
                 results[r.get('value')] = {

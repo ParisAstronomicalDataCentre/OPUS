@@ -24,7 +24,7 @@
         </method>
         <method id="create_job" name="POST">
             <doc>POSTing a request to the Job List creates a new job</doc>
-            <request id="create_job_parameters">
+            <request>
 				<param style="query" name="PHASE" type="xs:string" required="false" fixed="RUN"/>
 <!-- TODO: parameters -->
 <param style="query" name="evfile" type="xs:anyURI" required="true" default="events.fits">
@@ -363,7 +363,6 @@
 	            <response status="500"/>
 	        </method>
 	    </resource>
-
 	    <resource id="job_parameters" path="{job-id}/parameters">
 	        <doc title="Parameters Resource">This resource handles job parameters</doc>
 	        <method name="GET">
@@ -458,7 +457,6 @@
 	            <response status="500"/>
 	        </method>
 	    </resource>
-
 	    <resource id="job_parameter_name" path="{job-id}/parameters/{parameter-name}">
 	        <doc>This resource handles parameter value</doc>
 	        <method name="GET">
@@ -541,7 +539,6 @@
 	            <response status="500"/>
 	        </method>
 	    </resource>
-
 	    <resource id="job_owner" path="{job-id}/owner">
 	        <doc>This resource handles job owner</doc>
 	        <method name="GET">
@@ -556,7 +553,6 @@
 	            <response status="500"/>
 	        </method>
 	    </resource>
-
 	</resource>
     </resources>
 </application>
