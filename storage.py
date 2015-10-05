@@ -195,7 +195,8 @@ class SQLiteStorage(Storage):
         query = "SELECT jobid, phase FROM jobs"
         where = ["jobname='{}'".format(joblist.jobname)]
         if joblist.user not in ['localhost']:
-            where.append("owner='{}'".format(joblist.user))
+            where.append("owner='{}'".format(joblist.user.name))
+            where.append("owner_pid='{}'".format(joblist.user.pid))
         query += " WHERE " + " AND ".join(where) + ";"
         jobs = self.cursor.execute(query).fetchall()
         return jobs
