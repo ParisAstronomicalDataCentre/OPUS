@@ -78,9 +78,6 @@ class SLURMManager(Manager):
         Returns:
             PBS as a string
         """
-        # Need WADL for results description
-        if not job.wadl:
-            job.read_wadl()
         duration = dt.timedelta(0, int(job.execution_duration))
         # duration format is 00:01:00 for 1 min
         duration_str = str(duration).replace(' days', '').replace(' day', '').replace(', ', '-')
@@ -142,6 +139,9 @@ class SLURMManager(Manager):
             '### CP RESULTS',
             'mkdir $jd/results',
         ])
+        # Need WADL for results description
+        if not job.wadl:
+            job.read_wadl()
         # Identify results to be moved to $jd/results
         cp_results = []
         for rname, r in job.wadl['results'].iteritems():

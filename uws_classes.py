@@ -181,8 +181,8 @@ class Job(object):
         if not self.wadl:
             self.read_wadl()
         # Pop attributes keywords from POST or WADL
-        self.execution_duration = post.pop('EXECUTION_DURATION', self.wadl.get('executionduration', EXECUTION_DURATION_DEF))
-        self.quote = post.pop('QUOTE', self.execution_duration)
+        self.execution_duration = int(post.pop('EXECUTION_DURATION', self.wadl.get('executionduration', EXECUTION_DURATION_DEF)))
+        self.quote = int(post.pop('QUOTE', self.execution_duration))
         # Set parameters from POST
         for pname, value in post.iteritems():
             if pname not in ['PHASE']:
