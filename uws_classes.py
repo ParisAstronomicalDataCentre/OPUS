@@ -138,7 +138,7 @@ class Job(object):
                     'default': r.get('default'),
                     'doc': r.getchildren()[0].text,
                 }
-            logger.debug('WADL read at {}'.format(inspect.stack()[0][3]))
+            logger.debug('WADL read at {}'.format(inspect.stack()[1][3]))
         except IOError:
             # if file does not exist, continue and return an empty dict
             return {}
