@@ -111,7 +111,7 @@ class TestGet(unittest.TestCase):
         print ' --> ' + response.status
         print response.headers['content-type']
         self.assertEqual(response.status_int, 200)
-        self.assertEqual(response.headers['content-type'], 'text/html; charset=UTF-8')
+        self.assertEqual(response.headers['content-type'], 'text/plain; charset=UTF-8')
         url = '/' + jobname + '/' + jobid + '/owner'
         response = test_app.get(url)
         print url

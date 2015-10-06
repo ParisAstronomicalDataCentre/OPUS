@@ -165,7 +165,7 @@ def init_db():
         403 Forbidden (if not super_user)
         500 Internal Server Error
     """
-    user = set_user()
+    # user = set_user()
     #if not is_localhost():
     #    abort_403()
     try:
@@ -190,7 +190,7 @@ def test_db():
         403 Forbidden (if not super_user)
         500 Internal Server Error
     """
-    user = set_user()
+    # user = set_user()
     #if not is_localhost():
     #    abort_403()
     try:
@@ -231,6 +231,7 @@ def show_db():
 # ----------
 # Form for new job definition
 
+
 @app.get('/new_job_definition')
 def new_job_definition():
     return '''
@@ -246,6 +247,7 @@ def new_job_definition():
             <input value="Submit" type="submit" />
         </form>
     '''
+
 
 @app.post('/new_job_definition')
 def do_new_job_definition():
@@ -901,10 +903,10 @@ def get_result(jobname, jobid, rname):
 
 @app.route('/get_result_file/<jobname>/<jobid>/<rname>/<rfname>')
 def get_result_file(jobname, jobid, rname, rfname):
-    """Get result <rname> for job <jobid>
+    """Get result file <rname>/<rfname> for job <jobid>
 
     Returns:
-        200 OK: text/plain (on success)
+        200 OK: file (on success)
         404 Not Found: Job not found (on NotFoundWarning)
         404 Not Found: Result not found (on NotFoundWarning)
         500 Internal Server Error (on error)
@@ -918,12 +920,14 @@ def get_result_file(jobname, jobid, rname, rfname):
     # Return result
     #response.content_type = 'text/plain; charset=UTF-8'
     #return str(job.results[result]['url'])
-    logger.debug(rname + ' ' + rfname + ' ' + job.results[rname]['mediaType'])
-    response.set_header('Content-type', job.results[rname]['mediaType'])
-    if 'text' in job.results[rname]['mediaType']:
+    media_type = job.results[rname]['mediaType']
+    logger.debug(rname + ' ' + rfname + ' ' + media_type)
+    response.set_header('Content-type', media_type)
+    if 'text' in media_type:
         return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid))
     else:
         return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid), download=rfname)
+
 
 # ----------
 # JOB owner

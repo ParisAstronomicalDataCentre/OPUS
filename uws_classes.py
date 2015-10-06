@@ -5,12 +5,11 @@ Created on Tue Apr 14 15:14:24 2015
 @author: mservillat
 """
 
-import os
 import shutil
 import urllib
 import inspect
 import datetime as dt
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ETree
 import storage
 import managers
 from settings import *
@@ -120,7 +119,7 @@ class Job(object):
         try:
             with open(filename, 'r') as f:
                 wadl_string = f.read()
-            wadl_tree = ET.fromstring(wadl_string)
+            wadl_tree = ETree.fromstring(wadl_string)
             # Read parameters description
             params_block = wadl_tree.find(".//{http://wadl.dev.java.net/2009/02}request[@id='create_job_parameters']")
             for p in params_block.getchildren():
@@ -140,7 +139,7 @@ class Job(object):
                 }
             execdur_block = wadl_tree.find(".//{http://wadl.dev.java.net/2009/02}param[@name='EXECUTIONDURATION']")
             execdur = execdur_block.get('default')
-            frame,filename,line_number,function_name,lines,index = inspect.stack()[1]
+            frame, filename, line_number, function_name, lines, index = inspect.stack()[1]
             logger.debug('WADL read at {} ({}:{})'.format(function_name, filename, line_number))
         except IOError:
             # if file does not exist, continue and return an empty dict
@@ -272,7 +271,7 @@ class Job(object):
             if p['value']:
                 value = urllib.quote_plus(urllib.unquote_plus(p['value']))
                 by_ref = str(p['byref']).lower()
-                ET.SubElement(xml_params, 'uws:parameter', attrib={'id': pname, 'byReference': by_ref}).text = value
+                ETree.SubElement(xml_params, 'uws:parameter', attrib={'id': pname, 'byReference': by_ref}).text = value
 
     def parameters_to_xml(self):
         """Returns the XML representation of job parameters"""
@@ -280,15 +279,15 @@ class Job(object):
                       'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
                       'xmlns:xlink': 'http://www.w3.org/1999/xlink',
                       'xsi:schemaLocation': 'http://www.ivoa.net/xml/UWS/v1.0 http://ivoa.net/xml/UWS/UWS-v1.0.xsd'}
-        xml_params = ET.Element('uws:parameters', attrib=xmlns_uris)
+        xml_params = ETree.Element('uws:parameters', attrib=xmlns_uris)
         # Add each parameter that has a value
         self._parameters_to_xml_fill(xml_params)
-        return ET.tostring(xml_params)
+        return ETree.tostring(xml_params)
 
     def _results_to_xml_fill(self, xml_results):
         for rname, r in self.results.iteritems():
             if r['url']:
-                ET.SubElement(xml_results, 'uws:result', attrib={'id': rname, 'xlink:href': r['url']})
+                ETree.SubElement(xml_results, 'uws:result', attrib={'id': rname, 'xlink:href': r['url']})
 
     def results_to_xml(self, add_xmlns=True):
         """Returns the XML representation of job results"""
@@ -296,25 +295,25 @@ class Job(object):
                       'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
                       'xmlns:xlink': 'http://www.w3.org/1999/xlink',
                       'xsi:schemaLocation': 'http://www.ivoa.net/xml/UWS/v1.0 http://ivoa.net/xml/UWS/UWS-v1.0.xsd'}
-        xml_results = ET.Element('uws:results', attrib=xmlns_uris)
+        xml_results = ETree.Element('uws:results', attrib=xmlns_uris)
         # Add each result that has a value
         self._results_to_xml_fill(xml_results)
-        return ET.tostring(xml_results)
+        return ETree.tostring(xml_results)
 
     def to_xml(self):
         """Returns the XML representation of a job (uws:job)"""
 
         def add_sub_elt(root, tag, value, attrib={}):
             if value:
-                ET.SubElement(root, tag, attrib=attrib).text = str(value)
+                ETree.SubElement(root, tag, attrib=attrib).text = str(value)
             else:
-                ET.SubElement(root, tag, attrib={'xsi:nil': 'true'})
+                ETree.SubElement(root, tag, attrib={'xsi:nil': 'true'})
 
         xmlns_uris = {'xmlns:uws': 'http://www.ivoa.net/xml/UWS/v1.0',
                       'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
                       'xmlns:xlink': 'http://www.w3.org/1999/xlink',
                       'xsi:schemaLocation': 'http://www.ivoa.net/xml/UWS/v1.0 http://ivoa.net/xml/UWS/UWS-v1.0.xsd'}
-        xml_job = ET.Element('uws:job', attrib=xmlns_uris)
+        xml_job = ETree.Element('uws:job', attrib=xmlns_uris)
         add_sub_elt(xml_job, 'uws:jobId', self.jobid)
         add_sub_elt(xml_job, 'uws:phase', self.phase)
         add_sub_elt(xml_job, 'uws:executionduration', self.execution_duration)
@@ -324,11 +323,11 @@ class Job(object):
         add_sub_elt(xml_job, 'uws:endTime', self.end_time)
         add_sub_elt(xml_job, 'uws:destruction', self.destruction_time)
         add_sub_elt(xml_job, 'uws:ownerId', self.owner)
-        xml_params = ET.SubElement(xml_job, 'uws:parameters')
+        xml_params = ETree.SubElement(xml_job, 'uws:parameters')
         self._parameters_to_xml_fill(xml_params)
-        xml_results = ET.SubElement(xml_job, 'uws:results')
+        xml_results = ETree.SubElement(xml_job, 'uws:results')
         self._results_to_xml_fill(xml_results)
-        return ET.tostring(xml_job)
+        return ETree.tostring(xml_job)
 
     # ----------
     # Actions on a job
