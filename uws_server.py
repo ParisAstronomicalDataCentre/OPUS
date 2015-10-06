@@ -154,8 +154,7 @@ def home():
 
 @app.route('/favicon.ico')
 def favicon():
-    """/favicon.ico not provided, maybe later"""
-    abort(404)
+    return static_file('favicon.ico', root='{}/static'.format(APP_PATH))
 
 
 # ----------
