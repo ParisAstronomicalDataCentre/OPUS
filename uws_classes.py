@@ -8,6 +8,7 @@ Created on Tue Apr 14 15:14:24 2015
 import os
 import shutil
 import urllib
+import inspect
 import datetime as dt
 import xml.etree.ElementTree as ET
 import storage
@@ -137,7 +138,7 @@ class Job(object):
                     'default': r.get('default'),
                     'doc': r.getchildren()[0].text,
                 }
-            logger.info('WADL read!')
+            logger.debug('WADL read at {}'.format(inspect.stack()[0][3]))
         except IOError:
             # if file does not exist, continue and return an empty dict
             return {}
