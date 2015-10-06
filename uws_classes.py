@@ -138,6 +138,8 @@ class Job(object):
                     'default': r.get('default'),
                     'doc': r.getchildren()[0].text,
                 }
+            execdur_block = wadl_tree.find(".//{http://wadl.dev.java.net/2009/02}param[@name='EXECUTIONDURATION']")
+            execdur = execdur_block.get('default')
             frame,filename,line_number,function_name,lines,index = inspect.stack()[1]
             logger.debug('WADL read at {} ({}:{})'.format(function_name, filename, line_number))
         except IOError:
@@ -147,8 +149,9 @@ class Job(object):
         # TODO: Read results description from WADL
         job_wadl['results'] = results
         # TODO: Read expected duration from WADL
-        job_wadl['duration'] = 60
+        job_wadl['executionduration'] = execdur
         # TODO: Read expected quote from WADL?
+        job_wadl['quote'] = execdur
         self.wadl = job_wadl
 
     def get_result_filename(self, rname):
@@ -178,7 +181,8 @@ class Job(object):
         if not self.wadl:
             self.read_wadl()
         # Pop attributes keywords from POST or WADL
-        self.execution_duration = post.pop('EXECUTION_DURATION', self.wadl.get('duration', EXECUTION_DURATION_DEF))
+        self.execution_duration = post.pop('EXECUTION_DURATION', self.wadl.get('executionduration', EXECUTION_DURATION_DEF))
+        self.quote = post.pop('QUOTE', self.execution_duration)
         # Set parameters from POST
         for pname, value in post.iteritems():
             if pname not in ['PHASE']:
@@ -442,11 +446,12 @@ class Job(object):
                     job.read_wadl()
                 # Copy back results from cluster
                 job.manager.get_results(job)
-                # Check results and all links to db (maybe not all results in WADL have been created)
+                # Check results and all links to db (maybe not all results listed in WADL have been created)
                 for rname, r in job.wadl['results'].iteritems():
                     rfname = job.get_result_filename(rname)
                     if os.path.isfile('{}/{}/results/{}'.format(JOBDATA_PATH, job.jobid, rfname)):
-                        url = '{}/{}/{}/results/{}'.format(BASE_URL, job.jobname, job.jobid, rname)
+                        # /get_result_file/<jobname>/<jobid>/<rname>/<fname>
+                        url = '{}/get_result_file/{}/{}/{}/{}'.format(BASE_URL, job.jobname, job.jobid, rname, rfname)
                         job.results[rname] = {'url': url, 'mediaType': r['mediaType']}
                         logger.info('add result ' + rname + ' ' + str(r))
                 # Set job.end_time

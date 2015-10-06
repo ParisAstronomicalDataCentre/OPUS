@@ -23,11 +23,6 @@ app = Bottle()
 # Set user
 
 
-# Send user/pwd in GET?
-# REMOTE_USER set?
-# COOKIE set for Shibboleth auth in service? then redirect to institution
-
-
 def set_user():
     """Set user from request header"""
     # logger.debug(str(request.environ))
@@ -234,6 +229,34 @@ def show_db():
 
 
 # ----------
+# Form for new job definition
+
+@app.get('/new_job_definition')
+def new_job_definition():
+    return '''
+        <p>Define a new job:</p>
+        <form action="/new_job_definition" method="post">
+            Name: <input name="jobname" type="text" value="testjob"/><br>
+            Description: <input name="jobdoc" type="text" /><br>
+            Parameters: <input name="params" type="text" /><br>
+            Results: <input name="results" type="text" /><br>
+            Duration: <input name="duration" type="int" /> seconds <br>
+            Quote: <input name="quote" type="int" /> seconds <br>
+            Script: <input name="script" type="text" /><br>
+            <input value="Submit" type="submit" />
+        </form>
+    '''
+
+@app.post('/new_job_definition')
+def do_new_job_definition():
+    jobname = request.forms.get('jobname')
+    # Create WADL file from form
+    # Create bash script file
+    # Send email to admin for review
+    return '<p>{} created</p>'.format(jobname)
+
+
+# ----------
 # Server maintenance
 
 
@@ -250,7 +273,6 @@ def maintenance():
         abort_403()
     try:
         # Get joblist
-
         # For each job:
         # TODO: Check consistency of dates (destruction_time > end_time > start_time > creation_time)
         # TODO: Update status if phase is not PENDING or terminal (or for all jobs?)
@@ -801,10 +823,9 @@ def post_parameter(jobname, jobid, pname):
         if 'VALUE' not in request.forms:
             raise UserWarning('VALUE keyword required')
         new_value = request.forms.get('VALUE')
-        # TODO: Check if new_value format is correct (from WADL?)
-
         # Get job description from DB
         job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True)
+        # TODO: Check if new_value format is correct (from WADL?)
         # Change value
         if job.phase == 'PENDING':
             job.set_parameter(pname, new_value)
@@ -853,7 +874,7 @@ def get_results(jobname, jobid):
 
 @app.route('/<jobname>/<jobid>/results/<rname>')
 def get_result(jobname, jobid, rname):
-    """Get parameter <param> for job <jobid>
+    """Get result <rname> for job <jobid>
 
     Returns:
         200 OK: text/plain (on success)
@@ -870,20 +891,39 @@ def get_result(jobname, jobid, rname):
         if rname not in job.results:
             raise storage.NotFoundWarning('Result "{}" NOT FOUND for job "{}"'.format(rname, jobid))
         # Return result
-        #response.content_type = 'text/plain; charset=UTF-8'
-        #return str(job.results[result]['url'])
-        fname = job.get_result_filename(rname)
-        logger.debug(fname + ' ' + job.results[rname]['mediaType'])
-        response.set_header('Content-type', job.results[rname]['mediaType'])
-        if 'text' in job.results[rname]['mediaType']:
-            return static_file(fname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid))
-        else:
-            return static_file(fname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid), download=fname)
+        response.content_type = 'text/plain; charset=UTF-8'
+        return str(job.results[rname]['url'])
     except storage.NotFoundWarning as e:
         abort_404(e.message)
     except:
         abort_500_except()
 
+
+@app.route('/get_result_file/<jobname>/<jobid>/<rname>/<rfname>')
+def get_result_file(jobname, jobid, rname, rfname):
+    """Get result <rname> for job <jobid>
+
+    Returns:
+        200 OK: text/plain (on success)
+        404 Not Found: Job not found (on NotFoundWarning)
+        404 Not Found: Result not found (on NotFoundWarning)
+        500 Internal Server Error (on error)
+    """
+    user = set_user()
+    # Get job description from DB
+    job = Job(jobname, jobid, user, get_parameters=True, get_results=True)
+    # Check if result exists
+    if rname not in job.results:
+        raise storage.NotFoundWarning('Result "{}" NOT FOUND for job "{}"'.format(rname, jobid))
+    # Return result
+    #response.content_type = 'text/plain; charset=UTF-8'
+    #return str(job.results[result]['url'])
+    logger.debug(rname + ' ' + rfname + ' ' + job.results[rname]['mediaType'])
+    response.set_header('Content-type', job.results[rname]['mediaType'])
+    if 'text' in job.results[rname]['mediaType']:
+        return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid))
+    else:
+        return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid), download=rfname)
 
 # ----------
 # JOB owner
