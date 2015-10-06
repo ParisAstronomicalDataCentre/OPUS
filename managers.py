@@ -81,7 +81,7 @@ class SLURMManager(Manager):
         # Need WADL for results description
         if not job.wadl:
             job.read_wadl()
-        duration = dt.timedelta(0, job.execution_duration)
+        duration = dt.timedelta(0, int(job.execution_duration))
         # duration format is 00:01:00 for 1 min
         duration_str = str(duration).replace(' days', '').replace(' day', '').replace(', ', '-')
         # Create sbatch

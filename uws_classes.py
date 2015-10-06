@@ -394,12 +394,16 @@ class Job(object):
         if self.phase not in ['PENDING']:
             # Send command to manager
             self.manager.delete(self)
-        # Remove job from storage
-        self.storage.delete(self)
         # Remove uploaded files corresponding to jobid if needed
         upload_dir = '{}/{}'.format(UPLOAD_PATH, self.jobid)
         if os.path.isdir(upload_dir):
             shutil.rmtree(upload_dir)
+        # Remove jobdata files corresponding to jobid if needed
+        jobdata_dir = '{}/{}'.format(JOBDATA_PATH, self.jobid)
+        if os.path.isdir(jobdata_dir):
+            shutil.rmtree(jobdata_dir)
+        # Remove job from storage
+        self.storage.delete(self)
 
     def get_status(self):
         """Get job status
