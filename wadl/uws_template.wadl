@@ -16,6 +16,7 @@
 <!-- TODO: set jobname -->
     <resource id="joblist" path="jobname">
         <doc>This resource contains the whole list of job</doc>
+        <doc title="description"></doc>
         <method id="list_jobs" name="GET">
             <doc>List all created jobs. The list may be empty if the UWS is idle</doc>
             <response status="200">
@@ -28,9 +29,6 @@
             <request id="create_job_parameters">
                 <param style="query" name="PHASE" type="xs:string" required="false" fixed="RUN"/>
 <!-- TODO: insert parameters -->
-<param style="query" name="example" type="xs:string" required="false" default="default_value">
-    <doc>Example of param block</doc>
-</param>
             </request>
             <response status="303">
                 <doc>Redirects to newly created resource /{job-id}</doc>
@@ -71,9 +69,6 @@
                         <option value="DELETE"/>
                     </param>
 <!-- TODO: insert parameters -->
-<param style="query" name="example" type="xs:string" required="false" default="default_value">
-    <doc>Example of param block</doc>
-</param>
                 </request>
                 <response status="303">
                     <doc>Redirects to /{job}/{job-id}</doc>
@@ -133,7 +128,7 @@
                 <request>
                     <param style="template" name="job-id" type="xs:string" required="true"/>
 <!-- TODO: set default execution duration in seconds -->
-                    <param style="query" name="EXECUTIONDURATION" type="xs:int" required="false" default="120"/>
+                    <param style="query" name="EXECUTIONDURATION" type="xs:int" required="false" default="100"/>
                 </request>
                 <response status="303">
                     <doc>Redirects to /{job}/{job-id}</doc>
@@ -224,9 +219,6 @@
                     <param style="template" name="job-id" type="xs:string" required="true"/>
                     <param style="template" name="result-id" type="xs:string" required="true">
 <!-- TODO: add result names as option blocks -->
-<option value="example" mediaType="text/plain" default="example.txt">
-    <doc>Example of option block for results</doc>
-</option>
                     </param>
                 </request>
                 <response status="200">
@@ -255,9 +247,6 @@
                 <request id="set_job_parameters">
                     <param style="template" name="job-id" type="xs:string" required="true"/>
 <!-- TODO: insert parameters -->
-<param style="query" name="example" type="xs:string" required="false" default="default_value">
-    <doc>Example of param block</doc>
-</param>
                 </request>
                 <response status="303">
                     <doc>Redirect to /{job}/{job-id}</doc>
@@ -276,9 +265,6 @@
                     <param style="template" name="job-id" type="xs:string" required="true"/>
                     <param style="template" name="parameter-name" type="xs:string" required="true">
 <!-- TODO: add parameter names as option blocks -->
-<option value="example" mediaType="text/plain">
-    <doc>Example of option block for parameters</doc>
-</option>
                     </param>
                 </request>
                 <response status="200"/>

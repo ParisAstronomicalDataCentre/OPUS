@@ -9,10 +9,11 @@ See http://www.ivoa.net/documents/UWS/20101010/REC-UWS-1.0-20101010.html
 @author: mservillat
 """
 
+import os
 import traceback
 import uuid
 from subprocess import CalledProcessError
-from bottle import Bottle, request, response, abort, redirect, run, static_file, parse_auth
+from bottle import Bottle, request, response, abort, redirect, run, static_file, parse_auth, view, jinja2_view
 from uws_classes import *
 
 # Create a new application
@@ -74,7 +75,7 @@ def is_localhost():
 
 
 # ----------
-# Helper functions
+# Abort functions
 
 
 def abort_403():
@@ -137,14 +138,13 @@ def abort_500_except(msg=None):
 
 
 # ----------
-# HOME
+# Helper functions
 
 
-@app.route('/')
-def home():
-    """Home page"""
-    response.content_type = 'text/html; charset=UTF-8'
-    return "UWS v1.0 server implementation<br>(c) Observatoire de Paris 2015"
+@app.route('/static/<path:path>')
+def static(path):
+    """Access to static files (css, js, ...)"""
+    return static_file(path, root='{}/static'.format(APP_PATH))
 
 
 @app.route('/favicon.ico')
@@ -152,8 +152,112 @@ def favicon():
     return static_file('favicon.ico', root='{}/static'.format(APP_PATH))
 
 
+@app.get('/get_wadl/<jobname:path>')
+def get_wadl(jobname):
+    """Get WADL file for jobname"""
+    response.content_type = 'text/xml; charset=UTF-8'
+    fname = '{}/{}.wadl'.format(WADL_PATH, jobname)
+    if os.path.isfile(fname):
+        with open(fname) as f:
+            wadl = f.readlines()
+        return wadl
+    abort_404('No WADL file found for ' + jobname)
+
+
+@app.get('/get_wadl_json/<jobname:path>')
+def get_wadl(jobname):
+    """Get json dictionary WADL file for jobname"""
+    job_def = uws_jdl.read_wadl(jobname)
+    return job_def
+
+
+@app.get('/get_script/<jobname:path>')
+def get_wadl(jobname):
+    response.content_type = 'text/plain; charset=UTF-8'
+    fname = '{}/{}.sh'.format(SCRIPT_PATH, jobname)
+    if os.path.isfile(fname):
+        return static_file(fname, root='/')
+    abort_404('No script file found for ' + jobname)
+
+
 # ----------
-# Database
+# Pages
+
+
+@app.route('/')
+@jinja2_view('home.html')
+def home():
+    """Home page"""
+    return {}
+    # response.content_type = 'text/html; charset=UTF-8'
+    # return "UWS v1.0 server implementation<br>(c) Observatoire de Paris 2015"
+
+
+@app.get('/new_job_definition')
+@jinja2_view('new_job_form.html')
+def new_job_definition():
+    """Show form for new job definition"""
+    return {}
+
+
+@app.post('/new_job_definition')
+def do_new_job_definition():
+    """Use filled form to create a WADL file for the given job"""
+    # Read form
+    keys = request.forms.keys()
+    jobname = request.forms.get('name').split('/')[-1]
+    description = request.forms.get('description')
+    execdur = request.forms.get('executionduration')
+    script = request.forms.get('script')
+    params = collections.OrderedDict()
+    iparam = 1
+    while 'param_name_' + str(iparam) in keys:
+        pname = request.forms.get('param_name_' + str(iparam))
+        if pname:
+            ptype = request.forms.get('param_type_' + str(iparam))
+            pdefault = request.forms.get('param_default_' + str(iparam))
+            preq = request.forms.get('param_required_' + str(iparam))
+            pdesc = request.forms.get('param_description_' + str(iparam))
+            params[pname] = {'type': ptype,
+                             'default': pdefault,
+                             'required': (preq == 'on'),
+                             'description': pdesc}
+        iparam += 1
+    results = collections.OrderedDict()
+    iresult = 1
+    while 'result_name_' + str(iresult) in keys:
+        rname = request.forms.get('result_name_' + str(iresult))
+        if rname:
+            rtype = request.forms.get('result_type_' + str(iresult))
+            rdefault = request.forms.get('result_default_' + str(iresult))
+            results[rname] = {'mediaType': rtype,
+                              'default': rdefault}
+        iresult += 1
+    # Create job_wadl structure
+    job_def = {'description': description,
+                'parameters': params,
+                'results': results,
+                'executionduration': execdur,
+                'quote': execdur}
+    # Create WADL file from form
+    job_wadl = uws_jdl.create_wadl(jobname, job_def)
+    wadl_fname = '{}/new/{}.wadl'.format(WADL_PATH, jobname)
+    with open(wadl_fname, 'w') as f:
+        f.write(job_wadl)
+    # response.content_type = 'text/xml; charset=UTF-8'
+    # return job_wadl
+    # Create bash script file
+    script_fname = '{}/new/{}.sh'.format(SCRIPT_PATH, jobname)
+    with open(script_fname, 'w') as f:
+        f.write(script)
+
+    # Send email to admin for review
+    # return '<p>{}</p><p>{}</p><p>{}</p><p>{}</p><p>{}</p><pre>{}</pre>' \
+    #        ''.format(jobname, description, execdur, str(params), str(results), script)
+
+
+# ----------
+# Database testing
 
 
 @app.route('/init_db')
@@ -226,36 +330,6 @@ def show_db():
     except:
         abort_500_except()
     return html
-
-
-# ----------
-# Form for new job definition
-
-
-@app.get('/new_job_definition')
-def new_job_definition():
-    return '''
-        <p>Define a new job:</p>
-        <form action="/new_job_definition" method="post">
-            Name: <input name="jobname" type="text" value="testjob"/><br>
-            Description: <input name="jobdoc" type="text" /><br>
-            Parameters: <input name="params" type="text" /><br>
-            Results: <input name="results" type="text" /><br>
-            Duration: <input name="duration" type="int" /> seconds <br>
-            Quote: <input name="quote" type="int" /> seconds <br>
-            Script: <input name="script" type="text" /><br>
-            <input value="Submit" type="submit" />
-        </form>
-    '''
-
-
-@app.post('/new_job_definition')
-def do_new_job_definition():
-    jobname = request.forms.get('jobname')
-    # Create WADL file from form
-    # Create bash script file
-    # Send email to admin for review
-    return '<p>{} created</p>'.format(jobname)
 
 
 # ----------
@@ -359,7 +433,7 @@ def job_event():
 
 
 # ----------
-# Job List
+# /<jobname>
 
 
 @app.route('/<jobname>')
@@ -414,7 +488,7 @@ def create_job(jobname):
 
 
 # ----------
-# JOB Description
+# /<jobname>/<jobid>
 
 
 @app.route('/<jobname>/<jobid>')
@@ -495,7 +569,7 @@ def post_job(jobname, jobid):
 
 
 # ----------
-# JOB Phase
+# /<jobname>/<jobid>/phase
 
 
 @app.route('/<jobname>/<jobid>/phase')
@@ -567,7 +641,7 @@ def post_phase(jobname, jobid):
 
 
 # ----------
-# JOB executionduration
+# /<jobname>/<jobid>/executionduration
 
 
 @app.route('/<jobname>/<jobid>/executionduration')
@@ -632,7 +706,7 @@ def post_executionduration(jobname, jobid):
 
 
 # ----------
-# JOB destruction
+# /<jobname>/<jobid>/destruction
 
 
 @app.route('/<jobname>/<jobid>/destruction')
@@ -699,7 +773,7 @@ def post_destruction(jobname, jobid):
 
 
 # ----------
-# JOB error
+# /<jobname>/<jobid>/error
 
 
 @app.route('/<jobname>/<jobid>/error')
@@ -727,7 +801,7 @@ def get_error(jobname, jobid):
 
 
 # ----------
-# JOB quote
+# /<jobname>/<jobid>/quote
 
 
 @app.route('/<jobname>/<jobid>/quote')
@@ -754,7 +828,7 @@ def get_quote(jobname, jobid):
 
 
 # ----------
-# JOB parameters
+# /<jobname>/<jobid>/parameters
 
 
 @app.route('/<jobname>/<jobid>/parameters')
@@ -846,7 +920,7 @@ def post_parameter(jobname, jobid, pname):
 
 
 # ----------
-# JOB results
+# /<jobname>/<jobid>/results
 
 
 @app.route('/<jobname>/<jobid>/results')
@@ -930,7 +1004,7 @@ def get_result_file(jobname, jobid, rname, rfname):
 
 
 # ----------
-# JOB owner
+# /<jobname>/<jobid>/owner
 
 
 @app.route('/<jobname>/<jobid>/owner')
@@ -957,7 +1031,7 @@ def get_owner(jobname, jobid):
 
 
 # ----------
-# test server
+# run server
 
 
 if __name__ == '__main__':

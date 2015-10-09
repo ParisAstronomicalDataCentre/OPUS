@@ -149,6 +149,8 @@ JOBDATA_PATH = APP_PATH + '/jobdata'
 RESULTS_PATH = JOBDATA_PATH + '/results'
 # Path for WADL files, should probably be accessed through a URL as static files
 WADL_PATH = APP_PATH + '/wadl'
+# Path for WADL files, should probably be accessed through a URL as static files
+SCRIPT_PATH = APP_PATH + '/slurm_scripts'
 # Path for SLURM sbatch files created by SLURMManager
 SLURM_SBATCH_PATH = APP_PATH + '/sbatch'
 #--- Set all _PATH based on APP_PATH -----------------------------------------------------------------------------------

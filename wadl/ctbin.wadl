@@ -16,6 +16,7 @@
 <!-- TODO: jobname -->
     <resource id="joblist" path="ctbin">
         <doc>This resource contains the whole list of job</doc>
+        <doc title="description">CTOOLS command to generate a counts cube for binned maximum likelihood analysis.</doc>
         <method id="list_jobs" name="GET">
             <doc>List all created jobs. The list may be empty if the UWS is idle</doc>
             <response status="200">

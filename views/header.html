@@ -1,0 +1,31 @@
+    <div class="bs-docs-header">
+        <div class="container">
+            <div class="navbar navbar-default">
+                <div class="navbar-header">
+                    <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse" type="button">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="/">UWS Server</a>
+                </div> <!-- navbar-header -->
+                <div class="navbar-collapse collapse">
+                  <ul class="nav navbar-nav">
+                    <!--<li {{print(" class=\"active\"") if (page_title == "help")}}>-->
+                      <!--<a href="/help"><span class="glyphicon glyphicon-search"></span>-->
+                      <!--Help</a>-->
+                    <!--</li>-->
+                    <!--<li{{' class="active"' if page_title == 'job_list'}}>-->
+                      <!--<a href="/job_list"><span class="glyphicon glyphicon-cog"></span>-->
+                      <!--Available jobs</a>-->
+                    <!--</li>-->
+                    <li{{' class="active"' if page_title == 'new_job'}}>
+                      <a href="/new_job_definition"><span class="glyphicon glyphicon-refresh"></span>
+                      Define new job</a>
+                    </li>
+                  </ul>
+                </div> <!-- navbar-collapse -->
+            </div> <!-- navbar -->
+        </div> <!-- container -->
+    </div> <!-- header -->

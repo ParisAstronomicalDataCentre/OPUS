@@ -8,8 +8,10 @@ Created on Tue Apr 14 15:14:24 2015
 import shutil
 import urllib
 import inspect
+import collections
 import datetime as dt
 import xml.etree.ElementTree as ETree
+import uws_jdl
 import storage
 import managers
 from settings import *
@@ -110,53 +112,15 @@ class Job(object):
     # ----------
     # Methods to read job description from WADL file
 
-    def read_wadl(self):
+    def get_wadl(self):
         """Read job description from WADL file"""
-        filename = '{}/{}.wadl'.format(WADL_PATH, self.jobname)
-        job_wadl = {}
-        parameters = {}
-        results = {}
-        try:
-            with open(filename, 'r') as f:
-                wadl_string = f.read()
-            wadl_tree = ETree.fromstring(wadl_string)
-            # Read parameters description
-            params_block = wadl_tree.find(".//{http://wadl.dev.java.net/2009/02}request[@id='create_job_parameters']")
-            for p in params_block.getchildren():
-                if p.get('name') not in ['PHASE']:
-                    parameters[p.get('name')] = {
-                        'type': p.get('type'),
-                        'required': p.get('required'),
-                        'default': p.get('default'),
-                        'doc': p.getchildren()[0].text,
-                    }
-            results_block = wadl_tree.find(".//{http://wadl.dev.java.net/2009/02}param[@name='result-id']")
-            for r in results_block.getchildren():
-                results[r.get('value')] = {
-                    'mediaType': r.get('mediaType'),
-                    'default': r.get('default'),
-                    'doc': r.getchildren()[0].text,
-                }
-            execdur_block = wadl_tree.find(".//{http://wadl.dev.java.net/2009/02}param[@name='EXECUTIONDURATION']")
-            execdur = execdur_block.get('default')
-            frame, filename, line_number, function_name, lines, index = inspect.stack()[1]
-            logger.debug('WADL read at {} ({}:{})'.format(function_name, filename, line_number))
-        except IOError:
-            # if file does not exist, continue and return an empty dict
-            return {}
-        job_wadl['parameters'] = parameters
-        # TODO: Read results description from WADL
-        job_wadl['results'] = results
-        # TODO: Read expected duration from WADL
-        job_wadl['executionduration'] = execdur
-        # TODO: Read expected quote from WADL?
-        job_wadl['quote'] = execdur
+        job_wadl = uws_jdl.read_wadl(self.jobname)
         self.wadl = job_wadl
 
     def get_result_filename(self, rname):
         """Get the filename corresponding to the result name"""
         if not self.wadl:
-            self.read_wadl()
+            self.get_wadl()
         if not self.parameters:
             # need to read all parameters
             self.storage.read(self, get_attributes=False, get_parameters=True, get_results=False)
@@ -178,7 +142,7 @@ class Job(object):
         """Set attributes and parameters from POST"""
         # Read WADL
         if not self.wadl:
-            self.read_wadl()
+            self.get_wadl()
         # Pop attributes keywords from POST or WADL
         self.execution_duration = int(post.pop('EXECUTION_DURATION', self.wadl.get('executionduration', EXECUTION_DURATION_DEF)))
         self.quote = int(post.pop('QUOTE', self.execution_duration))
@@ -276,8 +240,8 @@ class Job(object):
     def parameters_to_xml(self):
         """Returns the XML representation of job parameters"""
         xmlns_uris = {'xmlns:uws': 'http://www.ivoa.net/xml/UWS/v1.0',
-                      'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
                       'xmlns:xlink': 'http://www.w3.org/1999/xlink',
+                      'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
                       'xsi:schemaLocation': 'http://www.ivoa.net/xml/UWS/v1.0 http://ivoa.net/xml/UWS/UWS-v1.0.xsd'}
         xml_params = ETree.Element('uws:parameters', attrib=xmlns_uris)
         # Add each parameter that has a value
@@ -289,11 +253,11 @@ class Job(object):
             if r['url']:
                 ETree.SubElement(xml_results, 'uws:result', attrib={'id': rname, 'xlink:href': r['url']})
 
-    def results_to_xml(self, add_xmlns=True):
+    def results_to_xml(self):
         """Returns the XML representation of job results"""
         xmlns_uris = {'xmlns:uws': 'http://www.ivoa.net/xml/UWS/v1.0',
-                      'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
                       'xmlns:xlink': 'http://www.w3.org/1999/xlink',
+                      'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
                       'xsi:schemaLocation': 'http://www.ivoa.net/xml/UWS/v1.0 http://ivoa.net/xml/UWS/UWS-v1.0.xsd'}
         xml_results = ETree.Element('uws:results', attrib=xmlns_uris)
         # Add each result that has a value
@@ -303,15 +267,15 @@ class Job(object):
     def to_xml(self):
         """Returns the XML representation of a job (uws:job)"""
 
-        def add_sub_elt(root, tag, value, attrib={}):
+        def add_sub_elt(root, tag, value, attrib=None):
             if value:
                 ETree.SubElement(root, tag, attrib=attrib).text = str(value)
             else:
                 ETree.SubElement(root, tag, attrib={'xsi:nil': 'true'})
 
         xmlns_uris = {'xmlns:uws': 'http://www.ivoa.net/xml/UWS/v1.0',
-                      'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
                       'xmlns:xlink': 'http://www.w3.org/1999/xlink',
+                      'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
                       'xsi:schemaLocation': 'http://www.ivoa.net/xml/UWS/v1.0 http://ivoa.net/xml/UWS/UWS-v1.0.xsd'}
         xml_job = ETree.Element('uws:job', attrib=xmlns_uris)
         add_sub_elt(xml_job, 'uws:jobId', self.jobid)
@@ -446,7 +410,7 @@ class Job(object):
 
             def phase_completed(job, error_msg):
                 if not job.wadl:
-                    job.read_wadl()
+                    job.get_wadl()
                 # Copy back results from cluster
                 job.manager.get_results(job)
                 # Check results and all links to db (maybe not all results listed in WADL have been created)
