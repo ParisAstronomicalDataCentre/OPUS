@@ -1,7 +1,7 @@
 ( function($) {
 	"use strict";
 
-    var editor = CodeMirror.fromTextArea( $('textarea[name=script]')[0], {mode: "text/x-sh", lineNumbers: true } );
+    var editor
 
 	function add_parameter() {
 	    var mytable = $("#parameter_list tbody");
@@ -173,7 +173,7 @@
 			dataType: "text",
 			success : function(script) {
 				// $('textarea[name=script]').val(script);
-				$('.CodeMirror')[0].CodeMirror.setValue(script);
+				editor.setValue(script);
 			},
 			error : function(xhr, status, exception) {
 				console.log(exception);
@@ -182,6 +182,7 @@
     }
 
 	$(document).ready( function() {
+	    editor = CodeMirror.fromTextArea( $('textarea[name=script]')[0], {mode: "text/x-sh", lineNumbers: true } );
         $('div.CodeMirror').addClass('panel panel-default');
         // Create click functions
         $('#add_parameter').click( function() { add_parameter(); });
