@@ -10,7 +10,7 @@ import urllib
 import inspect
 import collections
 import datetime as dt
-import xml.etree.ElementTree as ETree
+import lxml.etree as ETree
 import uws_jdl
 import storage
 import managers
