@@ -223,10 +223,12 @@ def create_new_job_definition():
             pdefault = request.forms.get('param_default_' + str(iparam))
             preq = request.forms.get('param_required_' + str(iparam))
             pdesc = request.forms.get('param_description_' + str(iparam))
-            params[pname] = {'type': ptype,
-                             'default': pdefault,
-                             'required': (preq == 'on'),
-                             'description': pdesc}
+            params[pname] = {
+                'type': ptype,
+                'default': pdefault,
+                'required': (preq == 'on'),
+                'description': pdesc,
+            }
         iparam += 1
     results = collections.OrderedDict()
     iresult = 1
@@ -235,8 +237,12 @@ def create_new_job_definition():
         if rname:
             rtype = request.forms.get('result_type_' + str(iresult))
             rdefault = request.forms.get('result_default_' + str(iresult))
-            results[rname] = {'mediaType': rtype,
-                              'default': rdefault}
+            rdesc = request.forms.get('result_description_' + str(iresult))
+            results[rname] = {
+                'mediaType': rtype,
+                'default': rdefault,
+                'description': rdesc,
+            }
         iresult += 1
     # Create job_wadl structure
     job_def = {'description': description,

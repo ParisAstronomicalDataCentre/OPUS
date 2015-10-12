@@ -125,21 +125,11 @@ def create_wadl(jobname, job_def):
     execdur_block = wadl_tree.find(".//{}param[@name='EXECUTIONDURATION']".format(xmlns))
     execdur_block.set('default', job_def['executionduration'])
     job_list_description_block = wadl_tree.find(".//{}doc[@title='description']".format(xmlns))
-    job_list_description_block.text = job_def['description']
+    job_list_description_block.text = job_def['description'].decode()
     # Write WADL file for jobname
     # wadl_fname = '{}/new/{}.wadl'.format(WADL_PATH, jobname)
     # wadl_tree.write(wadl_fname, pretty_print=True)
     return ETree.tostring(wadl_tree, pretty_print=True)
-
-def write_wadl_file(jobname):
-    import fileinput
-    # copy uws_template.wadl to final file
-
-    # insert parameters and results description
-    for line in fileinput.input('uws_template.wadl', inplace=1):
-        print line,
-        if line.startswith('<!-- INSERT BASE VALUE -->'):
-            print 'foo bar'
 
 
 def read_par(jobname):
@@ -161,7 +151,7 @@ def read_par(jobname):
     from astropy.io import ascii
     cnames = ['name', 'type', 'mode', 'default', 'lower', 'upper', 'prompt']
     data = ascii.read(filename, data_start=0, names=cnames)
-    job_par = np.array(data)
+    job_par = data
     for p in job_par:
         # Set if parameter is required (mode q and a)
         required = 'false'

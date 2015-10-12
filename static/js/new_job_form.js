@@ -2,10 +2,30 @@
 	"use strict";
 
     var editor
+    var param_type_options = [
+        "xs:string</option>",
+        "xs:anyURI", "file",
+        "xs:float",
+        "xs:double",
+        "xs:int",
+        "xs:long",
+        "xs:boolean",
+    ];
+    var result_type_options = [
+        "text/plain",
+        "text/xml",
+        "text/x-votable+xml",
+        "application/pdf",
+        "image/jpeg",
+        "image/png",
+        "image/fits",
+        "video/mp4",
+    ];
 
 	function add_parameter() {
 	    var mytable = $("#parameter_list tbody");
 	    var iparam = mytable.children().length;
+	    var options = '<option>' + param_type_options.join('</option><option>') + '</option>';
         var row = '\
             <tr id="param_' + iparam + '">\
                 <td>\
@@ -22,15 +42,8 @@
                             <input title="Required parameter?" name="param_required_' + iparam + '" type="checkbox" checked/>\
                         </span>\
                         <span class="input-group-btn">\
-                            <select name="param_type_' + iparam + '" class="btn btn-default">\
-                                <option>xs:string</option>\
-                                <option>xs:anyURI</option>\
-                                <option>file</option>\
-                                <option>xs:float</option>\
-                                <option>xs:double</option>\
-                                <option>xs:int</option>\
-                                <option>xs:long</option>\
-                                <option>xs:boolean</option>\
+                            <select name="param_type_' + iparam + '" class="selectpicker">\
+                                ' + options + '\
                             </select>\
                         </span>\
                     </div>\
@@ -41,11 +54,19 @@
                 </td>\
             </tr>';
         $(row).insertBefore('#parameter_list > tbody > tr:last');
-        //$('#param_' + iparam + ' > td > select').attr('data-width', '140px').selectpicker();
+        $(".selectpicker").attr('data-width', '140px').selectpicker();
         $('#remove_param_' + iparam).click( function() {
             iparam = this.id.split('_').pop();
             remove_parameter(iparam);
         });
+//        $('#moveup_param_' + iparam).click( function() {
+//            iparam = this.id.split('_').pop();
+//            move_parameter_up(iparam);
+//        });
+//        $('#movedw_param_' + iparam).click( function() {
+//            iparam = this.id.split('_').pop();
+//            move_parameter_down(iparam);
+//        });
 	}
 
 	function remove_all_parameters() {
@@ -68,17 +89,24 @@
 	    var mytable = $("#parameter_list tbody");
 	    var nparam = mytable.children().length - 1;
         $('#param_' + iparam).remove();
-	    for (var i = iparam; i < nparam; i++) {
+	    for (var i = Number(iparam); i < nparam; i++) {
 	        var j = i + 1;
     	    console.log(j + '->' + i);
-    	    console.log($('#param_' + j).id);
-    	    $('#param_' + j).id = 'param_' + i;
+    	    console.log($('#param_' + j).prop('id'));
+    	    $('#param_' + j).prop('id', 'param_' + i);
+    	    $('#remove_param_' + j).prop('id', 'remove_param_' + i);
+    	    $('input[name=param_name_' + j + ']').attr('name', 'param_name_' + i);
+    	    $('input[name=param_default_' + j + ']').attr('name', 'param_default_' + i);
+    	    $('input[name=param_required_' + j + ']').attr('name', 'param_required_' + i);
+    	    $('select[name=param_type_' + j + ']').attr('name', 'param_type_' + i);
+    	    $('input[name=param_description_' + j + ']').attr('name', 'param_description_' + i);
 	    }
     }
 
 	function add_result() {
 	    var mytable = $("#result_list tbody");
 	    var iresult = mytable.children().length;
+	    var options = '<option>' + result_type_options.join('</option><option>') + '</option>';
         var row = '\
             <tr id="result_' + iresult + '">\
                 <td>\
@@ -92,12 +120,8 @@
                         <span class="input-group-addon">=</span>\
                         <input class="form-control" name="result_default_' + iresult + '" type="text" placeholder="Default value" />\
                         <span class="input-group-btn">\
-                            <select name="result_type_' + iresult + '" class="btn btn-default">\
-                                <option>text/plain</option>\
-                                <option>application/pdf</option>\
-                                <option>image/jpeg</option>\
-                                <option>image/png</option>\
-                                <option>image/fits</option>\
+                            <select name="result_type_' + iresult + '" class="selectpicker">\
+                                ' + options + '\
                             </select>\
                         </span>\
                     </div>\
@@ -108,7 +132,7 @@
                 </td>\
             </tr>';
         $(row).insertBefore('#result_list > tbody > tr:last');
-        //$('#result_' + iresult + ' > td > select').attr('data-width', '140px').selectpicker();
+        $(".selectpicker").attr('data-width', '140px').selectpicker();
 	}
 
 	function remove_all_results() {
@@ -129,7 +153,6 @@
 
 	function load_wadl() {
         var jobname = $('input[name=name]').val();
-        console.log(jobname);
         // ajax command to get_wadl on UWS server
         $.ajax({
 			url : '/get_wadl_json/' + jobname, //.split("/").pop(),
@@ -147,7 +170,7 @@
 				    $('input[name=param_name_' + i + ']').val(param);
 				    $('select[name=param_type_' + i + ']').val(wadl.parameters[param]['type']);
 				    $('input[name=param_default_' + i + ']').val(wadl.parameters[param]['default']);
-				    $('input[name=param_required_' + i + ']').prop("checked", wadl.parameters[param]['required'] == "true");
+				    $('input[name=param_required_' + i + ']').prop("checked", wadl.parameters[param]['required'].toLowerCase() == "true");
 				    $('input[name=param_description_' + i + ']').val(wadl.parameters[param]['description']);
 				};
 				remove_all_results();
@@ -160,6 +183,7 @@
 				    $('input[name=result_default_' + i + ']').val(wadl.results[result]['default']);
 				    $('input[name=result_description_' + i + ']').val(wadl.results[result]['description']);
 				};
+                $('.selectpicker').selectpicker('refresh');
 			},
 			error : function(xhr, status, exception) {
 				console.log(exception);
@@ -182,6 +206,13 @@
     }
 
 	$(document).ready( function() {
+        $('input[name=name]').keyup(function (e) {
+            if (e.keyCode == 13) {
+                event.preventDefault();
+                load_wadl();
+            }
+        });
+	    // Script editor with CodeMirror
 	    editor = CodeMirror.fromTextArea( $('textarea[name=script]')[0], {mode: "text/x-sh", lineNumbers: true } );
         $('div.CodeMirror').addClass('panel panel-default');
         // Create click functions
