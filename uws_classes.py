@@ -10,7 +10,7 @@ import urllib
 import inspect
 import collections
 import datetime as dt
-import lxml.etree as ETree
+import xml.etree.ElementTree as ETree
 import uws_jdl
 import storage
 import managers
@@ -269,6 +269,8 @@ class Job(object):
 
         def add_sub_elt(root, tag, value, attrib=None):
             if value:
+                if not attrib:
+                    attrib = {}
                 ETree.SubElement(root, tag, attrib=attrib).text = str(value)
             else:
                 ETree.SubElement(root, tag, attrib={'xsi:nil': 'true'})
