@@ -17,3 +17,7 @@ select:first-child + .bootstrap-select > .btn {
     /* Actually, it overwrites .bootstrap-select { width: 220px; } */
     width: 1%;
 }
+
+.input-group .form-control {
+    border-radius: 4px;
+}

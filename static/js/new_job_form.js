@@ -31,7 +31,7 @@
                 <td>\
                     <div class="input-group input-group-sm col-md-12">\
                         <span class="input-group-btn">\
-                            <button id="remove_param_' + iparam + '" class="btn btn-default" type="button">\
+                            <button id="remove_param_' + iparam + '" class="btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;" >\
                                 <span class="glyphicon glyphicon-remove"></span>\
                             </button>\
                         </span>\
@@ -48,7 +48,7 @@
                         </span>\
                     </div>\
                     <div class="input-group input-group-sm col-md-12">\
-                        <input class="form-control" name="param_description_' + iparam + '" type="text" placeholder="Description" />\
+                        <input class="form-control" name="param_description_' + iparam + '" type="text" placeholder="Description" style="border-radius: 4px;" />\
                     </div>\
                     <div style="height: 8px;"></div>\
                 </td>\
@@ -112,7 +112,7 @@
                 <td>\
                     <div class="input-group input-group-sm col-md-12">\
                         <span class="input-group-btn">\
-                            <button id="remove_result_' + iresult + '" class="btn btn-default" type="button">\
+                            <button id="remove_result_' + iresult + '" class="btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;">\
                                 <span class="glyphicon glyphicon-remove"></span>\
                             </button>\
                         </span>\
@@ -126,7 +126,7 @@
                         </span>\
                     </div>\
                     <div class="input-group input-group-sm col-md-12">\
-                        <input class="form-control" name="result_description_' + iresult + '" type="text" placeholder="Description" />\
+                        <input class="form-control" name="result_description_' + iresult + '" type="text" placeholder="Description" style="border-radius: 4px;" />\
                     </div>\
                     <div style="height: 8px;"></div>\
                 </td>\
