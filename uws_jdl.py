@@ -5,7 +5,6 @@ Created on Oct 9 11:30:00 2015
 @author: mservillat
 """
 
-import numpy as np
 import collections
 import inspect
 import copy
