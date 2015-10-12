@@ -155,27 +155,28 @@ def favicon():
 @app.get('/get_wadl/<jobname:path>')
 def get_wadl(jobname):
     """Get WADL file for jobname"""
-    response.content_type = 'text/xml; charset=UTF-8'
     fname = '{}/{}.wadl'.format(WADL_PATH, jobname)
     if os.path.isfile(fname):
         with open(fname) as f:
             wadl = f.readlines()
+        response.content_type = 'text/xml; charset=UTF-8'
         return wadl
     abort_404('No WADL file found for ' + jobname)
 
 
 @app.get('/get_wadl_json/<jobname:path>')
-def get_wadl(jobname):
+def get_wadl_json(jobname):
     """Get json dictionary WADL file for jobname"""
     job_def = uws_jdl.read_wadl(jobname)
     return job_def
 
 
 @app.get('/get_script/<jobname:path>')
-def get_wadl(jobname):
-    response.content_type = 'text/plain; charset=UTF-8'
+def get_script(jobname):
     fname = '{}/{}.sh'.format(SCRIPT_PATH, jobname)
+    logger.info('Job script read: {}'.format(fname))
     if os.path.isfile(fname):
+        response.content_type = 'text/plain; charset=UTF-8'
         return static_file(fname, root='/')
     abort_404('No script file found for ' + jobname)
 
@@ -197,11 +198,15 @@ def home():
 @jinja2_view('new_job_form.html')
 def new_job_definition():
     """Show form for new job definition"""
-    return {}
+    jobname = request.query.get('jobname', '')
+    if request.query.get('msg', '') == 'new':
+        msg = 'New job description has been saved as {}'.format(jobname)
+        return {'jobname': jobname, 'message': msg}
+    return {'jobname': jobname}
 
 
 @app.post('/new_job_definition')
-def do_new_job_definition():
+def create_new_job_definition():
     """Use filled form to create a WADL file for the given job"""
     # Read form
     keys = request.forms.keys()
@@ -235,25 +240,27 @@ def do_new_job_definition():
         iresult += 1
     # Create job_wadl structure
     job_def = {'description': description,
-                'parameters': params,
-                'results': results,
-                'executionduration': execdur,
-                'quote': execdur}
+               'parameters': params,
+               'results': results,
+               'executionduration': execdur,
+               'quote': execdur}
     # Create WADL file from form
     job_wadl = uws_jdl.create_wadl(jobname, job_def)
     wadl_fname = '{}/new/{}.wadl'.format(WADL_PATH, jobname)
     with open(wadl_fname, 'w') as f:
         f.write(job_wadl)
+        logger.info('WADL saved: ' + wadl_fname)
     # response.content_type = 'text/xml; charset=UTF-8'
     # return job_wadl
     # Create bash script file
     script_fname = '{}/new/{}.sh'.format(SCRIPT_PATH, jobname)
     with open(script_fname, 'w') as f:
         f.write(script)
-
+        logger.info('Job script save: ' + script_fname)
     # Send email to admin for review
     # return '<p>{}</p><p>{}</p><p>{}</p><p>{}</p><p>{}</p><pre>{}</pre>' \
     #        ''.format(jobname, description, execdur, str(params), str(results), script)
+    redirect('/new_job_definition?jobname=new/{}&msg=new'.format(jobname), 303)
 
 
 # ----------

@@ -24,11 +24,11 @@ xmlns_uris = {'xmlns:wadl': 'http://wadl.dev.java.net/2009/02',
 
 def read_wadl(jobname):
     """Read job description from WADL file"""
-    filename = '{}/{}.wadl'.format(WADL_PATH, jobname)
+    fname = '{}/{}.wadl'.format(WADL_PATH, jobname)
     parameters = collections.OrderedDict()
     results = collections.OrderedDict()
     try:
-        with open(filename, 'r') as f:
+        with open(fname, 'r') as f:
             wadl_string = f.read()
         wadl_tree = ETree.fromstring(wadl_string)
         xmlns = '{' + wadl_tree.nsmap[None] + '}'
@@ -59,7 +59,7 @@ def read_wadl(jobname):
         description = job_list_description_block.text
         # Log wadl access
         frame, filename, line_number, function_name, lines, index = inspect.stack()[1]
-        logger.debug('WADL read at {} ({}:{})'.format(function_name, filename, line_number))
+        logger.debug('WADL read at {} ({}:{}): {}'.format(function_name, filename, line_number, fname))
     except IOError:
         # if file does not exist, continue and return an empty dict
         logger.debug('WADL not found for job {}'.format(jobname))

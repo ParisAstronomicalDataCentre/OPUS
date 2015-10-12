@@ -1,6 +1,8 @@
 ( function($) {
 	"use strict";
 
+    var editor = CodeMirror.fromTextArea( $('textarea[name=script]')[0], {mode: "text/x-sh", lineNumbers: true } );
+
 	function add_parameter() {
 	    var mytable = $("#parameter_list tbody");
 	    var iparam = mytable.children().length;
@@ -170,7 +172,8 @@
 			type : 'GET',
 			dataType: "text",
 			success : function(script) {
-				$('textarea[name=script]').val(script);
+				// $('textarea[name=script]').val(script);
+				$('.CodeMirror')[0].CodeMirror.setValue(script);
 			},
 			error : function(xhr, status, exception) {
 				console.log(exception);
@@ -179,7 +182,7 @@
     }
 
 	$(document).ready( function() {
-        // var myCodeMirror = CodeMirror.fromTextArea($('textarea[name=script]')[0]);
+        $('div.CodeMirror').addClass('panel panel-default');
         // Create click functions
         $('#add_parameter').click( function() { add_parameter(); });
         $('#remove_last_parameter').click( function() { remove_last_parameter(); });
@@ -188,6 +191,12 @@
         $('#remove_last_result').click( function() { remove_last_result(); });
         $('#remove_all_results').click( function() { remove_all_results(); });
         $('#load_wadl').click( function() { load_wadl(); });
+        // Get jobname from DOM (if set), and update input
+        var jobname = $('#jobname').attr('value');
+        if (jobname) {
+            $('input[name=name]').val(jobname);
+            load_wadl();
+        };
 	}); // end ready
 
 })(jQuery);

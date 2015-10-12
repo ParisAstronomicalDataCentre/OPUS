@@ -19,6 +19,16 @@
 {% block variables %}{% endblock %}
     <!-- Page header (banner and nav panel) -->
 {% block header %}{% include "header.html" %}{% endblock %}
+    <!-- Message -->
+{% block message %}
+    {% if message is defined %}
+    <div class="container">
+        <div class="col-md-8 col-md-offset-2">
+            <div class="panel panel-info text-center"> {{ message }} </div>
+        </div>
+    </div>
+    {% endif %}
+{% endblock %}
     <!-- Content -->
 {% block content %}{% endblock %}
     <!-- Footer (credits) -->
