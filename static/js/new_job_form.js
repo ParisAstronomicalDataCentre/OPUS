@@ -3,24 +3,24 @@
 
 	function add_parameter() {
 	    var mytable = $("#parameter_list tbody");
-	    var nparam = mytable.children().length;
+	    var iparam = mytable.children().length;
         var row = '\
-            <tr id="param_' + nparam + '">\
+            <tr id="param_' + iparam + '">\
                 <td>\
                     <div class="input-group input-group-sm col-md-12">\
                         <span class="input-group-btn">\
-                            <button id="remove_param_' + nparam + '" class="btn btn-default" type="button">\
+                            <button id="remove_param_' + iparam + '" class="btn btn-default" type="button">\
                                 <span class="glyphicon glyphicon-remove"></span>\
                             </button>\
                         </span>\
-                        <input class="form-control" style="font-weight: bold;" name="param_name_' + nparam + '" type="text" placeholder="Name" />\
+                        <input class="form-control" style="font-weight: bold;" name="param_name_' + iparam + '" type="text" placeholder="Name" />\
                         <span class="input-group-addon">=</span>\
-                        <input class="form-control" name="param_default_' + nparam + '" type="text" placeholder="Default value" />\
+                        <input class="form-control" name="param_default_' + iparam + '" type="text" placeholder="Default value" />\
                         <span class="input-group-addon">\
-                            <input title="Required parameter?" name="param_required_' + nparam + '" type="checkbox" checked/>\
+                            <input title="Required parameter?" name="param_required_' + iparam + '" type="checkbox" checked/>\
                         </span>\
                         <span class="input-group-btn">\
-                            <select name="param_type_' + nparam + '" class="btn btn-default">\
+                            <select name="param_type_' + iparam + '" class="btn btn-default">\
                                 <option>xs:string</option>\
                                 <option>xs:anyURI</option>\
                                 <option>file</option>\
@@ -33,24 +33,18 @@
                         </span>\
                     </div>\
                     <div class="input-group input-group-sm col-md-12">\
-                        <input class="form-control" name="param_description_' + nparam + '" type="text" placeholder="Description" />\
+                        <input class="form-control" name="param_description_' + iparam + '" type="text" placeholder="Description" />\
                     </div>\
                     <div style="height: 8px;"></div>\
                 </td>\
             </tr>';
         $(row).insertBefore('#parameter_list > tbody > tr:last');
-        //$('#param_' + nparam + ' > td > select').attr('data-width', '140px').selectpicker();
-        //$('#remove_param_' + nparam).click( function() { remove_last_parameter(); });
+        //$('#param_' + iparam + ' > td > select').attr('data-width', '140px').selectpicker();
+        $('#remove_param_' + iparam).click( function() {
+            iparam = this.id.split('_').pop();
+            remove_parameter(iparam);
+        });
 	}
-
-	function remove_last_parameter() {
-	    var mytable = $("#parameter_list tbody");
-	    var nparam = mytable.children().length - 1;
-	    console.log(nparam);
-	    if (nparam > 0) {
-    	    $('#param_' + nparam).remove();
-	    }
-    }
 
 	function remove_all_parameters() {
 	    var mytable = $("#parameter_list tbody");
@@ -60,23 +54,43 @@
 	    }
     }
 
+	function remove_last_parameter() {
+	    var mytable = $("#parameter_list tbody");
+	    var iparam = mytable.children().length - 1;
+	    if (iparam > 0) {
+    	    $('#param_' + iparam).remove();
+	    }
+    }
+
+	function remove_parameter(iparam) {
+	    var mytable = $("#parameter_list tbody");
+	    var nparam = mytable.children().length - 1;
+        $('#param_' + iparam).remove();
+	    for (var i = iparam; i < nparam; i++) {
+	        var j = i + 1;
+    	    console.log(j + '->' + i);
+    	    console.log($('#param_' + j).id);
+    	    $('#param_' + j).id = 'param_' + i;
+	    }
+    }
+
 	function add_result() {
 	    var mytable = $("#result_list tbody");
-	    var nresult = mytable.children().length;
+	    var iresult = mytable.children().length;
         var row = '\
-            <tr id="result_' + nresult + '">\
+            <tr id="result_' + iresult + '">\
                 <td>\
                     <div class="input-group input-group-sm col-md-12">\
                         <span class="input-group-btn">\
-                            <button id="remove_result_' + nresult + '" class="btn btn-default" type="button">\
+                            <button id="remove_result_' + iresult + '" class="btn btn-default" type="button">\
                                 <span class="glyphicon glyphicon-remove"></span>\
                             </button>\
                         </span>\
-                        <input class="form-control" style="font-weight: bold;" name="result_name_' + nresult + '" type="text" placeholder="Name" />\
+                        <input class="form-control" style="font-weight: bold;" name="result_name_' + iresult + '" type="text" placeholder="Name" />\
                         <span class="input-group-addon">=</span>\
-                        <input class="form-control" name="result_default_' + nresult + '" type="text" placeholder="Default value" />\
+                        <input class="form-control" name="result_default_' + iresult + '" type="text" placeholder="Default value" />\
                         <span class="input-group-btn">\
-                            <select name="result_type_' + nresult + '" class="btn btn-default">\
+                            <select name="result_type_' + iresult + '" class="btn btn-default">\
                                 <option>text/plain</option>\
                                 <option>application/pdf</option>\
                                 <option>image/jpeg</option>\
@@ -86,28 +100,28 @@
                         </span>\
                     </div>\
                     <div class="input-group input-group-sm col-md-12">\
-                        <input class="form-control" name="result_description_' + nresult + '" type="text" placeholder="Description" />\
+                        <input class="form-control" name="result_description_' + iresult + '" type="text" placeholder="Description" />\
                     </div>\
                     <div style="height: 8px;"></div>\
                 </td>\
             </tr>';
         $(row).insertBefore('#result_list > tbody > tr:last');
-        //$('#result_' + nresult + ' > td > select').attr('data-width', '140px').selectpicker();
+        //$('#result_' + iresult + ' > td > select').attr('data-width', '140px').selectpicker();
 	}
-
-	function remove_last_result() {
-	    var mytable = $("#result_list tbody");
-	    var nresult = mytable.children().length - 1;
-	    if (nresult > 0) {
-	        $('#result_' + nresult).remove();
-	    }
-    }
 
 	function remove_all_results() {
 	    var mytable = $("#result_list tbody");
 	    var nresult = mytable.children().length - 1;
 	    for (var i = nresult; i > 0; i--) {
             $('#result_' + i).remove();
+	    }
+    }
+
+	function remove_last_result() {
+	    var mytable = $("#result_list tbody");
+	    var iresult = mytable.children().length - 1;
+	    if (iresult > 0) {
+	        $('#result_' + iresult).remove();
 	    }
     }
 
@@ -162,11 +176,6 @@
 				console.log(exception);
 			}
 		});
-    }
-
-	function update_form(json) {
-        // given WADL information in json, fill form
-
     }
 
 	$(document).ready( function() {
