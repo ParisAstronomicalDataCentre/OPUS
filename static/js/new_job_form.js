@@ -42,7 +42,7 @@
                             <input title="Required parameter?" name="param_required_' + iparam + '" type="checkbox" checked/>\
                         </span>\
                         <span class="input-group-btn">\
-                            <select name="param_type_' + iparam + '" class="selectpicker">\
+                            <select name="param_type_' + iparam + '" class="select-small selectpicker">\
                                 ' + options + '\
                             </select>\
                         </span>\
@@ -121,7 +121,7 @@
                         <span class="input-group-addon">=</span>\
                         <input class="form-control" name="result_default_' + iresult + '" type="text" placeholder="Default value" />\
                         <span class="input-group-btn">\
-                            <select name="result_type_' + iresult + '" class="selectpicker">\
+                            <select name="result_type_' + iresult + '" class="select-small selectpicker">\
                                 ' + options + '\
                             </select>\
                         </span>\

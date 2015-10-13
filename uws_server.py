@@ -197,6 +197,26 @@ def home():
     # return "UWS v1.0 server implementation<br>(c) Observatoire de Paris 2015"
 
 
+@app.route('/client/job_list')
+@jinja2_view('job_list.html')
+def job_list():
+    """Job list page"""
+    return {}
+
+@app.route('/client/job_list/<jobname>')
+@jinja2_view('job_list.html')
+def job_list_direct(jobname):
+    """Job list page"""
+    return {'jobname': jobname}
+
+
+@app.route('/client/job_edit/<jobname>/<jobid>')
+@jinja2_view('job_edit.html')
+def job_list(jobname, jobid):
+    """Home page"""
+    return {'jobname': jobname, 'jobid': jobid}
+
+
 @app.get('/new_job_definition')
 @jinja2_view('new_job_form.html')
 def new_job_definition():
@@ -266,6 +286,7 @@ def create_new_job_definition():
     with open(script_fname, 'w') as f:
         f.write(script)
         logger.info('Job script save: ' + script_fname)
+        # TODO: send to work cluster?
     # Send email to admin for review
     # return '<p>{}</p><p>{}</p><p>{}</p><p>{}</p><p>{}</p><pre>{}</pre>' \
     #        ''.format(jobname, description, execdur, str(params), str(results), script)

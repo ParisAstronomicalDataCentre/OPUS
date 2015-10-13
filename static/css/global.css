@@ -1,5 +1,5 @@
 /* simulate .input-group-btn:first-child > .btn in bootstrap.js */
-select:first-child + .bootstrap-select > .btn {
+select.select-small:first-child + .bootstrap-select > .btn {
     margin-right: -1px;
     height: 30px;
     font-size: 12px;
@@ -20,4 +20,35 @@ select:first-child + .bootstrap-select > .btn {
 
 .input-group .form-control {
     border-radius: 4px;
+}
+
+/* animate a refresh glyphicon */
+.glyphicon-refresh-animate {
+    animation: spin 1s infinite linear;
+    -webkit-animation: spin2 1s infinite linear;
+}
+@keyframes spin {
+    from { transform: scale(1) rotate(0deg);}
+    to { transform: scale(1) rotate(360deg);}
+}
+@-webkit-keyframes spin2 {
+    from { -webkit-transform: rotate(0deg);}
+    to { -webkit-transform: rotate(360deg);}
+}
+
+/* arrow for accordion panels */
+.panel-heading a.accordion-toggle:hover {
+    color: black;
+	text-decoration: none;
+	cursor: pointer; cursor: hand;
+}
+.panel-heading a.accordion-toggle h4:before {
+    /* symbol for "opening" panels */
+    font-family: 'Glyphicons Halflings';
+    content: "\e114";
+    color: grey;
+}
+.panel-heading a.accordion-toggle.collapsed h4:before {
+    /* symbol for "collapsed" panels */
+    content: "\e080";
 }
