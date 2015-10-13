@@ -167,8 +167,11 @@ def get_wadl(jobname):
 @app.get('/get_wadl_json/<jobname:path>')
 def get_wadl_json(jobname):
     """Get json dictionary WADL file for jobname"""
-    job_def = uws_jdl.read_wadl(jobname)
-    return job_def
+    try:
+        job_def = uws_jdl.read_wadl(jobname)
+        return job_def
+    except UserWarning as e:
+        abort_404(e.message)
 
 
 @app.get('/get_script/<jobname:path>')

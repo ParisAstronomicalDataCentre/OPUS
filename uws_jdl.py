@@ -63,7 +63,8 @@ def read_wadl(jobname):
     except IOError:
         # if file does not exist, continue and return an empty dict
         logger.debug('WADL not found for job {}'.format(jobname))
-        return {}
+        raise UserWarning('WADL not found for job {}'.format(jobname))
+        # return {}
     job_def = {'description': description,
                'parameters': parameters,
                'results': results,

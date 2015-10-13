@@ -47,6 +47,7 @@
                             </select>\
                         </span>\
                     </div>\
+                    <div style="height: 2px;"></div>\
                     <div class="input-group input-group-sm col-md-12">\
                         <input class="form-control" name="param_description_' + iparam + '" type="text" placeholder="Description" style="border-radius: 4px;" />\
                     </div>\
@@ -125,6 +126,7 @@
                             </select>\
                         </span>\
                     </div>\
+                    <div style="height: 2px;"></div>\
                     <div class="input-group input-group-sm col-md-12">\
                         <input class="form-control" name="result_description_' + iresult + '" type="text" placeholder="Description" style="border-radius: 4px;" />\
                     </div>\
@@ -184,30 +186,32 @@
 				    $('input[name=result_description_' + i + ']').val(wadl.results[result]['description']);
 				};
                 $('.selectpicker').selectpicker('refresh');
+                // ajax command to get_script on UWS server
+                $.ajax({
+                    url : '/get_script/' + jobname, //.split("/").pop(),
+                    async : true,
+                    type : 'GET',
+                    dataType: "text",
+                    success : function(script) {
+                        // $('textarea[name=script]').val(script);
+                        editor.setValue(script);
+                    },
+                    error : function(xhr, status, exception) {
+                        console.log(exception);
+                    }
+                });
 			},
 			error : function(xhr, status, exception) {
 				console.log(exception);
-			}
-		});
-        // ajax command to get_script on UWS server
-        $.ajax({
-			url : '/get_script/' + jobname, //.split("/").pop(),
-			async : true,
-			type : 'GET',
-			dataType: "text",
-			success : function(script) {
-				// $('textarea[name=script]').val(script);
-				editor.setValue(script);
-			},
-			error : function(xhr, status, exception) {
-				console.log(exception);
+				$('#load_msg').text('No WADL found.');
+				$('#load_msg').show().delay(1000).fadeOut();
 			}
 		});
     }
 
 	$(document).ready( function() {
-        $('input[name=name]').keyup(function (e) {
-            if (e.keyCode == 13) {
+        $('input[name=name]').keydown(function (event) {
+            if (event.keyCode == 13) {
                 event.preventDefault();
                 load_wadl();
             }
