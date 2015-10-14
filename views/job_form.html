@@ -4,15 +4,31 @@
     <script type="text/javascript" src="/static/js/uws_manager.js" defer></script>
     <script type="text/javascript" src="/static/js/job_form.js" defer></script>
 {% endblock %}
+{% block variables %}
+	<div id="jobname" style="display:none" value="{{ jobname }}"></div>
+{% endblock %}
 {% block content %}
 	<div class="container bs-docs-container">    
-        <div class="bs-docs-section">
-            <h3>Create Job ({{ job_name }})</h3>
-	      	<!-- show form -->
-            <form id="job_params" class="form-horizontal" role="form" action="{{ app_url }}{% url 'job_send' job_name %}" method="get">
-                {% include "inc_form.html" with form=form label_size=2 input_size=5 help_size=5 %}
-            </form>
-        </div> <!-- bs-docs-section -->
+        <div id="new_job_panel" class="panel panel-default">
+            <div class="panel-heading">
+                <span class="panel-title">Create new {{ jobname }} job</span>
+            </div>
+            <div id="parameters_panel" class="panel-body">
+                <p></p>
+                <!-- show form -->
+                <form id="job_params" class="form-horizontal" role="form" action="" method="get">
+                    {{ form }}
+                    <div class="row">
+                        <div class="col-md-12 form-group">
+                            <label class="col-md-2 control-label">&nbsp;</label>
+                            <div class="col-md-7 controls">
+                                <input value="Submit" type="submit" class="btn btn-primary" />
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div> <!-- panel-body -->
+        </div> <!-- panel -->
 	</div> <!-- container -->
 {% endblock %}
         

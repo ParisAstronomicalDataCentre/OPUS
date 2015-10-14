@@ -7,7 +7,7 @@
     $(document).ready( function() {
     	
  	    // Look at URL to set jobName
-    	jobName = location.pathname.split('/').pop();
+    	jobName = $('#jobname').attr('value');
  	    
  	    // Look at GET parameters to fill newJobParams
     	var updateNewJobParams = function(form_params) {    	
@@ -19,7 +19,7 @@
         		switch (key) {
         			case 'csrfmiddlewaretoken': break;
         			case 'evfile':
-                    	logger('WARNING', 'DEBUG mode: set evfile=http://voplus.obspm.fr/cta/events.fits');
+                    	// logger('WARNING', 'DEBUG mode: set evfile=http://voplus.obspm.fr/cta/events.fits');
         				newJobParams['evfile'] = 'http://voplus.obspm.fr/cta/events.fits';
         				break;
                     default:
@@ -38,22 +38,10 @@
     	};
 
     	// catch the form's submit event to validate form
-        $('#job_params').submit(function() {
-            $.ajax({ // create an AJAX call...
-                data: $(this).serialize(), // get the form data
-                type: $(this).attr('method'), // GET or POST
-                url: $(this).attr('action'), // the url to call, here: job_send
-                success: function(response) { // on success..
-                    $('#job_params').html(response); // update the DIV with new form
-                    if ($('#job_params div').hasClass('has-error')) {
-                    	logger('DEBUG', 'createJob form has errors!');
-                    } else {
-                    	logger('DEBUG', 'createJob form is valid!');
-                    	updateNewJobParams($('#job_params').serialize());
-                    	createNewJob();
-                    };
-                }
-            });
+        $('#job_params').submit(function(event) {
+			event.preventDefault();
+			updateNewJobParams($('#job_params').serialize());
+			createNewJob();
             return false; // cancel original event to prevent form submitting
         });	    
 

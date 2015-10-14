@@ -1,6 +1,5 @@
 {% extends "skeleton.html" %}
 {% block js %}
-    <script type="text/javascript" src="/static/js/fits.js" defer></script>
     <script type="text/javascript" src="/static/js/samp.js" defer></script>
     <script type="text/javascript" src="/static/js/samp_client.js" defer></script>
     <script type="text/javascript" src="/static/js/uwsLib.js" defer></script>
@@ -8,25 +7,26 @@
     <script type="text/javascript" src="/static/js/job_edit.js" defer></script>
 {% endblock %}
 {% block variables %}
-	<div id="jobid" style="display:none" value="{{ jobid }}"></div>
-	<div id="jobname" style="display:none" value="{{ jobname }}"></div>
+    <div id="jobid" style="display:none" value="{{ jobid }}"></div>
+    <div id="jobname" style="display:none" value="{{ jobname }}"></div>
 {% endblock %}
 {% block content %}
     <div class="container bs-docs-container">
         <div id="div_info"></div> 
-	    <div id="div_job" style="display:none"> 
+        <div id="div_job" style="display:none"> 
 
-	        <div id="description" class="panel panel-default">
-				<div class="panel-heading">
-		           	<h3 class="panel-title">
-		           	    Job Description
-		           	</h3>
-				</div>
-		   		<div id="div_table" class="table-responsive">
-		           	<table id="job_list" class="table table-bordered table-condensed">
-					</table>
-				</div>
-	        </div> <!-- panel -->
+            <div id="description" class="panel panel-default">
+                <div class="panel-heading clearfix">
+                    <span class="pull-left" style="padding-top: 4px;">
+                        <span class="panel-title">Job Description</span>
+                    </span>
+                    <button id="to_job_list" type="button" class="btn btn-default btn-sm pull-right">Back to job list</button>
+                </div>
+                <div id="div_table" class="table-responsive">
+                    <table id="job_list" class="table table-bordered table-condensed">
+                    </table>
+                </div>
+            </div> <!-- panel -->
 
             <div class="panel-group" id="accordion">
         
@@ -43,43 +43,41 @@
                         </table>
                     </div> <!-- panel-body -->
                 </div> <!-- panel -->
-		        
-				<div id='parameters' class="panel panel-default">
-				  	<div class="panel-heading">
+                
+                <div id='parameters' class="panel panel-default">
+                      <div class="panel-heading">
                         <a id='parameters_btn' class="accordion-toggle panel-title collapsed" data-toggle="collapse" data-target="#parameters_panel">
                             <h4 class="panel-title">
-			           	        Job Parameters
+                                   Job Parameters
                             </h4>
                         </a>
-				  	</div> <!-- panel-heading -->
-		            <div id="parameters_panel" class="panel-body panel-collapse collapse">
-			            <p></p>
-				        <!-- show form -->
-                        <table id='param_list' class="table table-bordered table-condensed">
-                        </table>
-				        <form id="job_params" class="form-horizontal" role="form" action="" method="get">
-
-				       	</form>
-		            </div> <!-- panel-body -->
-				</div> <!-- panel -->
-		
-				<div id='results' class="panel panel-default">
-				  	<div class="panel-heading">
-                        <a id='results_btn' class="accordion-toggle panel-title" data-toggle="collapse" data-target="#results_panel">
-        		           	<h4 class="panel-title">
-			           	        Job Results
-    			           	</h4>
-                        </a>
-				  	</div> <!-- panel-heading -->
+                      </div> <!-- panel-heading -->
+                    <div id="parameters_panel" class="panel-body panel-collapse collapse">
+                        <p></p>
+                        <!-- show form -->
+                        <form id="job_params" class="form-horizontal" role="form" action="" method="get">
+                            {{ form }}
+                           </form>
+                    </div> <!-- panel-body -->
+                </div> <!-- panel -->
+        
+                <div id='results' class="panel panel-default">
+                      <div class="panel-heading">
+                           <a id='results_btn' class="accordion-toggle panel-title" data-toggle="collapse" data-target="#results_panel">
+                               <h4 class="panel-title">
+                                   Job Results
+                               </h4>
+                           </a>
+                      </div> <!-- panel-heading -->
                     <div id="results_panel" class="panel-body panel-collapse collapse in">
-					    <p></p>
-		                <div id='result_list' class='text-center'>
-		                </div>
-		            </div> <!-- panel-body -->
-				</div> <!-- panel -->
-				
-	        </div> <!-- panel group -->
-	        
-	    </div> <!-- div_job -->
-	</div> <!-- container -->
+                        <p></p>
+                        <div id='result_list' class='text-center'>
+                        </div>
+                    </div> <!-- panel-body -->
+                </div> <!-- panel -->
+                
+            </div> <!-- panel group -->
+            
+        </div> <!-- div_job -->
+    </div> <!-- container -->
 {% endblock %}

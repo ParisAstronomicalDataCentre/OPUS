@@ -41,13 +41,18 @@
         $('.selectpicker').on('change', function(){
             load_job_list();
         });
+        $('#refresh_list').click( function() {
+            uws_manager.getJobList();
+        });
         $('#create_test_job').click( function() {
             var jobname = $('select[name=jobname]').val();
             uws_manager.createTestJob(jobname, jobParameters);
         });
-        // Refresh button
-        $('#refresh_list').click( function() {
-            uws_manager.getJobList();
+        $('#create_new_job').click( function() {
+            var jobname = $('select[name=jobname]').val();
+            if (jobname) {
+                window.location.href =  "/client/job_form/" + jobname;
+            }
         });
 
     });

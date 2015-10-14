@@ -175,10 +175,10 @@ var uws_manager = (function($) {
         };
         var row = '\
             <tr id='+ job.jobId +' jobname='+ job.jobName +'>\
-                <td class="text-center v-center">' + job.jobName + '</td>\
-                <td class="text-center v-center">' + start_time + '</td>\
-                <td class="text-center v-center">' + destr_time + '</td>\
-                <td class="text-center v-center">\
+                <td class="text-center" style="vertical-align: middle;">' + job.jobName + '</td>\
+                <td class="text-center" style="vertical-align: middle;">' + start_time + '</td>\
+                <td class="text-center" style="vertical-align: middle;">' + destr_time + '</td>\
+                <td class="text-center" style="vertical-align: middle;">\
                     <button type="button" class="phase btn btn-default">PHASE...</button>\
                 </td>\
                 <td class="text-center">\
@@ -332,7 +332,7 @@ var uws_manager = (function($) {
             $('#result_list').append(r_panel);
             switch (r_type) {
                 case 'fits':
-                    $('#'+r_id+' div.panel-heading span').attr('style', "padding-top: 5px;");
+                    $('#'+r_id+' div.panel-heading span.pull-left').attr('style', "padding-top: 4px;");
                     $('#'+r_id+' div.panel-heading').append('\
                         <button type="button" class="samp btn btn-default btn-sm pull-right">SAMP</button>\
                     ');
@@ -394,7 +394,7 @@ var uws_manager = (function($) {
             // the following line stops the script for unknown reason... hence it is commented
             //$("#div_info").html('<strong>Job deleted</strong>: '+jobId+', going back to job list').addClass('alert alert-success');
             var jobName = $(this).attr('jobname');
-            window.location.href = job_list_url + "/" + jobName + "?job_deleted=true";
+            window.location.href = job_list_url + "?jobname=" + jobName + "?job_deleted=true";
         });
         // Change click event for Details buttons
         $('#'+job.jobId+' td button.properties').click( function() {
@@ -496,7 +496,7 @@ var uws_manager = (function($) {
     var getJobPhaseSuccess = function(jobId, phase) {
         var phase_init = $('#'+jobId+' td button.phase').html().split(";").pop();
         clearTimeout(refreshPhaseTimeout[jobId]);
-        //logger('DEBUG', 'Phase is '+phase+' (was '+phase_init+') for job '+jobId);
+        logger('INFO', 'Phase is '+phase+' (was '+phase_init+') for job '+jobId);
         //logger('DEBUG',phase_init+' --> '+phase);
         if (phase != phase_init) {
             refreshPhaseTimeoutDelay[jobId] = timeoutDelays[0]

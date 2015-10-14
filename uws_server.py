@@ -201,20 +201,58 @@ def home():
 @jinja2_view('job_list.html')
 def job_list():
     """Job list page"""
-    return {}
-
-@app.route('/client/job_list/<jobname>')
-@jinja2_view('job_list.html')
-def job_list_direct(jobname):
-    """Job list page"""
+    jobname = request.query.get('jobname', '')
     return {'jobname': jobname}
 
 
 @app.route('/client/job_edit/<jobname>/<jobid>')
 @jinja2_view('job_edit.html')
-def job_list(jobname, jobid):
-    """Home page"""
-    return {'jobname': jobname, 'jobid': jobid}
+def job_edit(jobname, jobid):
+    """Job edit page"""
+    # Get job definition
+    job_def = uws_jdl.read_wadl(jobname)
+    # Create form fields
+    form = []
+    for pname, pdict in job_def['parameters'].iteritems():
+        if pdict['required'].lower() == 'true':
+            form.append(
+                '<div class="form-group">\n'
+                '    <label class="col-md-2 control-label">{pname}</label>\n'
+                '    <div class="col-md-5 controls">\n'
+                '        <input class="form-control" id="id_{pname}" name="{pname}" type="text" value="{pdef}" />'
+                '    </div>\n'
+                '    <div class="col-md-5 help-block">\n'
+                '        {pdoc}\n'
+                '    </div>\n'
+                '</div>'
+                ''.format(pname=pname, pdef=pdict['default'], pdoc=pdict['description'])
+            )
+    return {'jobname': jobname, 'jobid': jobid, 'form': '\n'.join(form)}
+
+
+@app.route('/client/job_form/<jobname>')
+@jinja2_view('job_form.html')
+def job_form(jobname):
+    """Job edit page"""
+    # Get job definition
+    job_def = uws_jdl.read_wadl(jobname)
+    # Create form fields
+    form = []
+    for pname, pdict in job_def['parameters'].iteritems():
+        if pdict['required'].lower() == 'true':
+            form.append(
+                '<div class="form-group">\n'
+                '    <label class="col-md-2 control-label">{pname}</label>\n'
+                '    <div class="col-md-5 controls">\n'
+                '        <input class="form-control" id="id_{pname}" name="{pname}" type="text" value="{pdef}" />'
+                '    </div>\n'
+                '    <div class="col-md-5 help-block">\n'
+                '        {pdoc}\n'
+                '    </div>\n'
+                '</div>'
+                ''.format(pname=pname, pdef=pdict['default'], pdoc=pdict['description'])
+            )
+    return {'jobname': jobname, 'form': '\n'.join(form)}
 
 
 @app.get('/new_job_definition')

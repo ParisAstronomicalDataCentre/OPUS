@@ -11,10 +11,11 @@
 {% block content %}
 	<div class="container bs-docs-container">
         <div id="job_list_panel" class="panel panel-default">
-            <div class="panel-heading clearfix">
+            <div class="panel-heading">
                 <div class="btn-group pull-right">
                     <button id="refresh_list" type="button" class="btn btn-default">Refresh Job List</button>
                     <button id="create_test_job" type="button" class="btn btn-default">Create Test Job</button>
+                    <button id="create_new_job" type="button" class="btn btn-default">Create New Job</button>
                 </div>
                 <span>
                     <select name="jobname" class="selectpicker" title="Please Select...">
@@ -33,7 +34,7 @@
                 <table id="job_list" class="table table-bordered table-condensed tablesorter">
                 </table>
             </div>
-        </div>
+        </div> <!-- panel -->
 	</div> <!-- container -->
 {% endblock %}
         
