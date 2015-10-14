@@ -255,18 +255,18 @@ def job_form(jobname):
     return {'jobname': jobname, 'form': '\n'.join(form)}
 
 
-@app.get('/new_job_definition')
-@jinja2_view('new_job_form.html')
-def new_job_definition():
+@app.get('/config/job_definition')
+@jinja2_view('job_definition.html')
+def job_definition():
     """Show form for new job definition"""
     jobname = request.query.get('jobname', '')
     if request.query.get('msg', '') == 'new':
-        msg = 'New job description has been saved as {}'.format(jobname)
+        msg = 'New job definition has been saved as {}'.format(jobname)
         return {'jobname': jobname, 'message': msg}
     return {'jobname': jobname}
 
 
-@app.post('/new_job_definition')
+@app.post('/config/job_definition')
 def create_new_job_definition():
     """Use filled form to create a WADL file for the given job"""
     # Read form
@@ -328,7 +328,7 @@ def create_new_job_definition():
     # Send email to admin for review
     # return '<p>{}</p><p>{}</p><p>{}</p><p>{}</p><p>{}</p><pre>{}</pre>' \
     #        ''.format(jobname, description, execdur, str(params), str(results), script)
-    redirect('/new_job_definition?jobname=new/{}&msg=new'.format(jobname), 303)
+    redirect('/config/job_definition?jobname=new/{}&msg=new'.format(jobname), 303)
 
 
 # ----------

@@ -387,14 +387,18 @@ var uws_manager = (function($) {
                 $("#"+hash+"_btn").removeClass("collapsed");
             };
         };
-        scrollToAnchor(hash);
+        if (hash != 'properties') {
+            scrollToAnchor(hash);
+        };
         // Back to job list on remove
         $("#"+job.jobId).on("remove", function () {
-            $("#div_job").hide();
-            // the following line stops the script for unknown reason... hence it is commented
-            //$("#div_info").html('<strong>Job deleted</strong>: '+jobId+', going back to job list').addClass('alert alert-success');
+            var jobId = $(this).attr('id');
             var jobName = $(this).attr('jobname');
-            window.location.href = job_list_url + "?jobname=" + jobName + "?job_deleted=true";
+            $("#div_job").hide();
+            $("#div_info").html('<strong>Job deleted</strong>: '+jobId+', going back to job list').addClass('alert alert-success');
+            setTimeout(function(){
+                window.location.href = job_list_url + "?jobname=" + jobName + "&msg=deleted&jobid=" + jobId;
+            }, 3000);
         });
         // Change click event for Details buttons
         $('#'+job.jobId+' td button.properties').click( function() {
@@ -423,7 +427,9 @@ var uws_manager = (function($) {
         $("#div_job").hide();
         $("#div_info").html('<strong>Job does not exist</strong>: '+jobId+', going back to job list').addClass('alert alert-warning');
         logger('WARNING', 'displaySingleJob '+ jobId, exception);
-        window.location.href = job_list_url + "?job_missing=true";
+        setTimeout(function(){
+            window.location.href = job_list_url + "?msg=missing&jobid=" + jobId;
+        }, 3000);
     };
 
     // REFRESH PROPS

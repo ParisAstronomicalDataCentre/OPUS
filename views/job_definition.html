@@ -5,7 +5,7 @@
 {% block js %}
     <script type="text/javascript" src="/static/libs/codemirror-5.7/lib/codemirror.js" defer></script>
     <script type="text/javascript" src="/static/libs/codemirror-5.7/mode/shell/shell.js" defer></script>
-    <script type="text/javascript" src="/static/js/new_job_form.js" defer></script>
+    <script type="text/javascript" src="/static/js/job_definition.js" defer></script>
 {% endblock %}
 {% block variables %}
     <div id="jobname" style="display:none" value="{{ jobname }}"></div>
@@ -19,7 +19,7 @@
                 </h3>
             </div>
             <div class="panel-body">
-                <form action="/new_job_definition" method="post" class="form-horizontal">
+                <form action="/config/job_definition" method="post" class="form-horizontal">
                     <div class="row">
                         <div class="col-md-12 form-group">
                             <label class="col-md-2 control-label">Name</label>
