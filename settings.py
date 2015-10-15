@@ -23,6 +23,7 @@ JOB_SERVERS = {
     '145.238.151.10': 'tycho.obspm.fr',
     '145.238.151.72': 'quadri12.obspm.fr',
     '145.238.151.130': 'tyctst0',
+    '145.238.151.19': 'tycho',
 }
 
 # Storage of job information
