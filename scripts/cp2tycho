@@ -1,0 +1,2 @@
+scp *.* tycho:/obs/vouws/scripts/
+scp *.* tycho.obspm.fr:/obs/vouws/scripts/

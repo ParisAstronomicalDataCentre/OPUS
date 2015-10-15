@@ -60,7 +60,8 @@ class Manager(object):
 class SLURMManager(Manager):
     """Manage interactions with SLURM queue manager (e.g. on tycho.obspm.fr)"""
 
-    def __init__(self, host=SLURM_URL, user=SLURM_USER, home=SLURM_HOME_PATH, mail=SLURM_USER_MAIL):
+    def __init__(self, host=SLURM_URL, user=SLURM_USER, home=SLURM_HOME_PATH, mail=SLURM_USER_MAIL,
+                 jobdata_path=SLURM_JOBDATA_PATH, workdir_path=SLURM_WORKDIR_PATH):
         # Set basic attributes
         self.host = host
         self.user = user
@@ -69,8 +70,8 @@ class SLURMManager(Manager):
         self.ssh_arg = user + '@' + host
         # PATHs
         self.scripts_path = '{}/scripts'.format(home)
-        self.jobdata_path = '{}/jobdata'.format(home)  # may be a link on host
-        self.working_path = '{}/workdir'.format(home)  # may be a link on host, will be current dir
+        self.jobdata_path = jobdata_path
+        self.working_path = workdir_path
 
     def _make_sbatch(self, job):
         """Make PBS file content for given job
@@ -85,6 +86,7 @@ class SLURMManager(Manager):
         sbatch = [
             '#!/bin/bash',
             '#SBATCH --job-name={}'.format(job.jobname),
+            '#SBATCH --workdir={}/{}'.format(self.working_path, job.jobid),
             '#SBATCH --error={}/{}/stderr.log'.format(self.jobdata_path, job.jobid),
             '#SBATCH --output={}/{}/stdout.log'.format(self.jobdata_path, job.jobid),
             '#SBATCH --mail-user=' + self.mail,
@@ -101,6 +103,8 @@ class SLURMManager(Manager):
             'wd={}/{}'.format(self.working_path, job.jobid),
             'jd={}/{}'.format(self.jobdata_path, job.jobid),
             'cd $wd',
+            'echo "User is `id`"',
+            'echo "Current dir is `pwd`"',
             'echo "Working dir is $wd"',
             'echo "JobData dir is $jd"',
             'timestamp() {',
@@ -187,7 +191,7 @@ class SLURMManager(Manager):
                 raise
         # Create parameter file
         param_file_distant = '{}/{}/parameters.sh'.format(self.jobdata_path, job.jobid)
-        param_file_local = '{}/{}_parameters.sh'.format(SLURM_SBATCH_PATH, job.jobid)
+        param_file_local = '{}/{}_parameters.sh'.format(SBATCH_PATH, job.jobid)
         with open(param_file_local, 'w') as f:
             # parameters are a list of key=value (easier for bash sourcing)
             params, files = job.parameters_to_text(handle_files=True)
@@ -213,7 +217,7 @@ class SLURMManager(Manager):
         sp.check_output(cmd, stderr=sp.STDOUT)
         # Create sbatch file
         sbatch_file_distant = '{}/{}/sbatch.sh'.format(self.jobdata_path, job.jobid)
-        sbatch_file_local = '{}/{}_sbatch.sh'.format(SLURM_SBATCH_PATH, job.jobid)
+        sbatch_file_local = '{}/{}_sbatch.sh'.format(SBATCH_PATH, job.jobid)
         with open(sbatch_file_local, 'w') as f:
             sbatch = self._make_sbatch(job)
             f.write(sbatch)

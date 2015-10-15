@@ -17,7 +17,8 @@ var uws_manager = (function($) {
     var timeoutDelays = [2000,3000,4000,5000,10000]; // delays in ms
     var selectedJobId;
     //var serviceUrl = "http://voparis-uws.obspm.fr/uws-v1.0/"; // app_url+"/uws-v1.0/" //
-    var serviceUrl = "https://voparis-uws-test.obspm.fr/"; // app_url+"/uws-v1.0/" //
+    var serviceUrl = $(location).attr('protocol') + '//' + $(location).attr('host') + '/';
+    // "https://voparis-uws-test.obspm.fr/"; // app_url+"/uws-v1.0/" //
     var job_list_url = '/client/job_list';
     var job_edit_url = '/client/job_edit';
     var jobNames;
@@ -43,6 +44,7 @@ var uws_manager = (function($) {
         for (var i in jobNames) {
             clients[jobNames[i]] = new uwsLib.uwsClient(serviceUrl + jobNames[i]);
         }
+        logger('INFO', 'initManager '+serviceUrl);
     };
 
     // PREPARE TABLE

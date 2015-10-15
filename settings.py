@@ -31,16 +31,18 @@ DB_FILE = 'job_database.db'
 
 # Define a Manager and its properties
 MANAGER = 'SLURMManager'
-SLURM_URL = 'quadri12.obspm.fr'  # 'tycho.obspm.fr'
+SLURM_URL = 'tycho.obspm.fr'  # 'quadri12.obspm.fr'  #
 SLURM_USER = 'vouws'
 SLURM_USER_MAIL = 'mathieu.servillat@obspm.fr'
-SLURM_HOME_PATH = '/obs/vouws'
+SLURM_HOME_PATH = '/home/vouws'  # '/obs/vouws'
+SLURM_JOBDATA_PATH = '/poubelle/vouws/jobdata'
+SLURM_WORKDIR_PATH = '/poubelle/vouws/workdir'
 SLURM_SBATCH_ADD = [
     "#SBATCH --mem=200mb",
     "#SBATCH --nodes=1 --ntasks-per-node=1",
-    # '#SBATCH --partition=short',  # for tycho...
-    '#SBATCH --account=obspm',  # for quadri12...
-    '#SBATCH --partition=def',  # for quadri12...'
+    '#SBATCH --partition=short',  # for tycho...
+    # '#SBATCH --account=obspm',  # for quadri12...
+    # '#SBATCH --partition=def',  # for quadri12...'
 ]
 PHASE_CONVERT = {
     # Conversions for SLURM job state codes
@@ -150,9 +152,9 @@ RESULTS_PATH = JOBDATA_PATH + '/results'
 # Path for WADL files, should probably be accessed through a URL as static files
 WADL_PATH = APP_PATH + '/wadl'
 # Path for WADL files, should probably be accessed through a URL as static files
-SCRIPT_PATH = APP_PATH + '/slurm_scripts'
+SCRIPT_PATH = APP_PATH + '/scripts'
 # Path for SLURM sbatch files created by SLURMManager
-SLURM_SBATCH_PATH = APP_PATH + '/sbatch'
+SBATCH_PATH = APP_PATH + '/sbatch'
 #--- Set all _PATH based on APP_PATH -----------------------------------------------------------------------------------
 
 # Set logger
