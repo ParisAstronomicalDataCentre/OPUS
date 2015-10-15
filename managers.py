@@ -145,7 +145,7 @@ class SLURMManager(Manager):
         ])
         # Need WADL for results description
         if not job.wadl:
-            job.read_wadl()
+            job.get_wadl()()
         # Identify results to be moved to $jd/results
         cp_results = []
         for rname, r in job.wadl['results'].iteritems():
