@@ -43,8 +43,9 @@ var uws_manager = (function($) {
         jobNames = jobNames_init;
         for (var i in jobNames) {
             clients[jobNames[i]] = new uwsLib.uwsClient(serviceUrl + jobNames[i]);
+            logger('INFO', 'uwsClient at '+clients[jobNames[i]].serviceUrl);
         }
-        logger('INFO', 'initManager '+clients[jobNames[i]].serviceUrl);
+        logger('INFO', 'initManager '+serviceUrl);
     };
 
     // PREPARE TABLE

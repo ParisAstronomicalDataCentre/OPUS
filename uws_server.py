@@ -359,7 +359,7 @@ def init_db():
         logger.info('Database initialized using ' + filename)
     except:
         abort_500_except()
-    redirect('/show_db', 303)
+    redirect('/db/show', 303)
 
 
 @app.route('/db/test')
@@ -384,7 +384,7 @@ def test_db():
         logger.info('Database initialized using ' + filename)
     except:
         abort_500_except()
-    redirect('/show_db', 303)
+    redirect('/db/show', 303)
 
 
 @app.route('/db/show')
@@ -561,7 +561,7 @@ def create_job(jobname):
     except:
         abort_500_except()
     # Response
-    redirect('/' + jobname + '/' + jobid, 303)
+    redirect('/jobs/' + jobname + '/' + jobid, 303)
 
 
 # ----------
@@ -617,7 +617,7 @@ def delete_job(jobname, jobid):
     except:
         abort_500_except()
     # Response
-    redirect('/' + jobname, 303)
+    redirect('/jobs/' + jobname, 303)
 
 
 @app.post('/jobs/<jobname>/<jobid>')
@@ -642,7 +642,7 @@ def post_job(jobname, jobid):
         abort_500_except('STDERR output:\n' + e.output)
     except:
         abort_500_except()
-    redirect('/' + jobname, 303)
+    redirect('/jobs/' + jobname, 303)
 
 
 # ----------
@@ -714,7 +714,7 @@ def post_phase(jobname, jobid):
     except:
         abort_500_except()
     # Response
-    redirect('/' + jobname + '/' + jobid, 303)
+    redirect('/jobs/' + jobname + '/' + jobid, 303)
 
 
 # ----------
@@ -779,7 +779,7 @@ def post_executionduration(jobname, jobid):
     except:
         abort_500_except()
     # Response
-    redirect('/' + jobname + '/' + jobid, 303)
+    redirect('/jobs/' + jobname + '/' + jobid, 303)
 
 
 # ----------
@@ -846,7 +846,7 @@ def post_destruction(jobname, jobid):
     except:
         abort_500_except()
     # Response
-    redirect('/' + jobname + '/' + jobid, 303)
+    redirect('/jobs/' + jobname + '/' + jobid, 303)
 
 
 # ----------
@@ -993,7 +993,7 @@ def post_parameter(jobname, jobid, pname):
     except:
         abort_500_except()
     # Response
-    redirect('/' + jobname + '/' + jobid + '/parameters', 303)
+    redirect('/jobs/' + jobname + '/' + jobid + '/parameters', 303)
 
 
 # ----------
