@@ -321,7 +321,7 @@
                 </request>
                 <response status="200">
 <!-- TODO: set default quote in seconds -->
-                    <representation id="quote" mediaType="text/plain" element="xs:int" default="120"/>
+                    <representation id="quote" mediaType="text/plain" element="xs:int" default="20"/>
                 </response>
                 <response status="404"/>
                 <response status="500"/>
