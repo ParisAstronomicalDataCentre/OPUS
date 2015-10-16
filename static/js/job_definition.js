@@ -47,7 +47,7 @@
                             </select>\
                         </span>\
                     </div>\
-                    <div style="height: 2px;"></div>\
+                    <div style="height: 1px;"></div>\
                     <div class="input-group input-group-sm col-md-12">\
                         <input class="form-control" name="param_description_' + iparam + '" type="text" placeholder="Description" style="border-radius: 4px;" />\
                     </div>\
@@ -126,7 +126,7 @@
                             </select>\
                         </span>\
                     </div>\
-                    <div style="height: 2px;"></div>\
+                    <div style="height: 1px;"></div>\
                     <div class="input-group input-group-sm col-md-12">\
                         <input class="form-control" name="result_description_' + iresult + '" type="text" placeholder="Description" style="border-radius: 4px;" />\
                     </div>\
@@ -135,6 +135,10 @@
             </tr>';
         $(row).insertBefore('#result_list > tbody > tr:last');
         $(".selectpicker").attr('data-width', '140px').selectpicker();
+        $('#remove_result_' + iresult).click( function() {
+            iresult = this.id.split('_').pop();
+            remove_result(iresult);
+        });
 	}
 
 	function remove_all_results() {
@@ -150,6 +154,23 @@
 	    var iresult = mytable.children().length - 1;
 	    if (iresult > 0) {
 	        $('#result_' + iresult).remove();
+	    }
+    }
+
+	function remove_result(iresult) {
+	    var mytable = $("#result_list tbody");
+	    var nresult = mytable.children().length - 1;
+        $('#result_' + iresult).remove();
+	    for (var i = Number(iresult); i < nresult; i++) {
+	        var j = i + 1;
+    	    console.log(j + '->' + i);
+    	    console.log($('#result_' + j).prop('id'));
+    	    $('#result_' + j).prop('id', 'result_' + i);
+    	    $('#remove_result_' + j).prop('id', 'remove_result_' + i);
+    	    $('input[name=result_name_' + j + ']').attr('name', 'result_name_' + i);
+    	    $('input[name=result_default_' + j + ']').attr('name', 'result_default_' + i);
+    	    $('select[name=result_type_' + j + ']').attr('name', 'result_type_' + i);
+    	    $('input[name=result_description_' + j + ']').attr('name', 'result_description_' + i);
 	    }
     }
 
