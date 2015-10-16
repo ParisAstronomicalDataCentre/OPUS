@@ -201,6 +201,7 @@ def home():
 @jinja2_view('job_list.html')
 def job_list():
     """Job list page"""
+    logger.info('')
     jobname = request.query.get('jobname', '')
     return {'jobname': jobname}
 
@@ -209,6 +210,7 @@ def job_list():
 @jinja2_view('job_edit.html')
 def job_edit(jobname, jobid):
     """Job edit page"""
+    logger.info(jobname + ' ' + jobid)
     # Get job definition
     job_def = uws_jdl.read_wadl(jobname)
     # Create form fields
@@ -234,6 +236,7 @@ def job_edit(jobname, jobid):
 @jinja2_view('job_form.html')
 def job_form(jobname):
     """Job edit page"""
+    logger.info(jobname)
     # Get job definition
     job_def = uws_jdl.read_wadl(jobname)
     # Create form fields
@@ -259,6 +262,7 @@ def job_form(jobname):
 @jinja2_view('job_definition.html')
 def job_definition():
     """Show form for new job definition"""
+    logger.info('')
     jobname = request.query.get('jobname', '')
     if request.query.get('msg', '') == 'new':
         msg = 'New job definition has been saved as {}'.format(jobname)

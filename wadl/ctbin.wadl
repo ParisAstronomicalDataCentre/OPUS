@@ -320,7 +320,8 @@
                     <param style="template" name="job-id" type="xs:string" required="true"/>
                 </request>
                 <response status="200">
-                    <representation mediaType="text/plain" element="xs:int"/>
+<!-- TODO: set default quote in seconds -->
+                    <representation id="quote" mediaType="text/plain" element="xs:int" default="120"/>
                 </response>
                 <response status="404"/>
                 <response status="500"/>

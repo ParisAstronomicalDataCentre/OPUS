@@ -204,7 +204,7 @@
 			},
 			error : function(xhr, status, exception) {
 				console.log(exception);
-				$('#load_msg').text('No WADL found.');
+				$('#load_msg').text('No valid WADL found.');
 				$('#load_msg').show().delay(1000).fadeOut();
 			}
 		});
