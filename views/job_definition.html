@@ -15,7 +15,7 @@
         <div id="new_job_form" class="panel panel-default">
             <div class="panel-heading">
                 <h3 class="panel-title">
-                    Define a new job
+                    Job Definition
                 </h3>
             </div>
             <div class="panel-body">
@@ -91,7 +91,18 @@
                                 <input class="form-control" name="executionduration" type="number" value="60" step="10" min="0" />
                             </div>
                             <div class="col-md-3 help-block">
-                                Maximum duration in seconds that will be allocated to the job.
+                                Duration in seconds that will be allocated to the job.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 form-group">
+                            <label class="col-md-2 control-label">Default quote</label>
+                            <div class="col-md-7 controls">
+                                <input class="form-control" name="quote" type="number" value="10" step="10" min="0" />
+                            </div>
+                            <div class="col-md-3 help-block">
+                                Default quote in seconds corresponding to the expected duration of the job.
                             </div>
                         </div>
                     </div>

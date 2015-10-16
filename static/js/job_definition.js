@@ -163,6 +163,7 @@
 			dataType: "json",
 			success : function(wadl) {
 				$('input[name=executionduration]').val(wadl.executionduration);
+				$('input[name=quote]').val(wadl.quote);
 				$('textarea[name=description]').val(wadl.description);
 				remove_all_parameters();
 				var i = 0;
@@ -210,29 +211,33 @@
     }
 
 	$(document).ready( function() {
-        $('input[name=name]').keydown(function (event) {
-            if (event.keyCode == 13) {
-                event.preventDefault();
-                load_wadl();
-            }
-        });
 	    // Script editor with CodeMirror
 	    editor = CodeMirror.fromTextArea( $('textarea[name=script]')[0], {mode: "text/x-sh", lineNumbers: true } );
         $('div.CodeMirror').addClass('panel panel-default');
-        // Create click functions
+        // Get jobname from DOM (if set), and fill input form
+        var jobname = $('#jobname').attr('value');
+        if (jobname) {
+            $('input[name=name]').val(jobname);
+            load_wadl();
+        } else {
+            // Prepare empty form
+	        add_parameter();
+	        add_result();
+        };
+        // Add event functions
+        $('#load_wadl').click( function() { load_wadl(); });
         $('#add_parameter').click( function() { add_parameter(); });
         $('#remove_last_parameter').click( function() { remove_last_parameter(); });
         $('#remove_all_parameters').click( function() { remove_all_parameters(); });
         $('#add_result').click( function() { add_result(); });
         $('#remove_last_result').click( function() { remove_last_result(); });
         $('#remove_all_results').click( function() { remove_all_results(); });
-        $('#load_wadl').click( function() { load_wadl(); });
-        // Get jobname from DOM (if set), and update input
-        var jobname = $('#jobname').attr('value');
-        if (jobname) {
-            $('input[name=name]').val(jobname);
-            load_wadl();
-        };
+        $('input[name=name]').keydown(function (event) {
+            if (event.keyCode == 13) {
+                event.preventDefault();
+                load_wadl();
+            }
+        });
 	}); // end ready
 
 })(jQuery);

@@ -31,11 +31,13 @@ def read_wadl(jobname):
         with open(fname, 'r') as f:
             wadl_string = f.read()
         wadl_tree = ETree.fromstring(wadl_string)
+        # Get default namespace
         xmlns = '{' + wadl_tree.nsmap[None] + '}'
         # Read parameters description
         params_block = wadl_tree.find(".//{}request[@id='create_job_parameters']".format(xmlns))
         for p in params_block.getchildren():
             if p.get('name') not in ['PHASE', None]:
+                # TODO: Add all attributes (e.g. min, max for numbers)
                 parameters[p.get('name')] = {
                     'type': p.get('type'),
                     'required': p.get('required'),
@@ -51,9 +53,12 @@ def read_wadl(jobname):
                     'default': r.get('default'),
                     'description': list(r)[0].text,
                 }
-        # Read default execution duration
+        # Read execution duration
         execdur_block = wadl_tree.find(".//{}param[@name='EXECUTIONDURATION']".format(xmlns))
         execdur = execdur_block.get('default')
+        # Read default quote
+        quote_block = wadl_tree.find(".//{}representation[@id='quote']".format(xmlns))
+        quote = quote_block.get('default')
         # Read job description
         job_list_description_block = wadl_tree.find(".//{}doc[@title='description']".format(xmlns))
         description = job_list_description_block.text
@@ -69,7 +74,7 @@ def read_wadl(jobname):
                'parameters': parameters,
                'results': results,
                'executionduration': execdur,
-               'quote': execdur}
+               'quote': quote}
     return job_def
 
 
@@ -125,11 +130,10 @@ def create_wadl(jobname, job_def):
         result_opts_block.append(roelt)
     execdur_block = wadl_tree.find(".//{}param[@name='EXECUTIONDURATION']".format(xmlns))
     execdur_block.set('default', job_def['executionduration'])
+    quote_block = wadl_tree.find(".//{}representation[@id='quote']".format(xmlns))
+    quote_block.set('default', job_def['quote'])
     job_list_description_block = wadl_tree.find(".//{}doc[@title='description']".format(xmlns))
     job_list_description_block.text = job_def['description'].decode()
-    # Write WADL file for jobname
-    # wadl_fname = '{}/new/{}.wadl'.format(WADL_PATH, jobname)
-    # wadl_tree.write(wadl_fname, pretty_print=True)
     return ETree.tostring(wadl_tree, pretty_print=True)
 
 

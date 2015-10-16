@@ -185,7 +185,7 @@ def get_script(jobname):
 
 
 # ----------
-# Pages
+# Web Pages
 
 
 @app.route('/')
@@ -274,6 +274,7 @@ def create_new_job_definition():
     jobname = request.forms.get('name').split('/')[-1]
     description = request.forms.get('description')
     execdur = request.forms.get('executionduration')
+    quote = request.forms.get('quote')
     script = request.forms.get('script')
     params = collections.OrderedDict()
     iparam = 1
@@ -310,24 +311,21 @@ def create_new_job_definition():
                'parameters': params,
                'results': results,
                'executionduration': execdur,
-               'quote': execdur}
+               'quote': quote}
     # Create WADL file from form
     job_wadl = uws_jdl.create_wadl(jobname, job_def)
+    # Save WADL in new/
     wadl_fname = '{}/new/{}.wadl'.format(WADL_PATH, jobname)
     with open(wadl_fname, 'w') as f:
         f.write(job_wadl)
         logger.info('WADL saved: ' + wadl_fname)
-    # response.content_type = 'text/xml; charset=UTF-8'
-    # return job_wadl
-    # Create bash script file
+    # Save bash script file in new/
     script_fname = '{}/new/{}.sh'.format(SCRIPT_PATH, jobname)
     with open(script_fname, 'w') as f:
         f.write(script)
         logger.info('Job script save: ' + script_fname)
         # TODO: send to work cluster?
-    # Send email to admin for review
-    # return '<p>{}</p><p>{}</p><p>{}</p><p>{}</p><p>{}</p><pre>{}</pre>' \
-    #        ''.format(jobname, description, execdur, str(params), str(results), script)
+    # Back to filled form
     redirect('/config/job_definition?jobname=new/{}&msg=new'.format(jobname), 303)
 
 
@@ -335,7 +333,7 @@ def create_new_job_definition():
 # Database testing
 
 
-@app.route('/init_db')
+@app.route('/db/init')
 def init_db():
     """Initialize the database structure with test data
 
@@ -360,7 +358,7 @@ def init_db():
     redirect('/show_db', 303)
 
 
-@app.route('/test_db')
+@app.route('/db/test')
 def test_db():
     """Initialize the database structure with test data
 
@@ -385,7 +383,7 @@ def test_db():
     redirect('/show_db', 303)
 
 
-@app.route('/show_db')
+@app.route('/db/show')
 def show_db():
     """Show database in HTML
 
@@ -511,7 +509,7 @@ def job_event():
 # /<jobname>
 
 
-@app.route('/<jobname>')
+@app.route('/jobs/<jobname>')
 def get_joblist(jobname):
     """Get list for <jobname> jobs
 
@@ -531,7 +529,7 @@ def get_joblist(jobname):
         abort_500_except()
 
 
-@app.post('/<jobname>')
+@app.post('/jobs/<jobname>')
 def create_job(jobname):
     """Create a new job
 
@@ -566,7 +564,7 @@ def create_job(jobname):
 # /<jobname>/<jobid>
 
 
-@app.route('/<jobname>/<jobid>')
+@app.route('/jobs/<jobname>/<jobid>')
 def get_job(jobname, jobid):
     """Get description for job <jobid>
 
@@ -591,7 +589,7 @@ def get_job(jobname, jobid):
         abort_500_except()
 
 
-@app.delete('/<jobname>/<jobid>')
+@app.delete('/jobs/<jobname>/<jobid>')
 def delete_job(jobname, jobid):
     """Delete job with <jobid>
 
@@ -618,7 +616,7 @@ def delete_job(jobname, jobid):
     redirect('/' + jobname, 303)
 
 
-@app.post('/<jobname>/<jobid>')
+@app.post('/jobs/<jobname>/<jobid>')
 def post_job(jobname, jobid):
     """Alias for delete_job() if ACTION=DELETE"""
     try:
@@ -647,7 +645,7 @@ def post_job(jobname, jobid):
 # /<jobname>/<jobid>/phase
 
 
-@app.route('/<jobname>/<jobid>/phase')
+@app.route('/jobs/<jobname>/<jobid>/phase')
 def get_phase(jobname, jobid):
     """Get the phase of job <job-id>
 
@@ -670,7 +668,7 @@ def get_phase(jobname, jobid):
         abort_500_except()
 
 
-@app.post('/<jobname>/<jobid>/phase')
+@app.post('/jobs/<jobname>/<jobid>/phase')
 def post_phase(jobname, jobid):
     """Change Phase of job <jobid> --> start or abort job
 
@@ -719,7 +717,7 @@ def post_phase(jobname, jobid):
 # /<jobname>/<jobid>/executionduration
 
 
-@app.route('/<jobname>/<jobid>/executionduration')
+@app.route('/jobs/<jobname>/<jobid>/executionduration')
 def get_executionduration(jobname, jobid):
     """Get the maximum execution duration of job <jobid>
 
@@ -742,7 +740,7 @@ def get_executionduration(jobname, jobid):
         abort_500_except()
 
 
-@app.post('/<jobname>/<jobid>/executionduration')
+@app.post('/jobs/<jobname>/<jobid>/executionduration')
 def post_executionduration(jobname, jobid):
     """Change the maximum execution duration of job <jobid>
 
@@ -784,7 +782,7 @@ def post_executionduration(jobname, jobid):
 # /<jobname>/<jobid>/destruction
 
 
-@app.route('/<jobname>/<jobid>/destruction')
+@app.route('/jobs/<jobname>/<jobid>/destruction')
 def get_destruction(jobname, jobid):
     """Get the destruction instant for job <jobid>
 
@@ -807,7 +805,7 @@ def get_destruction(jobname, jobid):
         abort_500_except()
 
 
-@app.post('/<jobname>/<jobid>/destruction')
+@app.post('/jobs/<jobname>/<jobid>/destruction')
 def post_destruction(jobname, jobid):
     """Change the destruction instant for job <jobid>
 
@@ -851,7 +849,7 @@ def post_destruction(jobname, jobid):
 # /<jobname>/<jobid>/error
 
 
-@app.route('/<jobname>/<jobid>/error')
+@app.route('/jobs/<jobname>/<jobid>/error')
 def get_error(jobname, jobid):
     """Get any error message associated with job <jobid>
 
@@ -879,7 +877,7 @@ def get_error(jobname, jobid):
 # /<jobname>/<jobid>/quote
 
 
-@app.route('/<jobname>/<jobid>/quote')
+@app.route('/jobs/<jobname>/<jobid>/quote')
 def get_quote(jobname, jobid):
     """Get the Quote for job <jobid>
 
@@ -906,7 +904,7 @@ def get_quote(jobname, jobid):
 # /<jobname>/<jobid>/parameters
 
 
-@app.route('/<jobname>/<jobid>/parameters')
+@app.route('/jobs/<jobname>/<jobid>/parameters')
 def get_parameters(jobname, jobid):
     """Get parameters for job <jobid>
 
@@ -931,7 +929,7 @@ def get_parameters(jobname, jobid):
         abort_500_except()
 
 
-@app.route('/<jobname>/<jobid>/parameters/<pname>')
+@app.route('/jobs/<jobname>/<jobid>/parameters/<pname>')
 def get_parameter(jobname, jobid, pname):
     """Get parameter <param> for job <jobid>
 
@@ -958,7 +956,7 @@ def get_parameter(jobname, jobid, pname):
         abort_500_except()
 
 
-@app.post('/<jobname>/<jobid>/parameters/<pname>')
+@app.post('/jobs/<jobname>/<jobid>/parameters/<pname>')
 def post_parameter(jobname, jobid, pname):
     """Change the parameter value for job <jobid>
 
@@ -998,7 +996,7 @@ def post_parameter(jobname, jobid, pname):
 # /<jobname>/<jobid>/results
 
 
-@app.route('/<jobname>/<jobid>/results')
+@app.route('/jobs/<jobname>/<jobid>/results')
 def get_results(jobname, jobid):
     """Get results for job <jobid>
 
@@ -1023,7 +1021,7 @@ def get_results(jobname, jobid):
         abort_500_except()
 
 
-@app.route('/<jobname>/<jobid>/results/<rname>')
+@app.route('/jobs/<jobname>/<jobid>/results/<rname>')
 def get_result(jobname, jobid, rname):
     """Get result <rname> for job <jobid>
 
@@ -1050,7 +1048,7 @@ def get_result(jobname, jobid, rname):
         abort_500_except()
 
 
-@app.route('/get_result_file/<jobname>/<jobid>/<rname>/<rfname>')
+@app.route('/jobs/get_result_file/<jobname>/<jobid>/<rname>/<rfname>')
 def get_result_file(jobname, jobid, rname, rfname):
     """Get result file <rname>/<rfname> for job <jobid>
 
@@ -1082,7 +1080,7 @@ def get_result_file(jobname, jobid, rname, rfname):
 # /<jobname>/<jobid>/owner
 
 
-@app.route('/<jobname>/<jobid>/owner')
+@app.route('/jobs/<jobname>/<jobid>/owner')
 def get_owner(jobname, jobid):
     """Get the owner of the job <jobid>
 
