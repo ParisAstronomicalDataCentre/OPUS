@@ -210,22 +210,42 @@
 		});
     }
 
+	function get_wadl() {
+        var jobname = $('input[name=name]').val();
+        // ajax command to get_wadl on UWS server
+        $.ajax({
+			url : '/get_wadl/' + jobname, //.split("/").pop(),
+			async : true,
+			type : 'GET',
+			dataType: "text",
+			success : function(wadl) {
+				var blob = new Blob([wadl], {type: "text/xml;charset=utf-8"});
+                saveAs(blob, jobname + ".wadl");
+			},
+			error : function(xhr, status, exception) {
+				console.log(exception);
+				$('#load_msg').text('No valid WADL found.');
+				$('#load_msg').show().delay(1000).fadeOut();
+			}
+		});
+	}
+
 	$(document).ready( function() {
 	    // Script editor with CodeMirror
 	    editor = CodeMirror.fromTextArea( $('textarea[name=script]')[0], {mode: "text/x-sh", lineNumbers: true } );
         $('div.CodeMirror').addClass('panel panel-default');
+        // Prepare empty form
+        add_parameter();
+        add_result();
         // Get jobname from DOM (if set), and fill input form
         var jobname = $('#jobname').attr('value');
         if (jobname) {
             $('input[name=name]').val(jobname);
             load_wadl();
-        } else {
-            // Prepare empty form
-	        add_parameter();
-	        add_result();
         };
         // Add event functions
         $('#load_wadl').click( function() { load_wadl(); });
+        $('#get_wadl').click( function() { get_wadl(); });
         $('#add_parameter').click( function() { add_parameter(); });
         $('#remove_last_parameter').click( function() { remove_last_parameter(); });
         $('#remove_all_parameters').click( function() { remove_all_parameters(); });
