@@ -120,7 +120,7 @@ class SLURMManager(Manager):
             '    msg="Error in ${BASH_SOURCE[1]##*/} running command: $BASH_COMMAND"',
             '    echo "$msg"', # echo in stdout log
             # '    echo "Signal error"',
-            '    curl -s -o $jd/curl_error_signal.log '
+            '    curl -k -s -o $jd/curl_error_signal.log '
             '        -d "jobid=$SLURM_JOBID" -d "phase=ERROR" --data-urlencode "error_msg=$msg" '
             '        {}/handler/job_event'.format(BASE_URL),
             '    rm -rf $wd',
@@ -130,7 +130,7 @@ class SLURMManager(Manager):
             '}',
             'trap "error_handler" INT TERM EXIT',
             # Start job
-            'curl -s -o $jd/curl_start_signal.log '
+            'curl -k -s -o $jd/curl_start_signal.log '
             '    -d "jobid=$SLURM_JOBID" -d "phase=RUNNING" '
             '    {}/handler/job_event'.format(BASE_URL),
             'echo "[`timestamp`] Start job"',
