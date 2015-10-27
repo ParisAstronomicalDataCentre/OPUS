@@ -260,7 +260,7 @@
                 <request>
                     <param style="template" name="job-id" type="xs:string" required="true"/>
 <!-- TODO: default execution duration in seconds -->
-                    <param style="query" name="EXECUTIONDURATION" type="xs:int" required="false" default="120"/>
+                    <param style="query" name="EXECUTIONDURATION" type="xs:int" required="false" default="60"/>
                 </request>
                 <response status="303">
                     <doc>Redirects to /{job}/{job-id}</doc>

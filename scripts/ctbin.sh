@@ -1,5 +1,5 @@
 #!/bin/bash -l
-sleep 20
+sleep 60
 #source /etc/profile.d/modules.sh
 #module load gammalib
 #source $GAMMALIB/bin/gammalib-init.sh
