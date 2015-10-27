@@ -420,7 +420,7 @@ class Job(object):
                     rfname = job.get_result_filename(rname)
                     if os.path.isfile('{}/{}/results/{}'.format(JOBDATA_PATH, job.jobid, rfname)):
                         # /get_result_file/<jobname>/<jobid>/<rname>/<fname>
-                        url = '{}/get_result_file/{}/{}/{}/{}'.format(BASE_URL, job.jobname, job.jobid, rname, rfname)
+                        url = '{}/jobs/get_result_file/{}/{}/{}/{}'.format(BASE_URL, job.jobname, job.jobid, rname, rfname)
                         job.results[rname] = {'url': url, 'mediaType': r['mediaType']}
                         logger.info('add result ' + rname + ' ' + str(r))
                 # Set job.end_time
