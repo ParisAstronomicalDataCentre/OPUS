@@ -83,7 +83,7 @@
 <param style="query" name="chatter" type="xs:long" required="false" default="2">
     <doc>Chattiness of output</doc>
 </param>
-<param style="query" name="clobber" type="xs:boolean" required="true" default="yes">
+<param style="query" name="clobber" type="xs:boolean" required="false" default="yes">
     <doc>Overwrite existing output files with new output files?</doc>
 </param>
 <param style="query" name="debug" type="xs:boolean" required="true" default="no">
