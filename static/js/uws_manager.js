@@ -296,8 +296,11 @@ var uws_manager = (function($) {
 
     // DISPLAY PARAMS
     var displayParams = function(job){
+        // first create form fields from WADL
+
+        // then fill form
         for (var p in job['parameters']) {
-            // Add in param_list
+            // Add in param_list table (if present in DOM)
             $('#param_list').append('<tr><td><strong>'+p+'</strong></td><td>'+decodeURIComponent(job['parameters'][p])+'</td></tr>');
             // Update form fields
             $('#id_'+p).attr('value', decodeURIComponent(job['parameters'][p]));

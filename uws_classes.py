@@ -192,7 +192,7 @@ class Job(object):
     # ----------
     # Methods to export a job description
 
-    def parameters_to_text(self, separator='\n', handle_files=False):
+    def parameters_to_text(self, separator='\n', get_files=False):
         """Make parameter file content for given job
 
         Returns:
@@ -200,7 +200,7 @@ class Job(object):
         """
         params = []
         files = {'URI': [], 'form': []}
-        if handle_files:
+        if get_files:
             for pname, pdict in self.parameters.iteritems():
                 pvalue = pdict['value']
                 # Test if file is given as a URI, prefixed by http*

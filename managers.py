@@ -61,7 +61,7 @@ class SLURMManager(Manager):
     """Manage interactions with SLURM queue manager (e.g. on tycho.obspm.fr)"""
 
     def __init__(self, host=SLURM_URL, user=SLURM_USER, home=SLURM_HOME_PATH, mail=SLURM_USER_MAIL,
-                 jobdata_path=SLURM_JOBDATA_PATH, workdir_path=SLURM_WORKDIR_PATH):
+                 jobdata_path=SLURM_JOBDATA_PATH, working_path=SLURM_WORKDIR_PATH):
         # Set basic attributes
         self.host = host
         self.user = user
@@ -71,13 +71,13 @@ class SLURMManager(Manager):
         # PATHs
         self.scripts_path = '{}/scripts'.format(home)
         self.jobdata_path = jobdata_path
-        self.working_path = workdir_path
+        self.working_path = working_path
 
     def _make_sbatch(self, job):
-        """Make PBS file content for given job
+        """Make sbatch file content for given job
 
         Returns:
-            PBS as a string
+            sbatch file content as a string
         """
         duration = dt.timedelta(0, int(job.execution_duration))
         # duration format is 00:01:00 for 1 min
@@ -145,7 +145,7 @@ class SLURMManager(Manager):
         ])
         # Need WADL for results description
         if not job.wadl:
-            job.get_wadl()()
+            job.get_wadl()
         # Identify results to be moved to $jd/results
         cp_results = []
         for rname, r in job.wadl['results'].iteritems():
@@ -168,7 +168,6 @@ class SLURMManager(Manager):
         #     curl --max-time 10 -d jobid="$JOBID" -d phase="$JOBSTATE" https://voparis-uws-test.obspm.fr/handler/job_event
         # fi
         # """
-
         return '\n'.join(sbatch)
 
     def start(self, job):
@@ -180,7 +179,7 @@ class SLURMManager(Manager):
         # Create workdir and jobdata dir (to upload the scripts, parameters and input files)
         cmd = ['ssh', self.ssh_arg,
                'mkdir {}/{}; mkdir {}/{}'.format(self.working_path, job.jobid, self.jobdata_path, job.jobid)]
-        logger.debug(' '.join(cmd))
+        # logger.debug(' '.join(cmd))
         try:
             sp.check_output(cmd, stderr=sp.STDOUT)
         except sp.CalledProcessError as e:
@@ -190,47 +189,48 @@ class SLURMManager(Manager):
             else:
                 raise
         # Create parameter file
-        param_file_distant = '{}/{}/parameters.sh'.format(self.jobdata_path, job.jobid)
         param_file_local = '{}/{}_parameters.sh'.format(SBATCH_PATH, job.jobid)
+        param_file_distant = '{}/{}/parameters.sh'.format(self.jobdata_path, job.jobid)
         with open(param_file_local, 'w') as f:
             # parameters are a list of key=value (easier for bash sourcing)
-            params, files = job.parameters_to_text(handle_files=True)
+            params, files = job.parameters_to_text(get_files=True)
             f.write(params)
-        # Copy files (scp if uploaded from form, or wget if given as a URI)
+        # Copy parameter file to jobdata_path
+        cmd = ['scp',
+               param_file_local,
+               '{}:{}'.format(self.ssh_arg, param_file_distant)]
+        # logger.debug(' '.join(cmd))
+        sp.check_output(cmd, stderr=sp.STDOUT)
+        # Copy files to working_path (scp if uploaded from form, or wget if given as a URI)
+        # TODO: delete files
         for fname in files['form']:
             cmd = ['scp',
                    '{}/{}/{}'.format(UPLOAD_PATH, job.jobid, fname),
                    '{}:{}/{}/{}'.format(self.ssh_arg, self.working_path, job.jobid, fname)]
-            logger.debug(' '.join(cmd))
+            # logger.debug(' '.join(cmd))
             sp.check_output(cmd, stderr=sp.STDOUT)
         for furl in files['URI']:
             fname = furl.split('/')[-1]
             cmd = ['ssh', self.ssh_arg,
                    'wget -q {} -O {}/{}/{}'.format(furl, self.working_path, job.jobid, fname)]
-            logger.debug(' '.join(cmd))
+            # logger.debug(' '.join(cmd))
             sp.check_output(cmd, stderr=sp.STDOUT)
-        # Copy parameter file
-        cmd = ['scp',
-               param_file_local,
-               '{}:{}'.format(self.ssh_arg, param_file_distant)]
-        logger.debug(' '.join(cmd))
-        sp.check_output(cmd, stderr=sp.STDOUT)
         # Create sbatch file
-        sbatch_file_distant = '{}/{}/sbatch.sh'.format(self.jobdata_path, job.jobid)
         sbatch_file_local = '{}/{}_sbatch.sh'.format(SBATCH_PATH, job.jobid)
+        sbatch_file_distant = '{}/{}/sbatch.sh'.format(self.jobdata_path, job.jobid)
         with open(sbatch_file_local, 'w') as f:
             sbatch = self._make_sbatch(job)
             f.write(sbatch)
-        # Copy sbatch file
+        # Copy sbatch file to jobdata_path
         cmd = ['scp',
                sbatch_file_local,
                '{}:{}'.format(self.ssh_arg, sbatch_file_distant)]
-        logger.debug(' '.join(cmd))
+        # logger.debug(' '.join(cmd))
         sp.check_output(cmd, stderr=sp.STDOUT)
         # Start job using sbatch
         cmd = ['ssh', self.ssh_arg,
                'sbatch {}'.format(sbatch_file_distant)]
-        logger.debug(' '.join(cmd))
+        # logger.debug(' '.join(cmd))
         jobid_cluster = sp.check_output(cmd, stderr=sp.STDOUT)
         # Get jobid_cluster from output (e.g. "Submitted batch job 9421")
         return jobid_cluster.split(' ')[-1]
@@ -254,11 +254,11 @@ class SLURMManager(Manager):
                     logger.warning('force delete {} {}'.format(job.jobname, job.jobid))
                 else:
                     raise
-        # Delete workdir
+        # Delete working_path
         cmd = ['ssh', self.ssh_arg,
                'rm -rf {}/{}'.format(self.working_path, job.jobid)]
         sp.check_output(cmd, stderr=sp.STDOUT)
-        # Delete jobdata
+        # Delete jobdata_path
         cmd = ['ssh', self.ssh_arg,
                'rm -rf {}/{}'.format(self.jobdata_path, job.jobid)]
         sp.check_output(cmd, stderr=sp.STDOUT)
