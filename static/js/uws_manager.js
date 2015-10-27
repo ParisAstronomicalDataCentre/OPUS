@@ -299,16 +299,15 @@ var uws_manager = (function($) {
     // DISPLAY PARAMS
     var displayParams = function(job){
         // first create form fields from WADL
-        console.log(job);
         $.ajax({
 			url : jdl_url + job.jobName, //.split("/").pop(),
 			async : true,
 			type : 'GET',
 			dataType: "json",
 			success : function(jdl) {
-			    console.log(jdl);
-				//for (var param in jdl.parameters) {
-				///};
+				for (var param in jdl.parameters) {
+                    console.log(param);
+				};
 			},
 			error : function(xhr, status, exception) {
 
