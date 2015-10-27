@@ -306,7 +306,7 @@ var uws_manager = (function($) {
 			dataType: "json",
 			success : function(jdl) {
 				for (var param in jdl.parameters) {
-                    console.log(param);
+                    console.log(jdl.parameters[param]);
 				};
 			},
 			error : function(xhr, status, exception) {
