@@ -103,6 +103,7 @@ class SLURMManager(Manager):
             'wd={}/{}'.format(self.working_path, job.jobid),
             'jd={}/{}'.format(self.jobdata_path, job.jobid),
             'cd $wd',
+            'echo "SLURM_JOBID is $SLURM_JOBID"',
             'echo "User is `id`"',
             'echo "Current dir is `pwd`"',
             'echo "Working dir is $wd"',
