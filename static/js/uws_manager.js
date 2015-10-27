@@ -300,13 +300,24 @@ var uws_manager = (function($) {
     var displayParams = function(job){
         // first create form fields from WADL
         $.ajax({
-			url : jdl_url + job.jobName, //.split("/").pop(),
+			url : serviceUrl + jdl_url + job.jobName, //.split("/").pop(),
 			async : true,
 			type : 'GET',
 			dataType: "json",
 			success : function(jdl) {
-				for (var param in jdl.parameters) {
-                    console.log(jdl.parameters[param]);
+				for (var pname in jdl.parameters) {
+				    var p = jdl.parameters[pname]
+                    var row = '\
+                        <div class="form-group">\
+                            <label class="col-md-2 control-label">' + pname + '</label>\
+                            <div class="col-md-5 controls">\
+                                <input class="form-control" id="id_' + pname + '" name="' + pname + '" type="text" value="' + p.default + '" />\
+                            </div>\
+                            <div class="col-md-5 help-block">\
+                                ' + p.description + '\
+                            </div>\
+                        </div>';
+                    $('#job_params').append(row);
 				};
 			},
 			error : function(xhr, status, exception) {
