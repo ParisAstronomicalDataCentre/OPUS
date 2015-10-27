@@ -301,7 +301,7 @@ var uws_manager = (function($) {
         // first create form fields from WADL
         console.log(job);
         $.ajax({
-			url : jdl_url + job.jobname, //.split("/").pop(),
+			url : jdl_url + job.jobName, //.split("/").pop(),
 			async : true,
 			type : 'GET',
 			dataType: "json",
