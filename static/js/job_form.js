@@ -8,6 +8,8 @@
         
         // Look at URL to set jobName
         jobName = $('#jobname').attr('value');
+        uws_manager.initManager([jobName]);
+        uws_manager.displayParamForm(jobName);
 
          // Look at GET parameters to fill newJobParams
         var updateNewJobParams = function(form_params) {        
@@ -33,7 +35,6 @@
             newJobParams['PHASE'] = 'RUN';
             //uws_client.createClient(serviceUrl, jobName);
             //uws_client.createJob(newJobParams);
-            uws_manager.initManager([jobName]);            
             uws_manager.createJob(jobName, newJobParams);
         };
 

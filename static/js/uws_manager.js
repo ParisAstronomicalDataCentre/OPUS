@@ -41,17 +41,30 @@ var uws_manager = (function($) {
 
     // CREATE MANAGER AND CLIENTS
     function initManager(jobNames_init){
-        //serviceUrl = serviceUrl_init;
         jobNames = jobNames_init;
         for (var i in jobNames) {
             // Init client
             clients[jobNames[i]] = new uwsLib.uwsClient(serviceUrl + jobs_url + jobNames[i]);
             // Get JDL for job
-            $.getJSON(serviceUrl + jdl_url + jobNames[i], function(jdl) { clients[jobNames[i]].jdl = jdl; });
+            $.getJSON(serviceUrl + jdl_url + jobNames[i], function(jdl) {
+                clients[jobNames[i]].jdl = jdl;
+            });
             logger('INFO', 'uwsClient at '+clients[jobNames[i]].serviceUrl);
         }
         logger('INFO', 'initManager '+serviceUrl);
     };
+
+    function wait_for_jdl(jobName, next_function, args){
+        if ((typeof clients[jobName] !== "undefined") && (typeof clients[jobName].jdl !== "undefined")) {
+            console.log('JDL set for ' + jobName);
+            next_function.apply(this, args);
+        } else {
+            console.log('Wait for JDL for ' + jobName);
+            setTimeout(function(){
+                wait_for_jdl(jobName, next_function, args);
+            }, 500);
+        };
+    }
 
     // PREPARE TABLE
     var prepareTable = function() {
@@ -300,45 +313,98 @@ var uws_manager = (function($) {
     };
 
     // DISPLAY PARAMS
-    var displayParams = function(job){
-        var jdl = clients[job.jobName].jdl;
-        // first create form fields from WADL/JDL
+    var displayParamFormInput = function(pname, p){
+        var row = '\
+            <div class="form-group">\
+                <label class="col-md-2 control-label">' + pname + '</label>\
+                <div class="col-md-5 controls">\
+                    <input class="form-control" id="id_' + pname + '" name="' + pname + '" type="text" value="' + p.default + '"/>\
+                </div>\
+                <div class="col-md-5 help-block">\
+                    ' + p.description + '\
+                </div>\
+            </div>';
+        $('#job_params').append(row);
+    }
+    var displayParamFormOk = function(jobName){
+        var jdl = clients[jobName].jdl;
+        // Create form fields from WADL/JDL
         for (var pname in jdl.parameters) {
             var p = jdl.parameters[pname];
-            //var can_update =
-            var row = '\
-                <div class="form-group">\
-                    <label class="col-md-2 control-label">' + pname + '</label>\
-                    <div class="col-md-5 controls">\
-                        <div class="input-group">\
-                            <input class="form-control" id="id_' + pname + '" name="' + pname + '" type="text" value="' + p.default + '"/>\
-                        </div>\
-                    </div>\
-                    <div class="col-md-5 help-block">\
-                        ' + p.description + '\
-                    </div>\
-                </div>';
-            $('#job_params').append(row);
+            if (p.required.toLowerCase() == 'true') {
+                displayParamFormInput(pname, p)
+                console.log(p.type);
+                if (p.type == 'file') {
+                    $('#id_'+pname).attr('type', 'file');
+                };
+                if ((p.type.indexOf('long') > -1)
+                    || (p.type.indexOf('int') > -1)
+                    || (p.type.indexOf('float') > -1)
+                    || (p.type.indexOf('double') > -1)) {
+                    $('#id_'+pname).attr('type', 'number');
+                };
+                if (p.type.indexOf('anyURI') > -1) {
+                    $('#id_'+pname).attr('type', 'url');
+                };
+                if (p.type.indexOf('bool') > -1) {
+                    $('#id_'+pname).removeClass('form-control');
+                    $('#id_'+pname).attr('type', 'checkbox');
+                    $('#id_'+pname).wrap('<div class="checkbox"></div>');
+                    $('#id_'+pname).attr('style', 'margin-left: 10px;');
+                    var val = p.default.toLowerCase();
+                    if ((val == 'true') || (val == 'yes')) {
+                        $('#id_'+pname).attr('checked', 'checked');
+                    }
+                };
+            };
+        };
+        var row = '\
+            <div id="form-buttons" class="form-group">\
+                <div class="col-md-offset-2 col-md-5">\
+                    <button type="submit" class="btn btn-primary">Submit</button>\
+                    <button type="reset" class="btn btn-default">Reset</button>\
+                </div>\
+            </div>';
+        $('#job_params').append(row);
+    }
+    var displayParamForm = function(jobName){
+        wait_for_jdl(jobName, displayParamFormOk, [jobName]);
+    }
+    var displayParamFormAll = function(job){
+        var jdl = clients[job.jobName].jdl;
+        // Create form fields from WADL/JDL
+        for (var pname in jdl.parameters) {
+            var p = jdl.parameters[pname];
+            displayParamFormInput(pname, p)
             if (!(pname in job['parameters'])) {
+                $('#id_'+pname).wrap('<div class="input-group"></div>');
                 $('#id_'+pname).parent().append('<span class="input-group-addon"><small>default used</small></span>');
             };
         };
-        // readonly
-        $('#job_params input').attr('readonly','readonly');
-        // then fill form
+    }
+    var fillParamForm = function(job){
         for (var pname in job['parameters']) {
+            var pvalue = job['parameters'][pname];
             // Add in param_list table (if present in DOM)
-            $('#param_list').append('<tr><td><strong>'+pname+'</strong></td><td>'+decodeURIComponent(job['parameters'][pname])+'</td></tr>');
+            $('#param_list').append('<tr><td><strong>'+pname+'</strong></td><td>'+decodeURIComponent(pvalue)+'</td></tr>');
             // Update form fields
-            $('#id_'+pname).attr('value', decodeURIComponent(job['parameters'][p]));
+            $('#id_'+pname).attr('value', decodeURIComponent(pvalue));
             // Add update buttons (possible to update params when pĥase is PENDING in UWS 1.0 - but not yet implemented)
+            $('#id_'+pname).wrap('<div class="input-group"></div>');
             $('#id_'+pname).parent().append('<span class="input-group-btn"><button id="button_'+pname+'" class="btn btn-default" type="button" disabled>Update</button></span>');
             // Activate button if job is PENDING
-            if (job['phase'] != 'PENDING') {
+            if (job['phase'] == 'PENDING') {
                 $('#id_'+pname).removeAttr('readonly');
                 $('#button_'+pname).removeAttr('disabled');
             };
         };
+    }
+    var displayParams = function(job){
+        displayParamFormAll(job);
+        // Set readonly
+        $('#job_params input').attr('readonly','readonly');
+        // then fill form
+        fillParamForm(job);
     };
 
     // DISPLAY RESULTS
@@ -668,7 +734,8 @@ var uws_manager = (function($) {
         selectJob: selectJob,
         createJob: createJob,
         createTestJob: createTestJob,
-        displaySingleJob: displaySingleJob
+        displaySingleJob: displaySingleJob,
+        displayParamForm: displayParamForm
     }
 
 })(jQuery);

@@ -241,20 +241,20 @@ def job_form(jobname):
     job_def = uws_jdl.read_wadl(jobname)
     # Create form fields
     form = []
-    for pname, pdict in job_def['parameters'].iteritems():
-        if pdict['required'].lower() == 'true':
-            form.append(
-                '<div class="form-group">\n'
-                '    <label class="col-md-2 control-label">{pname}</label>\n'
-                '    <div class="col-md-5 controls">\n'
-                '        <input class="form-control" id="id_{pname}" name="{pname}" type="text" value="{pdef}" />'
-                '    </div>\n'
-                '    <div class="col-md-5 help-block">\n'
-                '        {pdoc}\n'
-                '    </div>\n'
-                '</div>'
-                ''.format(pname=pname, pdef=pdict['default'], pdoc=pdict['description'])
-            )
+    # for pname, pdict in job_def['parameters'].iteritems():
+    #     if pdict['required'].lower() == 'true':
+    #         form.append(
+    #             '<div class="form-group">\n'
+    #             '    <label class="col-md-2 control-label">{pname}</label>\n'
+    #             '    <div class="col-md-5 controls">\n'
+    #             '        <input class="form-control" id="id_{pname}" name="{pname}" type="text" value="{pdef}" />'
+    #             '    </div>\n'
+    #             '    <div class="col-md-5 help-block">\n'
+    #             '        {pdoc}\n'
+    #             '    </div>\n'
+    #             '</div>'
+    #             ''.format(pname=pname, pdef=pdict['default'], pdoc=pdict['description'])
+    #         )
     return {'jobname': jobname, 'form': '\n'.join(form)}
 
 
