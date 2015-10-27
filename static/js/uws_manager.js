@@ -307,7 +307,7 @@ var uws_manager = (function($) {
 			success : function(jdl, job) {
 				for (var pname in jdl.parameters) {
 				    var p = jdl.parameters[pname];
-				    var can_update =
+				    //var can_update =
                     var row = '\
                         <div class="form-group">\
                             <label class="col-md-2 control-label">' + pname + '</label>\
