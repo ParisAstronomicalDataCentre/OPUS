@@ -4,7 +4,8 @@
     var editor
     var param_type_options = [
         "xs:string</option>",
-        "xs:anyURI", "file",
+        "xs:anyURI",
+        "file",
         "xs:float",
         "xs:double",
         "xs:int",

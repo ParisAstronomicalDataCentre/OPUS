@@ -44,7 +44,10 @@ var uws_manager = (function($) {
         //serviceUrl = serviceUrl_init;
         jobNames = jobNames_init;
         for (var i in jobNames) {
+            // Init client
             clients[jobNames[i]] = new uwsLib.uwsClient(serviceUrl + jobs_url + jobNames[i]);
+            // Get JDL for job
+            $.getJSON(serviceUrl + jdl_url + jobNames[i], function(jdl) { clients[jobNames[i]].jdl = jdl; });
             logger('INFO', 'uwsClient at '+clients[jobNames[i]].serviceUrl);
         }
         logger('INFO', 'initManager '+serviceUrl);
@@ -298,46 +301,42 @@ var uws_manager = (function($) {
 
     // DISPLAY PARAMS
     var displayParams = function(job){
-        // first create form fields from WADL
-        $.ajax({
-			url : serviceUrl + jdl_url + job.jobName, //.split("/").pop(),
-			async : false,
-			type : 'GET',
-			dataType: "json",
-			success : function(jdl) {
-				for (var pname in jdl.parameters) {
-				    var p = jdl.parameters[pname];
-				    //var can_update =
-                    var row = '\
-                        <div class="form-group">\
-                            <label class="col-md-2 control-label">' + pname + '</label>\
-                            <div class="col-md-5 controls">\
-                                <input class="form-control" id="id_' + pname + '" name="' + pname + '" type="text" value="' + p.default + '" readonly/>\
-                            </div>\
-                            <div class="col-md-5 help-block">\
-                                ' + p.description + '\
-                            </div>\
-                        </div>';
-                    $('#job_params').append(row);
-				};
-			},
-			error : function(xhr, status, exception) {
-
-			}
-		});
-
+        var jdl = clients[job.jobName].jdl;
+        // first create form fields from WADL/JDL
+        for (var pname in jdl.parameters) {
+            var p = jdl.parameters[pname];
+            //var can_update =
+            var row = '\
+                <div class="form-group">\
+                    <label class="col-md-2 control-label">' + pname + '</label>\
+                    <div class="col-md-5 controls">\
+                        <div class="input-group">\
+                            <input class="form-control" id="id_' + pname + '" name="' + pname + '" type="text" value="' + p.default + '"/>\
+                        </div>\
+                    </div>\
+                    <div class="col-md-5 help-block">\
+                        ' + p.description + '\
+                    </div>\
+                </div>';
+            $('#job_params').append(row);
+            if (!(pname in job['parameters'])) {
+                $('#id_'+pname).parent().append('<span class="input-group-addon"><small>default used</small></span>');
+            };
+        };
+        // readonly
+        $('#job_params input').attr('readonly','readonly');
         // then fill form
-        for (var p in job['parameters']) {
+        for (var pname in job['parameters']) {
             // Add in param_list table (if present in DOM)
-            $('#param_list').append('<tr><td><strong>'+p+'</strong></td><td>'+decodeURIComponent(job['parameters'][p])+'</td></tr>');
+            $('#param_list').append('<tr><td><strong>'+pname+'</strong></td><td>'+decodeURIComponent(job['parameters'][pname])+'</td></tr>');
             // Update form fields
-            $('#id_'+p).attr('value', decodeURIComponent(job['parameters'][p]));
+            $('#id_'+pname).attr('value', decodeURIComponent(job['parameters'][p]));
             // Add update buttons (possible to update params when pĥase is PENDING in UWS 1.0 - but not yet implemented)
-            $('#id_'+p).wrap('<div class="input-group"></div>');
-            $('#id_'+p).parent().append('<span class="input-group-btn"><button id="button_'+p+'" class="btn btn-default" type="button">Update</button></span>');
+            $('#id_'+pname).parent().append('<span class="input-group-btn"><button id="button_'+pname+'" class="btn btn-default" type="button" disabled>Update</button></span>');
+            // Activate button if job is PENDING
             if (job['phase'] != 'PENDING') {
-                $('#id_'+p).attr('readonly','readonly');
-                $('#button_'+p).attr('disabled','disabled');
+                $('#id_'+pname).removeAttr('readonly');
+                $('#button_'+pname).removeAttr('disabled');
             };
         };
     };
