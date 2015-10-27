@@ -17,8 +17,10 @@ var uws_manager = (function($) {
     var timeoutDelays = [2000,3000,4000,5000,10000]; // delays in ms
     var selectedJobId;
     //var serviceUrl = "http://voparis-uws.obspm.fr/uws-v1.0/"; // app_url+"/uws-v1.0/" //
-    var serviceUrl = $(location).attr('protocol') + '//' + $(location).attr('host') + '/jobs/';
+    var serviceUrl = $(location).attr('protocol') + '//' + $(location).attr('host');
     // "https://voparis-uws-test.obspm.fr/"; // app_url+"/uws-v1.0/" //
+    var jobs_url = '/jobs/';
+    var jdl_url = '/get_wadl_json/';
     var job_list_url = '/client/job_list';
     var job_edit_url = '/client/job_edit';
     var jobNames;
@@ -42,7 +44,7 @@ var uws_manager = (function($) {
         //serviceUrl = serviceUrl_init;
         jobNames = jobNames_init;
         for (var i in jobNames) {
-            clients[jobNames[i]] = new uwsLib.uwsClient(serviceUrl + jobNames[i]);
+            clients[jobNames[i]] = new uwsLib.uwsClient(serviceUrl + jobs_url + jobNames[i]);
             logger('INFO', 'uwsClient at '+clients[jobNames[i]].serviceUrl);
         }
         logger('INFO', 'initManager '+serviceUrl);
@@ -297,6 +299,20 @@ var uws_manager = (function($) {
     // DISPLAY PARAMS
     var displayParams = function(job){
         // first create form fields from WADL
+        $.ajax({
+			url : jdl_url + jobname, //.split("/").pop(),
+			async : true,
+			type : 'GET',
+			dataType: "json",
+			success : function(jdl) {
+			    console.log(jdl);
+				//for (var param in jdl.parameters) {
+				///};
+			},
+			error : function(xhr, status, exception) {
+
+			}
+		});
 
         // then fill form
         for (var p in job['parameters']) {
