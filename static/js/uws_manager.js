@@ -301,10 +301,10 @@ var uws_manager = (function($) {
         // first create form fields from WADL
         $.ajax({
 			url : serviceUrl + jdl_url + job.jobName, //.split("/").pop(),
-			async : true,
+			async : false,
 			type : 'GET',
 			dataType: "json",
-			success : function(jdl, job) {
+			success : function(jdl) {
 				for (var pname in jdl.parameters) {
 				    var p = jdl.parameters[pname];
 				    //var can_update =
@@ -312,33 +312,34 @@ var uws_manager = (function($) {
                         <div class="form-group">\
                             <label class="col-md-2 control-label">' + pname + '</label>\
                             <div class="col-md-5 controls">\
-                                <input class="form-control" id="id_' + pname + '" name="' + pname + '" type="text" value="' + p.default + '" />\
+                                <input class="form-control" id="id_' + pname + '" name="' + pname + '" type="text" value="' + p.default + '" readonly/>\
                             </div>\
                             <div class="col-md-5 help-block">\
                                 ' + p.description + '\
                             </div>\
                         </div>';
                     $('#job_params').append(row);
-                    // then fill form
-                    for (var p in job['parameters']) {
-                        // Add in param_list table (if present in DOM)
-                        $('#param_list').append('<tr><td><strong>'+p+'</strong></td><td>'+decodeURIComponent(job['parameters'][p])+'</td></tr>');
-                        // Update form fields
-                        $('#id_'+p).attr('value', decodeURIComponent(job['parameters'][p]));
-                        // Add update buttons (possible to update params when pĥase is PENDING in UWS 1.0 - but not yet implemented)
-                        $('#id_'+p).wrap('<div class="input-group"></div>');
-                        $('#id_'+p).parent().append('<span class="input-group-btn"><button id="button_'+p+'" class="btn btn-default" type="button">Update</button></span>');
-                        if (job['phase'] != 'PENDING') {
-                            $('#id_'+p).attr('readonly','readonly');
-                            $('#button_'+p).attr('disabled','disabled');
-                        };
-                    };
 				};
 			},
 			error : function(xhr, status, exception) {
 
 			}
 		});
+
+        // then fill form
+        for (var p in job['parameters']) {
+            // Add in param_list table (if present in DOM)
+            $('#param_list').append('<tr><td><strong>'+p+'</strong></td><td>'+decodeURIComponent(job['parameters'][p])+'</td></tr>');
+            // Update form fields
+            $('#id_'+p).attr('value', decodeURIComponent(job['parameters'][p]));
+            // Add update buttons (possible to update params when pĥase is PENDING in UWS 1.0 - but not yet implemented)
+            $('#id_'+p).wrap('<div class="input-group"></div>');
+            $('#id_'+p).parent().append('<span class="input-group-btn"><button id="button_'+p+'" class="btn btn-default" type="button">Update</button></span>');
+            if (job['phase'] != 'PENDING') {
+                $('#id_'+p).attr('readonly','readonly');
+                $('#button_'+p).attr('disabled','disabled');
+            };
+        };
     };
 
     // DISPLAY RESULTS
