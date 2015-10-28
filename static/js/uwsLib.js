@@ -86,7 +86,9 @@ var uwsLib = (function() {
 			},
 			error : function(xhr, status, exception) {
 				ErrorCallback(exception);
-			}
+			},
+			processData: false,  // tell jQuery not to process the data
+			contentType: false   // tell jQuery not to set contentType
 		});
 	};
 	uwsClient.prototype.destroyJob = function(id,successCallback, errorCallback) {
