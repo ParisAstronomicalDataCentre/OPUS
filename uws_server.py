@@ -1052,8 +1052,8 @@ def get_result(jobname, jobid, rname):
         abort_500_except()
 
 
-@app.route('/jobs/get_result_file/<jobname>/<jobid>/<rname>/<rfname>')
-def get_result_file(jobname, jobid, rname, rfname):
+@app.route('/jobs/get_result_file/<jobid>/<rname>/<rfname>')
+def get_result_file(jobid, rname, rfname):
     """Get result file <rname>/<rfname> for job <jobid>
 
     Returns:
@@ -1064,7 +1064,7 @@ def get_result_file(jobname, jobid, rname, rfname):
     """
     user = set_user()
     # Get job description from DB
-    job = Job(jobname, jobid, user, get_parameters=True, get_results=True)
+    job = Job('', jobid, user, get_parameters=True, get_results=True)
     # Check if result exists
     if rname not in job.results:
         raise storage.NotFoundWarning('Result "{}" NOT FOUND for job "{}"'.format(rname, jobid))
@@ -1072,7 +1072,7 @@ def get_result_file(jobname, jobid, rname, rfname):
     #response.content_type = 'text/plain; charset=UTF-8'
     #return str(job.results[result]['url'])
     media_type = job.results[rname]['mediaType']
-    logger.debug(rname + ' ' + rfname + ' ' + media_type)
+    logger.debug('{} {} {} {} {}'.format(job.jobname, jobid, rname, rfname, media_type))
     response.set_header('Content-type', media_type)
     if 'text' in media_type:
         return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid))
