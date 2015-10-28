@@ -48,7 +48,7 @@
             //updateNewJobParams(form_params);
             //createNewJob();
             formData.append('PHASE', 'RUN');
-            uws_manager.createJob(jobName, newJobParams);
+            uws_manager.createJob(jobName, formData);
             //return false; // cancel original event to prevent form submitting
         });
 
