@@ -1052,7 +1052,7 @@ def get_result(jobname, jobid, rname):
         abort_500_except()
 
 
-@app.route('/jobs/get_result_file/<jobid>/<rname>/<rfname>')
+@app.route('/get_result_file/<jobid>/<rname>/<rfname>')
 def get_result_file(jobid, rname, rfname):
     """Get result file <rname>/<rfname> for job <jobid>
 

@@ -43,9 +43,13 @@
             event.preventDefault();
             var form_params = $('#job_params').serialize();
             console.log(form_params);
-            updateNewJobParams(form_params);
-            createNewJob();
-            return false; // cancel original event to prevent form submitting
+            var formData = new FormData($('#job_params'));
+            console.log(formData);
+            //updateNewJobParams(form_params);
+            //createNewJob();
+            formData.append('PHASE', 'RUN');
+            uws_manager.createJob(jobName, newJobParams);
+            //return false; // cancel original event to prevent form submitting
         });
 
         $('#to_job_list').click( function() {
