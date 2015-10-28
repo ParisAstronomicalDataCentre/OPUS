@@ -41,7 +41,9 @@
         // catch the form's submit event to validate form
         $('#job_params').submit(function(event) {
             event.preventDefault();
-            updateNewJobParams($('#job_params').serialize());
+            var form_params = $('#job_params').serialize();
+            console.log(form_params);
+            updateNewJobParams(form_params);
             createNewJob();
             return false; // cancel original event to prevent form submitting
         });

@@ -218,7 +218,7 @@ class Job(object):
             params.append(pname + '=' + pvalue)
         # Results
         params.append('# Results')
-        for rname, rdict in self.results.iteritems():
+        for rname, rdict in self.wadl['results'].iteritems():
             if rname in self.parameters:
                 params.append(rname + '=' + self.parameters[rname]['value'])
             else:
