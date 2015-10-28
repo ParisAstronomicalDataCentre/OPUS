@@ -84,7 +84,7 @@ class SLURMManager(Manager):
         duration_str = str(duration).replace(' days', '').replace(' day', '').replace(', ', '-')
         # Create sbatch
         sbatch = [
-            '#!/bin/bash',
+            '#!/bin/bash -l',
             '#SBATCH --job-name={}'.format(job.jobname),
             '#SBATCH --workdir={}/{}'.format(self.working_path, job.jobid),
             '#SBATCH --error={}/{}/stderr.log'.format(self.jobdata_path, job.jobid),

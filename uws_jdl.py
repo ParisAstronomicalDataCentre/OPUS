@@ -36,14 +36,18 @@ def read_wadl(jobname):
         # Read parameters description
         params_block = wadl_tree.find(".//{}request[@id='create_job_parameters']".format(xmlns))
         for p in params_block.getchildren():
-            if p.get('name') not in ['PHASE', None]:
+            pname = p.get('name')
+            if pname not in ['PHASE', None]:
                 # TODO: Add all attributes (e.g. min, max for numbers)
-                parameters[p.get('name')] = {
+                parameters[pname] = {
                     'type': p.get('type'),
                     'required': p.get('required'),
                     'default': p.get('default'),
                     'description': list(p)[0].text,
                 }
+                for attr in ['min', 'max', 'choices']:
+                    if p.get(attr):
+                        parameters[pname][attr] = p.get(attr)
         # Read results description
         results_block = wadl_tree.find(".//{}param[@name='result-id']".format(xmlns))
         for r in results_block.getchildren():

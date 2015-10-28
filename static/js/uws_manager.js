@@ -153,7 +153,7 @@ var uws_manager = (function($) {
             case 'UNKNOWN':
             case 'SUSPENDED':
                 refreshPhaseTimeout[jobId] = setTimeout(getJobPhase, refreshPhaseTimeoutDelay[jobId], jobId);
-        }
+        };
     };
 
     // REFRESH PHASE
@@ -325,7 +325,7 @@ var uws_manager = (function($) {
                 </div>\
             </div>';
         $('#job_params').append(row);
-    }
+    };
     var displayParamFormOk = function(jobName){
         var jdl = clients[jobName].jdl;
         // Create form fields from WADL/JDL
@@ -347,6 +347,7 @@ var uws_manager = (function($) {
                     $('#id_'+pname).attr('type', 'url');
                 };
                 if (p.type.indexOf('bool') > -1) {
+                    // Change to checkbox
                     $('#id_'+pname).removeClass('form-control');
                     $('#id_'+pname).attr('type', 'checkbox');
                     $('#id_'+pname).wrap('<div class="checkbox"></div>');
@@ -354,22 +355,37 @@ var uws_manager = (function($) {
                     var val = p.default.toLowerCase();
                     if ((val == 'true') || (val == 'yes')) {
                         $('#id_'+pname).attr('checked', 'checked');
-                    }
+                    };
+                };
+                if (p.choices) {
+                    // change input to select and run selectpicker
+                    console.log('change to select');
+                    var div = $('#id_'+pname).parent();
+                    $('#id_'+pname).remove();
+                    var elt = '\
+                        <select class="selectpicker" id="id_' + pname + '" name="' + pname + '>\
+                        </select>';
+                    div.append(elt);
+                    for (choice in p.choices.split('|')) {
+                        $('#id_'+pname).append('<option>' + choice + '</option>');
+                    };
+                    $(".selectpicker").selectpicker();
+                    $('#id_'+pname).val(p.default);
                 };
             };
         };
-        var row = '\
+        var elt = '\
             <div id="form-buttons" class="form-group">\
                 <div class="col-md-offset-2 col-md-5">\
                     <button type="submit" class="btn btn-primary">Submit</button>\
                     <button type="reset" class="btn btn-default">Reset</button>\
                 </div>\
             </div>';
-        $('#job_params').append(row);
-    }
+        $('#job_params').append(elt);
+    };
     var displayParamForm = function(jobName){
         wait_for_jdl(jobName, displayParamFormOk, [jobName]);
-    }
+    };
     var displayParamFormAll = function(job){
         var jdl = clients[job.jobName].jdl;
         // Create form fields from WADL/JDL
@@ -381,7 +397,7 @@ var uws_manager = (function($) {
                 $('#id_'+pname).parent().append('<span class="input-group-addon"><small>default used</small></span>');
             };
         };
-    }
+    };
     var fillParamForm = function(job){
         for (var pname in job['parameters']) {
             var pvalue = job['parameters'][pname];
@@ -398,7 +414,7 @@ var uws_manager = (function($) {
                 $('#button_'+pname).removeAttr('disabled');
             };
         };
-    }
+    };
     var displayParams = function(job){
         displayParamFormAll(job);
         // Set readonly
