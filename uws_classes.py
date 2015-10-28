@@ -225,7 +225,7 @@ class Job(object):
                 params.append(rname + '=' + rdict['default'])
         # Other parameters
         params.append('# Other parameters')
-        for pname, pdict in self.wadl['parameters']:
+        for pname, pdict in self.wadl['parameters'].iteritems():
             if (pname not in self.parameters) and (pname not in self.results):
                 params.append(pname + '=' + pdict['default'])
         # Return list of bash variables
