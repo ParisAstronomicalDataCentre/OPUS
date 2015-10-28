@@ -366,7 +366,7 @@ var uws_manager = (function($) {
                         <select class="selectpicker" id="id_' + pname + '" name="' + pname + '>\
                         </select>';
                     div.append(elt);
-                    for (choice in p.choices.split('|')) {
+                    for (var choice in p.choices.split('|')) {
                         $('#id_'+pname).append('<option>' + choice + '</option>');
                     };
                     $(".selectpicker").selectpicker();
