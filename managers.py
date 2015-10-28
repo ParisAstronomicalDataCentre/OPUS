@@ -103,6 +103,7 @@ class SLURMManager(Manager):
             'wd={}/{}'.format(self.working_path, job.jobid),
             'jd={}/{}'.format(self.jobdata_path, job.jobid),
             'cd $wd',
+            'cd $wd',
             'echo "SLURM_JOBID is $SLURM_JOBID"',
             'echo "User is `id`"',
             'echo "Current dir is `pwd`"',
@@ -194,7 +195,7 @@ class SLURMManager(Manager):
         param_file_distant = '{}/{}/parameters.sh'.format(self.jobdata_path, job.jobid)
         with open(param_file_local, 'w') as f:
             # parameters are a list of key=value (easier for bash sourcing)
-            params, files = job.parameters_to_text(get_files=True)
+            params, files = job.parameters_to_bash(get_files=True)
             f.write(params)
         # Copy parameter file to jobdata_path
         cmd = ['scp',

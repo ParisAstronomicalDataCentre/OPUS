@@ -192,30 +192,46 @@ class Job(object):
     # ----------
     # Methods to export a job description
 
-    def parameters_to_text(self, separator='\n', get_files=False):
+    def parameters_to_bash(self, separator='\n', get_files=False):
         """Make parameter file content for given job
 
         Returns:
-            parameter list as a string
+            All parameters as a list of bash variables
         """
-        params = []
+        if not self.wadl:
+            self.get_wadl()
+        params = ['# Required parameters']
         files = {'URI': [], 'form': []}
-        if get_files:
-            for pname, pdict in self.parameters.iteritems():
-                pvalue = pdict['value']
+        # Required parameters
+        for pname, pdict in self.parameters.iteritems():
+            pvalue = pdict['value']
+            if get_files:
+                # Prepare file upload and convert param value for files
                 # Test if file is given as a URI, prefixed by http*
                 if any(s in pvalue for s in ['http://', 'https://']):
                     files['URI'].append(pvalue)
                     pvalue = pvalue.split('/')[-1]
-                # Test if file was uploaded from the form, and given the file:// prefix (see self.set_from_post())
+                # Test if file was uploaded from the form, and given the "file://" prefix (see self.set_from_post())
                 if 'file://' in pvalue:
                     pvalue = pvalue.split('/')[-1]
                     files['form'].append(pvalue)
-                params.append(pname + '=' + pvalue)
+            params.append(pname + '=' + pvalue)
+        # Results
+        params.append('# Results')
+        for rname, rdict in self.results.iteritems():
+            if rname in self.parameters:
+                params.append(rname + '=' + self.parameters[rname]['value'])
+            else:
+                params.append(rname + '=' + rdict['default'])
+        # Other parameters
+        params.append('# Other parameters')
+        for pname, pdict in self.wadl['parameters']:
+            if (pname not in self.parameters) and (pname not in self.results):
+                params.append(pname + '=' + pdict['default'])
+        # Return list of bash variables
+        if get_files:
             return separator.join(params), files
         else:
-            for pname, pdict in self.parameters.iteritems():
-                params.append(pname + '=' + pdict['value'])
             return separator.join(params)
 
     def parameters_to_json(self):
