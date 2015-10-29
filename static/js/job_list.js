@@ -2,20 +2,6 @@
     "use strict";
 
     var jobNames = ['ctbin'] //, 'astrocheck']
-    var jobParameters = {
-        evfile: "http://voplus.obspm.fr/cta/events.fits",
-        emin: "0.1",
-        emax: "100.0",
-        enumbins: "20",
-        nxpix: "200",
-        nypix: "200",
-        binsz: "0.02",
-        coordsys: "CEL",
-        xref: "85.25333404541016",
-        yref: "22.01444435119629",
-        proj: "TAN",
-        "PHASE": "RUN",
-    };
 
     function load_job_list() {
         var jobname = $('select[name=jobname]').val();
@@ -46,7 +32,10 @@
         });
         $('#create_test_job').click( function() {
             var jobname = $('select[name=jobname]').val();
-            uws_manager.createTestJob(jobname, jobParameters);
+            var formData = new FormData();
+            formData.append('evfile', 'http://voplus.obspm.fr/cta/events.fits');
+            formData.append('PHASE', 'RUN');
+            uws_manager.createTestJob(jobname, formData);
         });
         $('#create_new_job').click( function() {
             var jobname = $('select[name=jobname]').val();

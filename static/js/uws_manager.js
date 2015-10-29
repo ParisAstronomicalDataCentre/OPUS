@@ -676,35 +676,6 @@ var uws_manager = (function($) {
     // POST functions
 
     // CREATE JOB
-    var createJobSubmit = function(formData) {
-        // get form data (including files)
-        $.ajax({
-            url: serviceUrl + form_upload_url,  //Server script to process data
-            type: 'POST',
-            xhr: function() {  // Custom XMLHttpRequest
-                var myXhr = $.ajaxSettings.xhr();
-                if(myXhr.upload){ // Check if upload property exists
-                    // For handling the progress of the upload
-                    myXhr.upload.addEventListener('progress', progressHandlingFunction, false);
-                }
-                return myXhr;
-            },
-            //Ajax events
-            //beforeSend: beforeSendHandler,
-            success: function(jobName, jobParams) {
-				createJob(jobName, jobParams);
-			},
-            error: function(exception) {
-				createJobError(exception);
-			},
-            // Form data
-            data: formData,
-            //Options to tell jQuery not to process data or worry about content-type.
-            cache: false,
-            contentType: false,
-            processData: false
-        });
-    };
     var createJob = function(jobName, jobParams) {
         clients[jobName].createJob(jobParams, createJobSuccess, createJobError);
     };

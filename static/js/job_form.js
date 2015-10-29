@@ -14,8 +14,6 @@
         $('#job_params').submit(function(event) {
             event.preventDefault();
             var formData = new FormData($('#job_params')[0]);
-            //updateNewJobParams(form_params);
-            //createNewJob();
             formData.append('PHASE', 'RUN');
             uws_manager.createJob(jobName, formData);
         });
