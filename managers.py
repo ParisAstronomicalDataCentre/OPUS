@@ -112,7 +112,7 @@ class SLURMManager(Manager):
             '    msg="Error in ${BASH_SOURCE[1]##*/} running command: $BASH_COMMAND"',
             '    echo "$msg"', # echo in stdout log
             # '    echo "Signal error"',
-            '    curl -k -s -o $jd/curl_error_signal.log '
+            '    curl -k -o $jd/curl_error_signal.log '
             '        -d "jobid=$SLURM_JOBID" -d "phase=ERROR" --data-urlencode "error_msg=$msg" '
             '        {}/handler/job_event'.format(BASE_URL),
             '    rm -rf $wd',
@@ -135,7 +135,7 @@ class SLURMManager(Manager):
             'echo "[`timestamp`] Prepare input files"',
             'cp $jd/input/* $wd',
             # Start job
-            'curl -k -s -o $jd/curl_start_signal.log '
+            'curl -k -o $jd/curl_start_signal.log '
             '    -d "jobid=$SLURM_JOBID" -d "phase=RUNNING" '
             '    {}/handler/job_event'.format(BASE_URL),
             'echo "[`timestamp`] Start job"',
@@ -171,7 +171,7 @@ class SLURMManager(Manager):
         # """
         # # vouws
         # if [[ "$UID" -eq 1834 ]]; then
-        #     curl --max-time 10 -d jobid="$JOBID" -d phase="$JOBSTATE" https://voparis-uws-test.obspm.fr/handler/job_event
+        #     curl -k --max-time 10 -d jobid="$JOBID" -d phase="$JOBSTATE" https://voparis-uws-test.obspm.fr/handler/job_event
         # fi
         # """
         return '\n'.join(sbatch)
