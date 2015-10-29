@@ -318,7 +318,7 @@ var uws_manager = (function($) {
         var row = '\
             <div class="form-group">\
                 <label class="col-md-2 control-label">' + pname + '</label>\
-                <div class="col-md-5 controls">\
+                <div id="div_' + pname + '" class="col-md-5 controls">\
                     <input class="form-control" id="id_' + pname + '" name="' + pname + '" type="text" value="' + p.default + '"/>\
                 </div>\
                 <div class="col-md-5 help-block">\
@@ -328,13 +328,13 @@ var uws_manager = (function($) {
         $('#job_params').append(row);
     };
     var displayParamFormOk = function(jobName){
+        // Run displayParamForm insread to check that jdl is defined
         var jdl = clients[jobName].jdl;
         // Create form fields from WADL/JDL
         for (var pname in jdl.parameters) {
             var p = jdl.parameters[pname];
             if (p.required.toLowerCase() == 'true') {
                 displayParamFormInput(pname, p)
-                console.log(p.type);
                 if (p.type == 'file') {
                     $('#id_'+pname).attr('type', 'file');
                 };
@@ -361,27 +361,28 @@ var uws_manager = (function($) {
                 if (p.choices) {
                     // change input to select and run selectpicker
                     console.log('change to select');
-                    var div = $('#id_'+pname).parent();
-                    $('#id_'+pname).remove();
                     var elt = '\
-                        <select class="selectpicker" id="id_' + pname + '" name="' + pname + '>\
-                        </select>';
-                    div.append(elt);
-                    for (var choice in p.choices.split('|')) {
-                        $('#id_'+pname).append('<option>' + choice + '</option>');
+                        <select class="selectpicker" id="id_' + pname + '" name="' + pname + '">\n\
+                        </select>\n';
+
+                    $('#id_'+pname).replaceWith(elt);
+                    var choices = p.choices.split('|');
+                    for (var i in choices) {
+                        $('#id_'+pname).append('<option>' + choices[i] + '</option>');
+                        $('select[name=' + pname + ']').attr('data-width', '100%').selectpicker();
+                        $('select[name=' + pname + ']').val(p.default);
                     };
-                    $(".selectpicker").selectpicker();
-                    $('#id_'+pname).val(p.default);
+                    $('.selectpicker').selectpicker('refresh');
                 };
             };
         };
         var elt = '\
-            <div id="form-buttons" class="form-group">\
-                <div class="col-md-offset-2 col-md-5">\
-                    <button type="submit" class="btn btn-primary">Submit</button>\
-                    <button type="reset" class="btn btn-default">Reset</button>\
-                </div>\
-            </div>';
+            <div id="form-buttons" class="form-group">\n\
+                <div class="col-md-offset-2 col-md-5">\n\
+                    <button type="submit" class="btn btn-primary">Submit</button>\n\
+                    <button type="reset" class="btn btn-default">Reset</button>\n\
+                </div>\n\
+            </div>\n';
         $('#job_params').append(elt);
     };
     var displayParamForm = function(jobName){
