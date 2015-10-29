@@ -155,7 +155,7 @@ class SLURMManager(Manager):
         cp_results = []
         for rname, r in job.wadl['results'].iteritems():
             fname = job.get_result_filename(rname)
-            cp_results.append('[-f $wd/{}] && cp $wd/{} $jd/results'.format(fname))
+            cp_results.append('[-f $wd/{fname}] && cp $wd/{fname} $jd/results'.format(fname))
         sbatch.extend(cp_results)
         # Clean and terminate job
         sbatch.extend([
