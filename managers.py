@@ -86,7 +86,6 @@ class SLURMManager(Manager):
         sbatch = [
             '#!/bin/bash -l',
             '#SBATCH --job-name={}'.format(job.jobname),
-            '#SBATCH --workdir={}/{}'.format(self.working_path, job.jobid),
             '#SBATCH --error={}/{}/stderr.log'.format(self.jobdata_path, job.jobid),
             '#SBATCH --output={}/{}/stdout.log'.format(self.jobdata_path, job.jobid),
             '#SBATCH --mail-user=' + self.mail,
@@ -102,7 +101,7 @@ class SLURMManager(Manager):
             # Init job execution
             'wd={}/{}'.format(self.working_path, job.jobid),
             'jd={}/{}'.format(self.jobdata_path, job.jobid),
-            'cd $wd',
+            'mkdir -p $wd',
             'cd $wd',
             'echo "SLURM_JOBID is $SLURM_JOBID"',
             'echo "User is `id`"',
@@ -112,6 +111,9 @@ class SLURMManager(Manager):
             'timestamp() {',
             '    date +"%Y-%m-%dT%H:%M:%S"',
             '}',
+            # Move uploaded files to working directory if they exist
+            'echo "[`timestamp`] Prepare input files"',
+            'cp $jd/input/* $wd',
             # Error handler (send signal on error, in addition to job completion by SLURM)
             'set -e ',
             'error_handler()',
@@ -178,9 +180,9 @@ class SLURMManager(Manager):
         Returns:
             jobid_cluster on SLURM server
         """
-        # Create workdir and jobdata dir (to upload the scripts, parameters and input files)
+        # Create jobdata dir (to upload the scripts, parameters and input files)
         cmd = ['ssh', self.ssh_arg,
-               'mkdir {}/{}; mkdir {}/{}'.format(self.working_path, job.jobid, self.jobdata_path, job.jobid)]
+               'mkdir -p {}/{}/input'.format(self.jobdata_path, job.jobid)]
         # logger.debug(' '.join(cmd))
         try:
             sp.check_output(cmd, stderr=sp.STDOUT)
@@ -208,13 +210,13 @@ class SLURMManager(Manager):
         for fname in files['form']:
             cmd = ['scp',
                    '{}/{}/{}'.format(UPLOAD_PATH, job.jobid, fname),
-                   '{}:{}/{}/{}'.format(self.ssh_arg, self.working_path, job.jobid, fname)]
+                   '{}:{}/{}/input/{}'.format(self.ssh_arg, self.jobdata_path, job.jobid, fname)]
             # logger.debug(' '.join(cmd))
             sp.check_output(cmd, stderr=sp.STDOUT)
         for furl in files['URI']:
             fname = furl.split('/')[-1]
             cmd = ['ssh', self.ssh_arg,
-                   'wget -q {} -O {}/{}/{}'.format(furl, self.working_path, job.jobid, fname)]
+                   'wget -q {} -O {}/{}/input/{}'.format(furl, self.jobdata_path, job.jobid, fname)]
             # logger.debug(' '.join(cmd))
             sp.check_output(cmd, stderr=sp.STDOUT)
         # Create sbatch file

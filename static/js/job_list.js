@@ -34,7 +34,7 @@
             var jobname = $('select[name=jobname]').val();
             var formData = new FormData();
             formData.append('evfile', 'http://voplus.obspm.fr/cta/events.fits');
-            formData.append('PHASE', 'RUN');
+            //formData.append('PHASE', 'RUN');
             uws_manager.createTestJob(jobname, formData);
         });
         $('#create_new_job').click( function() {

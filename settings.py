@@ -55,7 +55,7 @@ SLURM_USER = 'vouws'
 SLURM_USER_MAIL = 'mathieu.servillat@obspm.fr'
 SLURM_HOME_PATH = '/home/vouws'  # '/obs/vouws'
 SLURM_JOBDATA_PATH = '/poubelle/vouws/jobdata'
-SLURM_WORKDIR_PATH = '/poubelle/vouws/workdir'
+SLURM_WORKDIR_PATH = '/scratch/vouws'
 SLURM_SBATCH_ADD = [
     "#SBATCH --mem=200mb",
     "#SBATCH --nodes=1 --ntasks-per-node=1",
