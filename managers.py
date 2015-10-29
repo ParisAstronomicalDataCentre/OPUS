@@ -99,25 +99,13 @@ class SLURMManager(Manager):
         sbatch.extend([
             '### INIT',
             # Init job execution
-            'wd={}/{}'.format(self.working_path, job.jobid),
-            'jd={}/{}'.format(self.jobdata_path, job.jobid),
-            'mkdir -p $wd',
-            'cd $wd',
-            'echo "SLURM_JOBID is $SLURM_JOBID"',
-            'echo "User is `id`"',
-            'echo "Current dir is `pwd`"',
-            'echo "Working dir is $wd"',
-            'echo "JobData dir is $jd"',
             'timestamp() {',
             '    date +"%Y-%m-%dT%H:%M:%S"',
             '}',
-            # Move uploaded files to working directory if they exist
-            'echo "[`timestamp`] Prepare input files"',
-            'cp $jd/input/* $wd',
+            'echo "[`timestamp`] Initialize job"',
             # Error handler (send signal on error, in addition to job completion by SLURM)
             'set -e ',
-            'error_handler()',
-            '{',
+            'error_handler() {',
             '    touch $jd/error',
             # '    error_string=`tac /obs/vouws/uws_logs/$SLURM_JOBID.err | grep -m 1 .`',
             # '    msg="${BASH_SOURCE[1]}: line ${BASH_LINENO[0]}: ${FUNCNAME[1]}"',
@@ -133,6 +121,19 @@ class SLURMManager(Manager):
             '    exit 1',
             '}',
             'trap "error_handler" INT TERM EXIT',
+            # Set $wd and $jd
+            'wd={}/{}'.format(self.working_path, job.jobid),
+            'jd={}/{}'.format(self.jobdata_path, job.jobid),
+            'mkdir -p $wd',
+            'cd $wd',
+            'echo "SLURM_JOBID is $SLURM_JOBID"',
+            'echo "User is `id`"',
+            'echo "Current dir is `pwd`"',
+            'echo "Working dir is $wd"',
+            'echo "JobData dir is $jd"',
+            # Move uploaded files to working directory if they exist
+            'echo "[`timestamp`] Prepare input files"',
+            'cp $jd/input/* $wd',
             # Start job
             'curl -k -s -o $jd/curl_start_signal.log '
             '    -d "jobid=$SLURM_JOBID" -d "phase=RUNNING" '
