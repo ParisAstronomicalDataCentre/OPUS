@@ -144,6 +144,7 @@ class SLURMManager(Manager):
             # Load variables from params file
             '. {}/{}/parameters.sh'.format(self.jobdata_path, job.jobid),
             # Run script in the current environment (with SLURM_JOBID defined)
+            'cp {}/{}.sh $jd'.format(self.scripts_path, job.jobname),
             '. {}/{}.sh'.format(self.scripts_path, job.jobname),
             '### CP RESULTS',
             'mkdir $jd/results',
