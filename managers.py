@@ -158,7 +158,7 @@ class SLURMManager(Manager):
         for rname, r in job.wadl['results'].iteritems():
             fname = job.get_result_filename(rname)
             cp_results.append('[ -f $wd/{fname} ] '
-                              '&& {cp $wd/{fname} $jd/results; echo "{fname} found and copied"} '
+                              '&& {{cp $wd/{fname} $jd/results; echo "{fname} found and copied"}} '
                               '|| echo "{fname} not found"'
                               ''.format(fname=fname))
         sbatch.extend(cp_results)
