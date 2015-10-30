@@ -128,7 +128,6 @@ class SLURMManager(Manager):
             'cd $wd',
             'echo "SLURM_JOBID is $SLURM_JOBID"',
             'echo "User is `id`"',
-            'echo "Current dir is `pwd`"',
             'echo "Working dir is $wd"',
             'echo "JobData dir is $jd"',
             # Move uploaded files to working directory if they exist
@@ -153,10 +152,15 @@ class SLURMManager(Manager):
         if not job.wadl:
             job.get_wadl()
         # Identify results to be moved to $jd/results
-        cp_results = []
+        cp_results = [
+            'echo "[`timestamp`] Copy results"'
+        ]
         for rname, r in job.wadl['results'].iteritems():
             fname = job.get_result_filename(rname)
-            cp_results.append('[ -f $wd/{fname} ] && cp $wd/{fname} $jd/results'.format(fname=fname))
+            cp_results.append('[ -f $wd/{fname} ] '
+                              '&& {cp $wd/{fname} $jd/results; echo "{fname} found and copied"} '
+                              '|| echo "{fname} not found"'
+                              ''.format(fname=fname))
         sbatch.extend(cp_results)
         # Clean and terminate job
         sbatch.extend([
