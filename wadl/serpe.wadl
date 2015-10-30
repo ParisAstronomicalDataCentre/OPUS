@@ -215,7 +215,7 @@ http://typhon2.obspm.fr/maser/serpe/</doc>
                     <param style="template" name="job-id" type="xs:string" required="true"/>
                     <param style="template" name="result-id" type="xs:string" required="true">
 <!-- TODO: add result names as option blocks -->
-                        <option default="confirg.srp" mediaType="text/xml" value="config"><doc> Configuration file for SERPE (srp or json)</doc></option>
+                        <option default="config.srp" mediaType="text/xml" value="config"><doc> Configuration file for SERPE (srp or json)</doc></option>
                         <option default="f_t.pdf" mediaType="application/pdf" value="f_t"><doc> Time / frequency spectrogram of observed intensity</doc></option>
                         <option default="f_t.pdf" mediaType="application/pdf" value="f_lat"><doc> Latitude / frequency spectrogram of observed intensity</doc></option>
                         <option default="f_t.pdf" mediaType="application/pdf" value="f_lg"><doc> Longitude / frequency spectrogram of observed intensity</doc></option>

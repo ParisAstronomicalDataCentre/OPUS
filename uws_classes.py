@@ -133,6 +133,7 @@ class Job(object):
         else:
             # The result filename is the name given as default in the WADL
             fname = self.wadl['results'][rname]['default']
+        logger.debug('Result filename for {} is {}'.format(rname, fname))
         return fname
 
     # ----------
