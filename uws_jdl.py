@@ -83,6 +83,7 @@ def read_wadl(jobname):
 
 
 def create_wadl(jobname, job_def):
+    """Open WADL template and insert job definition"""
     jobname = jobname.split('/')[-1]
     # Prepare parameter blocks
     wadl_params = []
@@ -117,27 +118,32 @@ def create_wadl(jobname, job_def):
         wadl_string = f.read()
     wadl_tree = ETree.fromstring(wadl_string)
     xmlns = '{' + wadl_tree.nsmap[None] + '}'
-    #wadl_tree.
-    # Insert blocks
+    # Insert jobname
     joblist_block = wadl_tree.find(".//{}resource[@id='joblist']".format(xmlns))
     joblist_block.set('path', jobname)
+    # Insert job description
+    job_list_description_block = wadl_tree.find(".//{}doc[@title='description']".format(xmlns))
+    job_list_description_block.text = job_def['description'].decode()
+    # Insert parameters
     params_block = {}
     for block in ['create_job_parameters', 'control_job_parameters', 'set_job_parameters']:
         params_block[block] = wadl_tree.find(".//{}request[@id='{}']".format(xmlns, block))
         for pelt in wadl_params:
             params_block[block].append(copy.copy(pelt))
+    # Insert parameters as options
     param_opts_block = wadl_tree.find(".//{}param[@name='parameter-name']".format(xmlns))
     for poelt in wadl_popts:
         param_opts_block.append(poelt)
+    # Insert results as options
     result_opts_block = wadl_tree.find(".//{}param[@name='result-id']".format(xmlns))
     for roelt in wadl_ropts:
         result_opts_block.append(roelt)
+    # Insert default execution duration
     execdur_block = wadl_tree.find(".//{}param[@name='EXECUTIONDURATION']".format(xmlns))
     execdur_block.set('default', job_def['executionduration'])
+    # Insert default quote
     quote_block = wadl_tree.find(".//{}representation[@id='quote']".format(xmlns))
     quote_block.set('default', job_def['quote'])
-    job_list_description_block = wadl_tree.find(".//{}doc[@title='description']".format(xmlns))
-    job_list_description_block.text = job_def['description'].decode()
     return ETree.tostring(wadl_tree, pretty_print=True)
 
 
