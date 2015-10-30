@@ -127,6 +127,7 @@ class Job(object):
         if rname in self.parameters:
             # The result filename is a defined parameter of the job
             fname = self.parameters[rname]['value']
+            fname = fname.slit('file://')[-1]
         elif rname in self.wadl['parameters']:
             # The result filename is a parameter with a default value in the WADL
             fname = self.wadl['parameters'][rname]['default']
