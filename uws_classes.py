@@ -222,7 +222,11 @@ class Job(object):
         params.append('# Results')
         for rname, rdict in self.wadl['results'].iteritems():
             if rname in self.parameters:
-                params.append(rname + '=' + self.parameters[rname]['value'])
+                rvalue = self.parameters[rname]['value']
+                if 'file://' in rvalue:
+                    if get_files:
+                        rvalue = rvalue.split('/')[-1]
+                params.append(rname + '=' + rvalue)
             else:
                 params.append(rname + '=' + rdict['default'])
         # Other parameters
