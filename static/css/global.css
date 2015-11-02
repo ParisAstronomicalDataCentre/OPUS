@@ -55,4 +55,5 @@ select.select-small:first-child + .bootstrap-select > .btn {
 
 .bootstrap-select > button.disabled {
     background-color: #eee;
+    border-color: #ccc;
 }
