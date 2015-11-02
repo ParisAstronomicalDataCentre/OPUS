@@ -327,6 +327,47 @@ var uws_manager = (function($) {
             </div>';
         $('#job_params').append(row);
     };
+    var displayParamFormInputType = function(pname, p){
+        if (p.type == 'file') {
+            $('#id_'+pname).attr('type', 'file');
+        };
+        if ((p.type.indexOf('long') > -1)
+            || (p.type.indexOf('int') > -1)
+            || (p.type.indexOf('float') > -1)
+            || (p.type.indexOf('double') > -1)) {
+            $('#id_'+pname).attr('type', 'number');
+        };
+        if (p.type.indexOf('anyURI') > -1) {
+            $('#id_'+pname).attr('type', 'url');
+        };
+        if (p.type.indexOf('bool') > -1) {
+            // Change to checkbox
+            $('#id_'+pname).removeClass('form-control');
+            $('#id_'+pname).attr('type', 'checkbox');
+            $('#id_'+pname).wrap('<div class="checkbox"></div>');
+            $('#id_'+pname).attr('style', 'margin-left: 10px;');
+            var val = p.default.toLowerCase();
+            if ((val == 'true') || (val == 'yes')) {
+                $('#id_'+pname).attr('checked', 'checked');
+            };
+        };
+        if (p.choices) {
+            // change input to select and run selectpicker
+            console.log('change to select');
+            var elt = '\
+                <select class="selectpicker" id="id_' + pname + '" name="' + pname + '">\n\
+                </select>\n';
+
+            $('#id_'+pname).replaceWith(elt);
+            var choices = p.choices.split('|');
+            for (var i in choices) {
+                $('#id_'+pname).append('<option>' + choices[i] + '</option>');
+                $('select[name=' + pname + ']').attr('data-width', '100%').selectpicker();
+                $('select[name=' + pname + ']').val(p.default);
+            };
+            $('.selectpicker').selectpicker('refresh');
+        };
+    };
     var displayParamFormOk = function(jobName){
         // Run displayParamForm insread to check that jdl is defined
         var jdl = clients[jobName].jdl;
@@ -335,47 +376,10 @@ var uws_manager = (function($) {
             var p = jdl.parameters[pname];
             if (p.required.toLowerCase() == 'true') {
                 displayParamFormInput(pname, p)
-                if (p.type == 'file') {
-                    $('#id_'+pname).attr('type', 'file');
-                };
-                if ((p.type.indexOf('long') > -1)
-                    || (p.type.indexOf('int') > -1)
-                    || (p.type.indexOf('float') > -1)
-                    || (p.type.indexOf('double') > -1)) {
-                    $('#id_'+pname).attr('type', 'number');
-                };
-                if (p.type.indexOf('anyURI') > -1) {
-                    $('#id_'+pname).attr('type', 'url');
-                };
-                if (p.type.indexOf('bool') > -1) {
-                    // Change to checkbox
-                    $('#id_'+pname).removeClass('form-control');
-                    $('#id_'+pname).attr('type', 'checkbox');
-                    $('#id_'+pname).wrap('<div class="checkbox"></div>');
-                    $('#id_'+pname).attr('style', 'margin-left: 10px;');
-                    var val = p.default.toLowerCase();
-                    if ((val == 'true') || (val == 'yes')) {
-                        $('#id_'+pname).attr('checked', 'checked');
-                    };
-                };
-                if (p.choices) {
-                    // change input to select and run selectpicker
-                    console.log('change to select');
-                    var elt = '\
-                        <select class="selectpicker" id="id_' + pname + '" name="' + pname + '">\n\
-                        </select>\n';
-
-                    $('#id_'+pname).replaceWith(elt);
-                    var choices = p.choices.split('|');
-                    for (var i in choices) {
-                        $('#id_'+pname).append('<option>' + choices[i] + '</option>');
-                        $('select[name=' + pname + ']').attr('data-width', '100%').selectpicker();
-                        $('select[name=' + pname + ']').val(p.default);
-                    };
-                    $('.selectpicker').selectpicker('refresh');
-                };
+                displayParamFormInputType(pname, p)
             };
         };
+        // Add buttons
         var elt = '\
             <div id="form-buttons" class="form-group">\n\
                 <div class="col-md-offset-2 col-md-5">\n\
@@ -385,22 +389,26 @@ var uws_manager = (function($) {
             </div>\n';
         $('#job_params').append(elt);
     };
-    var displayParamForm = function(jobName){
-        wait_for_jdl(jobName, displayParamFormOk, [jobName]);
-    };
-    var displayParamFormAll = function(job){
+    var displayParamFormFilled = function(job){
         var jdl = clients[job.jobName].jdl;
         // Create form fields from WADL/JDL
         for (var pname in jdl.parameters) {
             var p = jdl.parameters[pname];
-            displayParamFormInput(pname, p)
+            displayParamFormInput(pname, p);
+            $('#id_'+pname).wrap('<div class="input-group"></div>');
             if (!(pname in job['parameters'])) {
-                $('#id_'+pname).wrap('<div class="input-group"></div>');
                 $('#id_'+pname).parent().append('<span class="input-group-addon"><small>default used</small></span>');
             };
+            displayParamFormInputType(pname, p);
+            if (p.choices) {
+                $('button[data-id=id_'+pname+']').attr('style','border-bottom-right-radius: 0px; border-top-right-radius: 0px;');
+            };
         };
-    };
-    var fillParamForm = function(job){
+        // Set readonly
+        //$('#job_params input').attr('readonly','readonly');
+        $('#job_params input').attr('disabled','disabled');
+        $('#job_params select').attr('disabled','disabled');
+        //$('#job_params input[type=checkbox]').attr('disabled','disabled');
         for (var pname in job['parameters']) {
             var pvalue = job['parameters'][pname];
             // Add in param_list table (if present in DOM)
@@ -408,22 +416,21 @@ var uws_manager = (function($) {
             // Update form fields
             $('#id_'+pname).attr('value', decodeURIComponent(pvalue));
             // Add update buttons (possible to update params when pĥase is PENDING in UWS 1.0 - but not yet implemented)
-            $('#id_'+pname).wrap('<div class="input-group"></div>');
             $('#id_'+pname).parent().append('<span class="input-group-btn"><button id="button_'+pname+'" class="btn btn-default" type="button" disabled>Update</button></span>');
             // Activate button if job is PENDING
             if (job['phase'] == 'PENDING') {
-                $('#id_'+pname).removeAttr('readonly');
+                //$('#id_'+pname).removeAttr('readonly');
+                $('#id_'+pname).removeAttr('disabled');
                 $('#button_'+pname).removeAttr('disabled');
             };
         };
+        $('.selectpicker').selectpicker('refresh');
+    };
+    var displayParamForm = function(jobName){
+        wait_for_jdl(jobName, displayParamFormOk, [jobName]);
     };
     var displayParams = function(job){
-        wait_for_jdl(job.jobName, displayParamFormAll, [job]);
-        // Set readonly
-        $('#job_params input').attr('readonly','readonly');
-        $('#job_params select').attr('readonly','readonly');
-        // then fill form
-        fillParamForm(job);
+        wait_for_jdl(job.jobName, displayParamFormFilled, [job]);
     };
 
     // DISPLAY RESULTS
