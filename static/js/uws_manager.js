@@ -431,7 +431,7 @@ var uws_manager = (function($) {
         var r_i = 0;
         for (var r in job['results']) {
             r_i++;
-            var r_id = 'result_'+r_i
+            var r_id = 'result_'+r
             var r_url = job['results'][r];
             var r_name = r_url.split('/').pop();
             var r_type = r_name.split('.').pop();
@@ -455,6 +455,7 @@ var uws_manager = (function($) {
                     ');
                     // Add event on SAMP button click
                     $('#'+r_id+' > button.samp').click(function() {
+                        console.log('samp!');
                         var url = $(this).parents(".panel").attr('value');
                         var name = url.split('/').pop();
                         samp_client.samp_image(url, name);
