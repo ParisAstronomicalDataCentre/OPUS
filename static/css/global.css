@@ -52,3 +52,7 @@ select.select-small:first-child + .bootstrap-select > .btn {
     /* symbol for "collapsed" panels */
     content: "\e080";
 }
+
+.bootstrap-select > button.disabled {
+    background-color: #eee;
+}
