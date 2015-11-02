@@ -418,9 +418,10 @@ var uws_manager = (function($) {
         };
     };
     var displayParams = function(job){
-        displayParamForm(job.jobName);
+        wait_for_jdl(job.jobName, displayParamFormAll, [job.jobName]);
         // Set readonly
         $('#job_params input').attr('readonly','readonly');
+        $('#job_params select').attr('readonly','readonly');
         // then fill form
         fillParamForm(job);
     };
