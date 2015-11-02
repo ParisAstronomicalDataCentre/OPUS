@@ -61,7 +61,7 @@ class SLURMManager(Manager):
     """Manage interactions with SLURM queue manager (e.g. on tycho.obspm.fr)"""
 
     def __init__(self, host=SLURM_URL, user=SLURM_USER, home=SLURM_HOME_PATH, mail=SLURM_USER_MAIL,
-                 jobdata_path=SLURM_JOBDATA_PATH, working_path=SLURM_WORKDIR_PATH):
+                 jobdata_path=SLURM_JOBDATA_PATH, workdir_path=SLURM_WORKDIR_PATH):
         # Set basic attributes
         self.host = host
         self.user = user
@@ -71,7 +71,7 @@ class SLURMManager(Manager):
         # PATHs
         self.scripts_path = '{}/scripts'.format(home)
         self.jobdata_path = jobdata_path
-        self.working_path = working_path
+        self.workdir_path = workdir_path
 
     def _make_sbatch(self, job):
         """Make sbatch file content for given job
@@ -122,7 +122,7 @@ class SLURMManager(Manager):
             '}',
             'trap "error_handler" INT TERM EXIT',
             # Set $wd and $jd
-            'wd={}/{}'.format(self.working_path, job.jobid),
+            'wd={}/{}'.format(self.workdir_path, job.jobid),
             'jd={}/{}'.format(self.jobdata_path, job.jobid),
             'mkdir -p $wd',
             'cd $wd',
@@ -158,9 +158,9 @@ class SLURMManager(Manager):
         for rname, r in job.wadl['results'].iteritems():
             fname = job.get_result_filename(rname)
             cp_results.append('[ -f $wd/{fname} ] '
-                              '&& {{ cp $wd/{fname} $jd/results; echo "{fname} found and copied"; }} '
-                              '|| echo "{fname} not found"'
-                              ''.format(fname=fname))
+                              '&& {{ cp $wd/{fname} $jd/results; echo "{rname}: {fname} found and copied"; }} '
+                              '|| echo "{rname}: {fname} NOT FOUND"'
+                              ''.format(rname=rname, fname=fname))
         sbatch.extend(cp_results)
         # Clean and terminate job
         sbatch.extend([
@@ -211,7 +211,7 @@ class SLURMManager(Manager):
                '{}:{}'.format(self.ssh_arg, param_file_distant)]
         # logger.debug(' '.join(cmd))
         sp.check_output(cmd, stderr=sp.STDOUT)
-        # Copy files to working_path (scp if uploaded from form, or wget if given as a URI)
+        # Copy files to workdir_path (scp if uploaded from form, or wget if given as a URI)
         # TODO: delete files
         for fname in files['form']:
             cmd = ['scp',
@@ -264,9 +264,9 @@ class SLURMManager(Manager):
                     logger.warning('force delete {} {}'.format(job.jobname, job.jobid))
                 else:
                     raise
-        # Delete working_path
+        # Delete workdir_path
         cmd = ['ssh', self.ssh_arg,
-               'rm -rf {}/{}'.format(self.working_path, job.jobid)]
+               'rm -rf {}/{}'.format(self.workdir_path, job.jobid)]
         sp.check_output(cmd, stderr=sp.STDOUT)
         # Delete jobdata_path
         cmd = ['ssh', self.ssh_arg,

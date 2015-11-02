@@ -211,25 +211,7 @@ def job_list():
 def job_edit(jobname, jobid):
     """Job edit page"""
     logger.info(jobname + ' ' + jobid)
-    # Get job definition
-    job_def = uws_jdl.read_wadl(jobname)
-    # Create form fields
-    form = []
-    # for pname, pdict in job_def['parameters'].iteritems():
-    #     if pdict['required'].lower() == 'true':
-    #         form.append(
-    #             '<div class="form-group">\n'
-    #             '    <label class="col-md-2 control-label">{pname}</label>\n'
-    #             '    <div class="col-md-5 controls">\n'
-    #             '        <input class="form-control" id="id_{pname}" name="{pname}" type="text" value="{pdef}" />'
-    #             '    </div>\n'
-    #             '    <div class="col-md-5 help-block">\n'
-    #             '        {pdoc}\n'
-    #             '    </div>\n'
-    #             '</div>'
-    #             ''.format(pname=pname, pdef=pdict['default'], pdoc=pdict['description'])
-    #         )
-    return {'jobname': jobname, 'jobid': jobid, 'form': '\n'.join(form)}
+    return {'jobname': jobname, 'jobid': jobid}
 
 
 @app.route('/client/job_form/<jobname>')
@@ -237,25 +219,7 @@ def job_edit(jobname, jobid):
 def job_form(jobname):
     """Job edit page"""
     logger.info(jobname)
-    # Get job definition
-    job_def = uws_jdl.read_wadl(jobname)
-    # Create form fields
-    form = []
-    # for pname, pdict in job_def['parameters'].iteritems():
-    #     if pdict['required'].lower() == 'true':
-    #         form.append(
-    #             '<div class="form-group">\n'
-    #             '    <label class="col-md-2 control-label">{pname}</label>\n'
-    #             '    <div class="col-md-5 controls">\n'
-    #             '        <input class="form-control" id="id_{pname}" name="{pname}" type="text" value="{pdef}" />'
-    #             '    </div>\n'
-    #             '    <div class="col-md-5 help-block">\n'
-    #             '        {pdoc}\n'
-    #             '    </div>\n'
-    #             '</div>'
-    #             ''.format(pname=pname, pdef=pdict['default'], pdoc=pdict['description'])
-    #         )
-    return {'jobname': jobname, 'form': '\n'.join(form)}
+    return {'jobname': jobname}
 
 
 @app.get('/config/job_definition')

@@ -217,15 +217,15 @@ http://typhon2.obspm.fr/maser/serpe/</doc>
 <!-- TODO: add result names as option blocks -->
                         <option default="config.srp" mediaType="text/plain" value="config"><doc> Configuration file for SERPE (srp or json)</doc></option>
                         <option default="f_t.pdf" mediaType="application/pdf" value="f_t"><doc> Time / frequency spectrogram of observed intensity</doc></option>
-                        <option default="f_t.pdf" mediaType="application/pdf" value="f_lat"><doc> Latitude / frequency spectrogram of observed intensity</doc></option>
-                        <option default="f_t.pdf" mediaType="application/pdf" value="f_lg"><doc> Longitude / frequency spectrogram of observed intensity</doc></option>
-                        <option default="f_t.pdf" mediaType="application/pdf" value="f_lt"><doc> Local time / frequency spectrogram of observed intensity</doc></option>
-                        <option default="f_t.pdf" mediaType="application/pdf" value="f_r"><doc> Distance / frequency spectrogram of observed intensity</doc></option>
-                        <option default="f_t.pdf" mediaType="application/pdf" value="pol_t"><doc> Time / frequency spectrogram of observed polarisation</doc></option>
-                        <option default="f_t.pdf" mediaType="application/pdf" value="pol_lat"><doc> Latitude / frequency spectrogram of observed polarisation</doc></option>
-                        <option default="f_t.pdf" mediaType="application/pdf" value="pol_lg"><doc> Longitude / frequency spectrogram of observed polarisation</doc></option>
-                        <option default="f_t.pdf" mediaType="application/pdf" value="pol_lt"><doc> Local time / frequency spectrogram of observed polarisation</doc></option>
-                        <option default="f_t.pdf" mediaType="application/pdf" value="pol_r"><doc> Distance / frequency spectrogram of observed polarisation</doc></option>
+                        <option default="f_lat.pdf" mediaType="application/pdf" value="f_lat"><doc> Latitude / frequency spectrogram of observed intensity</doc></option>
+                        <option default="f_lg.pdf" mediaType="application/pdf" value="f_lg"><doc> Longitude / frequency spectrogram of observed intensity</doc></option>
+                        <option default="f_lt.pdf" mediaType="application/pdf" value="f_lt"><doc> Local time / frequency spectrogram of observed intensity</doc></option>
+                        <option default="f_r.pdf" mediaType="application/pdf" value="f_r"><doc> Distance / frequency spectrogram of observed intensity</doc></option>
+                        <option default="pol_t.pdf" mediaType="application/pdf" value="pol_t"><doc> Time / frequency spectrogram of observed polarisation</doc></option>
+                        <option default="pol_lat.pdf" mediaType="application/pdf" value="pol_lat"><doc> Latitude / frequency spectrogram of observed polarisation</doc></option>
+                        <option default="pol_lg.pdf" mediaType="application/pdf" value="pol_lg"><doc> Longitude / frequency spectrogram of observed polarisation</doc></option>
+                        <option default="pol_lt.pdf" mediaType="application/pdf" value="pol_lt"><doc> Local time / frequency spectrogram of observed polarisation</doc></option>
+                        <option default="pol_r.pdf" mediaType="application/pdf" value="pol_r"><doc> Distance / frequency spectrogram of observed polarisation</doc></option>
                         <option default="fov.mp4" mediaType="video/mp4" value="fov"><doc>2D movie of visible radio sources in Field of View</doc></option>
                         <option default="movie.mp4" mediaType="video/mp4" value="movie"><doc>3D movie of visible radio sources</doc></option>
                         <option default="sources.vot" mediaType="text/x-votable+xml" value="sources"><doc>Time / frequency spectrogram of visibility (VOTable format)</doc></option>
