@@ -397,7 +397,7 @@ var uws_manager = (function($) {
             displayParamFormInput(pname, p);
             $('#id_'+pname).wrap('<div class="input-group"></div>');
             if (!(pname in job['parameters'])) {
-                $('#id_'+pname).parent().append('<span class="input-group-addon"><small>default used</small></span>');
+                $('#id_'+pname).parent().append('<span class="input-group-addon" style="line-height: 1.5;"><small>default used</small></span>');
             };
             displayParamFormInputType(pname, p);
             if (p.choices) {
