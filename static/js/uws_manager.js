@@ -454,7 +454,7 @@ var uws_manager = (function($) {
                         <button type="button" class="samp btn btn-default btn-sm pull-right">SAMP</button>\
                     ');
                     // Add event on SAMP button click
-                    $('#'+r_id+' div.panel-heading button.samp').click(function() {
+                    $('#'+r_id+' > button.samp').click(function() {
                         var url = $(this).parents(".panel").attr('value');
                         var name = url.split('/').pop();
                         samp_client.samp_image(url, name);
