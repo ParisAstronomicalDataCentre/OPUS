@@ -418,7 +418,7 @@ var uws_manager = (function($) {
         };
     };
     var displayParams = function(job){
-        displayParamFormAll(job);
+        displayParamForm(job);
         // Set readonly
         $('#job_params input').attr('readonly','readonly');
         // then fill form
