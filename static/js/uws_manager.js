@@ -345,7 +345,7 @@ var uws_manager = (function($) {
             $('#id_'+pname).removeClass('form-control');
             $('#id_'+pname).attr('type', 'checkbox');
             $('#id_'+pname).wrap('<div class="checkbox"></div>');
-            $('#id_'+pname).attr('style', 'margin-left: 10px; line-height: 1.4;');
+            $('#id_'+pname).attr('style', 'margin-left: 10px;');
             var val = p.default.toLowerCase();
             if ((val == 'true') || (val == 'yes')) {
                 $('#id_'+pname).attr('checked', 'checked');
@@ -396,33 +396,37 @@ var uws_manager = (function($) {
             var p = jdl.parameters[pname];
             displayParamFormInput(pname, p);
             $('#id_'+pname).wrap('<div class="input-group"></div>');
+            // Signal default value
             if (!(pname in job['parameters'])) {
                 $('#id_'+pname).parent().append('<span class="input-group-addon" style="line-height: 1.4;"><small>default used</small></span>');
             };
+            // Add Update buttons (possible to update params when pĥase is PENDING in UWS 1.0 - but not yet implemented)
+            $('#id_'+pname).parent().append('<span class="input-group-btn"><button id="button_'+pname+'" class="btn btn-default" type="button">Update</button></span>');
+            // Change input type
             displayParamFormInputType(pname, p);
+            // Change right corners for checkbox and select
+            if (p.type.indexOf('bool') > -1) {
+                $('#id_'+pname).parent().attr('style','border-bottom-right-radius: 0px; border-top-right-radius: 0px;');
+            };
             if (p.choices) {
-                $('button[data-id=id_'+pname+']').attr('style','border-bottom-right-radius: 0px; border-top-right-radius: 0px;');
+                $('button[data-id=id_'+pname+']').attr('style','border-bottom-right-radius: 0px; border-top-right-radius: 0px; opacity: 1;');
             };
         };
-        // Set readonly
-        //$('#job_params input').attr('readonly','readonly');
-        $('#job_params input').attr('disabled','disabled');
-        $('#job_params select').attr('disabled','disabled');
-        //$('#job_params input[type=checkbox]').attr('disabled','disabled');
+        // Disable button if job is not PENDING
+        if (job['phase'] != 'PENDING') {
+            //$('#id_'+pname).removeAttr('readonly');
+            //$('#id_'+pname).removeAttr('disabled');
+            //$('#button_'+pname).removeAttr('disabled');
+            $('#job_params input').attr('disabled','disabled');
+            $('#job_params select').attr('disabled','disabled');
+        };
+        // Fill value
         for (var pname in job['parameters']) {
             var pvalue = job['parameters'][pname];
             // Add in param_list table (if present in DOM)
             $('#param_list').append('<tr><td><strong>'+pname+'</strong></td><td>'+decodeURIComponent(pvalue)+'</td></tr>');
             // Update form fields
             $('#id_'+pname).attr('value', decodeURIComponent(pvalue));
-            // Add update buttons (possible to update params when pĥase is PENDING in UWS 1.0 - but not yet implemented)
-            $('#id_'+pname).parent().append('<span class="input-group-btn"><button id="button_'+pname+'" class="btn btn-default" type="button" disabled>Update</button></span>');
-            // Activate button if job is PENDING
-            if (job['phase'] == 'PENDING') {
-                //$('#id_'+pname).removeAttr('readonly');
-                $('#id_'+pname).removeAttr('disabled');
-                $('#button_'+pname).removeAttr('disabled');
-            };
         };
         $('.selectpicker').selectpicker('refresh');
     };

@@ -11,11 +11,14 @@
         if ( $( "#job_id" ).length ) {
             uws_manager.selectJob($( "#jobid" ).attr('value'));
         }
-    }
+        $('button.actions').removeAttr('disabled');
+    };
+
     // LOAD JOB LIST AT STARTUP
     $(document).ready( function() {
 
         $('.selectpicker').selectpicker('deselectAll');
+        $('button.actions').attr('disabled', 'disabled');
         // check if jobname is set in DOM
         var jobname = $('#jobname').attr('value');
         if (jobname) {

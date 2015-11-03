@@ -57,3 +57,10 @@ select.select-small:first-child + .bootstrap-select > .btn {
     background-color: #eee;
     border-color: #ccc;
 }
+
+.checkbox {
+    line-height: 1.42857143;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding-bottom: 25px;
+}
