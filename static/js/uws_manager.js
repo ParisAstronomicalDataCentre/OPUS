@@ -419,6 +419,7 @@ var uws_manager = (function($) {
             //$('#button_'+pname).removeAttr('disabled');
             $('#job_params input').attr('disabled','disabled');
             $('#job_params select').attr('disabled','disabled');
+            $('#job_params button').attr('disabled','disabled');
         };
         // Fill value
         for (var pname in job['parameters']) {
