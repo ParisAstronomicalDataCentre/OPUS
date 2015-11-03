@@ -39,7 +39,7 @@
                         <input class="form-control" style="font-weight: bold;" name="param_name_' + iparam + '" type="text" placeholder="Name" />\
                         <span class="input-group-addon">=</span>\
                         <input class="form-control" name="param_default_' + iparam + '" type="text" placeholder="Default value" />\
-                        <span class="input-group-addon checkbox">\
+                        <span class="input-group-addon">\
                             <input title="Required parameter?" name="param_required_' + iparam + '" type="checkbox" checked/>\
                         </span>\
                         <span class="input-group-btn">\
