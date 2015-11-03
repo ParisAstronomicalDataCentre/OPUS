@@ -345,7 +345,7 @@ var uws_manager = (function($) {
             $('#id_'+pname).removeClass('form-control');
             $('#id_'+pname).attr('type', 'checkbox');
             $('#id_'+pname).wrap('<div class="checkbox"></div>');
-            $('#id_'+pname).attr('style', 'margin-left: 10px;');
+            $('#id_'+pname).attr('style', 'margin-left: 10px; line-height: 1.4;');
             var val = p.default.toLowerCase();
             if ((val == 'true') || (val == 'yes')) {
                 $('#id_'+pname).attr('checked', 'checked');
@@ -397,7 +397,7 @@ var uws_manager = (function($) {
             displayParamFormInput(pname, p);
             $('#id_'+pname).wrap('<div class="input-group"></div>');
             if (!(pname in job['parameters'])) {
-                $('#id_'+pname).parent().append('<span class="input-group-addon" style="line-height: 1.5;"><small>default used</small></span>');
+                $('#id_'+pname).parent().append('<span class="input-group-addon" style="line-height: 1.4;"><small>default used</small></span>');
             };
             displayParamFormInputType(pname, p);
             if (p.choices) {
