@@ -411,7 +411,6 @@ var uws_manager = (function($) {
                     $('#id_'+pname).parent().append('<span class="input-group-addon" style="line-height: 1.4;"><small>default used</small></span>');
                 };
             };
-            }
             // Change right corners for checkbox and select inside input-group
             if (p.type.indexOf('bool') > -1) {
                 $('#id_'+pname).parent().attr('style','border-bottom-right-radius: 0px; border-top-right-radius: 0px;');
