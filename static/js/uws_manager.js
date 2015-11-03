@@ -402,8 +402,10 @@ var uws_manager = (function($) {
             };
             // Add Update buttons (possible to update params when pĥase is PENDING in UWS 1.0 - but not yet implemented)
             $('#id_'+pname).parent().append('<span class="input-group-btn"><button id="button_'+pname+'" class="btn btn-default" type="button">Update</button></span>');
-            // Change input type
-            displayParamFormInputType(pname, p);
+            // Change input type (if not file)
+            if (p.type != 'file') {
+                displayParamFormInputType(pname, p);
+            };
             // Change right corners for checkbox and select
             if (p.type.indexOf('bool') > -1) {
                 $('#id_'+pname).parent().attr('style','border-bottom-right-radius: 0px; border-top-right-radius: 0px;');
