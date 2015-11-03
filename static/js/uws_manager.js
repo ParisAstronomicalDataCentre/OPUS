@@ -406,6 +406,7 @@ var uws_manager = (function($) {
                 // Change input type
                 displayParamFormInputType(pname, p);
             } else {
+                $('#id_'+pname).attr('disabled','disabled');
                 if (!(pname in job['parameters'])) {
                     $('#id_'+pname).wrap('<div class="input-group"></div>');
                     $('#id_'+pname).parent().append('<span class="input-group-addon" style="line-height: 1.4;"><small>default used</small></span>');
