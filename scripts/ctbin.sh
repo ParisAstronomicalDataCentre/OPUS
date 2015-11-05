@@ -4,27 +4,28 @@ module load gammalib
 source $GAMMALIB/bin/gammalib-init.sh
 module load ctools
 source $CTOOLS/bin/ctools-init.sh
-ctbin evfile=$evfile \
+ctbin \
+    evfile=$evfile \
     outfile=$outfile \
-    prefix=cntmap_ \
-    ebinalg=LOG \
-    emin=0.1 \
-    emax=100.0 \
+    prefix=$prefix \
+    ebinalg=$ebinalg \
+    emin=$emin \
+    emax=$emax \
     enumbins=$enumbins \
-    ebinfile=NONE \
+    ebinfile=$ebinfile \
     usepnt=no \
-    nxpix=200 \
-    nypix=200 \
-    binsz=0.02 \
-    coordsys=CEL \
-    xref=83.63 \
-    yref=22.01 \
-    axisrot=0.0 \
-    proj=CAR \
-    chatter=2 \
+    nxpix=$nxpix \
+    nypix=$nypix \
+    binsz=$binsz \
+    coordsys=$coordsys \
+    xref=$xref \
+    yref=$yref \
+    axisrot=$axisrot \
+    proj=$proj \
+    chatter=$chatter \
     clobber=yes \
     debug=no \
-    mode=ql \
+    mode=$mode \
     logfile=$logfile
 
 #cp ${evfile##*/} evfile.fits
