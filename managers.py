@@ -132,7 +132,7 @@ class SLURMManager(Manager):
             'echo "JobData dir is $jd"',
             # Move uploaded files to working directory if they exist
             'echo "[`timestamp`] Prepare input files"',
-            'cp $jd/input/* $wd',
+            'for filename in $jd/input/*; do [ -f "$filename" ] && cp $filename $wd; done',
             # Start job
             'curl -k -s -o $jd/curl_start_signal.log '
             '    -d "jobid=$SLURM_JOBID" -d "phase=RUNNING" '
