@@ -290,7 +290,7 @@ def create_new_job_definition():
     # Save bash script file in new/
     script_fname = '{}/new/{}.sh'.format(SCRIPT_PATH, jobname)
     with open(script_fname, 'w') as f:
-        f.write(script)
+        f.write(script.replace('\r', ''))
         logger.info('Job script save: ' + script_fname)
         # TODO: send to work cluster?
     # Back to filled form
