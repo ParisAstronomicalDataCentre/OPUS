@@ -146,7 +146,7 @@ class SLURMManager(Manager):
             'cp {}/{}.sh $jd'.format(self.scripts_path, job.jobname),
             '. {}/{}.sh'.format(self.scripts_path, job.jobname),
             'echo "[`timestamp`] List files in workdir"',
-            'll',
+            'ls -l',
             '### CP RESULTS',
             'mkdir $jd/results',
         ])
