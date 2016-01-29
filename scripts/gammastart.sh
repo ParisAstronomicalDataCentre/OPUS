@@ -7,11 +7,11 @@ source /usr/local/root_v5.34.34/bin/thisroot.sh
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/obs/vouws/scripts/gammastart/lib
 export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:/obs/vouws/scripts/gammastart/lib
 # ROOT options (batch and quit)
-rootopt="-b -q"
+rootopt="-q"
 
 ### JLK, variables to define in the UWS environment for configuration file:
 gammastart_dir=/obs/vouws/scripts/gammastart/
-listdir=./
+listdir=${gammastart_dir}/test/
 outdir=./
 # access to data
 datadir=${gammastart_dir}/test/data/
@@ -19,14 +19,19 @@ export HESSCONFIG=${gammastart_dir}/test/IRF/
 #cp $data .
 
 ### Copy needed files
-# rootlogon to beloaded by start (same dir as root -l)
+# rootlogon to be loaded by start (same dir as root -l)
 rootlogon=${gammastart_dir}/rootlogon.C
 cp $rootlogon .
 # script to be launch
 script=${gammastart_dir}/start/scripts/startfit.C
 cp $script .
 
+echo "CHECK"
+echo "`ls -l /etc/root/gdb-backtrace.sh`"
+echo "`ls -l $ROOTSYS/etc/plugins/`"
+
 ### Generate configuration file
+export configfile
 cat > $configfile << EOF
 #########################################                                                                               
 ###        Configuration file         ###                                                                               
@@ -199,6 +204,6 @@ EOF
 
 ### End of configuration file
 
-root.exe $rootopt 'startfit.C+($configfile)'
+root.exe $rootopt rootlogon.C "startfit.C+(\"$configfile\")"
 
 ### End of job

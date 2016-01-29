@@ -1,13 +1,18 @@
 #!/usr/bin/env bash
-sleep 10
+
+echo "Load modules"
+
 module load gammalib
 source $GAMMALIB/bin/gammalib-init.sh
 module load ctools
 source $CTOOLS/bin/ctools-init.sh
+
+sleep 10
+
+echo "Run ctbin"
 ctbin \
-    evfile=$evfile \
-    outfile=$outfile \
-    prefix=$prefix \
+    inobs=$evfile \
+    outcube=$outfile \
     ebinalg=$ebinalg \
     emin=$emin \
     emax=$emax \
@@ -20,19 +25,12 @@ ctbin \
     coordsys=$coordsys \
     xref=$xref \
     yref=$yref \
-    axisrot=$axisrot \
     proj=$proj \
     chatter=$chatter \
     clobber=yes \
     debug=no \
-    mode=$mode \
+    mode=$mode\
     logfile=$logfile
 
-#cp ${evfile##*/} evfile.fits
-#echo "File $evfile copied to evfile.fits"
-#cp ~/test/cntmap.fits .
-#echo "File cntmap.fits created"
-#cp ~/test/ctbin.log .
-#echo "File ctbin.log created"
-#echo "test fake result" > fake_result.txt
-sleep 10
+echo "Done"
+
