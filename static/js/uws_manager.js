@@ -495,7 +495,6 @@ var uws_manager = (function($) {
                     break;
                 case 'txt':
                 case 'log':
-                case 'cfg':
                     // show textarea with log
                     $('#'+r_id+' div.panel-body').html('\
                         <textarea class="log form-control" rows="10" style="font-family: monospace;" readonly></textarea>\

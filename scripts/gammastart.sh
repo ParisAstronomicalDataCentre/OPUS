@@ -26,10 +26,6 @@ cp $rootlogon .
 script=${gammastart_dir}/start/scripts/startfit.C
 cp $script .
 
-echo "CHECK"
-echo "`ls -l /etc/root/gdb-backtrace.sh`"
-echo "`ls -l $ROOTSYS/etc/plugins/`"
-
 ### Generate configuration file
 export configfile
 cat > $configfile << EOF
