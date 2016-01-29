@@ -145,6 +145,8 @@ class SLURMManager(Manager):
             # Run script in the current environment (with SLURM_JOBID defined)
             'cp {}/{}.sh $jd'.format(self.scripts_path, job.jobname),
             '. {}/{}.sh'.format(self.scripts_path, job.jobname),
+            'echo "[`timestamp`] List files in workdir"',
+            'll',
             '### CP RESULTS',
             'mkdir $jd/results',
         ])

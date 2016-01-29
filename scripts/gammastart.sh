@@ -205,5 +205,7 @@ EOF
 ### End of configuration file
 
 root.exe $rootopt rootlogon.C "startfit.C+(\"$configfile\")"
+mv ${fitresult}.root ${fitresult}
+
 
 ### End of job

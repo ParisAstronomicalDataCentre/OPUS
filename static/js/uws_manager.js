@@ -503,8 +503,8 @@ var uws_manager = (function($) {
                     $.ajax({
                         url : r_url,
                         dataType: "text",
-                        success : function (log) {
-                            $('#'+r_id+' div.panel-body textarea').html(log);
+                        success : function (txt) {
+                            $('#'+r_id+' div.panel-body textarea').html(txt);
                         }
                     });
                     break;
