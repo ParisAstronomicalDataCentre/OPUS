@@ -11,24 +11,35 @@
                     <a class="navbar-brand" href="/">UWS Server</a>
                 </div> <!-- navbar-header -->
                 <div class="navbar-collapse collapse">
-                  <ul class="nav navbar-nav">
-                    <!--<li {{print(" class=\"active\"") if (page_title == "help")}}>-->
-                      <!--<a href="/help"><span class="glyphicon glyphicon-search"></span>-->
-                      <!--Help</a>-->
-                    <!--</li>-->
-                    <!--<li{{' class="active"' if page_title == 'job_list'}}>-->
-                      <!--<a href="/job_list"><span class="glyphicon glyphicon-cog"></span>-->
-                      <!--Available jobs</a>-->
-                    <!--</li>-->
-                    <li{{' class="active"' if page_title == 'new_job_def'}}>
-                      <a href="/config/job_definition"><span class="glyphicon glyphicon-edit"></span>
-                      Job Definition</a>
-                    </li>
-                    <li{{' class="active"' if page_title == 'job_list'}}>
-                      <a href="/client/job_list"><span class="glyphicon glyphicon-list"></span>
-                      Job Manager</a>
-                    </li>
-                  </ul>
+                    <ul class="nav navbar-nav">
+                        <!--<li {{print(" class=\"active\"") if (page_title == "help")}}>-->
+                            <!--<a href="/help"><span class="glyphicon glyphicon-search"></span>-->
+                            <!--Help</a>-->
+                        <!--</li>-->
+                        <!--<li{{' class="active"' if page_title == 'job_list'}}>-->
+                            <!--<a href="/job_list"><span class="glyphicon glyphicon-cog"></span>-->
+                            <!--Available jobs</a>-->
+                        <!--</li>-->
+                        <li{{' class="active"' if page_title == 'new_job_def'}}>
+                            <a href="/config/job_definition"><span class="glyphicon glyphicon-edit"></span>
+                                Job Definition</a>
+                        </li>
+                        <li{{' class="active"' if page_title == 'job_list'}}>
+                            <a href="/client/job_list"><span class="glyphicon glyphicon-list"></span>
+                                Job Manager</a>
+                        </li>
+                    </ul>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li>
+{% if 'username' in session %}
+                            <a href="/accounts/logout"><span class="glyphicon glyphicon-remove"></span>
+                                Sign out <strong>{{ session.username }}</strong></a>
+{% else %}
+                            <a href="/accounts/login"><span class="glyphicon glyphicon-user"></span>
+                                Sign in</a>
+{% endif %}
+                        </li>
+                    </ul>
                 </div> <!-- navbar-collapse -->
             </div> <!-- navbar -->
         </div> <!-- container -->

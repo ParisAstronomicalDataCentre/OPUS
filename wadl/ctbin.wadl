@@ -127,7 +127,7 @@
                 <response status="404"/>
                 <response status="500"/>
             </method>
-            <method name="POST">
+            <method name="$">
                 <doc>Control a Job</doc>
                 <request id="control_job_parameters">
                     <param style="template" name="job-id" type="xs:string" required="true"/>

@@ -14,10 +14,24 @@ import traceback
 import uuid
 from subprocess import CalledProcessError
 from bottle import Bottle, request, response, abort, redirect, run, static_file, parse_auth, view, jinja2_view
+from beaker.middleware import SessionMiddleware
+from cork import Cork
 from uws_classes import *
 
 # Create a new application
 app = Bottle()
+
+# Create session
+session_opts = {
+    'session.cookie_expires': True,
+    'session.encrypt_key': 'please use a random key and keep it secret!',
+    'session.httponly': True,
+    'session.timeout': 3600 * 24,  # 1 day
+    'session.type': 'cookie',
+    'session.validate_key': True,
+}
+
+aaa = Cork('example_conf')
 
 
 # ----------
@@ -138,50 +152,83 @@ def abort_500_except(msg=None):
 
 
 # ----------
-# Helper functions
+# Manage user accounts
 
+def postd():
+    return request.forms
 
-@app.route('/static/<path:path>')
-def static(path):
-    """Access to static files (css, js, ...)"""
-    return static_file(path, root='{}/static'.format(APP_PATH))
+def post_get(name, default=''):
+    return request.POST.get(name, default).strip()
 
+@app.post('/accounts/login')
+def login():
+    """Authenticate users"""
+    username = post_get('username')
+    password = post_get('password')
+    next = post_get('next')
+    aaa.login(username, password, success_redirect=next, fail_redirect='/accounts/login')
 
-@app.route('/favicon.ico')
-def favicon():
-    return static_file('favicon.ico', root='{}/static'.format(APP_PATH))
+@app.route('/accounts/logout')
+def logout():
+    aaa.logout(success_redirect='/')
 
+@app.route('/accounts/admin')
+@view('admin_page')
+def admin():
+    """Only admin users can see this"""
+    aaa.require(role='admin', fail_redirect='/sorry_page')
+    return dict(
+        current_user=aaa.current_user,
+        users=aaa.list_users(),
+        roles=aaa.list_roles()
+    )
 
-@app.get('/get_wadl/<jobname:path>')
-def get_wadl(jobname):
-    """Get WADL file for jobname"""
-    fname = '{}/{}.wadl'.format(WADL_PATH, jobname)
-    if os.path.isfile(fname):
-        with open(fname) as f:
-            wadl = f.readlines()
-        response.content_type = 'text/xml; charset=UTF-8'
-        return wadl
-    abort_404('No WADL file found for ' + jobname)
-
-
-@app.get('/get_wadl_json/<jobname:path>')
-def get_wadl_json(jobname):
-    """Get json dictionary WADL file for jobname"""
+@app.post('/accounts/create_user')
+def create_user():
     try:
-        job_def = uws_jdl.read_wadl(jobname)
-        return job_def
-    except UserWarning as e:
-        abort_404(e.message)
+        aaa.create_user(postd().username, postd().role, postd().password)
+        return dict(ok=True, msg='')
+    except Exception, e:
+        return dict(ok=False, msg=e.message)
+
+@app.post('/accounts/delete_user')
+def delete_user():
+    try:
+        aaa.delete_user(post_get('username'))
+        return dict(ok=True, msg='')
+    except Exception, e:
+        print repr(e)
+        return dict(ok=False, msg=e.message)
+
+@app.post('/accounts/create_role')
+def create_role():
+    try:
+        aaa.create_role(post_get('role'), post_get('level'))
+        return dict(ok=True, msg='')
+    except Exception, e:
+        return dict(ok=False, msg=e.message)
+
+@app.post('/accounts/delete_role')
+def delete_role():
+    try:
+        aaa.delete_role(post_get('role'))
+        return dict(ok=True, msg='')
+    except Exception, e:
+        return dict(ok=False, msg=e.message)
 
 
-@app.get('/get_script/<jobname:path>')
-def get_script(jobname):
-    fname = '{}/{}.sh'.format(SCRIPT_PATH, jobname)
-    logger.info('Job script read: {}'.format(fname))
-    if os.path.isfile(fname):
-        response.content_type = 'text/plain; charset=UTF-8'
-        return static_file(fname, root='/')
-    abort_404('No script file found for ' + jobname)
+@app.route('/accounts/login')
+@jinja2_view('login_form.html')
+def login_form():
+    """Serve login form"""
+    next = request.query.next or '/'
+    return {'next': next}
+
+
+@app.route('/sorry_page')
+def sorry_page():
+    """Serve sorry page"""
+    return '<p>Sorry, you are not authorized to perform this action</p>'
 
 
 # ----------
@@ -192,7 +239,8 @@ def get_script(jobname):
 @jinja2_view('home.html')
 def home():
     """Home page"""
-    return {}
+    session = request.environ['beaker.session']
+    return {'session': session}
     # response.content_type = 'text/html; charset=UTF-8'
     # return "UWS v1.0 server implementation<br>(c) Observatoire de Paris 2015"
 
@@ -202,8 +250,10 @@ def home():
 def job_list():
     """Job list page"""
     logger.info('')
+    aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
+    session = request.environ['beaker.session']
     jobname = request.query.get('jobname', '')
-    return {'jobname': jobname}
+    return {'session': session, 'jobname': jobname}
 
 
 @app.route('/client/job_edit/<jobname>/<jobid>')
@@ -211,7 +261,8 @@ def job_list():
 def job_edit(jobname, jobid):
     """Job edit page"""
     logger.info(jobname + ' ' + jobid)
-    return {'jobname': jobname, 'jobid': jobid}
+    aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
+    return {'session': session, 'jobname': jobname, 'jobid': jobid}
 
 
 @app.route('/client/job_form/<jobname>')
@@ -219,7 +270,9 @@ def job_edit(jobname, jobid):
 def job_form(jobname):
     """Job edit page"""
     logger.info(jobname)
-    return {'jobname': jobname}
+    aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
+    session = request.environ['beaker.session']
+    return {'session': session, 'jobname': jobname}
 
 
 @app.get('/config/job_definition')
@@ -227,16 +280,19 @@ def job_form(jobname):
 def job_definition():
     """Show form for new job definition"""
     logger.info('')
+    aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
+    session = request.environ['beaker.session']
     jobname = request.query.get('jobname', '')
     if request.query.get('msg', '') == 'new':
         msg = 'New job definition has been saved as {}'.format(jobname)
         return {'jobname': jobname, 'message': msg}
-    return {'jobname': jobname}
+    return {'session': session, 'jobname': jobname}
 
 
 @app.post('/config/job_definition')
 def create_new_job_definition():
     """Use filled form to create a WADL file for the given job"""
+    aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
     # Read form
     keys = request.forms.keys()
     jobname = request.forms.get('name').split('/')[-1]
@@ -295,6 +351,53 @@ def create_new_job_definition():
         # TODO: send to work cluster?
     # Back to filled form
     redirect('/config/job_definition?jobname=new/{}&msg=new'.format(jobname), 303)
+
+
+# ----------
+# Helper functions
+
+
+@app.route('/static/<path:path>')
+def static(path):
+    """Access to static files (css, js, ...)"""
+    return static_file(path, root='{}/static'.format(APP_PATH))
+
+
+@app.route('/favicon.ico')
+def favicon():
+    return static_file('favicon.ico', root='{}/static'.format(APP_PATH))
+
+
+@app.get('/get_wadl/<jobname:path>')
+def get_wadl(jobname):
+    """Get WADL file for jobname"""
+    fname = '{}/{}.wadl'.format(WADL_PATH, jobname)
+    if os.path.isfile(fname):
+        with open(fname) as f:
+            wadl = f.readlines()
+        response.content_type = 'text/xml; charset=UTF-8'
+        return wadl
+    abort_404('No WADL file found for ' + jobname)
+
+
+@app.get('/get_wadl_json/<jobname:path>')
+def get_wadl_json(jobname):
+    """Get json dictionary WADL file for jobname"""
+    try:
+        job_def = uws_jdl.read_wadl(jobname)
+        return job_def
+    except UserWarning as e:
+        abort_404(e.message)
+
+
+@app.get('/get_script/<jobname:path>')
+def get_script(jobname):
+    fname = '{}/{}.sh'.format(SCRIPT_PATH, jobname)
+    logger.info('Job script read: {}'.format(fname))
+    if os.path.isfile(fname):
+        response.content_type = 'text/plain; charset=UTF-8'
+        return static_file(fname, root='/')
+    abort_404('No script file found for ' + jobname)
 
 
 # ----------
@@ -477,7 +580,7 @@ def job_event():
 # /<jobname>
 
 
-@app.route('/jobs/<jobname>')
+@app.route('/rest/<jobname>')
 def get_joblist(jobname):
     """Get list for <jobname> jobs
 
@@ -497,7 +600,7 @@ def get_joblist(jobname):
         abort_500_except()
 
 
-@app.post('/jobs/<jobname>')
+@app.post('/rest/<jobname>')
 def create_job(jobname):
     """Create a new job
 
@@ -525,14 +628,14 @@ def create_job(jobname):
     except:
         abort_500_except()
     # Response
-    redirect('/jobs/' + jobname + '/' + jobid, 303)
+    redirect('/rest/' + jobname + '/' + jobid, 303)
 
 
 # ----------
 # /<jobname>/<jobid>
 
 
-@app.route('/jobs/<jobname>/<jobid>')
+@app.route('/rest/<jobname>/<jobid>')
 def get_job(jobname, jobid):
     """Get description for job <jobid>
 
@@ -557,7 +660,7 @@ def get_job(jobname, jobid):
         abort_500_except()
 
 
-@app.delete('/jobs/<jobname>/<jobid>')
+@app.delete('/rest/<jobname>/<jobid>')
 def delete_job(jobname, jobid):
     """Delete job with <jobid>
 
@@ -581,10 +684,10 @@ def delete_job(jobname, jobid):
     except:
         abort_500_except()
     # Response
-    redirect('/jobs/' + jobname, 303)
+    redirect('/rest/' + jobname, 303)
 
 
-@app.post('/jobs/<jobname>/<jobid>')
+@app.post('/rest/<jobname>/<jobid>')
 def post_job(jobname, jobid):
     """Alias for delete_job() if ACTION=DELETE"""
     try:
@@ -606,14 +709,14 @@ def post_job(jobname, jobid):
         abort_500_except('STDERR output:\n' + e.output)
     except:
         abort_500_except()
-    redirect('/jobs/' + jobname, 303)
+    redirect('/rest/' + jobname, 303)
 
 
 # ----------
 # /<jobname>/<jobid>/phase
 
 
-@app.route('/jobs/<jobname>/<jobid>/phase')
+@app.route('/rest/<jobname>/<jobid>/phase')
 def get_phase(jobname, jobid):
     """Get the phase of job <job-id>
 
@@ -636,7 +739,7 @@ def get_phase(jobname, jobid):
         abort_500_except()
 
 
-@app.post('/jobs/<jobname>/<jobid>/phase')
+@app.post('/rest/<jobname>/<jobid>/phase')
 def post_phase(jobname, jobid):
     """Change Phase of job <jobid> --> start or abort job
 
@@ -678,14 +781,14 @@ def post_phase(jobname, jobid):
     except:
         abort_500_except()
     # Response
-    redirect('/jobs/' + jobname + '/' + jobid, 303)
+    redirect('/rest/' + jobname + '/' + jobid, 303)
 
 
 # ----------
 # /<jobname>/<jobid>/executionduration
 
 
-@app.route('/jobs/<jobname>/<jobid>/executionduration')
+@app.route('/rest/<jobname>/<jobid>/executionduration')
 def get_executionduration(jobname, jobid):
     """Get the maximum execution duration of job <jobid>
 
@@ -708,7 +811,7 @@ def get_executionduration(jobname, jobid):
         abort_500_except()
 
 
-@app.post('/jobs/<jobname>/<jobid>/executionduration')
+@app.post('/rest/<jobname>/<jobid>/executionduration')
 def post_executionduration(jobname, jobid):
     """Change the maximum execution duration of job <jobid>
 
@@ -743,14 +846,14 @@ def post_executionduration(jobname, jobid):
     except:
         abort_500_except()
     # Response
-    redirect('/jobs/' + jobname + '/' + jobid, 303)
+    redirect('/rest/' + jobname + '/' + jobid, 303)
 
 
 # ----------
 # /<jobname>/<jobid>/destruction
 
 
-@app.route('/jobs/<jobname>/<jobid>/destruction')
+@app.route('/rest/<jobname>/<jobid>/destruction')
 def get_destruction(jobname, jobid):
     """Get the destruction instant for job <jobid>
 
@@ -773,7 +876,7 @@ def get_destruction(jobname, jobid):
         abort_500_except()
 
 
-@app.post('/jobs/<jobname>/<jobid>/destruction')
+@app.post('/rest/<jobname>/<jobid>/destruction')
 def post_destruction(jobname, jobid):
     """Change the destruction instant for job <jobid>
 
@@ -810,14 +913,14 @@ def post_destruction(jobname, jobid):
     except:
         abort_500_except()
     # Response
-    redirect('/jobs/' + jobname + '/' + jobid, 303)
+    redirect('/rest/' + jobname + '/' + jobid, 303)
 
 
 # ----------
 # /<jobname>/<jobid>/error
 
 
-@app.route('/jobs/<jobname>/<jobid>/error')
+@app.route('/rest/<jobname>/<jobid>/error')
 def get_error(jobname, jobid):
     """Get any error message associated with job <jobid>
 
@@ -845,7 +948,7 @@ def get_error(jobname, jobid):
 # /<jobname>/<jobid>/quote
 
 
-@app.route('/jobs/<jobname>/<jobid>/quote')
+@app.route('/rest/<jobname>/<jobid>/quote')
 def get_quote(jobname, jobid):
     """Get the Quote for job <jobid>
 
@@ -872,7 +975,7 @@ def get_quote(jobname, jobid):
 # /<jobname>/<jobid>/parameters
 
 
-@app.route('/jobs/<jobname>/<jobid>/parameters')
+@app.route('/rest/<jobname>/<jobid>/parameters')
 def get_parameters(jobname, jobid):
     """Get parameters for job <jobid>
 
@@ -897,7 +1000,7 @@ def get_parameters(jobname, jobid):
         abort_500_except()
 
 
-@app.route('/jobs/<jobname>/<jobid>/parameters/<pname>')
+@app.route('/rest/<jobname>/<jobid>/parameters/<pname>')
 def get_parameter(jobname, jobid, pname):
     """Get parameter <param> for job <jobid>
 
@@ -924,7 +1027,7 @@ def get_parameter(jobname, jobid, pname):
         abort_500_except()
 
 
-@app.post('/jobs/<jobname>/<jobid>/parameters/<pname>')
+@app.post('/rest/<jobname>/<jobid>/parameters/<pname>')
 def post_parameter(jobname, jobid, pname):
     """Change the parameter value for job <jobid>
 
@@ -957,14 +1060,14 @@ def post_parameter(jobname, jobid, pname):
     except:
         abort_500_except()
     # Response
-    redirect('/jobs/' + jobname + '/' + jobid + '/parameters', 303)
+    redirect('/rest/' + jobname + '/' + jobid + '/parameters', 303)
 
 
 # ----------
 # /<jobname>/<jobid>/results
 
 
-@app.route('/jobs/<jobname>/<jobid>/results')
+@app.route('/rest/<jobname>/<jobid>/results')
 def get_results(jobname, jobid):
     """Get results for job <jobid>
 
@@ -989,7 +1092,7 @@ def get_results(jobname, jobid):
         abort_500_except()
 
 
-@app.route('/jobs/<jobname>/<jobid>/results/<rname>')
+@app.route('/rest/<jobname>/<jobid>/results/<rname>')
 def get_result(jobname, jobid, rname):
     """Get result <rname> for job <jobid>
 
@@ -1048,7 +1151,7 @@ def get_result_file(jobid, rname, rfname):
 # /<jobname>/<jobid>/owner
 
 
-@app.route('/jobs/<jobname>/<jobid>/owner')
+@app.route('/rest/<jobname>/<jobid>/owner')
 def get_owner(jobname, jobid):
     """Get the owner of the job <jobid>
 
@@ -1074,6 +1177,7 @@ def get_owner(jobname, jobid):
 # ----------
 # run server
 
+app = SessionMiddleware(app, session_opts)
 
 if __name__ == '__main__':
     # Run local web server
