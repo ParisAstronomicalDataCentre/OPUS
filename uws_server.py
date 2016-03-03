@@ -294,6 +294,7 @@ def job_definition():
 def create_new_job_definition():
     """Use filled form to create a WADL file for the given job"""
     aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
+    session = request.environ['beaker.session']
     # Read form
     keys = request.forms.keys()
     jobname = request.forms.get('name').split('/')[-1]

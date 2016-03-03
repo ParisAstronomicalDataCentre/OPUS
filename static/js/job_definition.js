@@ -213,6 +213,7 @@
                 $.ajax({
                     url : '/get_script/' + jobname, //.split("/").pop(),
                     async : true,
+                    cache : false,
                     type : 'GET',
                     dataType: "text",
                     success : function(script) {
