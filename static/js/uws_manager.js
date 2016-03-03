@@ -19,7 +19,7 @@ var uws_manager = (function($) {
     //var serviceUrl = "http://voparis-uws.obspm.fr/uws-v1.0/"; // app_url+"/uws-v1.0/" //
     var serviceUrl = $(location).attr('protocol') + '//' + $(location).attr('host');
     // "https://voparis-uws-test.obspm.fr/"; // app_url+"/uws-v1.0/" //
-    var jobs_url = '/jobs/';
+    var jobs_url = '/rest/';
     var jdl_url = '/get_wadl_json/';
     var form_upload_url = '/form_upload/';
     var job_list_url = '/client/job_list';
