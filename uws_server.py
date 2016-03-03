@@ -286,7 +286,7 @@ def job_definition():
     jobname = request.query.get('jobname', '')
     if request.query.get('msg', '') == 'new':
         msg = 'New job definition has been saved as {}'.format(jobname)
-        return {'jobname': jobname, 'message': msg}
+        return {'session': session, 'jobname': jobname, 'message': msg}
     return {'session': session, 'jobname': jobname}
 
 
@@ -294,7 +294,6 @@ def job_definition():
 def create_new_job_definition():
     """Use filled form to create a WADL file for the given job"""
     aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
-    session = request.environ['beaker.session']
     # Read form
     keys = request.forms.keys()
     jobname = request.forms.get('name').split('/')[-1]

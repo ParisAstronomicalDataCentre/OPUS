@@ -228,7 +228,7 @@ class Job(object):
                         rvalue = rvalue.split('/')[-1]
             else:
                 rvalue = rdict['default']
-            params.append(rname + '=\"' + rvalue + '\"')
+                params.append(rname + '=\"' + rvalue + '\"')
         # Other parameters
         params.append('# Other parameters')
         for pname, pdict in self.wadl['parameters'].iteritems():
