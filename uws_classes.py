@@ -217,7 +217,7 @@ class Job(object):
                 if 'file://' in pvalue:
                     pvalue = pvalue.split('/')[-1]
                     files['form'].append(pvalue)
-            params.append(pname + '=' + pvalue)
+            params.append(pname + '=\"' + pvalue + '\"')
         # Results
         params.append('# Results')
         for rname, rdict in self.wadl['results'].iteritems():
@@ -226,14 +226,14 @@ class Job(object):
                 if 'file://' in rvalue:
                     if get_files:
                         rvalue = rvalue.split('/')[-1]
-                params.append(rname + '=' + rvalue)
             else:
-                params.append(rname + '=' + rdict['default'])
+                rvalue = rdict['default']
+            params.append(rname + '=\"' + rvalue + '\"')
         # Other parameters
         params.append('# Other parameters')
         for pname, pdict in self.wadl['parameters'].iteritems():
             if (pname not in self.parameters) and (pname not in self.results):
-                params.append(pname + '=' + pdict['default'])
+                params.append(pname + '=\"' + pdict['default'] + '\"')
         # Return list of bash variables
         if get_files:
             return separator.join(params), files
