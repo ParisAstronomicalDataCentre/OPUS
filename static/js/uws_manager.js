@@ -502,9 +502,8 @@ var uws_manager = (function($) {
                     $.ajax({
                         url : r_url,
                         dataType: "text",
+                        async: false,  # makes request synchronous
                         success : function (txt) {
-                            console.log(r_id);
-                            console.log(txt);
                             $('#'+r_id+' div.panel-body textarea').html(txt);
                         }
                     });
