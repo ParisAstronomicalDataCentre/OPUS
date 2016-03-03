@@ -31,7 +31,7 @@ session_opts = {
     'session.validate_key': True,
 }
 
-aaa = Cork('example_conf')
+aaa = Cork('cork_conf')
 
 
 # ----------
