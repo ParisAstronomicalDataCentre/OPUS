@@ -503,6 +503,7 @@ var uws_manager = (function($) {
                         url : r_url,
                         dataType: "text",
                         success : function (txt) {
+                            console.log(txt);
                             $('#'+r_id+' div.panel-body textarea').html(txt);
                         }
                     });
