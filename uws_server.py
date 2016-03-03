@@ -262,6 +262,7 @@ def job_edit(jobname, jobid):
     """Job edit page"""
     logger.info(jobname + ' ' + jobid)
     aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
+    session = request.environ['beaker.session']
     return {'session': session, 'jobname': jobname, 'jobid': jobid}
 
 
