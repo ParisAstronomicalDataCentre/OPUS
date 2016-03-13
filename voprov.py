@@ -54,13 +54,13 @@ def job2prov(job):
     pdoc.wasAssociatedWith(ctbin, 'cta:consortium')
     # Entities, in and out with relations
     e_in = []
-    for pname, pdict in job.wadl.parameters.iteritems():
+    for pname, pdict in job.wadl['parameters'].iteritems():
         if pname.startswith('in'):
             e_in.append(pdoc.entity('uwsdata:parameters/' + pname))
             # TODO: use publisher_did? add prov attributes, add voprov attributes?
             ctbin.used(e_in[-1])
     e_out = []
-    for rname, rdict in job.wadl.results.iteritems():
+    for rname, rdict in job.wadl['results'].iteritems():
         e_out.append(pdoc.entity('uwsdata:results/' + rname))
         # TODO: use publisher_did? add prov attributes, add voprov attributes?
         e_out[-1].wasGeneratedBy(ctbin)
