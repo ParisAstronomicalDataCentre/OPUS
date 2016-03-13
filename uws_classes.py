@@ -14,6 +14,7 @@ import xml.etree.ElementTree as ETree
 import uws_jdl
 import storage
 import managers
+import voprov
 from settings import *
 
 
@@ -447,6 +448,15 @@ class Job(object):
                         logger.info('add result ' + rname + ' ' + str(r))
                 # Set job.end_time
                 job.end_time = now.strftime(DT_FMT)
+                # Create Provenance file (added as a result)
+                pdoc = voprov.job2prov(job)
+                rname = 'provenance'
+                rfname = 'provenance.xml'
+                pdoc.serialize('{}/{}/results/{}'.format(JOBDATA_PATH, job.jobid, rfname), format='xml')
+                url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
+                job.results[rname] = {'url': url, 'mediaType': 'text/xml'}
+                logger.info('add provenance file to results')
+
 
             def phase_error(job, error_msg):
                 # Set job.end_time if not already in ERROR phase

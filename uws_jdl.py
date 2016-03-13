@@ -13,6 +13,29 @@ from settings import *
 
 
 # ---------
+# job_def structure (class?)
+
+# job_def = {
+#     'description': description,
+#     'parameters': parameters,
+#     'results': results,
+#     'executionduration': execdur,
+#     'quote': quote
+# }
+# parameters[pname] = {
+#     'type': p.get('type'),
+#     'required': p.get('required'),
+#     'default': p.get('default'),
+#     'description': list(p)[0].text,
+# }
+# results[r.get('value')] = {
+#     'mediaType': r.get('mediaType'),
+#     'default': r.get('default'),
+#     'description': list(r)[0].text,
+# }
+
+
+# ---------
 # WADL as Job Description Language
 
 # xmlns = '{http://wadl.dev.java.net/2009/02}'
@@ -145,6 +168,11 @@ def create_wadl(jobname, job_def):
     quote_block = wadl_tree.find(".//{}representation[@id='quote']".format(xmlns))
     quote_block.set('default', job_def['quote'])
     return ETree.tostring(wadl_tree, pretty_print=True)
+
+
+
+# ---------
+# Import PAR files (ftools, ctools)
 
 
 def read_par(jobname):
