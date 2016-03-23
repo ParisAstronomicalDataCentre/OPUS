@@ -366,7 +366,7 @@ def validate_job_definition(jobname):
     """Use filled form to create a WADL file for the given job"""
     aaa.require(role='admin', fail_redirect='/config/job_definition?jobname=new/{}&msg=restricted'.format(jobname))
     # Copy script and wadl from new
-
+    # TODO: copy from new/
     # Copy script to job manager
     manager = managers.__dict__[MANAGER]()
     manager.cp_script(jobname)
