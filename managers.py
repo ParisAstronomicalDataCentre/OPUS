@@ -55,6 +55,11 @@ class Manager(object):
 
     def get_results(self, job):
         """Get job results from cluster"""
+        pass
+
+    def cp_script(self, jobname):
+        """Copy job script to cluster"""
+        pass
 
 
 class SLURMManager(Manager):
@@ -312,5 +317,13 @@ class SLURMManager(Manager):
         cmd = ['scp', '-rp',
                '{}:{}/jobdata/{}'.format(self.ssh_arg, SLURM_HOME_PATH, job.jobid),
                JOBDATA_PATH]
+        logger.debug(' '.join(cmd))
+        sp.check_output(cmd, stderr=sp.STDOUT)
+
+    def cp_script(self, jobname):
+        """Copy job script to SLURM server"""
+        cmd = ['scp',
+               '{}/{}.sh'.format(SCRIPT_PATH, jobname),
+               '{}:{}/{}.sh'.format(self.ssh_arg, self.scripts_path, jobname)]
         logger.debug(' '.join(cmd))
         sp.check_output(cmd, stderr=sp.STDOUT)
