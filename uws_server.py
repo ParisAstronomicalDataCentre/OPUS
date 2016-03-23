@@ -374,7 +374,7 @@ def validate_job_definition(jobname):
     redirect('/config/job_definition?jobname={}&msg=validated'.format(jobname), 303)
 
 @app.get('/config/cp_script/<jobname>')
-def update_job_definition(jobname):
+def cp_script(jobname):
     """Use filled form to create a WADL file for the given job"""
     aaa.require(role='admin', fail_redirect='/config/job_definition?jobname={}&msg=restricted'.format(jobname))
     # Copy script to job manager

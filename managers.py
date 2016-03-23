@@ -74,7 +74,7 @@ class SLURMManager(Manager):
         self.mail = mail
         self.ssh_arg = user + '@' + host
         # PATHs
-        self.scripts_path = '{}/job_def/scripts'.format(home)
+        self.scripts_path = '{}/scripts'.format(home)
         self.jobdata_path = jobdata_path
         self.workdir_path = workdir_path
 
