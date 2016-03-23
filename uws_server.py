@@ -371,17 +371,17 @@ def validate_job_definition(jobname):
     manager = managers.__dict__[MANAGER]()
     manager.cp_script(jobname)
     # Redirect to job_definition with message
-    redirect('/config/job_definition?jobname=new/{}&msg=validated'.format(jobname), 303)
+    redirect('/config/job_definition?jobname={}&msg=validated'.format(jobname), 303)
 
 @app.get('/config/cp_script/<jobname>')
 def update_job_definition(jobname):
     """Use filled form to create a WADL file for the given job"""
-    aaa.require(role='admin', fail_redirect='/config/job_definition?jobname=new/{}&msg=restricted'.format(jobname))
+    aaa.require(role='admin', fail_redirect='/config/job_definition?jobname={}&msg=restricted'.format(jobname))
     # Copy script to job manager
     manager = managers.__dict__[MANAGER]()
     manager.cp_script(jobname)
     # Redirect to job_definition with message
-    redirect('/config/job_definition?jobname=new/{}&msg=script_copied'.format(jobname), 303)
+    redirect('/config/job_definition?jobname={}&msg=script_copied'.format(jobname), 303)
 
 
 # ----------
