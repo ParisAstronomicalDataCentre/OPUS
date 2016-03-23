@@ -289,7 +289,7 @@ def job_definition():
         'new': 'New job definition has been saved as {}'.format(jobname),
         'restricted': 'Access is restricted to administrators',
         'script_copied': 'Job script {}.sh has been copied to work cluster'.format(jobname),
-        'updated': 'Job definition for {jn} have been updated using new/{jn}'.format(jn=jobname),
+        'validated': 'Job definition for new/{jn} has been validated and renamed {jn}'.format(jn=jobname),
     }
     if msg_text.has_key(msg):
         return {'session': session, 'jobname': jobname, 'message': msg_text[msg]}
@@ -299,7 +299,8 @@ def job_definition():
 @app.post('/config/job_definition')
 def create_new_job_definition():
     """Use filled form to create a WADL file for the given job"""
-    aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
+    # no need to authenticate, users can propose new jobs that will be validated
+    #aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
     # Read form
     keys = request.forms.keys()
     jobname = request.forms.get('name').split('/')[-1]
@@ -359,8 +360,8 @@ def create_new_job_definition():
     # Back to filled form
     redirect('/config/job_definition?jobname=new/{}&msg=new'.format(jobname), 303)
 
-@app.get('/config/update_job/<jobname>')
-def update_job_definition(jobname):
+@app.get('/config/validate_job/<jobname>')
+def validate_job_definition(jobname):
     """Use filled form to create a WADL file for the given job"""
     aaa.require(role='admin', fail_redirect='/config/job_definition?jobname=new/{}&msg=restricted'.format(jobname))
     # Copy script and wadl from new
@@ -369,7 +370,7 @@ def update_job_definition(jobname):
     manager = managers.__dict__[MANAGER]()
     manager.cp_script(jobname)
     # Redirect to job_definition with message
-    redirect('/config/job_definition?jobname=new/{}&msg=updated'.format(jobname), 303)
+    redirect('/config/job_definition?jobname=new/{}&msg=validated'.format(jobname), 303)
 
 @app.get('/config/cp_script/<jobname>')
 def update_job_definition(jobname):
