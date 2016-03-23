@@ -284,9 +284,15 @@ def job_definition():
     aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
     session = request.environ['beaker.session']
     jobname = request.query.get('jobname', '')
-    if request.query.get('msg', '') == 'new':
-        msg = 'New job definition has been saved as {}'.format(jobname)
-        return {'session': session, 'jobname': jobname, 'message': msg}
+    msg = request.query.get('msg', '')
+    msg_text = {
+        'new': 'New job definition has been saved as {}'.format(jobname),
+        'restricted': 'Access is restricted to administrators',
+        'script_copied': 'Job script {}.sh has been copied to work cluster'.format(jobname),
+        'updated': 'Job definition for {jn} have been updated using new/{jn}'.format(jn=jobname),
+    }
+    if msg_text.has_key(msg):
+        return {'session': session, 'jobname': jobname, 'message': msg_text[msg]}
     return {'session': session, 'jobname': jobname}
 
 
@@ -352,6 +358,28 @@ def create_new_job_definition():
         # TODO: send to work cluster?
     # Back to filled form
     redirect('/config/job_definition?jobname=new/{}&msg=new'.format(jobname), 303)
+
+@app.get('/config/update_job/<jobname>')
+def update_job_definition(jobname):
+    """Use filled form to create a WADL file for the given job"""
+    aaa.require(role='admin', fail_redirect='/config/job_definition?jobname=new/{}&msg=restricted'.format(jobname))
+    # Copy script and wadl from new
+
+    # Copy script to job manager
+    manager = managers.__dict__[MANAGER]()
+    manager.cp_script(jobname)
+    # Redirect to job_definition with message
+    redirect('/config/job_definition?jobname=new/{}&msg=updated'.format(jobname), 303)
+
+@app.get('/config/cp_script/<jobname>')
+def update_job_definition(jobname):
+    """Use filled form to create a WADL file for the given job"""
+    aaa.require(role='admin', fail_redirect='/config/job_definition?jobname=new/{}&msg=restricted'.format(jobname))
+    # Copy script to job manager
+    manager = managers.__dict__[MANAGER]()
+    manager.cp_script(jobname)
+    # Redirect to job_definition with message
+    redirect('/config/job_definition?jobname=new/{}&msg=script_copied'.format(jobname), 303)
 
 
 # ----------
