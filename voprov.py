@@ -41,11 +41,11 @@ def job2prov(job):
     pdoc = ProvDocument()
     # Declaring namespaces for various prefixes used in the example
     pdoc.add_namespace('prov', 'http://www.w3.org/ns/prov#')
-    pdoc.add_namespace('voprov', 'http://www.ivoa.net/ns/voprov/')
-    pdoc.add_namespace('cta', 'http://www.cta-observatory.org/ns/cta')
+    pdoc.add_namespace('voprov', 'http://www.ivoa.net/ns/voprov#')
+    pdoc.add_namespace('cta', 'http://www.cta-observatory.org#')
     pdoc.add_namespace('ctadata', 'ivo://vopdc.obspm/cta#')
     pdoc.add_namespace('uwsdata', 'https://voparis-uws-test.obspm.fr/rest/' + job.jobname + '/' + job.jobid + '/')
-    pdoc.add_namespace('ctajobs', 'http://www.cta-observatory.org/ns/jobs')
+    pdoc.add_namespace('ctajobs', 'http://www.cta-observatory.org/ns/jobs#')
     # Adding an activity
     ctbin = pdoc.activity('ctajobs:' + job.jobname, job.start_time, job.end_time)
     # TODO: add job description, version, url, ...

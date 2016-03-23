@@ -161,6 +161,7 @@ class Job(object):
                     if 'anyURI' in ptype:
                         byref = True
                 self.parameters[pname] = {'value': value, 'byref': byref}
+        # TODO: add default parameters values from WADL
         # Upload files for multipart/form-data
         for fname, f in files.iteritems():
             upload_dir = '{}/{}'.format(UPLOAD_PATH, self.jobid)
