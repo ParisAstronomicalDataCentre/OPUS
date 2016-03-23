@@ -281,7 +281,8 @@ def job_form(jobname):
 def job_definition():
     """Show form for new job definition"""
     logger.info('')
-    aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
+    # no need to authenticate, users can propose new jobs that will be validated
+    #aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
     session = request.environ['beaker.session']
     jobname = request.query.get('jobname', '')
     msg = request.query.get('msg', '')
