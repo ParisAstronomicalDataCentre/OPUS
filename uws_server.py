@@ -242,14 +242,18 @@ def change_password():
     aaa.require(role='admin', fail_redirect='/?msg=restricted')
     return dict()
 
-
 @app.post('/accounts/change_password')
 def change_password():
     """Change password"""
     #aaa.reset_password(post_get('reset_code'), post_get('password'))
     user = aaa.user(post_get('username'))
-    user.update(pwd=post_get('password'))
-    return 'Thanks. <a href="/accounts/admin">Go to login</a>'
+    if post_get('password'):
+        user.update(pwd=post_get('password'))
+    if post_get('role'):
+        user.update(role=post_get('role'))
+    if post_get('email'):
+        user.update(email_addr=post_get('email'))
+    return 'Thanks. <a href="/accounts/admin">Go to admin page</a>'
 
 
 # ----------

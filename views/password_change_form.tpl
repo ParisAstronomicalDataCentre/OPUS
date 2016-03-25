@@ -6,9 +6,13 @@
     <h2>Password change</h2>
     <p>Please insert new password:</p>
     <form action="/accounts/change_password" method="post">
-        <input type="text" name="username" />
-        <input type="password" name="password" />
-
+        username: <input type="text" name="username" />
+        <br/>
+        role: <input type="text" name="role" />
+        <br/>
+        email: <input type="text" name="email" />
+        <br/>
+        password: <input type="password" name="password" />
         <br/><br/>
         <button type="submit" > OK </button>
         <button type="button" class="close"> Cancel </button>
