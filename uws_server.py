@@ -155,6 +155,7 @@ def abort_500_except(msg=None):
 # ----------
 # Manage user accounts
 
+
 @app.route('/accounts/login')
 @jinja2_view('login_form.html')
 def login_form():
@@ -168,16 +169,20 @@ def login_form():
         return {'next': next, 'message': msg_text[msg]}
     return {'next': next}
 
+
 @app.route('/sorry_page')
 def sorry_page():
     """Serve sorry page"""
     return '<p>Sorry, you are not authorized to perform this action</p>'
 
+
 def postd():
     return request.forms
 
+
 def post_get(name, default=''):
     return request.POST.get(name, default).strip()
+
 
 @app.post('/accounts/login')
 def login():
@@ -187,9 +192,11 @@ def login():
     next = post_get('next')
     aaa.login(username, password, success_redirect=next, fail_redirect='/accounts/login?msg=failed')
 
+
 @app.route('/accounts/logout')
 def logout():
     aaa.logout(success_redirect='/')
+
 
 @app.route('/accounts/admin')
 @view('admin_page')
@@ -202,6 +209,7 @@ def admin():
         roles=aaa.list_roles()
     )
 
+
 @app.post('/accounts/create_user')
 def create_user():
     try:
@@ -209,6 +217,7 @@ def create_user():
         return dict(ok=True, msg='')
     except Exception, e:
         return dict(ok=False, msg=e.message)
+
 
 @app.post('/accounts/delete_user')
 def delete_user():
@@ -219,6 +228,7 @@ def delete_user():
         print repr(e)
         return dict(ok=False, msg=e.message)
 
+
 @app.post('/accounts/create_role')
 def create_role():
     try:
@@ -226,6 +236,7 @@ def create_role():
         return dict(ok=True, msg='')
     except Exception, e:
         return dict(ok=False, msg=e.message)
+
 
 @app.post('/accounts/delete_role')
 def delete_role():
@@ -235,12 +246,14 @@ def delete_role():
     except Exception, e:
         return dict(ok=False, msg=e.message)
 
+
 @app.route('/accounts/change_password')
 @view('password_change_form')
 def change_password():
     """Show password change form"""
     aaa.require(role='admin', fail_redirect='/?msg=restricted')
     return dict()
+
 
 @app.post('/accounts/change_password')
 def change_password():
@@ -314,6 +327,9 @@ def job_definition():
     logger.info('')
     # no need to authenticate, users can propose new jobs that will be validated
     #aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
+    isadmin = False
+    if aaa.current_user.role == 'admin':
+        isadmin = True
     session = request.environ['beaker.session']
     jobname = request.query.get('jobname', '')
     msg = request.query.get('msg', '')
@@ -325,8 +341,8 @@ def job_definition():
         'notfound': 'Job definition for new/{jn} was not found on the server. Cannot validate.'.format(jn=jobname),
     }
     if msg_text.has_key(msg):
-        return {'session': session, 'jobname': jobname, 'message': msg_text[msg]}
-    return {'session': session, 'jobname': jobname}
+        return {'session': session, 'isadmin': isadmin, 'jobname': jobname, 'message': msg_text[msg]}
+    return {'session': session, 'isadmin': isadmin, 'jobname': jobname}
 
 
 @app.post('/config/job_definition')

@@ -269,6 +269,14 @@
         // Add event functions
         $('#load_wadl').click( function() { load_wadl(); });
         $('#get_wadl').click( function() { get_wadl(); });
+        $('#validate_job').click( function() {
+            jobname = $('input[name=name]').split("/").pop();
+            location.href = '/config/validate_job/' + jobname;
+        });
+        $('#cp_script').click( function() {
+            jobname = $('input[name=name]').split("/").pop();
+            location.href = '/config/cp_script/' + jobname;
+        });
         $('#add_parameter').click( function() { add_parameter(); });
         $('#remove_last_parameter').click( function() { remove_last_parameter(); });
         $('#remove_all_parameters').click( function() { remove_all_parameters(); });

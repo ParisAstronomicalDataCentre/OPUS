@@ -13,10 +13,18 @@
 {% block content %}
     <div class="container bs-docs-container">
         <div id="new_job_form" class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">
-                    Job Definition
-                </h3>
+            <div class="panel-heading clearfix">
+{% if is_admin %}
+                <div class="btn-group pull-right">
+                    <button id="validate_job" type="button" class="actions btn btn-default">
+                        Validate Job
+                    </button>
+                    <button id="cp_script" type="button" class="actions btn btn-default">
+                        Copy script
+                    </button>
+                </div>
+{% endif %}
+                <span class="panel-title pull-left" style="padding-top: 6px; padding-right: 6px;">Job Definition</span>
             </div>
             <div class="panel-body">
                 <form action="/config/job_definition" method="post" class="form-horizontal">
