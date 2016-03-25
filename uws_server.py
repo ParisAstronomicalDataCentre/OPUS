@@ -420,13 +420,13 @@ def validate_job_definition(jobname):
     wadl_dst = '{}/{}.wadl'.format(WADL_PATH, jobname)
     script_src = '{}/new/{}.sh'.format(SCRIPT_PATH, jobname)
     script_dst = '{}/{}.sh'.format(SCRIPT_PATH, jobname)
-    now = dt.datetime.fromtimestamp(os.path.getmtime('pgadmin.log')).isoformat()
+    mt = dt.datetime.fromtimestamp(os.path.getmtime(wadl_dst)).isoformat()
     # Copy from new/
     if os.path.isfile(wadl_src):
         if os.path.isfile(wadl_dst):
             # save file with time stamp
             wadl_dst_elts = list(os.path.splitext(wadl_dst))
-            wadl_dst_elts.insert(1, '_' + now)
+            wadl_dst_elts.insert(1, '_' + mt)
             wadl_dst_save = ''.join(wadl_dst_elts)
             os.rename(wadl_dst, wadl_dst_save)
             logger.info('Previous job wadl renamed: ' + wadl_dst_save)
@@ -439,7 +439,7 @@ def validate_job_definition(jobname):
         if os.path.isfile(script_dst):
             # save file with time stamp
             script_dst_elts = list(os.path.splitext(script_dst))
-            script_dst_elts.insert(1, '_' + now)
+            script_dst_elts.insert(1, '_' + mt)
             script_dst_save = ''.join(script_dst_elts)
             os.rename(script_dst, script_dst_save)
             logger.info('Previous job script renamed: ' + script_dst_save)
