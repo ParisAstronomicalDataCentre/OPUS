@@ -237,7 +237,7 @@ def delete_role():
 
 @app.route('/accounts/change_password')
 @view('password_change_form')
-def change_password(reset_code):
+def change_password():
     """Show password change form"""
     aaa.require(role='admin', fail_redirect='/?msg=restricted')
     return dict(reset_code=reset_code)
