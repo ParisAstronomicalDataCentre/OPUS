@@ -240,7 +240,7 @@ def delete_role():
 def change_password():
     """Show password change form"""
     aaa.require(role='admin', fail_redirect='/?msg=restricted')
-    return dict(reset_code=reset_code)
+    return dict()
 
 
 @app.post('/accounts/change_password')
