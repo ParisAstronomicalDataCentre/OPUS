@@ -9,7 +9,8 @@ See http://www.ivoa.net/documents/UWS/20101010/REC-UWS-1.0-20101010.html
 @author: mservillat
 """
 
-import os
+import os, shutil
+import datetime as dt
 import traceback
 import uuid
 from subprocess import CalledProcessError
@@ -154,6 +155,18 @@ def abort_500_except(msg=None):
 # ----------
 # Manage user accounts
 
+@app.route('/accounts/login')
+@jinja2_view('login_form.html')
+def login_form():
+    """Serve login form"""
+    next = request.query.next or '/'
+    return {'next': next}
+
+@app.route('/sorry_page')
+def sorry_page():
+    """Serve sorry page"""
+    return '<p>Sorry, you are not authorized to perform this action</p>'
+
 def postd():
     return request.forms
 
@@ -216,19 +229,18 @@ def delete_role():
     except Exception, e:
         return dict(ok=False, msg=e.message)
 
-
-@app.route('/accounts/login')
-@jinja2_view('login_form.html')
-def login_form():
-    """Serve login form"""
-    next = request.query.next or '/'
-    return {'next': next}
+@app.route('/change_password/:reset_code')
+@view('password_change_form')
+def change_password(reset_code):
+    """Show password change form"""
+    return dict(reset_code=reset_code)
 
 
-@app.route('/sorry_page')
-def sorry_page():
-    """Serve sorry page"""
-    return '<p>Sorry, you are not authorized to perform this action</p>'
+@app.post('/change_password')
+def change_password():
+    """Change password"""
+    aaa.reset_password(post_get('reset_code'), post_get('password'))
+    return 'Thanks. <a href="/login">Go to login</a>'
 
 
 # ----------
@@ -291,6 +303,7 @@ def job_definition():
         'restricted': 'Access is restricted to administrators',
         'script_copied': 'Job script {}.sh has been copied to work cluster'.format(jobname),
         'validated': 'Job definition for new/{jn} has been validated and renamed {jn}'.format(jn=jobname),
+        'notfound': 'Job definition for new/{jn} was not found on the server. Cannot validate.'.format(jn=jobname),
     }
     if msg_text.has_key(msg):
         return {'session': session, 'jobname': jobname, 'message': msg_text[msg]}
@@ -364,22 +377,66 @@ def create_new_job_definition():
 @app.get('/config/validate_job/<jobname>')
 def validate_job_definition(jobname):
     """Use filled form to create a WADL file for the given job"""
+    # Restrict access to admin
     aaa.require(role='admin', fail_redirect='/config/job_definition?jobname=new/{}&msg=restricted'.format(jobname))
     # Copy script and wadl from new
-    # TODO: copy from new/
+    wadl_src = '{}/new/{}.wadl'.format(WADL_PATH, jobname)
+    wadl_dst = '{}/{}.wadl'.format(WADL_PATH, jobname)
+    script_src = '{}/new/{}.sh'.format(SCRIPT_PATH, jobname)
+    script_dst = '{}/{}.sh'.format(SCRIPT_PATH, jobname)
+    now = dt.datetime.fromtimestamp(os.path.getmtime('pgadmin.log')).isoformat()
+    # Copy from new/
+    if os.path.isfile(wadl_src):
+        if os.path.isfile(wadl_dst):
+            # save file with time stamp
+            wadl_dst_elts = list(os.path.splitext(wadl_dst))
+            wadl_dst_elts.insert(1, '_' + now)
+            wadl_dst_save = ''.join(wadl_dst_elts)
+            os.rename(wadl_dst, wadl_dst_save)
+            logger.info('Previous job wadl renamed: ' + wadl_dst_save)
+        shutil.copy(wadl_src, wadl_dst)
+        logger.info('New job wadl copied: ' + wadl_dst)
+    else:
+        logger.info('No job wadl found for validation: ' + wadl_src)
+        redirect('/config/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
+    if os.path.isfile(script_src):
+        if os.path.isfile(script_dst):
+            # save file with time stamp
+            script_dst_elts = list(os.path.splitext(script_dst))
+            script_dst_elts.insert(1, '_' + now)
+            script_dst_save = ''.join(script_dst_elts)
+            os.rename(script_dst, script_dst_save)
+            logger.info('Previous job script renamed: ' + script_dst_save)
+        shutil.copy(script_src, script_dst)
+        logger.info('New job script copied: ' + wadl_dst)
+    else:
+        logger.info('No job script found for validation: ' + wadl_src)
+        redirect('/config/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
     # Copy script to job manager
-    manager = managers.__dict__[MANAGER]()
-    manager.cp_script(jobname)
+    if os.path.isfile(script_dst):
+        manager = managers.__dict__[MANAGER]()
+        manager.cp_script(jobname)
+        logger.info('Job script copied to work cluster: ' + jobname)
+    else:
+        logger.info('No job script found for job: ' + jobname)
+        redirect('/config/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
     # Redirect to job_definition with message
     redirect('/config/job_definition?jobname={}&msg=validated'.format(jobname), 303)
 
 @app.get('/config/cp_script/<jobname>')
 def cp_script(jobname):
     """Use filled form to create a WADL file for the given job"""
+    # Restrict access to admin
     aaa.require(role='admin', fail_redirect='/config/job_definition?jobname={}&msg=restricted'.format(jobname))
     # Copy script to job manager
-    manager = managers.__dict__[MANAGER]()
-    manager.cp_script(jobname)
+    script_dst = '{}/{}.sh'.format(SCRIPT_PATH, jobname)
+    if os.path.isfile(script_dst):
+        manager = managers.__dict__[MANAGER]()
+        manager.cp_script(jobname)
+        logger.info('Job script copied to work cluster: ' + jobname)
+    else:
+        logger.info('No job script found for job: ' + jobname)
+        redirect('/config/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
     # Redirect to job_definition with message
     redirect('/config/job_definition?jobname={}&msg=script_copied'.format(jobname), 303)
 
