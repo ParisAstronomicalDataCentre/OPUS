@@ -7,7 +7,6 @@
     <p>Please insert your new password:</p>
     <form action="/accounts/change_password" method="post">
         <input type="password" name="password" />
-        <input type="hidden" name="reset_code" value="{{reset_code}}" />
 
         <br/><br/>
         <button type="submit" > OK </button>
