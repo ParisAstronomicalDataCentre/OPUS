@@ -8,11 +8,11 @@
     <form action="/accounts/change_password" method="post">
         username: <input type="text" name="username" />
         <br/>
+        password: <input type="password" name="password" />
+        <br/>
         role: <input type="text" name="role" />
         <br/>
         email: <input type="text" name="email" />
-        <br/>
-        password: <input type="password" name="password" />
         <br/><br/>
         <button type="submit" > OK </button>
         <button type="button" class="close"> Cancel </button>
