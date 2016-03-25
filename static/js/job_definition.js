@@ -271,11 +271,11 @@
         $('#get_wadl').click( function() { get_wadl(); });
         $('#validate_job').click( function() {
             jobname = $('input[name=name]').split("/").pop();
-            location.href = '/config/validate_job/' + jobname;
+            window.location = '/config/validate_job/' + jobname;
         });
         $('#cp_script').click( function() {
             jobname = $('input[name=name]').split("/").pop();
-            location.href = '/config/cp_script/' + jobname;
+            window.location = '/config/cp_script/' + jobname;
         });
         $('#add_parameter').click( function() { add_parameter(); });
         $('#remove_last_parameter').click( function() { remove_last_parameter(); });
