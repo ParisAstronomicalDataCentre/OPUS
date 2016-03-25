@@ -246,8 +246,10 @@ def change_password():
 @app.post('/accounts/change_password')
 def change_password():
     """Change password"""
-    aaa.reset_password(post_get('reset_code'), post_get('password'))
-    return 'Thanks. <a href="/login">Go to login</a>'
+    #aaa.reset_password(post_get('reset_code'), post_get('password'))
+    user = aaa.user(post_get('username'))
+    user.update(pwd=post_get('password'))
+    return 'Thanks. <a href="/accounts/admin">Go to login</a>'
 
 
 # ----------

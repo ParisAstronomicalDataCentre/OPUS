@@ -4,8 +4,9 @@
 <meta content="text/html; charset=utf-8" http-equiv="content-type">
 <div class="box">
     <h2>Password change</h2>
-    <p>Please insert your new password:</p>
+    <p>Please insert new password:</p>
     <form action="/accounts/change_password" method="post">
+        <input type="text" name="username" />
         <input type="password" name="password" />
 
         <br/><br/>
