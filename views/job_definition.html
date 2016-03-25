@@ -9,13 +9,12 @@
 {% endblock %}
 {% block variables %}
     <div id="jobname" style="display:none" value="{{ jobname }}"></div>
-    <div id="isadmin" style="display:none" value="{{ isadmin }}"></div>
 {% endblock %}
 {% block content %}
     <div class="container bs-docs-container">
         <div id="new_job_form" class="panel panel-default">
             <div class="panel-heading clearfix">
-{% if is_admin %}
+{% if is_admin  %}
                 <div class="btn-group pull-right">
                     <button id="validate_job" type="button" class="actions btn btn-default">
                         Validate Job

@@ -327,9 +327,9 @@ def job_definition():
     logger.info('')
     # no need to authenticate, users can propose new jobs that will be validated
     #aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
-    isadmin = False
+    is_admin = False
     if aaa.current_user.role == 'admin':
-        isadmin = True
+        is_admin = True
     session = request.environ['beaker.session']
     jobname = request.query.get('jobname', '')
     msg = request.query.get('msg', '')
@@ -341,8 +341,8 @@ def job_definition():
         'notfound': 'Job definition for new/{jn} was not found on the server. Cannot validate.'.format(jn=jobname),
     }
     if msg_text.has_key(msg):
-        return {'session': session, 'isadmin': isadmin, 'jobname': jobname, 'message': msg_text[msg]}
-    return {'session': session, 'isadmin': isadmin, 'jobname': jobname}
+        return {'session': session, 'is_admin': is_admin, 'jobname': jobname, 'message': msg_text[msg]}
+    return {'session': session, 'is_admin': is_admin, 'jobname': jobname}
 
 
 @app.post('/config/job_definition')
