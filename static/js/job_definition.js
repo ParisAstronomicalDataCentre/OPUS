@@ -270,11 +270,11 @@
         $('#load_wadl').click( function() { load_wadl(); });
         $('#get_wadl').click( function() { get_wadl(); });
         $('#validate_job').click( function() {
-            jobname = $('input[name=name]').split("/").pop();
+            jobname = $('input[name=name]').val().split("/").pop();
             window.location = '/config/validate_job/' + jobname;
         });
         $('#cp_script').click( function() {
-            jobname = $('input[name=name]').split("/").pop();
+            jobname = $('input[name=name]').val().split("/").pop();
             window.location = '/config/cp_script/' + jobname;
         });
         $('#add_parameter').click( function() { add_parameter(); });
