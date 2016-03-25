@@ -9,6 +9,7 @@
 {% endblock %}
 {% block variables %}
     <div id="jobname" style="display:none" value="{{ jobname }}"></div>
+    <div id="isadmin" style="display:none" value="{{ isadmin }}"></div>
 {% endblock %}
 {% block content %}
     <div class="container bs-docs-container">
@@ -23,8 +24,10 @@
                         Copy script
                     </button>
                 </div>
-{% endif %}
                 <span class="panel-title pull-left" style="padding-top: 6px; padding-right: 6px;">Job Definition</span>
+{% else %}
+                <span class="panel-title">Job Definition</span>
+{% endif %}
             </div>
             <div class="panel-body">
                 <form action="/config/job_definition" method="post" class="form-horizontal">
