@@ -271,11 +271,17 @@
         $('#get_wadl').click( function() { get_wadl(); });
         $('#validate_job').click( function() {
             jobname = $('input[name=name]').val().split("/").pop();
-            window.location = '/config/validate_job/' + jobname;
+            if (jobname) {
+                window.location = '/config/validate_job/' + jobname;
+            };
+            console.log('no jobname given');
         });
         $('#cp_script').click( function() {
             jobname = $('input[name=name]').val().split("/").pop();
-            window.location = '/config/cp_script/' + jobname;
+            if (jobname) {
+                window.location = '/config/cp_script/' + jobname;
+            }
+            console.log('no jobname given');
         });
         $('#add_parameter').click( function() { add_parameter(); });
         $('#remove_last_parameter').click( function() { remove_last_parameter(); });
