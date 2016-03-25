@@ -421,7 +421,7 @@ def validate_job_definition(jobname):
     wadl_dst = '{}/{}.wadl'.format(WADL_PATH, jobname)
     script_src = '{}/new/{}.sh'.format(SCRIPT_PATH, jobname)
     script_dst = '{}/{}.sh'.format(SCRIPT_PATH, jobname)
-    # Copy from new/
+    # save, then copy from new/
     if os.path.isfile(wadl_src):
         if os.path.isfile(wadl_dst):
             # save file with time stamp
