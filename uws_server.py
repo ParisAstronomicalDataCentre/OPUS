@@ -328,8 +328,9 @@ def job_definition():
     # no need to authenticate, users can propose new jobs that will be validated
     #aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
     is_admin = False
-    if not aaa.user_is_anonymous() and aaa.current_user.role == 'admin':
-        is_admin = True
+    if not aaa.user_is_anonymous():
+        if aaa.current_user.role == 'admin':
+            is_admin = True
     session = request.environ['beaker.session']
     jobname = request.query.get('jobname', '')
     msg = request.query.get('msg', '')
