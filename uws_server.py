@@ -160,14 +160,14 @@ def abort_500_except(msg=None):
 @jinja2_view('login_form.html')
 def login_form():
     """Serve login form"""
-    next = request.query.next or '/'
+    next_page = request.query.get('next', '/')
     msg = request.query.get('msg', '')
     msg_text = {
         'failed': 'Authentication failed',
     }
-    if msg_text.has_key(msg):
-        return {'next': next, 'message': msg_text[msg]}
-    return {'next': next}
+    if msg in msg_text:
+        return {'next': next_page, 'message': msg_text[msg]}
+    return {'next': next_page}
 
 
 @app.route('/sorry_page')
@@ -189,8 +189,8 @@ def login():
     """Authenticate users"""
     username = post_get('username')
     password = post_get('password')
-    next = post_get('next')
-    aaa.login(username, password, success_redirect=next, fail_redirect='/accounts/login?msg=failed')
+    next_page = post_get('next')
+    aaa.login(username, password, success_redirect=next_page, fail_redirect='/accounts/login?msg=failed')
 
 
 @app.route('/accounts/logout')
@@ -282,7 +282,7 @@ def home():
     msg_text = {
         'restricted': 'Access is restricted to administrators',
     }
-    if msg_text.has_key(msg):
+    if msg in msg_text:
         return {'session': session, 'message': msg_text[msg]}
     return {'session': session}
     # response.content_type = 'text/html; charset=UTF-8'
@@ -341,7 +341,7 @@ def job_definition():
         'validated': 'Job definition for new/{jn} has been validated and renamed {jn}'.format(jn=jobname),
         'notfound': 'Job definition for new/{jn} was not found on the server. Cannot validate.'.format(jn=jobname),
     }
-    if msg_text.has_key(msg):
+    if msg in msg_text:
         return {'session': session, 'is_admin': is_admin, 'jobname': jobname, 'message': msg_text[msg]}
     return {'session': session, 'is_admin': is_admin, 'jobname': jobname}
 
@@ -410,6 +410,7 @@ def create_new_job_definition():
     # Back to filled form
     redirect('/config/job_definition?jobname=new/{}&msg=new'.format(jobname), 303)
 
+
 @app.get('/config/validate_job/<jobname>')
 def validate_job_definition(jobname):
     """Use filled form to create a WADL file for the given job"""
@@ -425,11 +426,9 @@ def validate_job_definition(jobname):
         if os.path.isfile(wadl_dst):
             # save file with time stamp
             mt = dt.datetime.fromtimestamp(os.path.getmtime(wadl_dst)).isoformat()
-            wadl_dst_elts = list(os.path.splitext(wadl_dst))
-            wadl_dst_elts.insert(1, '_' + mt)
-            wadl_dst_save = ''.join(wadl_dst_elts)
+            wadl_dst_save = '{}/saved/{}_{}.wadl'.format(WADL_PATH, jobname, mt)
             os.rename(wadl_dst, wadl_dst_save)
-            logger.info('Previous job wadl renamed: ' + wadl_dst_save)
+            logger.info('Previous job wadl saved: ' + wadl_dst_save)
         shutil.copy(wadl_src, wadl_dst)
         logger.info('New job wadl copied: ' + wadl_dst)
     else:
@@ -439,11 +438,9 @@ def validate_job_definition(jobname):
         if os.path.isfile(script_dst):
             # save file with time stamp
             mt = dt.datetime.fromtimestamp(os.path.getmtime(script_dst)).isoformat()
-            script_dst_elts = list(os.path.splitext(script_dst))
-            script_dst_elts.insert(1, '_' + mt)
-            script_dst_save = ''.join(script_dst_elts)
+            script_dst_save = '{}/saved/{}_{}.sh'.format(SCRIPT_PATH, jobname, mt)
             os.rename(script_dst, script_dst_save)
-            logger.info('Previous job script renamed: ' + script_dst_save)
+            logger.info('Previous job script saved: ' + script_dst_save)
         shutil.copy(script_src, script_dst)
         logger.info('New job script copied: ' + wadl_dst)
     else:
@@ -459,6 +456,7 @@ def validate_job_definition(jobname):
         redirect('/config/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
     # Redirect to job_definition with message
     redirect('/config/job_definition?jobname={}&msg=validated'.format(jobname), 303)
+
 
 @app.get('/config/cp_script/<jobname>')
 def cp_script(jobname):
