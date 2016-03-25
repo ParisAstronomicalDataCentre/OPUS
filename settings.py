@@ -11,7 +11,7 @@ import logging
 
 # Set debug mode, HTTP 500 Errors include traceback
 DEBUG = True
-LOG_FILE = 'app.log'
+LOG_FILE = 'logs/app.log'
 
 BASE_URL = 'http://localhost:8080'
 
