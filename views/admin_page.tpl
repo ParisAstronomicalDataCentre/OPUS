@@ -59,7 +59,7 @@
 
     <div id='status'><p>Ready.</p></div>
     <div id="urls">
-      <a href="/">index</a> <a href="/logout">logout</a>
+      <a href="/">index</a> <a href="/accounts/logout">logout</a>
     </div>
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
     <script>
