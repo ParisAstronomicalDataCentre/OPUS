@@ -160,6 +160,12 @@ def abort_500_except(msg=None):
 def login_form():
     """Serve login form"""
     next = request.query.next or '/'
+    msg = request.query.get('msg', '')
+    msg_text = {
+        'failed': 'Authentication failed',
+    }
+    if msg_text.has_key(msg):
+        return {'next': next, 'message': msg_text[msg]}
     return {'next': next}
 
 @app.route('/sorry_page')
@@ -179,7 +185,7 @@ def login():
     username = post_get('username')
     password = post_get('password')
     next = post_get('next')
-    aaa.login(username, password, success_redirect=next, fail_redirect='/accounts/login')
+    aaa.login(username, password, success_redirect=next, fail_redirect='/accounts/login?msg=failed')
 
 @app.route('/accounts/logout')
 def logout():
@@ -189,7 +195,7 @@ def logout():
 @view('admin_page')
 def admin():
     """Only admin users can see this"""
-    aaa.require(role='admin', fail_redirect='/sorry_page')
+    aaa.require(role='admin', fail_redirect='/?msg=restricted')
     return dict(
         current_user=aaa.current_user,
         users=aaa.list_users(),
@@ -229,14 +235,14 @@ def delete_role():
     except Exception, e:
         return dict(ok=False, msg=e.message)
 
-@app.route('/change_password/:reset_code')
+@app.route('/accounts/change_password/:reset_code')
 @view('password_change_form')
 def change_password(reset_code):
     """Show password change form"""
     return dict(reset_code=reset_code)
 
 
-@app.post('/change_password')
+@app.post('/accounts/change_password')
 def change_password():
     """Change password"""
     aaa.reset_password(post_get('reset_code'), post_get('password'))
@@ -252,6 +258,12 @@ def change_password():
 def home():
     """Home page"""
     session = request.environ['beaker.session']
+    msg = request.query.get('msg', '')
+    msg_text = {
+        'restricted': 'Access is restricted to administrators',
+    }
+    if msg_text.has_key(msg):
+        return {'session': session, 'message': msg_text[msg]}
     return {'session': session}
     # response.content_type = 'text/html; charset=UTF-8'
     # return "UWS v1.0 server implementation<br>(c) Observatoire de Paris 2015"

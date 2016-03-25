@@ -5,7 +5,7 @@
 <div class="box">
     <h2>Password change</h2>
     <p>Please insert your new password:</p>
-    <form action="/change_password" method="post">
+    <form action="/accounts/change_password" method="post">
         <input type="password" name="password" />
         <input type="hidden" name="reset_code" value="{{reset_code}}" />
 
