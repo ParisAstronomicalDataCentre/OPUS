@@ -8,7 +8,7 @@ sys.path.append(curdir)
 os.chdir(curdir)
 
 import bottle
-import uws_server
+from uws_server import uws_server
 
 # Do NOT use bottle.run() with mod_wsgi
 application = uws_server.app
