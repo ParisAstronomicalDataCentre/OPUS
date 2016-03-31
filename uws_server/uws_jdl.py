@@ -38,12 +38,14 @@ from settings import *
 # ---------
 # WADL as Job Description Language
 
+
 # xmlns = '{http://wadl.dev.java.net/2009/02}'
 xmlns_uris = {'xmlns:wadl': 'http://wadl.dev.java.net/2009/02',
               'xmlns:uws': 'http://www.ivoa.net/xml/UWS/v1.0',
               'xmlns:xlink': 'http://www.w3.org/1999/xlink',
               'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
               'xsi:schemaLocation': 'http://wadl.dev.java.net/2009/02 http://www.w3.org/Submission/wadl/wadl.xsd'}
+
 
 def read_wadl(jobname):
     """Read job description from WADL file"""

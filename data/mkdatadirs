@@ -3,5 +3,5 @@ mkdir job_def/scripts
 mkdir job_def/wadl
 mkdir jobdata
 mkdir sbatch
-mkdir upload
+mkdir uploads
 chown -R www:www *
