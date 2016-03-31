@@ -15,7 +15,7 @@ LOG_FILE = 'logs/app.log'
 
 BASE_URL = 'http://localhost:8080'
 
-APP_PATH = curdir = os.path.dirname(__file__)
+APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 #'/home/mservillat/CTA/git_voparis/uws_server'
 
 # Those servers have access to /job_event/<jobid_manager> to change the phase or report an error
