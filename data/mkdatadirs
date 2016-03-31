@@ -1,0 +1,7 @@
+mkdir job_def
+mkdir job_def/scripts
+mkdir job_def/wadl
+mkdir jobdata
+mkdir sbatch
+mkdir upload
+chown -R www:www *
