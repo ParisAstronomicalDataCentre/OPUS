@@ -367,7 +367,7 @@ class TestJobSequence(unittest.TestCase):
         self.assertRegexpMatches(response.location, '/db/show')
         # Create job
         url = '/rest/' + jobname + ''
-        post = {'evfile': 'test.fits', 'enumbins': 2}
+        post = {'inobs': 'test.fits', 'enumbins': 2}
         response = test_app.post(url, post)
         print url + ' ' + str(post)
         print ' --> ' + response.status
