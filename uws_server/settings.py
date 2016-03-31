@@ -147,7 +147,6 @@ TERMINAL_PHASES = [
 if os.path.exists('uws_server/settings_local.py'):
     from settings_local import *
 #--- Include host-specific settings ------------------------------------------------------------------------------------
-print(BASE_URL)
 
 #--- If imported from test.py, redefine settings -----------------------------------------------------------------------
 main_dict = sys.modules['__main__'].__dict__
