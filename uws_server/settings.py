@@ -15,7 +15,8 @@ LOG_FILE = 'logs/app.log'
 
 BASE_URL = 'http://localhost:8080'
 
-APP_PATH = '/home/mservillat/CTA/git_voparis/uws_server'
+APP_PATH = curdir = os.path.dirname(__file__)
+#'/home/mservillat/CTA/git_voparis/uws_server'
 
 # Those servers have access to /job_event/<jobid_manager> to change the phase or report an error
 JOB_SERVERS = {
@@ -144,7 +145,7 @@ TERMINAL_PHASES = [
 
 #--- Include host-specific settings ------------------------------------------------------------------------------------
 if os.path.exists('settings_local.py'):
-    from uws_server.settings_local import *
+    from settings_local import *
 #--- Include host-specific settings ------------------------------------------------------------------------------------
 
 #--- If imported from test.py, redefine settings -----------------------------------------------------------------------
