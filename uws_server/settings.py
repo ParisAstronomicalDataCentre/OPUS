@@ -145,7 +145,7 @@ TERMINAL_PHASES = [
 
 #--- Include host-specific settings ------------------------------------------------------------------------------------
 if os.path.exists(APP_PATH + '/uws_server/settings_local.py'):
-    from uws_server.settings_local import *
+    from settings_local import *
 #--- Include host-specific settings ------------------------------------------------------------------------------------
 print(BASE_URL)
 
