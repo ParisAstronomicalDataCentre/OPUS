@@ -33,6 +33,7 @@ aaa = Cork('cork_conf')
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 UWS_SERVER_URL = ''
 LOG_FILE = 'logs/client.log'
+TEMPLATE_PATH = APP_PATH + '/uws_client/views/'
 
 # Set logger
 logging.basicConfig(
@@ -50,12 +51,12 @@ logger = logging.getLogger(__name__)
 @app.route('/static/<path:path>')
 def static(path):
     """Access to static files (css, js, ...)"""
-    return static_file(path, root='{}/static'.format(APP_PATH))
+    return static_file(path, root='{}/uws_client/static'.format(APP_PATH))
 
 
 @app.route('/favicon.ico')
 def favicon():
-    return static_file('favicon.ico', root='{}/static'.format(APP_PATH))
+    return static_file('favicon.ico', root='{}/uws_client'.format(APP_PATH))
 
 
 # ----------

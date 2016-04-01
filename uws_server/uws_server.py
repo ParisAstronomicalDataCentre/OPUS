@@ -483,15 +483,15 @@ def abort_500_except(msg=None):
 # Helper functions
 
 
-@app.route('/static/<path:path>')
-def static(path):
-    """Access to static files (css, js, ...)"""
-    return static_file(path, root='{}/static'.format(APP_PATH))
+# @app.route('/static/<path:path>')
+# def static(path):
+#     """Access to static files (css, js, ...)"""
+#     return static_file(path, root='{}/static'.format(APP_PATH))
 
 
 @app.route('/favicon.ico')
 def favicon():
-    return static_file('favicon.ico', root='{}/static'.format(APP_PATH))
+    return static_file('favicon.ico', root='{}/uws_server'.format(APP_PATH))
 
 
 @app.get('/get_wadl/<jobname:path>')
