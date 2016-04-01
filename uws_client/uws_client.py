@@ -27,7 +27,7 @@ session_opts = {
 }
 
 # Start authentication system
-aaa = Cork('cork_conf')
+aaa = Cork('uws_client/cork_conf')
 
 # Settings
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
