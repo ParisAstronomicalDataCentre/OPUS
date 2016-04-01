@@ -15,26 +15,27 @@ from subprocess import CalledProcessError
 
 from bottle import Bottle, request, response, abort, redirect, run, static_file, parse_auth, view, jinja2_view
 from beaker.middleware import SessionMiddleware
-from cork import Cork
+# from cork import Cork
 
 from uws_classes import *
+from uws_client.uws_client import session_opts, app as client_app
 
 
 # Create a new application
 app = Bottle()
 
-# Session option (create session after code)
-session_opts = {
-    'session.cookie_expires': True,
-    'session.encrypt_key': 'please use a random key and keep it secret!',
-    'session.httponly': True,
-    'session.timeout': 3600 * 24,  # 1 day
-    'session.type': 'cookie',
-    'session.validate_key': True,
-}
-
-# Load authentication config
-aaa = Cork('cork_conf')
+# # Session option (create session after code)
+# session_opts = {
+#     'session.cookie_expires': True,
+#     'session.encrypt_key': 'please use a random key and keep it secret!',
+#     'session.httponly': True,
+#     'session.timeout': 3600 * 24,  # 1 day
+#     'session.type': 'cookie',
+#     'session.validate_key': True,
+# }
+#
+# # Load authentication config
+# aaa = Cork('cork_conf')
 
 
 # ----------
@@ -154,329 +155,329 @@ def abort_500_except(msg=None):
         abort(500, 'Internal Server Error')
 
 
-# ----------
-# Manage user accounts
-
-
-@app.route('/accounts/login')
-@jinja2_view('login_form.html')
-def login_form():
-    """Serve login form"""
-    next_page = request.query.get('next', '/')
-    msg = request.query.get('msg', '')
-    msg_text = {
-        'failed': 'Authentication failed',
-    }
-    if msg in msg_text:
-        return {'next': next_page, 'message': msg_text[msg]}
-    return {'next': next_page}
-
-
-@app.route('/sorry_page')
-def sorry_page():
-    """Serve sorry page"""
-    return '<p>Sorry, you are not authorized to perform this action</p>'
-
-
-def postd():
-    return request.forms
-
-
-def post_get(name, default=''):
-    return request.POST.get(name, default).strip()
-
-
-@app.post('/accounts/login')
-def login():
-    """Authenticate users"""
-    username = post_get('username')
-    password = post_get('password')
-    next_page = post_get('next')
-    aaa.login(username, password, success_redirect=next_page, fail_redirect='/accounts/login?msg=failed')
-
-
-@app.route('/accounts/logout')
-def logout():
-    aaa.logout(success_redirect='/')
-
-
-@app.route('/accounts/admin')
-@view('admin_page')
-def admin():
-    """Only admin users can see this"""
-    aaa.require(role='admin', fail_redirect='/?msg=restricted')
-    return dict(
-        current_user=aaa.current_user,
-        users=aaa.list_users(),
-        roles=aaa.list_roles()
-    )
-
-
-@app.post('/accounts/create_user')
-def create_user():
-    try:
-        aaa.create_user(postd().username, postd().role, postd().password)
-        return dict(ok=True, msg='')
-    except Exception, e:
-        return dict(ok=False, msg=e.message)
-
-
-@app.post('/accounts/delete_user')
-def delete_user():
-    try:
-        aaa.delete_user(post_get('username'))
-        return dict(ok=True, msg='')
-    except Exception, e:
-        print repr(e)
-        return dict(ok=False, msg=e.message)
-
-
-@app.post('/accounts/create_role')
-def create_role():
-    try:
-        aaa.create_role(post_get('role'), post_get('level'))
-        return dict(ok=True, msg='')
-    except Exception, e:
-        return dict(ok=False, msg=e.message)
-
-
-@app.post('/accounts/delete_role')
-def delete_role():
-    try:
-        aaa.delete_role(post_get('role'))
-        return dict(ok=True, msg='')
-    except Exception, e:
-        return dict(ok=False, msg=e.message)
-
-
-@app.route('/accounts/change_password')
-@view('password_change_form')
-def change_password():
-    """Show password change form"""
-    aaa.require(role='admin', fail_redirect='/?msg=restricted')
-    return dict()
-
-
-@app.post('/accounts/change_password')
-def change_password():
-    """Change password"""
-    #aaa.reset_password(post_get('reset_code'), post_get('password'))
-    user = aaa.user(post_get('username'))
-    if post_get('password'):
-        user.update(pwd=post_get('password'))
-    if post_get('role'):
-        user.update(role=post_get('role'))
-    if post_get('email'):
-        user.update(email_addr=post_get('email'))
-    return 'Thanks. <a href="/accounts/admin">Go to admin page</a>'
-
-
-# ----------
-# Web Pages
-
-
-@app.route('/')
-@jinja2_view('home.html')
-def home():
-    """Home page"""
-    session = request.environ['beaker.session']
-    msg = request.query.get('msg', '')
-    msg_text = {
-        'restricted': 'Access is restricted to administrators',
-    }
-    if msg in msg_text:
-        return {'session': session, 'message': msg_text[msg]}
-    return {'session': session}
-    # response.content_type = 'text/html; charset=UTF-8'
-    # return "UWS v1.0 server implementation<br>(c) Observatoire de Paris 2015"
-
-
-@app.route('/client/job_list')
-@jinja2_view('job_list.html')
-def job_list():
-    """Job list page"""
-    logger.info('')
-    aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
-    session = request.environ['beaker.session']
-    jobname = request.query.get('jobname', '')
-    return {'session': session, 'jobname': jobname}
-
-
-@app.route('/client/job_edit/<jobname>/<jobid>')
-@jinja2_view('job_edit.html')
-def job_edit(jobname, jobid):
-    """Job edit page"""
-    logger.info(jobname + ' ' + jobid)
-    aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
-    session = request.environ['beaker.session']
-    return {'session': session, 'jobname': jobname, 'jobid': jobid}
-
-
-@app.route('/client/job_form/<jobname>')
-@jinja2_view('job_form.html')
-def job_form(jobname):
-    """Job edit page"""
-    logger.info(jobname)
-    aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
-    session = request.environ['beaker.session']
-    return {'session': session, 'jobname': jobname}
-
-
-@app.get('/config/job_definition')
-@jinja2_view('job_definition.html')
-def job_definition():
-    """Show form for new job definition"""
-    logger.info('')
-    # no need to authenticate, users can propose new jobs that will be validated
-    #aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
-    is_admin = False
-    if not aaa.user_is_anonymous:
-        if aaa.current_user.role == 'admin':
-            is_admin = True
-    session = request.environ['beaker.session']
-    jobname = request.query.get('jobname', '')
-    msg = request.query.get('msg', '')
-    msg_text = {
-        'new': 'New job definition has been saved as {}'.format(jobname),
-        'restricted': 'Access is restricted to administrators',
-        'script_copied': 'Job script {}.sh has been copied to work cluster'.format(jobname),
-        'validated': 'Job definition for new/{jn} has been validated and renamed {jn}'.format(jn=jobname),
-        'notfound': 'Job definition for new/{jn} was not found on the server. Cannot validate.'.format(jn=jobname),
-    }
-    if msg in msg_text:
-        return {'session': session, 'is_admin': is_admin, 'jobname': jobname, 'message': msg_text[msg]}
-    return {'session': session, 'is_admin': is_admin, 'jobname': jobname}
-
-
-@app.post('/config/job_definition')
-def create_new_job_definition():
-    """Use filled form to create a WADL file for the given job"""
-    # no need to authenticate, users can propose new jobs that will be validated
-    #aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
-    # Read form
-    keys = request.forms.keys()
-    jobname = request.forms.get('name').split('/')[-1]
-    description = request.forms.get('description')
-    execdur = request.forms.get('executionduration')
-    quote = request.forms.get('quote')
-    script = request.forms.get('script')
-    params = collections.OrderedDict()
-    iparam = 1
-    while 'param_name_' + str(iparam) in keys:
-        pname = request.forms.get('param_name_' + str(iparam))
-        if pname:
-            ptype = request.forms.get('param_type_' + str(iparam))
-            pdefault = request.forms.get('param_default_' + str(iparam))
-            preq = request.forms.get('param_required_' + str(iparam))
-            pdesc = request.forms.get('param_description_' + str(iparam))
-            params[pname] = {
-                'type': ptype,
-                'default': pdefault,
-                'required': (preq == 'on'),
-                'description': pdesc,
-            }
-        iparam += 1
-    results = collections.OrderedDict()
-    iresult = 1
-    while 'result_name_' + str(iresult) in keys:
-        rname = request.forms.get('result_name_' + str(iresult))
-        if rname:
-            rtype = request.forms.get('result_type_' + str(iresult))
-            rdefault = request.forms.get('result_default_' + str(iresult))
-            rdesc = request.forms.get('result_description_' + str(iresult))
-            results[rname] = {
-                'mediaType': rtype,
-                'default': rdefault,
-                'description': rdesc,
-            }
-        iresult += 1
-    # Create job_wadl structure
-    job_def = {'description': description,
-               'parameters': params,
-               'results': results,
-               'executionduration': execdur,
-               'quote': quote}
-    # Create WADL file from form
-    job_wadl = uws_jdl.create_wadl(jobname, job_def)
-    # Save WADL in new/
-    wadl_fname = '{}/new/{}.wadl'.format(WADL_PATH, jobname)
-    with open(wadl_fname, 'w') as f:
-        f.write(job_wadl)
-        logger.info('WADL saved: ' + wadl_fname)
-    # Save bash script file in new/
-    script_fname = '{}/new/{}.sh'.format(SCRIPT_PATH, jobname)
-    with open(script_fname, 'w') as f:
-        f.write(script.replace('\r', ''))
-        logger.info('Job script save: ' + script_fname)
-        # TODO: send to work cluster?
-    # Back to filled form
-    redirect('/config/job_definition?jobname=new/{}&msg=new'.format(jobname), 303)
-
-
-@app.get('/config/validate_job/<jobname>')
-def validate_job_definition(jobname):
-    """Use filled form to create a WADL file for the given job"""
-    # Restrict access to admin
-    aaa.require(role='admin', fail_redirect='/config/job_definition?jobname=new/{}&msg=restricted'.format(jobname))
-    # Copy script and wadl from new
-    wadl_src = '{}/new/{}.wadl'.format(WADL_PATH, jobname)
-    wadl_dst = '{}/{}.wadl'.format(WADL_PATH, jobname)
-    script_src = '{}/new/{}.sh'.format(SCRIPT_PATH, jobname)
-    script_dst = '{}/{}.sh'.format(SCRIPT_PATH, jobname)
-    # save, then copy from new/
-    if os.path.isfile(wadl_src):
-        if os.path.isfile(wadl_dst):
-            # save file with time stamp
-            mt = dt.datetime.fromtimestamp(os.path.getmtime(wadl_dst)).isoformat()
-            wadl_dst_save = '{}/saved/{}_{}.wadl'.format(WADL_PATH, jobname, mt)
-            os.rename(wadl_dst, wadl_dst_save)
-            logger.info('Previous job wadl saved: ' + wadl_dst_save)
-        shutil.copy(wadl_src, wadl_dst)
-        logger.info('New job wadl copied: ' + wadl_dst)
-    else:
-        logger.info('No job wadl found for validation: ' + wadl_src)
-        redirect('/config/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
-    if os.path.isfile(script_src):
-        if os.path.isfile(script_dst):
-            # save file with time stamp
-            mt = dt.datetime.fromtimestamp(os.path.getmtime(script_dst)).isoformat()
-            script_dst_save = '{}/saved/{}_{}.sh'.format(SCRIPT_PATH, jobname, mt)
-            os.rename(script_dst, script_dst_save)
-            logger.info('Previous job script saved: ' + script_dst_save)
-        shutil.copy(script_src, script_dst)
-        logger.info('New job script copied: ' + wadl_dst)
-    else:
-        logger.info('No job script found for validation: ' + wadl_src)
-        redirect('/config/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
-    # Copy script to job manager
-    if os.path.isfile(script_dst):
-        manager = managers.__dict__[MANAGER]()
-        manager.cp_script(jobname)
-        logger.info('Job script copied to work cluster: ' + jobname)
-    else:
-        logger.info('No job script found for job: ' + jobname)
-        redirect('/config/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
-    # Redirect to job_definition with message
-    redirect('/config/job_definition?jobname={}&msg=validated'.format(jobname), 303)
-
-
-@app.get('/config/cp_script/<jobname>')
-def cp_script(jobname):
-    """Use filled form to create a WADL file for the given job"""
-    # Restrict access to admin
-    aaa.require(role='admin', fail_redirect='/config/job_definition?jobname={}&msg=restricted'.format(jobname))
-    # Copy script to job manager
-    script_dst = '{}/{}.sh'.format(SCRIPT_PATH, jobname)
-    if os.path.isfile(script_dst):
-        manager = managers.__dict__[MANAGER]()
-        manager.cp_script(jobname)
-        logger.info('Job script copied to work cluster: ' + jobname)
-    else:
-        logger.info('No job script found for job: ' + jobname)
-        redirect('/config/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
-    # Redirect to job_definition with message
-    redirect('/config/job_definition?jobname={}&msg=script_copied'.format(jobname), 303)
-
+# # ----------
+# # Manage user accounts
+#
+#
+# @app.route('/accounts/login')
+# @jinja2_view('login_form.html')
+# def login_form():
+#     """Serve login form"""
+#     next_page = request.query.get('next', '/')
+#     msg = request.query.get('msg', '')
+#     msg_text = {
+#         'failed': 'Authentication failed',
+#     }
+#     if msg in msg_text:
+#         return {'next': next_page, 'message': msg_text[msg]}
+#     return {'next': next_page}
+#
+#
+# @app.route('/sorry_page')
+# def sorry_page():
+#     """Serve sorry page"""
+#     return '<p>Sorry, you are not authorized to perform this action</p>'
+#
+#
+# def postd():
+#     return request.forms
+#
+#
+# def post_get(name, default=''):
+#     return request.POST.get(name, default).strip()
+#
+#
+# @app.post('/accounts/login')
+# def login():
+#     """Authenticate users"""
+#     username = post_get('username')
+#     password = post_get('password')
+#     next_page = post_get('next')
+#     aaa.login(username, password, success_redirect=next_page, fail_redirect='/accounts/login?msg=failed')
+#
+#
+# @app.route('/accounts/logout')
+# def logout():
+#     aaa.logout(success_redirect='/')
+#
+#
+# @app.route('/accounts/admin')
+# @view('admin_page')
+# def admin():
+#     """Only admin users can see this"""
+#     aaa.require(role='admin', fail_redirect='/?msg=restricted')
+#     return dict(
+#         current_user=aaa.current_user,
+#         users=aaa.list_users(),
+#         roles=aaa.list_roles()
+#     )
+#
+#
+# @app.post('/accounts/create_user')
+# def create_user():
+#     try:
+#         aaa.create_user(postd().username, postd().role, postd().password)
+#         return dict(ok=True, msg='')
+#     except Exception, e:
+#         return dict(ok=False, msg=e.message)
+#
+#
+# @app.post('/accounts/delete_user')
+# def delete_user():
+#     try:
+#         aaa.delete_user(post_get('username'))
+#         return dict(ok=True, msg='')
+#     except Exception, e:
+#         print repr(e)
+#         return dict(ok=False, msg=e.message)
+#
+#
+# @app.post('/accounts/create_role')
+# def create_role():
+#     try:
+#         aaa.create_role(post_get('role'), post_get('level'))
+#         return dict(ok=True, msg='')
+#     except Exception, e:
+#         return dict(ok=False, msg=e.message)
+#
+#
+# @app.post('/accounts/delete_role')
+# def delete_role():
+#     try:
+#         aaa.delete_role(post_get('role'))
+#         return dict(ok=True, msg='')
+#     except Exception, e:
+#         return dict(ok=False, msg=e.message)
+#
+#
+# @app.route('/accounts/change_password')
+# @view('password_change_form')
+# def change_password():
+#     """Show password change form"""
+#     aaa.require(role='admin', fail_redirect='/?msg=restricted')
+#     return dict()
+#
+#
+# @app.post('/accounts/change_password')
+# def change_password():
+#     """Change password"""
+#     #aaa.reset_password(post_get('reset_code'), post_get('password'))
+#     user = aaa.user(post_get('username'))
+#     if post_get('password'):
+#         user.update(pwd=post_get('password'))
+#     if post_get('role'):
+#         user.update(role=post_get('role'))
+#     if post_get('email'):
+#         user.update(email_addr=post_get('email'))
+#     return 'Thanks. <a href="/accounts/admin">Go to admin page</a>'
+#
+#
+# # ----------
+# # Web Pages
+#
+#
+# @app.route('/')
+# @jinja2_view('home.html')
+# def home():
+#     """Home page"""
+#     session = request.environ['beaker.session']
+#     msg = request.query.get('msg', '')
+#     msg_text = {
+#         'restricted': 'Access is restricted to administrators',
+#     }
+#     if msg in msg_text:
+#         return {'session': session, 'message': msg_text[msg]}
+#     return {'session': session}
+#     # response.content_type = 'text/html; charset=UTF-8'
+#     # return "UWS v1.0 server implementation<br>(c) Observatoire de Paris 2015"
+#
+#
+# @app.route('/client/job_list')
+# @jinja2_view('job_list.html')
+# def job_list():
+#     """Job list page"""
+#     logger.info('')
+#     aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
+#     session = request.environ['beaker.session']
+#     jobname = request.query.get('jobname', '')
+#     return {'session': session, 'jobname': jobname}
+#
+#
+# @app.route('/client/job_edit/<jobname>/<jobid>')
+# @jinja2_view('job_edit.html')
+# def job_edit(jobname, jobid):
+#     """Job edit page"""
+#     logger.info(jobname + ' ' + jobid)
+#     aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
+#     session = request.environ['beaker.session']
+#     return {'session': session, 'jobname': jobname, 'jobid': jobid}
+#
+#
+# @app.route('/client/job_form/<jobname>')
+# @jinja2_view('job_form.html')
+# def job_form(jobname):
+#     """Job edit page"""
+#     logger.info(jobname)
+#     aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
+#     session = request.environ['beaker.session']
+#     return {'session': session, 'jobname': jobname}
+#
+#
+# @app.get('/config/job_definition')
+# @jinja2_view('job_definition.html')
+# def job_definition():
+#     """Show form for new job definition"""
+#     logger.info('')
+#     # no need to authenticate, users can propose new jobs that will be validated
+#     #aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
+#     is_admin = False
+#     if not aaa.user_is_anonymous:
+#         if aaa.current_user.role == 'admin':
+#             is_admin = True
+#     session = request.environ['beaker.session']
+#     jobname = request.query.get('jobname', '')
+#     msg = request.query.get('msg', '')
+#     msg_text = {
+#         'new': 'New job definition has been saved as {}'.format(jobname),
+#         'restricted': 'Access is restricted to administrators',
+#         'script_copied': 'Job script {}.sh has been copied to work cluster'.format(jobname),
+#         'validated': 'Job definition for new/{jn} has been validated and renamed {jn}'.format(jn=jobname),
+#         'notfound': 'Job definition for new/{jn} was not found on the server. Cannot validate.'.format(jn=jobname),
+#     }
+#     if msg in msg_text:
+#         return {'session': session, 'is_admin': is_admin, 'jobname': jobname, 'message': msg_text[msg]}
+#     return {'session': session, 'is_admin': is_admin, 'jobname': jobname}
+#
+#
+# @app.post('/config/job_definition')
+# def create_new_job_definition():
+#     """Use filled form to create a WADL file for the given job"""
+#     # no need to authenticate, users can propose new jobs that will be validated
+#     #aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
+#     # Read form
+#     keys = request.forms.keys()
+#     jobname = request.forms.get('name').split('/')[-1]
+#     description = request.forms.get('description')
+#     execdur = request.forms.get('executionduration')
+#     quote = request.forms.get('quote')
+#     script = request.forms.get('script')
+#     params = collections.OrderedDict()
+#     iparam = 1
+#     while 'param_name_' + str(iparam) in keys:
+#         pname = request.forms.get('param_name_' + str(iparam))
+#         if pname:
+#             ptype = request.forms.get('param_type_' + str(iparam))
+#             pdefault = request.forms.get('param_default_' + str(iparam))
+#             preq = request.forms.get('param_required_' + str(iparam))
+#             pdesc = request.forms.get('param_description_' + str(iparam))
+#             params[pname] = {
+#                 'type': ptype,
+#                 'default': pdefault,
+#                 'required': (preq == 'on'),
+#                 'description': pdesc,
+#             }
+#         iparam += 1
+#     results = collections.OrderedDict()
+#     iresult = 1
+#     while 'result_name_' + str(iresult) in keys:
+#         rname = request.forms.get('result_name_' + str(iresult))
+#         if rname:
+#             rtype = request.forms.get('result_type_' + str(iresult))
+#             rdefault = request.forms.get('result_default_' + str(iresult))
+#             rdesc = request.forms.get('result_description_' + str(iresult))
+#             results[rname] = {
+#                 'mediaType': rtype,
+#                 'default': rdefault,
+#                 'description': rdesc,
+#             }
+#         iresult += 1
+#     # Create job_wadl structure
+#     job_def = {'description': description,
+#                'parameters': params,
+#                'results': results,
+#                'executionduration': execdur,
+#                'quote': quote}
+#     # Create WADL file from form
+#     job_wadl = uws_jdl.create_wadl(jobname, job_def)
+#     # Save WADL in new/
+#     wadl_fname = '{}/new/{}.wadl'.format(WADL_PATH, jobname)
+#     with open(wadl_fname, 'w') as f:
+#         f.write(job_wadl)
+#         logger.info('WADL saved: ' + wadl_fname)
+#     # Save bash script file in new/
+#     script_fname = '{}/new/{}.sh'.format(SCRIPT_PATH, jobname)
+#     with open(script_fname, 'w') as f:
+#         f.write(script.replace('\r', ''))
+#         logger.info('Job script save: ' + script_fname)
+#         # TODO: send to work cluster?
+#     # Back to filled form
+#     redirect('/config/job_definition?jobname=new/{}&msg=new'.format(jobname), 303)
+#
+#
+# @app.get('/config/validate_job/<jobname>')
+# def validate_job_definition(jobname):
+#     """Use filled form to create a WADL file for the given job"""
+#     # Restrict access to admin
+#     aaa.require(role='admin', fail_redirect='/config/job_definition?jobname=new/{}&msg=restricted'.format(jobname))
+#     # Copy script and wadl from new
+#     wadl_src = '{}/new/{}.wadl'.format(WADL_PATH, jobname)
+#     wadl_dst = '{}/{}.wadl'.format(WADL_PATH, jobname)
+#     script_src = '{}/new/{}.sh'.format(SCRIPT_PATH, jobname)
+#     script_dst = '{}/{}.sh'.format(SCRIPT_PATH, jobname)
+#     # save, then copy from new/
+#     if os.path.isfile(wadl_src):
+#         if os.path.isfile(wadl_dst):
+#             # save file with time stamp
+#             mt = dt.datetime.fromtimestamp(os.path.getmtime(wadl_dst)).isoformat()
+#             wadl_dst_save = '{}/saved/{}_{}.wadl'.format(WADL_PATH, jobname, mt)
+#             os.rename(wadl_dst, wadl_dst_save)
+#             logger.info('Previous job wadl saved: ' + wadl_dst_save)
+#         shutil.copy(wadl_src, wadl_dst)
+#         logger.info('New job wadl copied: ' + wadl_dst)
+#     else:
+#         logger.info('No job wadl found for validation: ' + wadl_src)
+#         redirect('/config/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
+#     if os.path.isfile(script_src):
+#         if os.path.isfile(script_dst):
+#             # save file with time stamp
+#             mt = dt.datetime.fromtimestamp(os.path.getmtime(script_dst)).isoformat()
+#             script_dst_save = '{}/saved/{}_{}.sh'.format(SCRIPT_PATH, jobname, mt)
+#             os.rename(script_dst, script_dst_save)
+#             logger.info('Previous job script saved: ' + script_dst_save)
+#         shutil.copy(script_src, script_dst)
+#         logger.info('New job script copied: ' + wadl_dst)
+#     else:
+#         logger.info('No job script found for validation: ' + wadl_src)
+#         redirect('/config/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
+#     # Copy script to job manager
+#     if os.path.isfile(script_dst):
+#         manager = managers.__dict__[MANAGER]()
+#         manager.cp_script(jobname)
+#         logger.info('Job script copied to work cluster: ' + jobname)
+#     else:
+#         logger.info('No job script found for job: ' + jobname)
+#         redirect('/config/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
+#     # Redirect to job_definition with message
+#     redirect('/config/job_definition?jobname={}&msg=validated'.format(jobname), 303)
+#
+#
+# @app.get('/config/cp_script/<jobname>')
+# def cp_script(jobname):
+#     """Use filled form to create a WADL file for the given job"""
+#     # Restrict access to admin
+#     aaa.require(role='admin', fail_redirect='/config/job_definition?jobname={}&msg=restricted'.format(jobname))
+#     # Copy script to job manager
+#     script_dst = '{}/{}.sh'.format(SCRIPT_PATH, jobname)
+#     if os.path.isfile(script_dst):
+#         manager = managers.__dict__[MANAGER]()
+#         manager.cp_script(jobname)
+#         logger.info('Job script copied to work cluster: ' + jobname)
+#     else:
+#         logger.info('No job script found for job: ' + jobname)
+#         redirect('/config/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
+#     # Redirect to job_definition with message
+#     redirect('/config/job_definition?jobname={}&msg=script_copied'.format(jobname), 303)
+#
 
 # ----------
 # Helper functions
@@ -599,6 +600,140 @@ def show_db():
     except:
         abort_500_except()
     return html
+
+
+# ----------
+# Config
+
+
+@app.post('/config/job_definition')
+def create_new_job_definition():
+    """Use filled form to create a WADL file for the given job"""
+    # no need to authenticate, users can propose new jobs that will be validated
+    #aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
+    # Read form
+    keys = request.forms.keys()
+    jobname = request.forms.get('name').split('/')[-1]
+    description = request.forms.get('description')
+    execdur = request.forms.get('executionduration')
+    quote = request.forms.get('quote')
+    script = request.forms.get('script')
+    params = collections.OrderedDict()
+    iparam = 1
+    while 'param_name_' + str(iparam) in keys:
+        pname = request.forms.get('param_name_' + str(iparam))
+        if pname:
+            ptype = request.forms.get('param_type_' + str(iparam))
+            pdefault = request.forms.get('param_default_' + str(iparam))
+            preq = request.forms.get('param_required_' + str(iparam))
+            pdesc = request.forms.get('param_description_' + str(iparam))
+            params[pname] = {
+                'type': ptype,
+                'default': pdefault,
+                'required': (preq == 'on'),
+                'description': pdesc,
+            }
+        iparam += 1
+    results = collections.OrderedDict()
+    iresult = 1
+    while 'result_name_' + str(iresult) in keys:
+        rname = request.forms.get('result_name_' + str(iresult))
+        if rname:
+            rtype = request.forms.get('result_type_' + str(iresult))
+            rdefault = request.forms.get('result_default_' + str(iresult))
+            rdesc = request.forms.get('result_description_' + str(iresult))
+            results[rname] = {
+                'mediaType': rtype,
+                'default': rdefault,
+                'description': rdesc,
+            }
+        iresult += 1
+    # Create job_wadl structure
+    job_def = {'description': description,
+               'parameters': params,
+               'results': results,
+               'executionduration': execdur,
+               'quote': quote}
+    # Create WADL file from form
+    job_wadl = uws_jdl.create_wadl(jobname, job_def)
+    # Save WADL in new/
+    wadl_fname = '{}/new/{}.wadl'.format(WADL_PATH, jobname)
+    with open(wadl_fname, 'w') as f:
+        f.write(job_wadl)
+        logger.info('WADL saved: ' + wadl_fname)
+    # Save bash script file in new/
+    script_fname = '{}/new/{}.sh'.format(SCRIPT_PATH, jobname)
+    with open(script_fname, 'w') as f:
+        f.write(script.replace('\r', ''))
+        logger.info('Job script save: ' + script_fname)
+        # TODO: send to work cluster?
+    # Back to filled form (request.headers.get('Referer')?)
+    redirect('/client/job_definition?jobname=new/{}&msg=new'.format(jobname), 303)
+
+
+@app.get('/config/validate_job/<jobname>')
+def validate_job_definition(jobname):
+    """Use filled form to create a WADL file for the given job"""
+    # TODO: Restrict access to admin
+    #aaa.require(role='admin', fail_redirect='/config/job_definition?jobname=new/{}&msg=restricted'.format(jobname))
+    # Copy script and wadl from new
+    wadl_src = '{}/new/{}.wadl'.format(WADL_PATH, jobname)
+    wadl_dst = '{}/{}.wadl'.format(WADL_PATH, jobname)
+    script_src = '{}/new/{}.sh'.format(SCRIPT_PATH, jobname)
+    script_dst = '{}/{}.sh'.format(SCRIPT_PATH, jobname)
+    # save, then copy from new/
+    if os.path.isfile(wadl_src):
+        if os.path.isfile(wadl_dst):
+            # save file with time stamp
+            mt = dt.datetime.fromtimestamp(os.path.getmtime(wadl_dst)).isoformat()
+            wadl_dst_save = '{}/saved/{}_{}.wadl'.format(WADL_PATH, jobname, mt)
+            os.rename(wadl_dst, wadl_dst_save)
+            logger.info('Previous job wadl saved: ' + wadl_dst_save)
+        shutil.copy(wadl_src, wadl_dst)
+        logger.info('New job wadl copied: ' + wadl_dst)
+    else:
+        logger.info('No job wadl found for validation: ' + wadl_src)
+        redirect('/client/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
+    if os.path.isfile(script_src):
+        if os.path.isfile(script_dst):
+            # save file with time stamp
+            mt = dt.datetime.fromtimestamp(os.path.getmtime(script_dst)).isoformat()
+            script_dst_save = '{}/saved/{}_{}.sh'.format(SCRIPT_PATH, jobname, mt)
+            os.rename(script_dst, script_dst_save)
+            logger.info('Previous job script saved: ' + script_dst_save)
+        shutil.copy(script_src, script_dst)
+        logger.info('New job script copied: ' + wadl_dst)
+    else:
+        logger.info('No job script found for validation: ' + wadl_src)
+        redirect('/client/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
+    # Copy script to job manager
+    if os.path.isfile(script_dst):
+        manager = managers.__dict__[MANAGER]()
+        manager.cp_script(jobname)
+        logger.info('Job script copied to work cluster: ' + jobname)
+    else:
+        logger.info('No job script found for job: ' + jobname)
+        redirect('/client/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
+    # Redirect to job_definition with message
+    redirect('/client/job_definition?jobname={}&msg=validated'.format(jobname), 303)
+
+
+@app.get('/config/cp_script/<jobname>')
+def cp_script(jobname):
+    """Use filled form to create a WADL file for the given job"""
+    # TODO: Restrict access to admin
+    #aaa.require(role='admin', fail_redirect='/config/job_definition?jobname={}&msg=restricted'.format(jobname))
+    # Copy script to job manager
+    script_dst = '{}/{}.sh'.format(SCRIPT_PATH, jobname)
+    if os.path.isfile(script_dst):
+        manager = managers.__dict__[MANAGER]()
+        manager.cp_script(jobname)
+        logger.info('Job script copied to work cluster: ' + jobname)
+    else:
+        logger.info('No job script found for job: ' + jobname)
+        redirect('/client/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
+    # Redirect to job_definition with message
+    redirect('/client/job_definition?jobname={}&msg=script_copied'.format(jobname), 303)
 
 
 # ----------
@@ -1303,7 +1438,14 @@ def get_owner(jobname, jobid):
 # run server
 
 # Create session
-app = SessionMiddleware(app, session_opts)
+# app = SessionMiddleware(app, session_opts)
+
+# Merge UWS Client app
+if MERGE_CLIENT:
+    app.merge(client_app)
+    app = SessionMiddleware(app, session_opts)
+
+
 
 if __name__ == '__main__':
     # Run local web server

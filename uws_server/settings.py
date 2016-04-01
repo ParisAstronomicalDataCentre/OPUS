@@ -11,12 +11,19 @@ import logging
 
 # Set debug mode, HTTP 500 Errors include traceback
 DEBUG = True
-LOG_FILE = 'logs/app.log'
-
-BASE_URL = 'http://localhost:8080'
 
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 #'/home/mservillat/CTA/git_voparis/uws_server'
+
+BASE_URL = 'http://localhost:8080'
+
+MERGE_CLIENT = True
+
+LOG_FILE = 'logs/app.log'
+
+# Storage of job information
+STORAGE = 'SQLiteStorage'
+DB_FILE = 'data/db/job_database.db'
 
 # Those servers have access to /job_event/<jobid_manager> to change the phase or report an error
 JOB_SERVERS = {
@@ -44,10 +51,6 @@ JOB_SERVERS = {
     '145.238.151.28': 'tycho',
     '145.238.151.29': 'tycho',
 }
-
-# Storage of job information
-STORAGE = 'SQLiteStorage'
-DB_FILE = 'data/db/job_database.db'
 
 # Define a Manager and its properties
 MANAGER = 'SLURMManager'
