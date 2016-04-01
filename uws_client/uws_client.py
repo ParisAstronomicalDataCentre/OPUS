@@ -8,7 +8,7 @@ UWS client implementation using bottle.py
 
 import os
 import logging
-from bottle import Bottle, request, response, abort, redirect, run, static_file, parse_auth, view, jinja2_view
+from bottle import Bottle, request, response, abort, redirect, run, static_file, parse_auth, TEMPLATE_PATH, view, jinja2_view
 from beaker.middleware import SessionMiddleware
 from cork import Cork
 
@@ -33,7 +33,7 @@ aaa = Cork('uws_client/cork_conf')
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 UWS_SERVER_URL = ''
 LOG_FILE = 'logs/client.log'
-TEMPLATE_PATH = APP_PATH + '/uws_client/views/'
+TEMPLATE_PATH.insert(0, APP_PATH + '/uws_client/views/')
 
 # Set logger
 logging.basicConfig(
