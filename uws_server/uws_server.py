@@ -7,6 +7,7 @@
 
 import traceback
 import uuid
+import collections
 from subprocess import CalledProcessError
 
 from bottle import Bottle, request, response, abort, redirect, run, static_file, parse_auth, view, jinja2_view
