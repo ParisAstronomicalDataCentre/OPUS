@@ -539,7 +539,7 @@ def init_db():
     #if not is_localhost():
     #    abort_403()
     try:
-        filename = 'data/db/job_database.sqlite'
+        filename = 'data/db_def/job_database.sqlite'
         with open(filename) as f:
             sql = f.read()
         db = storage.__dict__[STORAGE]()
@@ -564,7 +564,7 @@ def test_db():
     #if not is_localhost():
     #    abort_403()
     try:
-        filename = 'data/db/job_database_test.sqlite'
+        filename = 'data/db_def/job_database_test.sqlite'
         with open(filename) as f:
             sql = f.read()
         db = storage.__dict__[STORAGE]()
