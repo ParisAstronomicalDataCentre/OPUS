@@ -2,3 +2,5 @@ bottle
 beaker
 bottle-cork
 webtest
+prov
+pydotplus

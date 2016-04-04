@@ -515,19 +515,7 @@ var uws_manager = (function($) {
                     });
                     break;
                 case 'svg':
-                    // show textarea with log
-                    $('#'+r_id+' div.panel-body').html('\
-                        <textarea class="log form-control" rows="10" style="font-family: monospace;" readonly></textarea>\
-                    ');
-                    $.ajax({
-                        url : r_url,
-                        dataType: "xml",
-                        async: false,  // makes request synchronous
-                        success : function (svgDoc) {
-                            var importedSVGRootElement = document.importNode(svgDoc.documentElement,true);
-                            $('#'+r_id+' div.panel-body').append(importedSVGRootElement);
-                        }
-                    });
+                    $('#'+r_id+' div.panel-body').load(r_url)
                     break;
             };
         };
