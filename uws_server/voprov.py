@@ -7,6 +7,7 @@ Export UWS job description to a ProvDocument following the W3C PROV standard
 """
 
 from prov.model import ProvDocument
+from prov.dot import prov_to_dot
 
 # examples:
 # http://prov.readthedocs.org/en/latest/usage.html#simple-prov-document
@@ -14,6 +15,11 @@ from prov.model import ProvDocument
 
 
 def job2prov(job):
+    """
+    Create ProvDocument based on job description
+    :param job: UWS job
+    :return: ProvDocument
+    """
 
     # job.wadl = {
     #     'description': description,
@@ -62,3 +68,35 @@ def job2prov(job):
         for e in e_in:
             e_out[-1].wasDerivedFrom(e)
     return pdoc
+
+
+def prov2xml(prov_doc, fname):
+    """
+    Write ProvDocument as an XML file
+    :param prov_doc: ProvDocument
+    :param fname: file name
+    :return:
+    """
+    prov_doc.serialize(fname, format='xml')
+
+
+def prov2dot(prov_doc):
+    """
+    Convert ProvDocument to dot graphical format
+    :param prov_doc:
+    :return:
+    """
+    dot = prov_to_dot(prov_doc)
+    return dot
+
+
+def prov2svg(prov_doc, fname):
+    """
+    Convert ProvDocument to dot graphical format
+    :param prov_doc:
+    :return:
+    """
+    dot = prov2dot(prov_doc)
+    svg_content = dot.create(format="svg")
+    with open(fname, "w") as f:
+	    f.write(svg_content)

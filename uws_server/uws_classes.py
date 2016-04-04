@@ -452,14 +452,24 @@ class Job(object):
                 job.end_time = now.strftime(DT_FMT)
                 # Create Provenance XML file (added as a result)
                 pdoc = voprov.job2prov(job)
-                rname = 'provenance'
-                rfname = 'provenance.xml'
                 rfdir = '{}/{}/results/'.format(JOBDATA_PATH, job.jobid)
                 if os.path.isdir(rfdir):
-                    pdoc.serialize(rfdir + rfname, format='xml')
+                    # PROV XML
+                    rname = 'provxml'
+                    rfname = 'provenance.xml'
+                    voprov.prov2xml(pdoc, rfdir + rfname)
+                    #pdoc.serialize(rfdir + rfname, format='xml')
                     url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
                     job.results[rname] = {'url': url, 'mediaType': 'text/xml'}
-                    logger.info('add provenance file to results')
+                    logger.info('add provenance.xml file to results')
+                    # PROV SVG
+                    rname = 'provsvg'
+                    rfname = 'provenance.svg'
+                    voprov.prov2xml(pdoc, rfdir + rfname)
+                    #pdoc.serialize(rfdir + rfname, format='xml')
+                    url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
+                    job.results[rname] = {'url': url, 'mediaType': 'image/svg+xml'}
+                    logger.info('add provenance.svg file to results')
                 else:
                     logger.warning('CANNOT add provenance file to results')
 
