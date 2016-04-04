@@ -99,4 +99,4 @@ def prov2svg(prov_doc, fname):
     dot = prov2dot(prov_doc)
     svg_content = dot.create(format="svg")
     with open(fname, "w") as f:
-	    f.write(svg_content)
+        f.write(svg_content)

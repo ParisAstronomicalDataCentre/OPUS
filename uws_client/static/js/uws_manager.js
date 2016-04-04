@@ -515,7 +515,10 @@ var uws_manager = (function($) {
                     });
                     break;
                 case 'svg':
-                    $('#'+r_id+' div.panel-body').load(r_url)
+                    // $('#'+r_id+' div.panel-body').load(r_url)
+                    $('#'+r_id+' div.panel-body').html('\
+                        <img width="100%" src="' + r_url + '" />\
+                    ');
                     break;
             };
         };
