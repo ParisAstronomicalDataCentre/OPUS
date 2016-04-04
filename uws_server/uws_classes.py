@@ -450,13 +450,13 @@ class Job(object):
                         logger.info('add result ' + rname + ' ' + str(r))
                 # Set job.end_time
                 job.end_time = now.strftime(DT_FMT)
-                # Create Provenance file (added as a result)
+                # Create Provenance XML file (added as a result)
                 pdoc = voprov.job2prov(job)
                 rname = 'provenance'
                 rfname = 'provenance.xml'
-                rfpath = '{}/{}/results/{}'.format(JOBDATA_PATH, job.jobid, rfname)
-                if os.path.isfile(rfpath):
-                    pdoc.serialize(rfpath, format='xml')
+                rfdir = '{}/{}/results/'.format(JOBDATA_PATH, job.jobid)
+                if os.path.isdir(rfdir):
+                    pdoc.serialize(rfdir + rfname, format='xml')
                     url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
                     job.results[rname] = {'url': url, 'mediaType': 'text/xml'}
                     logger.info('add provenance file to results')
