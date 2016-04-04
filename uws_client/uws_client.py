@@ -1,9 +1,9 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# Copyright (c) 2016 by Mathieu Servillat
+# Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
 """
-Created on Wed Mar 2 2016
-
-UWS client implementation using bottle.py
-
-@author: mservillat
+UWS client implementation using bottle.py and javascript
 """
 
 import os

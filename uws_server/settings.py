@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# Copyright (c) 2016 by Mathieu Servillat
+# Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
 """
-Created on Apr 29 2015
-@author: mservillat
+Settings for the UWS server
 """
 
 import os

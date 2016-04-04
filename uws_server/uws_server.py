@@ -1,12 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# Copyright (c) 2016 by Mathieu Servillat
+# Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
 """
-Created on Tue Feb 24 2015
-
-UWS v1.0 server implementation using bottle.py
-See http://www.ivoa.net/documents/UWS/20101010/REC-UWS-1.0-20101010.html
-
-@author: mservillat
 """
 
 import traceback

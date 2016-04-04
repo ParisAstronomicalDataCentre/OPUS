@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# Copyright (c) 2016 by Mathieu Servillat
+# Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
+"""
+Unit tests for UWS server
+"""
 
 import unittest
 

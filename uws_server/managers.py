@@ -1,8 +1,19 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# Copyright (c) 2016 by Mathieu Servillat
+# Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
 """
-Created on Tue May 11 2015
+Defines the Manager classes that defines the interfaces between the UWS server
+and the job manager (e.g. SLURM)
 
-@author: mservillat
+Specific functions are expected for those classes:
+* start
+* abort
+* delete
+* get_status
+* get_info
+* get_results
+* cp_script
 """
 
 import datetime as dt

@@ -1,3 +1,8 @@
+/*!
+ * UWS Library
+ * Copyright (c) 2015 by Cyril Chauvin
+ * Licensed under MIT
+ */
 var uwsLib = (function() {
 	"use strict";
 

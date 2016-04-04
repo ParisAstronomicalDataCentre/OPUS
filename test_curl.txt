@@ -1,18 +1,28 @@
+# Copyright (c) 2016 by Mathieu Servillat
+# Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
+# CURL commands to perform tests in a shell or web browser
+
+URL=https://voparis-uws-test.obspm.fr
+JOB0=00000000-dbf3-6b04-b1e7-28d47ad32794
+JOB1=
+JOB2=
+
 # test home
-curl https://voparis-uws-test.obspm.fr
+curl $URL
 
 # DB
-curl https://voparis-uws-test.obspm.fr/init_db
-https://voparis-uws-test.obspm.fr/init_db
-https://voparis-uws-test.obspm.fr/show_db
+curl $URL/db/init
+https://voparis-uws-test.obspm.fr/db/init
+https://voparis-uws-test.obspm.fr/db/test
+https://voparis-uws-test.obspm.fr/db/show
 
 # job list
 https://voparis-uws-test.obspm.fr/ctbin
-curl --user name:pword https://voparis-uws-test.obspm.fr/ctbin
+curl --user name:pword $URL/ctbin
 curl --user name:pword localhost:8080/ctbin
 
 # job
-curl https://voparis-uws-test.obspm.fr/ctbin/non_valid_id
+curl $URL/ctbin/non_valid_id
 https://voparis-uws-test.obspm.fr/ctbin/22222222-e656-b924-c14a-fbd02f9ebaa9
 https://voparis-uws-test.obspm.fr/ctbin/22222222-e656-b924-c14a-fbd02f9ebaa9/phase
 https://voparis-uws-test.obspm.fr/ctbin/22222222-e656-b924-c14a-fbd02f9ebaa9/executionduration
@@ -26,57 +36,48 @@ https://voparis-uws-test.obspm.fr/ctbin/22222222-e656-b924-c14a-fbd02f9ebaa9/res
 https://voparis-uws-test.obspm.fr/ctbin/22222222-e656-b924-c14a-fbd02f9ebaa9/owner
 
 # create job
-curl -d "evfile=http://voplus.obspm.fr/cta/events.fits" -d "enumbins=2" https://voparis-uws-test.obspm.fr/ctbin
-curl -d "evfile=http://voplus.obspm.fr/cta/events.fits" -d "enumbins=2" -d "PHASE=RUN" https://voparis-uws-test.obspm.fr/ctbin
-curl -F "evfile=@/home/mservillat/CTA/svn_voparis-cta/data_processing/ctools/tutorial/events.fits" -F "enumbins=2" https://voparis-uws-test.obspm.fr/ctbin
-curl -F "evfile=@/home/mservillat/CTA/svn_voparis-cta/data_processing/ctools/tutorial/events.fits" -F "enumbins=2" -F "PHASE=RUN" https://voparis-uws-test.obspm.fr/ctbin
+curl -d "inobs=http://voplus.obspm.fr/cta/events.fits" -d "enumbins=2" $URL/ctbin
+curl -d "inobs=http://voplus.obspm.fr/cta/events.fits" -d "enumbins=2" -d "PHASE=RUN" $URL/ctbin
+curl -F "inobs=@/home/mservillat/CTA/svn_voparis-cta/data_processing/ctools/tutorial/events.fits" -F "enumbins=2" $URL/ctbin
+curl -F "inobs=@/home/mservillat/CTA/svn_voparis-cta/data_processing/ctools/tutorial/events.fits" -F "enumbins=2" -F "PHASE=RUN" $URL/ctbin
 
 # start job
-curl -d "PHASE=RUN" https://voparis-uws-test.obspm.fr/ctbin/00000000-dbf3-6b04-b1e7-28d47ad32794/phase
-curl -d "BADKEY=RUN" https://voparis-uws-test.obspm.fr/ctbin/00000000-dbf3-6b04-b1e7-28d47ad32794/phase
-curl -d "PHASE=BADVALUE" https://voparis-uws-test.obspm.fr/ctbin/00000000-dbf3-6b04-b1e7-28d47ad32794/phase
+curl -d "PHASE=RUN" $URL/ctbin/00000000-dbf3-6b04-b1e7-28d47ad32794/phase
+curl -d "BADKEY=RUN" $URL/ctbin/00000000-dbf3-6b04-b1e7-28d47ad32794/phase
+curl -d "PHASE=BADVALUE" $URL/ctbin/00000000-dbf3-6b04-b1e7-28d47ad32794/phase
 
 # delete job
-curl -X DELETE https://voparis-uws-test.obspm.fr/ctbin/00000000-dbf3-6b04-b1e7-28d47ad32794
-curl -d "ACTION=DELETE" https://voparis-uws-test.obspm.fr/ctbin/00000000-dbf3-6b04-b1e7-28d47ad32794
-curl -d "BADKEY=DELETE" https://voparis-uws-test.obspm.fr/ctbin/00000000-dbf3-6b04-b1e7-28d47ad32794
+curl -X DELETE $URL/ctbin/00000000-dbf3-6b04-b1e7-28d47ad32794
+curl -d "ACTION=DELETE" $URL/ctbin/00000000-dbf3-6b04-b1e7-28d47ad32794
+curl -d "BADKEY=DELETE" $URL/ctbin/00000000-dbf3-6b04-b1e7-28d47ad32794
 
 # abort job
-curl -d "PHASE=ABORT" https://voparis-uws-test.obspm.fr/ctbin/00000000-dbf3-6b04-b1e7-28d47ad32794/phase
+curl -d "PHASE=ABORT" $URL/ctbin/00000000-dbf3-6b04-b1e7-28d47ad32794/phase
 
 # change execution_duration
-curl -d "EXECUTIONDURATION=120" https://voparis-uws-test.obspm.fr/ctbin/22222222-e656-b924-c14a-fbd02f9ebaa9/executionduration
-curl -d "EXECUTIONDURATION=AA" https://voparis-uws-test.obspm.fr/ctbin/22222222-e656-b924-c14a-fbd02f9ebaa9/executionduration
-curl -d "EXECUTIONDUR=AA" https://voparis-uws-test.obspm.fr/ctbin/22222222-e656-b924-c14a-fbd02f9ebaa9/executionduration
+curl -d "EXECUTIONDURATION=120" $URL/ctbin/22222222-e656-b924-c14a-fbd02f9ebaa9/executionduration
+curl -d "EXECUTIONDURATION=AA" $URL/ctbin/22222222-e656-b924-c14a-fbd02f9ebaa9/executionduration
+curl -d "EXECUTIONDUR=AA" $URL/ctbin/22222222-e656-b924-c14a-fbd02f9ebaa9/executionduration
 
 # change desctruction_time
-curl -d "DESTRUCTION=2016-01-01T00:00:00" https://voparis-uws-test.obspm.fr/ctbin/22222222-e656-b924-c14a-fbd02f9ebaa9/destruction
-curl -d "DESTRUCTION=2016-01-01T00:00:00.55555" https://voparis-uws-test.obspm.fr/ctbin/22222222-e656-b924-c14a-fbd02f9ebaa9/destruction
-curl -d "DESTRUCTION=2016-01-01 00:00:00" https://voparis-uws-test.obspm.fr/ctbin/22222222-e656-b924-c14a-fbd02f9ebaa9/destruction
-curl -d "DESTRUCTION=AA" https://voparis-uws-test.obspm.fr/ctbin/22222222-e656-b924-c14a-fbd02f9ebaa9/destruction
-curl -d "DESTRUCT=AA" https://voparis-uws-test.obspm.fr/ctbin/22222222-e656-b924-c14a-fbd02f9ebaa9/destruction
+curl -d "DESTRUCTION=2016-01-01T00:00:00" $URL/ctbin/22222222-e656-b924-c14a-fbd02f9ebaa9/destruction
+curl -d "DESTRUCTION=2016-01-01T00:00:00.55555" $URL/ctbin/22222222-e656-b924-c14a-fbd02f9ebaa9/destruction
+curl -d "DESTRUCTION=2016-01-01 00:00:00" $URL/ctbin/22222222-e656-b924-c14a-fbd02f9ebaa9/destruction
+curl -d "DESTRUCTION=AA" $URL/ctbin/22222222-e656-b924-c14a-fbd02f9ebaa9/destruction
+curl -d "DESTRUCT=AA" $URL/ctbin/22222222-e656-b924-c14a-fbd02f9ebaa9/destruction
 
 # change parameter
-curl -d "VALUE=5" https://voparis-uws-test.obspm.fr/ctbin/22222222-e656-b924-c14a-fbd02f9ebaa9/parameters/enumbins
-curl -d "VALUE=5" https://voparis-uws-test.obspm.fr/ctbin/00000000-dbf3-6b04-b1e7-28d47ad32794/parameters/enumbins
-curl -d "VAL=5" https://voparis-uws-test.obspm.fr/ctbin/00000000-dbf3-6b04-b1e7-28d47ad32794/parameters/enumbins
-curl -d "VALUE=AA" https://voparis-uws-test.obspm.fr/ctbin/00000000-dbf3-6b04-b1e7-28d47ad32794/parameters/enumbins
+curl -d "VALUE=5" $URL/ctbin/22222222-e656-b924-c14a-fbd02f9ebaa9/parameters/enumbins
+curl -d "VALUE=5" $URL/ctbin/00000000-dbf3-6b04-b1e7-28d47ad32794/parameters/enumbins
+curl -d "VAL=5" $URL/ctbin/00000000-dbf3-6b04-b1e7-28d47ad32794/parameters/enumbins
+curl -d "VALUE=AA" $URL/ctbin/00000000-dbf3-6b04-b1e7-28d47ad32794/parameters/enumbins
 
 # job_events
-curl https://voparis-uws-test.obspm.fr/job_event
-curl -d "jobid=1234" https://voparis-uws-test.obspm.fr/job_event
-curl -d "jobid=1234" -d "phase=badvalue" https://voparis-uws-test.obspm.fr/handler/job_event
-curl -d "jobid=1234" -d "phase=HELD" https://voparis-uws-test.obspm.fr/handler/job_event
-curl -d "jobid=1234" -d "phase=SUSPENDED" https://voparis-uws-test.obspm.fr/handler/job_event
-curl -d "jobid=1234" -d "phase=EXECUTING" https://voparis-uws-test.obspm.fr/handler/job_event
-curl -d "jobid=1234" -d "phase=COMPLETED" https://voparis-uws-test.obspm.fr/handler/job_event
-curl -d "jobid=1234" -d "phase=ERROR" -d "error_msg=error_message" https://voparis-uws-test.obspm.fr/handler/job_event
-
-curl https://voparis-uws-test.obspm.fr/handler/job_event
-curl -d "jobid=1234" https://voparis-uws-test.obspm.fr/handler/job_event
-curl -d "jobid=1234" -d "phase=badvalue" https://voparis-uws-test.obspm.fr/handler/job_event
-curl -d "jobid=1234" -d "phase=HELD" https://voparis-uws-test.obspm.fr/handler/job_event
-curl -d "jobid=1234" -d "phase=SUSPENDED" https://voparis-uws-test.obspm.fr/handler/job_event
-curl -d "jobid=1234" -d "phase=RUNNING" https://voparis-uws-test.obspm.fr/handler/job_event
-curl -d "jobid=1234" -d "phase=COMPLETED" https://voparis-uws-test.obspm.fr/handler/job_event
-curl -d "jobid=1234" -d "phase=ERROR" -d "error_msg=error_message" https://voparis-uws-test.obspm.fr/handler/job_event
+curl $URL/handler/job_event
+curl -d "jobid=1234" $URL/handler/job_event
+curl -d "jobid=1234" -d "phase=badvalue" $URL/handler/job_event
+curl -d "jobid=1234" -d "phase=HELD" $URL/handler/job_event
+curl -d "jobid=1234" -d "phase=SUSPENDED" $URL/handler/job_event
+curl -d "jobid=1234" -d "phase=RUNNING" $URL/handler/job_event
+curl -d "jobid=1234" -d "phase=COMPLETED" $URL/handler/job_event
+curl -d "jobid=1234" -d "phase=ERROR" -d "error_msg=error_message" $URL/handler/job_event

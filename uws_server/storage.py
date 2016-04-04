@@ -1,7 +1,8 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# Copyright (c) 2016 by Mathieu Servillat
+# Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
 """
-Created on Tue May 11 2015
-
 Those classes handle the storage of the job information on the server
 (e.g. files, relational database, ...)
 
@@ -12,10 +13,8 @@ Specific functions are expected for a storage class to save and read job informa
 * get_job_list
 
 Rq: sometimes we need access to the job attributes only, not the parameters or results,
-therefore it is possible to retrieve only attributes, parameters or results so has to limit
+therefore it is possible to retrieve only attributes, parameters or results so as to limit
 the number of database access (in the case of a relational database)
-
-@author: mservillat
 """
 
 import sqlite3

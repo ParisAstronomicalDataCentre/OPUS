@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) 2016 by Cyril Chauvin
+ * Licensed under MIT
+ */
+
 var samp_client = ( function($) {
 	"use strict";
     

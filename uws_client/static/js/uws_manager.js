@@ -1,3 +1,9 @@
+/*!
+ * UWS Manager
+ * Copyright (c) 2016 by Mathieu Servillat
+ * Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
+ */
+
 // The client fills a Job List table with id=job_list
 // <table id="job_list" class="table table-bordered table-striped table-condensed"></table>
 

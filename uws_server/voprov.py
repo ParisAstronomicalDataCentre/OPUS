@@ -1,16 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# Copyright (c) 2016 by Mathieu Servillat
+# Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
 """
-Created on Mar 10 2016
-
-UWS v1.0 server implementation using bottle.py
-See http://www.ivoa.net/documents/UWS/20101010/REC-UWS-1.0-20101010.html
-
-@author: mservillat
+Export UWS job description to a ProvDocument following the W3C PROV standard
 """
 
 from prov.model import ProvDocument
-import datetime
 
 # examples:
 # http://prov.readthedocs.org/en/latest/usage.html#simple-prov-document
@@ -43,9 +39,8 @@ def job2prov(job):
     pdoc.add_namespace('prov', 'http://www.w3.org/ns/prov#')
     pdoc.add_namespace('voprov', 'http://www.ivoa.net/ns/voprov#')
     pdoc.add_namespace('cta', 'http://www.cta-observatory.org#')
-    pdoc.add_namespace('ctadata', 'ivo://vopdc.obspm/cta#')
     pdoc.add_namespace('uwsdata', 'https://voparis-uws-test.obspm.fr/rest/' + job.jobname + '/' + job.jobid + '/')
-    pdoc.add_namespace('ctajobs', 'http://www.cta-observatory.org/ns/jobs#')
+    pdoc.add_namespace('ctajobs', 'http://www.cta-observatory.org#')
     # Adding an activity
     ctbin = pdoc.activity('ctajobs:' + job.jobname, job.start_time, job.end_time)
     # TODO: add job description, version, url, ...
