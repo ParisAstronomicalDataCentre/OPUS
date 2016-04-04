@@ -1,5 +1,5 @@
 init:
-	if [ -n "${wwwuser}"]; then wwwuser=www; fi
+	if [ -n "${wwwuser}"]; then wwwuser="www"; fi
 	mkdir -p data/db
 	mkdir -p data/job_def
 	mkdir -p data/job_def/scripts
