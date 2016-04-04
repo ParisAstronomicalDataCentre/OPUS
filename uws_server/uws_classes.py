@@ -423,7 +423,7 @@ class Job(object):
             # destruction = dt.timedelta(DESTRUCTION_INTERVAL)
 
             def nul(*args):
-                """Simply change phase"""
+                # Simply change phase
                 pass
 
             def phase_executing(job, error_msg):
