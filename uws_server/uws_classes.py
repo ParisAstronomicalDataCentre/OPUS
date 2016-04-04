@@ -460,6 +460,8 @@ class Job(object):
                     url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
                     job.results[rname] = {'url': url, 'mediaType': 'text/xml'}
                     logger.info('add provenance file to results')
+                else:
+                    logger.warning('CANNOT add provenance file to results')
 
 
             def phase_error(job, error_msg):
