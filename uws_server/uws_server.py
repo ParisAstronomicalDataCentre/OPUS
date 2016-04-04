@@ -443,7 +443,7 @@ def job_event():
         abort_403()
     try:
         user = set_user()
-        logger.info('from {} ({}) with POST={}'.format(ip, JOB_SERVERS[ip], str(request.POST.dict)))
+        logger.info('from {} with POST={}'.format(ip, str(request.POST.dict)))
         if 'jobid' in request.POST:
             jobid_cluster = request.POST['jobid']
             # Get job description from DB based on jobid_cluster
