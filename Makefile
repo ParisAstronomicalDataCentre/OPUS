@@ -1,5 +1,5 @@
-ifndef wwwuser
-wwwuser=www
+ifndef $wwwuser
+	wwwuser=www
 endif
 
 init:
