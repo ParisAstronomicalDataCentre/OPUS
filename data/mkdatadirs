@@ -1,8 +1,0 @@
-mkdir db
-mkdir job_def
-mkdir job_def/scripts
-mkdir job_def/wadl
-mkdir jobdata
-mkdir sbatch
-mkdir uploads
-chown -R www:www *
