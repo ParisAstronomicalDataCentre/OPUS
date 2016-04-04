@@ -1399,6 +1399,7 @@ def get_result_file(jobid, rname, rfname):
     logger.debug('{} {} {} {} {}'.format(job.jobname, jobid, rname, rfname, media_type))
     response.set_header('Content-type', media_type)
     if any(x in media_type for x in ['text', 'xml']):
+        logger.debug('direct download')
         return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid))
     else:
         return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid), download=rfname)
