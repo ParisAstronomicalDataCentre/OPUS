@@ -21,22 +21,24 @@ Initialize the package
 
 Configure your web server
 -------------------------
-For example using Apache 2 and mod_wsgi, with the script `uws_server/wsgi.py`.
+For example with Apache 2 and mod_wsgi using the script `uws_server/wsgi.py`, 
+the following configuration file (e.g. uws_server.conf) should be placed in 
+`/etc/apache2/sites-available/` with a link to `/etc/apache2/sites-enabled/`.
 
     <VirtualHost *:80>
     
-        ServerName voparis-uws-test.obspm.fr
+        ServerName example.com
         ServerAdmin  a@b.com
-        DocumentRoot /share/web/uws_server
+        DocumentRoot /path_to_uws_server
         ErrorLog "/var/log/error_ssl.log"
         CustomLog "/var/log/access_ssl.log" combined
         Header set Access-Control-Allow-Origin "*"  
               
         WSGIDaemonProcess uws display-name=%{GROUP} processes=1 threads=5
         WSGIProcessGroup uws
-        WSGIScriptAlias / "/share/web/uws_server/uws_server/wsgi.py"
+        WSGIScriptAlias / "/path_to_uws_server/uws_server/wsgi.py"
 
-        <Directory "/share/web/uws_server">
+        <Directory "/path_to_uws_server">
         AllowOverride None
         Require all granted
         </Directory>
