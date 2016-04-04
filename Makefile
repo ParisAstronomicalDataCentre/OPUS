@@ -8,8 +8,8 @@ init:
 	mkdir -p data/jobdata
 	mkdir -p data/sbatch
 	mkdir -p data/uploads
-	chown -R $(WWWUSER):$(WWWUSER) data
-	chown -R $(WWWUSER):$(WWWUSER) uws_client/cork_conf
+	chown -R $(WWWUSER) data
+	chown -R $(WWWUSER) uws_client/cork_conf
 
 test:
 	./test.py
