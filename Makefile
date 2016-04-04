@@ -1,6 +1,3 @@
-req:
-    pip install -r requirements.txt
-
 init:
     mkdir data/db
     mkdir data/job_def
