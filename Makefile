@@ -1,7 +1,5 @@
 init:
-	ifndef $wwwuser
-		wwwuser=www
-	endif
+	if [ -n "$wwwuser"]; then wwwuser=www; fi
 	mkdir -p data/db
 	mkdir -p data/job_def
 	mkdir -p data/job_def/scripts
