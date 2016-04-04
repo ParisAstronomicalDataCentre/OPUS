@@ -1,5 +1,5 @@
 init:
-	if [ -n "$wwwuser"]; then wwwuser=www; fi
+	if [ -n "${wwwuser}"]; then wwwuser=www; fi
 	mkdir -p data/db
 	mkdir -p data/job_def
 	mkdir -p data/job_def/scripts
@@ -7,8 +7,8 @@ init:
 	mkdir -p data/jobdata
 	mkdir -p data/sbatch
 	mkdir -p data/uploads
-	chown -R $wwwuser:$wwwuser data
-	chown -R $wwwuser:$wwwuser uws_client/cork_conf
+	chown -R ${wwwuser}:${wwwuser} data
+	chown -R ${wwwuser}:${wwwuser} uws_client/cork_conf
 
 test:
 	./test.py
