@@ -465,7 +465,7 @@ class Job(object):
                     # PROV SVG
                     rname = 'provsvg'
                     rfname = 'provenance.svg'
-                    voprov.prov2xml(pdoc, rfdir + rfname)
+                    voprov.prov2svg(pdoc, rfdir + rfname)
                     #pdoc.serialize(rfdir + rfname, format='xml')
                     url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
                     job.results[rname] = {'url': url, 'mediaType': 'image/svg+xml'}
