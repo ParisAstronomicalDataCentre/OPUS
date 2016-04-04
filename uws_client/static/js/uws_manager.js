@@ -520,8 +520,7 @@ var uws_manager = (function($) {
                     ');
                     $('#'+r_id+' div.panel-body').load(r_url, function() {
                         alert( "Load was performed." );
-                        svg_tag = $('#'+r_id+' div.panel-body svg');
-                        svg_tag.attr('width', '100%');
+                        $('#'+r_id+' > div.panel-body > svg').attr('width', '100%');
                         // svg_tag.removeAttr('viewBox')
                     });
                     break;
