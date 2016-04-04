@@ -515,10 +515,13 @@ var uws_manager = (function($) {
                     });
                     break;
                 case 'svg':
-                    // $('#'+r_id+' div.panel-body').load(r_url)
                     $('#'+r_id+' div.panel-body').html('\
                         <img width="100%" src="' + r_url + '" />\
                     ');
+                    $('#'+r_id+' div.panel-body').load(r_url);
+                    svg_tag = $('#'+r_id+' div.panel-body svg');
+                    // svg_tag.removeAttr('viewBox')
+                    svg_tag.attr('width', '100%')
                     break;
             };
         };
