@@ -315,12 +315,6 @@ def create_new_job_definition():
     jdl = uws_jdl.__dict__[JDL]()
     jdl.content = job_def
     jdl.save('new/' + jobname)
-    #job_jdl = uws_jdl.create_wadl(jobname, job_def)
-    # Save WADL in new/
-    # jdl_fname = '{}/new/{}.wadl'.format(JDL_PATH, jobname)
-    # with open(jdl_fname, 'w') as f:
-    #     f.write(job_jdl)
-    #     logger.info('WADL saved: ' + jdl_fname)
     # Save bash script file in new/
     script_fname = '{}/new/{}.sh'.format(SCRIPT_PATH, jobname)
     with open(script_fname, 'w') as f:
@@ -333,12 +327,13 @@ def create_new_job_definition():
 
 @app.get('/config/validate_job/<jobname>')
 def validate_job_definition(jobname):
-    """Use filled form to create a WADL file for the given job"""
+    """Use filled form to create a JDL file for the given job"""
     # TODO: Restrict access to admin
     #aaa.require(role='admin', fail_redirect='/config/job_definition?jobname=new/{}&msg=restricted'.format(jobname))
     # Copy script and jdl from new
-    jdl_src = '{}/new/{}.wadl'.format(JDL_PATH, jobname)
-    jdl_dst = '{}/{}.wadl'.format(JDL_PATH, jobname)
+    jdl = uws_jdl.__dict__[JDL]()
+    jdl_src = '{}/new/{}{}'.format(JDL_PATH, jobname, jdl.extention)
+    jdl_dst = '{}/{}{}'.format(JDL_PATH, jobname, jdl.extention)
     script_src = '{}/new/{}.sh'.format(SCRIPT_PATH, jobname)
     script_dst = '{}/{}.sh'.format(SCRIPT_PATH, jobname)
     # save, then copy from new/
@@ -346,13 +341,13 @@ def validate_job_definition(jobname):
         if os.path.isfile(jdl_dst):
             # save file with time stamp
             mt = dt.datetime.fromtimestamp(os.path.getmtime(jdl_dst)).isoformat()
-            jdl_dst_save = '{}/saved/{}_{}.wadl'.format(JDL_PATH, jobname, mt)
+            jdl_dst_save = '{}/saved/{}_{}{}'.format(JDL_PATH, jobname, mt, jdl.extention)
             os.rename(jdl_dst, jdl_dst_save)
-            logger.info('Previous job WADL saved: ' + jdl_dst_save)
+            logger.info('Previous job JDL saved: ' + jdl_dst_save)
         shutil.copy(jdl_src, jdl_dst)
-        logger.info('New job WADL copied: ' + jdl_dst)
+        logger.info('New job JDL copied: ' + jdl_dst)
     else:
-        logger.info('No job WADL found for validation: ' + jdl_src)
+        logger.info('No job JDL found for validation: ' + jdl_src)
         redirect('/client/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
     if os.path.isfile(script_src):
         if os.path.isfile(script_dst):
