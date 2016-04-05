@@ -184,7 +184,7 @@
         var jobname = $('input[name=name]').val();
         // ajax command to get JDL from UWS server
         $.ajax({
-			url : '/get_jdl_json/' + jobname, //.split("/").pop(),
+			url : '/get_jdl/' + jobname, //.split("/").pop(),
 			async : true,
 			type : 'GET',
 			dataType: "json",
