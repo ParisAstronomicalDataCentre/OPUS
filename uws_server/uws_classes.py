@@ -435,7 +435,7 @@ class Job(object):
                 # Copy back results from cluster
                 job.manager.get_results(job)
                 # Check results and all links to db (maybe not all results listed in JDL have been created)
-                for rname, r in job.jdl['results'].iteritems():
+                for rname, r in job.jdl.content['results'].iteritems():
                     rfname = job.get_result_filename(rname)
                     rfpath = '{}/{}/results/{}'.format(JOBDATA_PATH, job.jobid, rfname)
                     if os.path.isfile(rfpath):
