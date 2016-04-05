@@ -86,17 +86,20 @@ Client only installation
 The `uws_client.py` file can be directly run to test the application on
 `localhost:8080`.
 
-With Apache 2 and mod_wsgi, use the script `uws_client/wsgi.py` to install the
-client as is. However, one may adapt the web pages to integrate the JavaScript
-web client to a specific web application.
+With Apache 2 and mod_wsgi, use the script `uws_client/wsgi.py` as explaied above
+to install the client as is. However, one may adapt the web pages to integrate 
+the JavaScript web client to a specific web application.
 
 
 Settings
 ========
 
+The file `settings.py` contains the following variables that are specific to an 
+installation, and should thus be set before running the application:
+
 **DEBUG**:  
     If True, the full trace of an error is shown on the error web page.  
-    If False, the error webpage is simply "Internal Server Error".  
+    If False, the error webpage is simply "Internal Server Error".
 
 **APP_PATH**:  
     Path to the application files. Autoset to the package directory (parent
@@ -106,14 +109,14 @@ Settings
     Base URL of the server hosting the applciation.
 
 **MERGE_CLIENT**:  
-    If true the UWS client bottle.py application is merged to the UWS server
+    If True the UWS client bottle.py application is merged to the UWS server
     application.
 
 **LOG_FILE**:  
     name of the log file
 
 **JOB_SERVERS**:  
-    dictionnary of IP adresses allowed to access the job_event/ endpoint of
+    Dictionnary of IP adresses allowed to access the job_event/ endpoint of
     the UWS server. Only the job servers can send events to change the status
     of a job.
 
