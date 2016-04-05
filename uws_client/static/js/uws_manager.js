@@ -466,7 +466,7 @@ var uws_manager = (function($) {
                 <div id="'+r_id+'" class="panel panel-default" value="'+r_url+'">\
                       <div class="panel-heading clearfix">\
                           <span class="pull-left">\
-                              <span class="panel-title"><strong>'+r_id+'</strong></span>: \
+                              <span class="panel-title"><strong>'+r+'</strong></span>: \
                               <a href="'+r_url+'" target="_blank">'+r_url+'</a>\
                           </span>\
                       </div>\
