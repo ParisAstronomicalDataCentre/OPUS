@@ -163,7 +163,7 @@ def get_wadl(jobname):
 
 
 @app.get('/get_jdl/<jobname:path>')
-def get_jdl_json(jobname):
+def get_jdl(jobname):
     """Get json description file for jobname"""
     try:
         jdl = uws_jdl.__dict__[JDL]()
@@ -312,7 +312,9 @@ def create_new_job_definition():
                'executionduration': execdur,
                'quote': quote}
     # Create WADL file from form
-    job_jdl = uws_jdl.create_wadl(jobname, job_def)
+    jdl = uws_jdl.__dict__[JDL]()
+    jdl.content = job_def
+    #job_jdl = uws_jdl.create_wadl(jobname, job_def)
     # Save WADL in new/
     jdl_fname = '{}/new/{}.wadl'.format(JDL_PATH, jobname)
     with open(jdl_fname, 'w') as f:

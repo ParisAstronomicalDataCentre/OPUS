@@ -116,7 +116,7 @@ class Job(object):
     def get_result_filename(self, rname):
         """Get the filename corresponding to the result name"""
         if not self.jdl.content:
-            self.jdl.read(self.jobname)()
+            self.jdl.read(self.jobname)
         if not self.parameters:
             # need to read all parameters
             self.storage.read(self, get_attributes=False, get_parameters=True, get_results=False)
@@ -140,7 +140,7 @@ class Job(object):
         """Set attributes and parameters from POST"""
         # Read JDL
         if not self.jdl.content:
-            self.jdl.read(self.jobname)()
+            self.jdl.read(self.jobname)
         # Pop attributes keywords from POST or JDL
         self.execution_duration = int(post.pop('EXECUTION_DURATION', self.jdl.content.get('executionduration', EXECUTION_DURATION_DEF)))
         self.quote = int(post.pop('QUOTE', self.jdl.content.get('quote', self.execution_duration)))
@@ -198,7 +198,7 @@ class Job(object):
             All parameters as a list of bash variables
         """
         if not self.jdl.content:
-            self.jdl.read(self.jobname)()
+            self.jdl.read(self.jobname)
         params = ['# Required parameters']
         files = {'URI': [], 'form': []}
         # Required parameters
