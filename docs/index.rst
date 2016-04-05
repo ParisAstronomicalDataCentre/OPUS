@@ -7,6 +7,7 @@ by the International Virtual Observatory Alliance (IVOA) is implemented
 as a REST service to manage job execution.
 
 More information on the UWS pattern recommendation can be found here:
+
 http://www.ivoa.net/documents/UWS/20101010/
 
 The **UWS server** is composed of:
