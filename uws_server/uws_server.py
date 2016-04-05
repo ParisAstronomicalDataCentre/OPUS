@@ -162,9 +162,9 @@ def get_wadl(jobname):
     abort_404('No WADL file found for ' + jobname)
 
 
-@app.get('/get_jdl_json/<jobname:path>')
+@app.get('/get_jdl/<jobname:path>')
 def get_jdl_json(jobname):
-    """Get json dictionary WADL file for jobname"""
+    """Get json description file for jobname"""
     try:
         jdl = uws_jdl.__dict__[JDL]()
         jdl.read(jobname)

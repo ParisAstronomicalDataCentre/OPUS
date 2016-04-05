@@ -52,7 +52,7 @@ JOB_SERVERS = {
 # }
 
 # Job Description Language
-JDL = 'WADL'
+JDL = 'WADLFile'
 
 # Storage of job information
 STORAGE = 'SQLiteStorage'
