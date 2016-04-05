@@ -500,6 +500,7 @@ var uws_manager = (function($) {
                     ');
                     break;
                 case 'txt':
+                case 'cfg':
                 case 'log':
                     // show textarea with log
                     $('#'+r_id).append('\
