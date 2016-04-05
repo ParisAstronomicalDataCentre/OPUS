@@ -314,7 +314,7 @@ def create_new_job_definition():
     # Create WADL file from job_jdl
     jdl = uws_jdl.__dict__[JDL]()
     jdl.content = job_def
-    jdl.save(jobname)
+    jdl.save('new/' + jobname)
     #job_jdl = uws_jdl.create_wadl(jobname, job_def)
     # Save WADL in new/
     # jdl_fname = '{}/new/{}.wadl'.format(JDL_PATH, jobname)
