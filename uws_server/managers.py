@@ -160,14 +160,14 @@ class SLURMManager(Manager):
             '### CP RESULTS',
             'mkdir $jd/results',
         ])
-        # Need WADL for results description
-        if not job.jdl:
-            job.get_jdl()
+        # Need JDL for results description
+        if not job.jdl.content:
+            job.jdl.read(job.jobname)
         # Identify results to be moved to $jd/results
         cp_results = [
             'echo "[`timestamp`] Copy results"'
         ]
-        for rname, r in job.jdl['results'].iteritems():
+        for rname, r in job.jdl.content['results'].iteritems():
             fname = job.get_result_filename(rname)
             cp_results.append('[ -f $wd/{fname} ] '
                               '&& {{ cp $wd/{fname} $jd/results; echo "{rname}: {fname} found and copied"; }} '

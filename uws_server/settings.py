@@ -22,10 +22,6 @@ MERGE_CLIENT = True
 
 LOG_FILE = 'logs/app.log'
 
-# Storage of job information
-STORAGE = 'SQLiteStorage'
-DB_FILE = 'data/db/job_database.db'
-
 # Those servers have access to /job_event/<jobid_manager> to change the phase or report an error
 JOB_SERVERS = {
     '127.0.0.1': 'localhost',
@@ -54,6 +50,13 @@ JOB_SERVERS = {
 #     '145.238.151.28': 'tycho',
 #     '145.238.151.29': 'tycho',
 # }
+
+# Job Description Language
+JDL = 'WADL'
+
+# Storage of job information
+STORAGE = 'SQLiteStorage'
+DB_FILE = 'data/db/job_database.db'
 
 # Define a Manager and its properties
 MANAGER = 'SLURMManager'

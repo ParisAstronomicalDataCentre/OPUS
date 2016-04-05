@@ -58,8 +58,8 @@ class Job(object):
             self.jobid = jobid
             self.jobid_cluster = None
         self.user = user
-        # Prepare jdl attribute
-        self.jdl = None
+        # Prepare jdl attribute, e.g. WADL, see settings.py
+        self.jdl = uws_jdl.__dict__[JDL]()
         # Link to the storage, e.g. SQLiteStorage, see settings.py
         self.storage = storage.__dict__[STORAGE]()
         # Link to the job manager, e.g. SLURMManager, see settings.py
@@ -113,15 +113,10 @@ class Job(object):
     # ----------
     # Methods to read job description from JDL file
 
-    def get_jdl(self):
-        """Read job description from JDL file"""
-        job_jdl = uws_jdl.read_jdl(self.jobname)
-        self.jdl = job_jdl
-
     def get_result_filename(self, rname):
         """Get the filename corresponding to the result name"""
-        if not self.jdl:
-            self.get_jdl()
+        if not self.jdl.content:
+            self.jdl.read(self.jobname)()
         if not self.parameters:
             # need to read all parameters
             self.storage.read(self, get_attributes=False, get_parameters=True, get_results=False)
@@ -129,12 +124,12 @@ class Job(object):
             # The result filename is a defined parameter of the job
             fname = self.parameters[rname]['value']
             fname = fname.split('file://')[-1]
-        elif rname in self.jdl['parameters']:
+        elif rname in self.jdl.content['parameters']:
             # The result filename is a parameter with a default value in the JDL
-            fname = self.jdl['parameters'][rname]['default']
+            fname = self.jdl.content['parameters'][rname]['default']
         else:
             # The result filename is the name given as default in the JDL
-            fname = self.jdl['results'][rname]['default']
+            fname = self.jdl.content['results'][rname]['default']
         logger.debug('Result filename for {} is {}'.format(rname, fname))
         return fname
 
@@ -144,20 +139,20 @@ class Job(object):
     def set_from_post(self, post, files):
         """Set attributes and parameters from POST"""
         # Read JDL
-        if not self.jdl:
-            self.get_jdl()
+        if not self.jdl.content:
+            self.jdl.read(self.jobname)()
         # Pop attributes keywords from POST or JDL
-        self.execution_duration = int(post.pop('EXECUTION_DURATION', self.jdl.get('executionduration', EXECUTION_DURATION_DEF)))
-        self.quote = int(post.pop('QUOTE', self.jdl.get('quote', self.execution_duration)))
+        self.execution_duration = int(post.pop('EXECUTION_DURATION', self.jdl.content.get('executionduration', EXECUTION_DURATION_DEF)))
+        self.quote = int(post.pop('QUOTE', self.jdl.content.get('quote', self.execution_duration)))
         # Set parameters from POST
         for pname, value in post.iteritems():
             if pname not in ['PHASE']:
                 # TODO: use JDL to check if value is valid
                 byref = False
-                if pname not in self.jdl['parameters']:
+                if pname not in self.jdl.content['parameters']:
                     logger.warning('Parameter {} not found in JDL'.format(pname))
                 else:
-                    ptype = self.jdl['parameters'][pname]['type']
+                    ptype = self.jdl.content['parameters'][pname]['type']
                     if 'anyURI' in ptype:
                         byref = True
                 self.parameters[pname] = {'value': value, 'byref': byref}
@@ -202,8 +197,8 @@ class Job(object):
         Returns:
             All parameters as a list of bash variables
         """
-        if not self.jdl:
-            self.get_jdl()
+        if not self.jdl.content:
+            self.jdl.read(self.jobname)()
         params = ['# Required parameters']
         files = {'URI': [], 'form': []}
         # Required parameters
@@ -222,7 +217,7 @@ class Job(object):
             params.append(pname + '=\"' + pvalue + '\"')
         # Results
         params.append('# Results')
-        for rname, rdict in self.jdl['results'].iteritems():
+        for rname, rdict in self.jdl.content['results'].iteritems():
             if rname in self.parameters:
                 rvalue = self.parameters[rname]['value']
                 if 'file://' in rvalue:
@@ -233,7 +228,7 @@ class Job(object):
                 params.append(rname + '=\"' + rvalue + '\"')
         # Other parameters
         params.append('# Other parameters')
-        for pname, pdict in self.jdl['parameters'].iteritems():
+        for pname, pdict in self.jdl.content['parameters'].iteritems():
             if (pname not in self.parameters) and (pname not in self.results):
                 params.append(pname + '=\"' + pdict['default'] + '\"')
         # Return list of bash variables
@@ -435,8 +430,8 @@ class Job(object):
                 job.end_time = end_time.strftime(DT_FMT)
 
             def phase_completed(job, error_msg):
-                if not job.jdl:
-                    job.get_jdl()
+                if not job.jdl.content:
+                    job.jdl.read(job.jobname)
                 # Copy back results from cluster
                 job.manager.get_results(job)
                 # Check results and all links to db (maybe not all results listed in JDL have been created)

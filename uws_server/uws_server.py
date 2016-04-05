@@ -166,8 +166,9 @@ def get_wadl(jobname):
 def get_jdl_json(jobname):
     """Get json dictionary WADL file for jobname"""
     try:
-        job_def = uws_jdl.read_jdl(jobname)
-        return job_def
+        jdl = uws_jdl.__dict__[JDL]()
+        jdl.read(jobname)
+        return jdl.content
     except UserWarning as e:
         abort_404(e.message)
 
