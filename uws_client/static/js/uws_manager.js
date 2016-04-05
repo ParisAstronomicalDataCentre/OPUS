@@ -470,8 +470,6 @@ var uws_manager = (function($) {
                               <a href="'+r_url+'" target="_blank">'+r_url+'</a>\
                           </span>\
                       </div>\
-                      <div class="panel-body">\
-                      </div>\
                 </div>';
             $('#result_list').append(r_panel);
             switch (r_type) {
@@ -495,8 +493,10 @@ var uws_manager = (function($) {
                 case 'jpg':
                 case 'png':
                     // Show image preview
-                    $('#'+r_id+' div.panel-body').html('\
-                        <img class="img-thumbnail" src="' + r_url + '" />\
+                    $('#'+r_id).append('\
+                        <div class="panel-body">\
+                            <img class="img-thumbnail" src="' + r_url + '" />\
+                        </div>\
                     ');
                     break;
                 case 'txt':
