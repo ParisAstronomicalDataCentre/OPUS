@@ -85,34 +85,35 @@ web client to a specific web application.
 Settings
 ========
 
-DEBUG
+**DEBUG**
+
     If True, the full trace of an error is shown on the error web page.
     If False, the error webpage is simply "Internal Server Error".
 
-APP_PATH
+**APP_PATH**
     Path to the application files. Autoset to the package directory (parent
     of the uws_server/settings.py file).
 
-BASE_URL
+**BASE_URL**
     Base URL of the server hosting the applciation.
 
-MERGE_CLIENT
+**MERGE_CLIENT**
     If true the UWS client bottle.py application is merged to the UWS server
     application.
 
-LOG_FILE
+**LOG_FILE**
     name of the log file
 
-JOB_SERVERS
+**JOB_SERVERS**
     dictionnary of IP adresses allowed to access the job_event/ endpoint of
     the UWS server. Only the job servers can send events to change the status
     of a job.
 
-STORAGE
+**STORAGE**
     Storage class to be used by the UWS server. Additional settings are relative
     to the Storage class selected.
 
-MANAGER
+**MANAGER**
     Manager class to be used by the UWS server. Additional settings are relative
     to the Manager class selected.
 
@@ -129,71 +130,72 @@ How to create new classes
 Manager and Storage classes are empty parent classes with the minimum functions
 required:
 
-    class Manager(object):
+```python
+class Manager(object):
+    """
+    Manage job execution on cluster. This class defines required functions executed
+    by the UWS server: start(), abort(), delete(), get_status(), get_info(),
+    get_results() and cp_script().
+    """
+
+    def start(self, job):
+        """Start job on cluster
+        :return: jobid_cluster, jobid on cluster
         """
-        Manage job execution on cluster. This class defines required functions executed
-        by the UWS server: start(), abort(), delete(), get_status(), get_info(),
-        get_results() and cp_script().
+        return 0
+
+    def abort(self, job):
+        """Abort/Cancel job on cluster"""
+        pass
+
+    def delete(self, job):
+        """Delete job on cluster"""
+        pass
+
+    def get_status(self, job):
+        """Get job status (phase) from cluster
+        :return: job status (phase)
         """
+        return job.phase
 
-        def start(self, job):
-            """Start job on cluster
-            :return: jobid_cluster, jobid on cluster
-            """
-            return 0
-
-        def abort(self, job):
-            """Abort/Cancel job on cluster"""
-            pass
-
-        def delete(self, job):
-            """Delete job on cluster"""
-            pass
-
-        def get_status(self, job):
-            """Get job status (phase) from cluster
-            :return: job status (phase)
-            """
-            return job.phase
-
-        def get_info(self, job):
-            """Get job info from cluster
-            :return: dictionary with job info
-            """
-            return {'phase': job.phase}
-
-        def get_results(self, job):
-            """Get job results from cluster"""
-            pass
-
-        def cp_script(self, jobname):
-            """Copy job script to cluster"""
-            pass
-
-
-    class Storage(object):
+    def get_info(self, job):
+        """Get job info from cluster
+        :return: dictionary with job info
         """
-        Manage job information storage. This class defines required functions executed
-        by the UWS server save(), read(), delete()
-        """
+        return {'phase': job.phase}
 
-        def save(self, job, save_attributes=True, save_parameters=True, save_results=True):
-            """Save job information to storage (attributes, parameters and results)"""
-            pass
+    def get_results(self, job):
+        """Get job results from cluster"""
+        pass
 
-        def read(self, job, get_attributes=True, get_parameters=True, get_results=True,
-                 from_jobid_cluster=False):
-            """Read job information from storage"""
-            pass
+    def cp_script(self, jobname):
+        """Copy job script to cluster"""
+        pass
 
-        def delete(self, job):
-            """Delete job information from storage"""
-            pass
 
-        def get_list(self, joblist):
-            """Delete job information from storage"""
-            pass
+class Storage(object):
+    """
+    Manage job information storage. This class defines required functions executed
+    by the UWS server save(), read(), delete()
+    """
 
+    def save(self, job, save_attributes=True, save_parameters=True, save_results=True):
+        """Save job information to storage (attributes, parameters and results)"""
+        pass
+
+    def read(self, job, get_attributes=True, get_parameters=True, get_results=True,
+             from_jobid_cluster=False):
+        """Read job information from storage"""
+        pass
+
+    def delete(self, job):
+        """Delete job information from storage"""
+        pass
+
+    def get_list(self, joblist):
+        """Delete job information from storage"""
+        pass
+``
 
 Child classes should be develop to fit one's need. Currently only the SQLiteStorage
 and SLURMManager classes are implemented and can be used as examples.
