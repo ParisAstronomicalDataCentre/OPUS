@@ -79,6 +79,8 @@ class WADLFile(JDLFile):
         """Save job description to WADL file"""
         raw_jobname = jobname
         raw_jobname.split('/')[-1]  # remove new/ prefix
+        logger.info(jobname)
+        logger.info(raw_jobname)
         # Prepare parameter blocks
         wadl_params = []
         wadl_popts = []
