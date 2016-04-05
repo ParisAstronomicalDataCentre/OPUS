@@ -94,9 +94,9 @@ web client to a specific web application.
 Settings
 ========
 
-**DEBUG**:
-    If True, the full trace of an error is shown on the error web page.
-    If False, the error webpage is simply "Internal Server Error".
+**DEBUG**:  
+If True, the full trace of an error is shown on the error web page.  
+If False, the error webpage is simply "Internal Server Error".  
 
 **APP_PATH**:
     Path to the application files. Autoset to the package directory (parent
