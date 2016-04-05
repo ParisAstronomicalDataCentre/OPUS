@@ -36,10 +36,9 @@ class NotFoundWarning(Warning):
 
 
 class Storage(object):
-    """Manage job information storage
-
-    This class defines required functions executed by the UWS server:
-    save(), read(), delete()
+    """
+    Manage job information storage. This class defines required functions executed
+    by the UWS server save(), read(), delete()
     """
 
     def save(self, job, save_attributes=True, save_parameters=True, save_results=True):

@@ -26,17 +26,15 @@ from settings import *
 
 
 class Manager(object):
-    """Manage job execution on cluster
-
-    This class defines required functions executed by the UWS server:
-    start(), abort(), delete(), get_status(), get_info() and get_results()
+    """
+    Manage job execution on cluster. This class defines required functions executed
+    by the UWS server: start(), abort(), delete(), get_status(), get_info(),
+    get_results() and cp_script().
     """
 
     def start(self, job):
         """Start job on cluster
-
-        Returns:
-            jobid_cluster: jobid on cluster
+        :return: jobid_cluster, jobid on cluster
         """
         return 0
 
@@ -50,17 +48,13 @@ class Manager(object):
 
     def get_status(self, job):
         """Get job status (phase) from cluster
-
-        Returns:
-            job status (phase)
+        :return: job status (phase)
         """
         return job.phase
 
     def get_info(self, job):
         """Get job info from cluster
-
-        Returns:
-            dictionary with job info
+        :return: dictionary with job info
         """
         return {'phase': job.phase}
 
