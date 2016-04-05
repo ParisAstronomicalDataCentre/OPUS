@@ -58,8 +58,8 @@ class Job(object):
             self.jobid = jobid
             self.jobid_cluster = None
         self.user = user
-        # Prepare wadl attribute
-        self.wadl = None
+        # Prepare jdl attribute
+        self.jdl = None
         # Link to the storage, e.g. SQLiteStorage, see settings.py
         self.storage = storage.__dict__[STORAGE]()
         # Link to the job manager, e.g. SLURMManager, see settings.py
@@ -78,7 +78,7 @@ class Job(object):
             # Create a new PENDING job and save to storage
             now = dt.datetime.now()
             destruction = dt.timedelta(DESTRUCTION_INTERVAL)  # default interval for UWS server
-            duration = dt.timedelta(0, 60)  # default duration of 60s, from wadl ?
+            duration = dt.timedelta(0, 60)  # default duration of 60s, from jdl ?
             self.phase = 'PENDING'
             self.quote = None
             self.execution_duration = duration.total_seconds()
@@ -111,17 +111,17 @@ class Job(object):
             self.results = {}
 
     # ----------
-    # Methods to read job description from WADL file
+    # Methods to read job description from JDL file
 
-    def get_wadl(self):
-        """Read job description from WADL file"""
-        job_wadl = uws_jdl.read_wadl(self.jobname)
-        self.wadl = job_wadl
+    def get_jdl(self):
+        """Read job description from JDL file"""
+        job_jdl = uws_jdl.read_jdl(self.jobname)
+        self.jdl = job_jdl
 
     def get_result_filename(self, rname):
         """Get the filename corresponding to the result name"""
-        if not self.wadl:
-            self.get_wadl()
+        if not self.jdl:
+            self.get_jdl()
         if not self.parameters:
             # need to read all parameters
             self.storage.read(self, get_attributes=False, get_parameters=True, get_results=False)
@@ -129,12 +129,12 @@ class Job(object):
             # The result filename is a defined parameter of the job
             fname = self.parameters[rname]['value']
             fname = fname.split('file://')[-1]
-        elif rname in self.wadl['parameters']:
-            # The result filename is a parameter with a default value in the WADL
-            fname = self.wadl['parameters'][rname]['default']
+        elif rname in self.jdl['parameters']:
+            # The result filename is a parameter with a default value in the JDL
+            fname = self.jdl['parameters'][rname]['default']
         else:
-            # The result filename is the name given as default in the WADL
-            fname = self.wadl['results'][rname]['default']
+            # The result filename is the name given as default in the JDL
+            fname = self.jdl['results'][rname]['default']
         logger.debug('Result filename for {} is {}'.format(rname, fname))
         return fname
 
@@ -143,25 +143,25 @@ class Job(object):
 
     def set_from_post(self, post, files):
         """Set attributes and parameters from POST"""
-        # Read WADL
-        if not self.wadl:
-            self.get_wadl()
-        # Pop attributes keywords from POST or WADL
-        self.execution_duration = int(post.pop('EXECUTION_DURATION', self.wadl.get('executionduration', EXECUTION_DURATION_DEF)))
-        self.quote = int(post.pop('QUOTE', self.wadl.get('quote', self.execution_duration)))
+        # Read JDL
+        if not self.jdl:
+            self.get_jdl()
+        # Pop attributes keywords from POST or JDL
+        self.execution_duration = int(post.pop('EXECUTION_DURATION', self.jdl.get('executionduration', EXECUTION_DURATION_DEF)))
+        self.quote = int(post.pop('QUOTE', self.jdl.get('quote', self.execution_duration)))
         # Set parameters from POST
         for pname, value in post.iteritems():
             if pname not in ['PHASE']:
-                # TODO: use WADL to check if value is valid
+                # TODO: use JDL to check if value is valid
                 byref = False
-                if pname not in self.wadl['parameters']:
-                    logger.warning('Parameter {} not found in WADL'.format(pname))
+                if pname not in self.jdl['parameters']:
+                    logger.warning('Parameter {} not found in JDL'.format(pname))
                 else:
-                    ptype = self.wadl['parameters'][pname]['type']
+                    ptype = self.jdl['parameters'][pname]['type']
                     if 'anyURI' in ptype:
                         byref = True
                 self.parameters[pname] = {'value': value, 'byref': byref}
-        # TODO: add default parameters values from WADL
+        # TODO: add default parameters values from JDL
         # Upload files for multipart/form-data
         for fname, f in files.iteritems():
             upload_dir = '{}/{}'.format(UPLOAD_PATH, self.jobid)
@@ -202,8 +202,8 @@ class Job(object):
         Returns:
             All parameters as a list of bash variables
         """
-        if not self.wadl:
-            self.get_wadl()
+        if not self.jdl:
+            self.get_jdl()
         params = ['# Required parameters']
         files = {'URI': [], 'form': []}
         # Required parameters
@@ -222,7 +222,7 @@ class Job(object):
             params.append(pname + '=\"' + pvalue + '\"')
         # Results
         params.append('# Results')
-        for rname, rdict in self.wadl['results'].iteritems():
+        for rname, rdict in self.jdl['results'].iteritems():
             if rname in self.parameters:
                 rvalue = self.parameters[rname]['value']
                 if 'file://' in rvalue:
@@ -233,7 +233,7 @@ class Job(object):
                 params.append(rname + '=\"' + rvalue + '\"')
         # Other parameters
         params.append('# Other parameters')
-        for pname, pdict in self.wadl['parameters'].iteritems():
+        for pname, pdict in self.jdl['parameters'].iteritems():
             if (pname not in self.parameters) and (pname not in self.results):
                 params.append(pname + '=\"' + pdict['default'] + '\"')
         # Return list of bash variables
@@ -435,17 +435,17 @@ class Job(object):
                 job.end_time = end_time.strftime(DT_FMT)
 
             def phase_completed(job, error_msg):
-                if not job.wadl:
-                    job.get_wadl()
+                if not job.jdl:
+                    job.get_jdl()
                 # Copy back results from cluster
                 job.manager.get_results(job)
-                # Check results and all links to db (maybe not all results listed in WADL have been created)
-                for rname, r in job.wadl['results'].iteritems():
+                # Check results and all links to db (maybe not all results listed in JDL have been created)
+                for rname, r in job.jdl['results'].iteritems():
                     rfname = job.get_result_filename(rname)
                     rfpath = '{}/{}/results/{}'.format(JOBDATA_PATH, job.jobid, rfname)
                     if os.path.isfile(rfpath):
                         # /get_result_file/<jobname>/<jobid>/<rname>/<fname>
-                        url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
+                        url = '{}/get_result_file/{}/{}'.format(BASE_URL, job.jobid, rname)
                         job.results[rname] = {'url': url, 'mediaType': r['mediaType']}
                         logger.info('add result ' + rname + ' ' + str(r))
                 # Set job.end_time
@@ -459,7 +459,7 @@ class Job(object):
                     rfname = 'provenance.xml'
                     voprov.prov2xml(pdoc, rfdir + rfname)
                     #pdoc.serialize(rfdir + rfname, format='xml')
-                    url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
+                    url = '{}/get_result_file/{}/{}'.format(BASE_URL, job.jobid, rname)
                     job.results[rname] = {'url': url, 'mediaType': 'text/xml'}
                     logger.info('add provenance.xml file to results')
                     # PROV SVG
@@ -467,7 +467,7 @@ class Job(object):
                     rfname = 'provenance.svg'
                     voprov.prov2svg(pdoc, rfdir + rfname)
                     #pdoc.serialize(rfdir + rfname, format='xml')
-                    url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
+                    url = '{}/get_result_file/{}/{}'.format(BASE_URL, job.jobid, rname)
                     job.results[rname] = {'url': url, 'mediaType': 'image/svg+xml'}
                     logger.info('add provenance.svg file to results')
                 else:

@@ -149,10 +149,11 @@ def favicon():
     return static_file('favicon.ico', root='{}/uws_server'.format(APP_PATH))
 
 
+# TODO: WADL should be one of the proposed JDL
 @app.get('/get_wadl/<jobname:path>')
 def get_wadl(jobname):
     """Get WADL file for jobname"""
-    fname = '{}/{}.wadl'.format(WADL_PATH, jobname)
+    fname = '{}/{}.wadl'.format(JDL_PATH, jobname)
     if os.path.isfile(fname):
         with open(fname) as f:
             wadl = f.readlines()
@@ -161,11 +162,11 @@ def get_wadl(jobname):
     abort_404('No WADL file found for ' + jobname)
 
 
-@app.get('/get_wadl_json/<jobname:path>')
-def get_wadl_json(jobname):
+@app.get('/get_jdl_json/<jobname:path>')
+def get_jdl_json(jobname):
     """Get json dictionary WADL file for jobname"""
     try:
-        job_def = uws_jdl.read_wadl(jobname)
+        job_def = uws_jdl.read_jdl(jobname)
         return job_def
     except UserWarning as e:
         abort_404(e.message)
@@ -303,19 +304,19 @@ def create_new_job_definition():
                 'description': rdesc,
             }
         iresult += 1
-    # Create job_wadl structure
+    # Create job_jdl structure
     job_def = {'description': description,
                'parameters': params,
                'results': results,
                'executionduration': execdur,
                'quote': quote}
     # Create WADL file from form
-    job_wadl = uws_jdl.create_wadl(jobname, job_def)
+    job_jdl = uws_jdl.create_wadl(jobname, job_def)
     # Save WADL in new/
-    wadl_fname = '{}/new/{}.wadl'.format(WADL_PATH, jobname)
-    with open(wadl_fname, 'w') as f:
-        f.write(job_wadl)
-        logger.info('WADL saved: ' + wadl_fname)
+    jdl_fname = '{}/new/{}.wadl'.format(JDL_PATH, jobname)
+    with open(jdl_fname, 'w') as f:
+        f.write(job_jdl)
+        logger.info('WADL saved: ' + jdl_fname)
     # Save bash script file in new/
     script_fname = '{}/new/{}.sh'.format(SCRIPT_PATH, jobname)
     with open(script_fname, 'w') as f:
@@ -331,23 +332,23 @@ def validate_job_definition(jobname):
     """Use filled form to create a WADL file for the given job"""
     # TODO: Restrict access to admin
     #aaa.require(role='admin', fail_redirect='/config/job_definition?jobname=new/{}&msg=restricted'.format(jobname))
-    # Copy script and wadl from new
-    wadl_src = '{}/new/{}.wadl'.format(WADL_PATH, jobname)
-    wadl_dst = '{}/{}.wadl'.format(WADL_PATH, jobname)
+    # Copy script and jdl from new
+    jdl_src = '{}/new/{}.wadl'.format(JDL_PATH, jobname)
+    jdl_dst = '{}/{}.wadl'.format(JDL_PATH, jobname)
     script_src = '{}/new/{}.sh'.format(SCRIPT_PATH, jobname)
     script_dst = '{}/{}.sh'.format(SCRIPT_PATH, jobname)
     # save, then copy from new/
-    if os.path.isfile(wadl_src):
-        if os.path.isfile(wadl_dst):
+    if os.path.isfile(jdl_src):
+        if os.path.isfile(jdl_dst):
             # save file with time stamp
-            mt = dt.datetime.fromtimestamp(os.path.getmtime(wadl_dst)).isoformat()
-            wadl_dst_save = '{}/saved/{}_{}.wadl'.format(WADL_PATH, jobname, mt)
-            os.rename(wadl_dst, wadl_dst_save)
-            logger.info('Previous job wadl saved: ' + wadl_dst_save)
-        shutil.copy(wadl_src, wadl_dst)
-        logger.info('New job wadl copied: ' + wadl_dst)
+            mt = dt.datetime.fromtimestamp(os.path.getmtime(jdl_dst)).isoformat()
+            jdl_dst_save = '{}/saved/{}_{}.wadl'.format(JDL_PATH, jobname, mt)
+            os.rename(jdl_dst, jdl_dst_save)
+            logger.info('Previous job WADL saved: ' + jdl_dst_save)
+        shutil.copy(jdl_src, jdl_dst)
+        logger.info('New job WADL copied: ' + jdl_dst)
     else:
-        logger.info('No job wadl found for validation: ' + wadl_src)
+        logger.info('No job WADL found for validation: ' + jdl_src)
         redirect('/client/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
     if os.path.isfile(script_src):
         if os.path.isfile(script_dst):
@@ -357,9 +358,9 @@ def validate_job_definition(jobname):
             os.rename(script_dst, script_dst_save)
             logger.info('Previous job script saved: ' + script_dst_save)
         shutil.copy(script_src, script_dst)
-        logger.info('New job script copied: ' + wadl_dst)
+        logger.info('New job script copied: ' + script_dst)
     else:
-        logger.info('No job script found for validation: ' + wadl_src)
+        logger.info('No job script found for validation: ' + script_src)
         redirect('/client/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
     # Copy script to job manager
     if os.path.isfile(script_dst):
@@ -1034,8 +1035,8 @@ def get_result(jobname, jobid, rname):
         abort_500_except()
 
 
-@app.route('/get_result_file/<jobid>/<rname>/<rfname>')
-def get_result_file(jobid, rname, rfname):
+@app.route('/get_result_file/<jobid>/<rname>')
+def get_result_file(jobid, rname):
     """Get result file <rname>/<rfname> for job <jobid>
 
     Returns:
@@ -1051,6 +1052,7 @@ def get_result_file(jobid, rname, rfname):
     if rname not in job.results:
         raise storage.NotFoundWarning('Result "{}" NOT FOUND for job "{}"'.format(rname, jobid))
     # Return result
+    rfname = job.get_result_filename(rname)
     #response.content_type = 'text/plain; charset=UTF-8'
     #return str(job.results[result]['url'])
     media_type = job.results[rname]['mediaType']

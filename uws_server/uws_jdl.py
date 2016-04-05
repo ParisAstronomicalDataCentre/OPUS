@@ -37,8 +37,9 @@ from settings import *
 
 
 # ---------
-# WADL as Job Description Language
+# Job Description Language
 
+# TODO: create classes for JDL reader/writer
 
 # xmlns = '{http://wadl.dev.java.net/2009/02}'
 xmlns_uris = {'xmlns:wadl': 'http://wadl.dev.java.net/2009/02',
@@ -50,7 +51,7 @@ xmlns_uris = {'xmlns:wadl': 'http://wadl.dev.java.net/2009/02',
 
 def read_wadl(jobname):
     """Read job description from WADL file"""
-    fname = '{}/{}.wadl'.format(WADL_PATH, jobname)
+    fname = '{}/{}.wadl'.format(JDL_PATH, jobname)
     parameters = collections.OrderedDict()
     results = collections.OrderedDict()
     try:

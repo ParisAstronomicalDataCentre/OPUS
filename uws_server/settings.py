@@ -175,9 +175,9 @@ UPLOAD_PATH = APP_PATH + '/data/uploads'
 JOBDATA_PATH = APP_PATH + '/data/jobdata'
 # Path for job results and logs
 RESULTS_PATH = JOBDATA_PATH + '/results'
-# Path for WADL files, should probably be accessed through a URL as static files
-WADL_PATH = APP_PATH + '/data/job_def/wadl'
-# Path for WADL files, should probably be accessed through a URL as static files
+# Path for JDL files, should probably be accessed through a URL as static files
+JDL_PATH = APP_PATH + '/data/job_def/jdl'
+# Path for script files, should probably be accessed through a URL as static files
 SCRIPT_PATH = APP_PATH + '/data/job_def/scripts'
 # Path for SLURM sbatch files created by SLURMManager
 SBATCH_PATH = APP_PATH + '/data/sbatch'
