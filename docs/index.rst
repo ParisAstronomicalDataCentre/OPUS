@@ -32,7 +32,7 @@ Server Installation
 
 Get the code from the git repository
 ------------------------------------
-    $ git clone https://github.com/mservillat/uws-server.git
+    $ git clone https://github.com/mservillat/uws_server.git
 
 Initialize the package
 ----------------------
