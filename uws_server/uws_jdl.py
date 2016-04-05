@@ -49,7 +49,7 @@ xmlns_uris = {'xmlns:wadl': 'http://wadl.dev.java.net/2009/02',
               'xsi:schemaLocation': 'http://wadl.dev.java.net/2009/02 http://www.w3.org/Submission/wadl/wadl.xsd'}
 
 
-def read_wadl(jobname):
+def read_jdl(jobname):
     """Read job description from WADL file"""
     fname = '{}/{}.wadl'.format(JDL_PATH, jobname)
     parameters = collections.OrderedDict()
@@ -109,7 +109,7 @@ def read_wadl(jobname):
     return job_def
 
 
-def create_wadl(jobname, job_def):
+def create_jdl(jobname, job_def):
     """Open WADL template and insert job definition"""
     jobname = jobname.split('/')[-1]
     # Prepare parameter blocks
