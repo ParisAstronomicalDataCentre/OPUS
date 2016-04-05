@@ -1,10 +1,10 @@
 
 UWS Server
 ==========
-Job controller server and client developed using the micro-framework 
-bottle.py. The standard pattern Universal Worker System v1.0 (UWS) 
-to manage job execution as defined by the International Virtual 
-Observatory Alliance (IVOA) is implemented as a REST service.
+Job control server and client developed using the micro-framework
+bottle.py. The Universal Worker System pattern v1.0 (UWS) as defined
+by the International Virtual Observatory Alliance (IVOA) is implemented
+as a REST service to manage job execution.
 
 Installation
 ============
