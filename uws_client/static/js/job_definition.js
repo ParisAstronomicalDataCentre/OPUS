@@ -182,36 +182,36 @@
 
 	function load_wadl() {
         var jobname = $('input[name=name]').val();
-        // ajax command to get_wadl on UWS server
+        // ajax command to get JDL from UWS server
         $.ajax({
-			url : '/get_wadl_json/' + jobname, //.split("/").pop(),
+			url : '/get_jdl_json/' + jobname, //.split("/").pop(),
 			async : true,
 			type : 'GET',
 			dataType: "json",
-			success : function(wadl) {
-				$('input[name=executionduration]').val(wadl.executionduration);
-				$('input[name=quote]').val(wadl.quote);
-				$('textarea[name=description]').val(wadl.description);
+			success : function(jdl) {
+				$('input[name=executionduration]').val(jdl.executionduration);
+				$('input[name=quote]').val(jdl.quote);
+				$('textarea[name=description]').val(jdl.description);
 				remove_all_parameters();
 				var i = 0;
-				for (var param in wadl.parameters) {
+				for (var param in jdl.parameters) {
 				    add_parameter();
 				    i++;
 				    $('input[name=param_name_' + i + ']').val(param);
-				    $('select[name=param_type_' + i + ']').val(wadl.parameters[param]['type']);
-				    $('input[name=param_default_' + i + ']').val(wadl.parameters[param]['default']);
-				    $('input[name=param_required_' + i + ']').prop("checked", wadl.parameters[param]['required'].toLowerCase() == "true");
-				    $('input[name=param_description_' + i + ']').val(wadl.parameters[param]['description']);
+				    $('select[name=param_type_' + i + ']').val(jdl.parameters[param]['type']);
+				    $('input[name=param_default_' + i + ']').val(jdl.parameters[param]['default']);
+				    $('input[name=param_required_' + i + ']').prop("checked", jdl.parameters[param]['required'].toLowerCase() == "true");
+				    $('input[name=param_description_' + i + ']').val(jdl.parameters[param]['description']);
 				};
 				remove_all_results();
 				var i = 0;
-				for (var result in wadl.results) {
+				for (var result in jdl.results) {
 				    add_result();
 				    i++;
 				    $('input[name=result_name_' + i + ']').val(result);
-				    $('select[name=result_type_' + i + ']').val(wadl.results[result]['mediaType']);
-				    $('input[name=result_default_' + i + ']').val(wadl.results[result]['default']);
-				    $('input[name=result_description_' + i + ']').val(wadl.results[result]['description']);
+				    $('select[name=result_type_' + i + ']').val(jdl.results[result]['mediaType']);
+				    $('input[name=result_default_' + i + ']').val(jdl.results[result]['default']);
+				    $('input[name=result_description_' + i + ']').val(jdl.results[result]['description']);
 				};
                 $('.selectpicker').selectpicker('refresh');
                 // ajax command to get_script on UWS server
