@@ -311,15 +311,16 @@ def create_new_job_definition():
                'results': results,
                'executionduration': execdur,
                'quote': quote}
-    # Create WADL file from form
+    # Create WADL file from job_jdl
     jdl = uws_jdl.__dict__[JDL]()
     jdl.content = job_def
+    jdl.save(jobname)
     #job_jdl = uws_jdl.create_wadl(jobname, job_def)
     # Save WADL in new/
-    jdl_fname = '{}/new/{}.wadl'.format(JDL_PATH, jobname)
-    with open(jdl_fname, 'w') as f:
-        f.write(job_jdl)
-        logger.info('WADL saved: ' + jdl_fname)
+    # jdl_fname = '{}/new/{}.wadl'.format(JDL_PATH, jobname)
+    # with open(jdl_fname, 'w') as f:
+    #     f.write(job_jdl)
+    #     logger.info('WADL saved: ' + jdl_fname)
     # Save bash script file in new/
     script_fname = '{}/new/{}.sh'.format(SCRIPT_PATH, jobname)
     with open(script_fname, 'w') as f:
