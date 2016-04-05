@@ -6,9 +6,8 @@ bottle.py. The Universal Worker System pattern v1.0 (UWS) as defined
 by the International Virtual Observatory Alliance (IVOA) is implemented
 as a REST service to manage job execution on a work cluster.
 
-More information on the UWS pattern recommendation can be found here:
-
-http://www.ivoa.net/documents/UWS/20101010/
+More information on the UWS pattern recommendation can be found 
+[here](http://www.ivoa.net/documents/UWS/20101010/).
 
 The **UWS server** is composed of:
 * a REST interface following the bottle.py framework and the UWS recommendation,
@@ -26,20 +25,30 @@ used independently to send requests to the server. The core of the client is the
 display job lists and job properties in web pages.A set of HTML pages use those
 scripts and are accessed through bottle.py functions. A separate web page allows
 the user to create and modify job descriptions. Note that the UWS client uses the
-JavaScript frameworks BootStrap3 and jQuery.
+JavaScript frameworks [BootStrap3](http://getbootstrap.com/) and 
+[jQuery](https://jquery.com/).
 
 
 Server Installation
 ===================
-
 Get the code from the git repository
 ------------------------------------
     $ git clone https://github.com/mservillat/uws_server.git
 
 Initialize the package
 ----------------------
+Install the required python packages:
+
     $ pip install -r requirements.txt
+    
+Intitialize the data tree structure and make it writable by the web server. The 
+variable WWWUSER can be used to set the username used by the web server. it is 
+set to `www` by default:
+
     $ make init
+    
+Run unit tests to check tha main features of the UWS server:
+
     $ make test
 
 Configure your web server
@@ -48,7 +57,7 @@ The `uws_server.py` file  can be directly run to test the application on
 `localhost:8080`.
 
 With Apache 2 and mod_wsgi, use the script `uws_server/wsgi.py`.
-the following configuration file (e.g. uws_server.conf) should be placed in
+the following configuration file (e.g. `uws_server.conf`) should be placed in
 `/etc/apache2/sites-available/` with a link to `/etc/apache2/sites-enabled/`.
 
     <VirtualHost *:80>
@@ -120,7 +129,7 @@ Settings
 User guide
 ==========
 
-
+TBD
 
 Developer guide
 ===============
@@ -170,8 +179,9 @@ class Manager(object):
     def cp_script(self, jobname):
         """Copy job script to cluster"""
         pass
+```
 
-
+```python
 class Storage(object):
     """
     Manage job information storage. This class defines required functions executed
@@ -194,7 +204,9 @@ class Storage(object):
     def get_list(self, joblist):
         """Delete job information from storage"""
         pass
-``
+```
 
-Child classes should be develop to fit one's need. Currently only the SQLiteStorage
-and SLURMManager classes are implemented and can be used as examples.
+Child classes should thus be develop to fit one's need. Currently only the 
+`SQLiteStorage` and `SLURMManager` classes are implemented and can be used as examples.
+
+
