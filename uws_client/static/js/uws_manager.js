@@ -502,8 +502,10 @@ var uws_manager = (function($) {
                 case 'txt':
                 case 'log':
                     // show textarea with log
-                    $('#'+r_id+' div.panel-body').html('\
-                        <textarea class="log form-control" rows="10" style="font-family: monospace;" readonly></textarea>\
+                    $('#'+r_id).append('\
+                        <div class="panel-body">\
+                            <textarea class="log form-control" rows="10" style="font-family: monospace;" readonly></textarea>\
+                        </div>\
                     ');
                     $.ajax({
                         url : r_url,
@@ -515,6 +517,10 @@ var uws_manager = (function($) {
                     });
                     break;
                 case 'svg':
+                    $('#'+r_id).append('\
+                        <div class="panel-body">\
+                        </div>\
+                    ');
                     $('#'+r_id+' div.panel-body').load(r_url, function() {
                         $('#'+r_id+' > div.panel-body > svg').attr('width', '100%');
                     });
