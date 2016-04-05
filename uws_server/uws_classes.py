@@ -440,7 +440,7 @@ class Job(object):
                     rfpath = '{}/{}/results/{}'.format(JOBDATA_PATH, job.jobid, rfname)
                     if os.path.isfile(rfpath):
                         # /get_result_file/<jobname>/<jobid>/<rname>/<fname>
-                        url = '{}/get_result_file/{}/{}'.format(BASE_URL, job.jobid, rname)
+                        url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
                         job.results[rname] = {'url': url, 'mediaType': r['mediaType']}
                         logger.info('add result ' + rname + ' ' + str(r))
                 # Set job.end_time
@@ -454,7 +454,7 @@ class Job(object):
                     rfname = 'provenance.xml'
                     voprov.prov2xml(pdoc, rfdir + rfname)
                     #pdoc.serialize(rfdir + rfname, format='xml')
-                    url = '{}/get_result_file/{}/{}'.format(BASE_URL, job.jobid, rname)
+                    url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
                     job.results[rname] = {'url': url, 'mediaType': 'text/xml'}
                     logger.info('add provenance.xml file to results')
                     # PROV SVG
@@ -462,7 +462,7 @@ class Job(object):
                     rfname = 'provenance.svg'
                     voprov.prov2svg(pdoc, rfdir + rfname)
                     #pdoc.serialize(rfdir + rfname, format='xml')
-                    url = '{}/get_result_file/{}/{}'.format(BASE_URL, job.jobid, rname)
+                    url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
                     job.results[rname] = {'url': url, 'mediaType': 'image/svg+xml'}
                     logger.info('add provenance.svg file to results')
                 else:

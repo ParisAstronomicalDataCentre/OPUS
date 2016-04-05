@@ -1038,8 +1038,8 @@ def get_result(jobname, jobid, rname):
         abort_500_except()
 
 
-@app.route('/get_result_file/<jobid>/<rname>')
-def get_result_file(jobid, rname):
+@app.route('/get_result_file/<jobid>/<rname>/<rfname>')
+def get_result_file(jobid, rname, rfname):
     """Get result file <rname>/<rfname> for job <jobid>
 
     Returns:
@@ -1055,7 +1055,7 @@ def get_result_file(jobid, rname):
     if rname not in job.results:
         raise storage.NotFoundWarning('Result "{}" NOT FOUND for job "{}"'.format(rname, jobid))
     # Return result
-    rfname = job.get_result_filename(rname)
+    # rfname = job.get_result_filename(rname)
     #response.content_type = 'text/plain; charset=UTF-8'
     #return str(job.results[result]['url'])
     media_type = job.results[rname]['mediaType']
