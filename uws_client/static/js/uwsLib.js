@@ -56,13 +56,13 @@ var uwsLib = (function() {
 	
 	
 	function uwsClient(serviceUrl, basicauth){
+		console.log(basicauth);
 		this.serviceUrl = serviceUrl;
 		this.jobName = serviceUrl.split('/').pop();
 		if(!!basicauth){
             basicauth = btoa("anonymous:anonymous");
         };
 		this.basicauth = basicauth;
-		console.log(basicauth);
 	};
 	
 	uwsClient.prototype.getJobListInfos
