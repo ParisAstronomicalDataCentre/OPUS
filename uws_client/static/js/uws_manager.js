@@ -15,6 +15,9 @@
 // The results are shown as bootstrap panels in a div block with id=result_list
 // <div id='result_list' class='text-center'></div>
 
+// Some results (stdout, stderr, provxml, provsvg) are shown as bootstrap panels in a div block with id=details_list
+// <div id='details_list' class='text-center'></div>
+
 var uws_manager = (function($) {
     "use strict";
 
@@ -22,7 +25,6 @@ var uws_manager = (function($) {
     var refreshPhaseTimeoutDelay = {}; //
     var timeoutDelays = [2000,3000,4000,5000,10000]; // delays in ms
     var selectedJobId;
-    //var serviceUrl = "http://voparis-uws.obspm.fr/uws-v1.0/"; // app_url+"/uws-v1.0/" //
     var serviceUrl = $(location).attr('protocol') + '//' + $(location).attr('host');
     // "https://voparis-uws-test.obspm.fr/"; // app_url+"/uws-v1.0/" //
     var jobs_url = '/rest/';
@@ -455,6 +457,7 @@ var uws_manager = (function($) {
     // DISPLAY RESULTS
     var displayResults = function(job){
         $('#result_list').html('');
+        $('#details_list').html('');
         var r_i = 0;
         for (var r in job['results']) {
             r_i++;
@@ -471,8 +474,20 @@ var uws_manager = (function($) {
                           </span>\
                       </div>\
                 </div>';
-            $('#result_list').append(r_panel);
+            // Some results are shown in the details box if present
+            switch (r_name) {
+                case 'stdout':
+                case 'stderr':
+                case 'provxml':
+                case 'provsvg':
+                    $('#details_list').append(r_panel);
+                    break;
+                else:
+                    $('#result_list').append(r_panel);
+            }
+            // Show preview according to result type (file extension)
             switch (r_type) {
+                // FITS files can be SAMPed
                 case 'fits':
                     $('#'+r_id+' div.panel-heading span.pull-left').attr('style', "padding-top: 4px;");
                     $('#'+r_id+' div.panel-heading').append('\
@@ -490,6 +505,7 @@ var uws_manager = (function($) {
                     //    <img class="img-thumbnail" src="/static/images/crab_cta.png" />\
                     //');
                     break;
+                // Show images
                 case 'jpg':
                 case 'png':
                     // Show image preview
@@ -499,6 +515,7 @@ var uws_manager = (function($) {
                         </div>\
                     ');
                     break;
+                // Show text in textarea
                 case 'txt':
                 case 'cfg':
                 case 'log':
@@ -517,6 +534,7 @@ var uws_manager = (function($) {
                         }
                     });
                     break;
+                // Show SVG
                 case 'svg':
                     $('#'+r_id).append('\
                         <div class="panel-body">\
