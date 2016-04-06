@@ -60,7 +60,7 @@ var uwsLib = (function() {
 		this.jobName = serviceUrl.split('/').pop();
 		if(!!basicauth){
             basicauth = btoa("anonymous:anonymous");
-        }
+        };
 		this.basicauth = basicauth;
 	};
 	
@@ -75,7 +75,7 @@ var uwsLib = (function() {
 			dataType: "xml",
 			headers: {
     			"Authorization": "Basic " + this.basicauth
-  			}
+  			},
 			success : function(xml) {
 				var jobs = getJobListFromXml(xml, jobName);
 				SuccessCallback(jobs);
@@ -95,7 +95,7 @@ var uwsLib = (function() {
 			data : jobParameters,
 			headers: {
     			"Authorization": "Basic " + this.basicauth
-  			}
+  			},
 			success : function(xml) {
 				var job = getJobFromXml(xml, jobName);
 				SuccessCallback(job);
@@ -117,7 +117,7 @@ var uwsLib = (function() {
 			data: "ACTION=DELETE",
 			headers: {
     			"Authorization": "Basic " + this.basicauth
-  			}
+  			},
 			success : function(xml) {
 				var jobs = getJobListFromXml(xml, jobName);
 				successCallback(id, jobs);
@@ -137,7 +137,7 @@ var uwsLib = (function() {
 			data: "PHASE=ABORT",
 			headers: {
     			"Authorization": "Basic " + this.basicauth
-  			}
+  			},
 			success : function(xml) {
 				successCallback(id);
 			},
@@ -156,7 +156,7 @@ var uwsLib = (function() {
 			data: "PHASE=RUN",
 			headers: {
     			"Authorization": "Basic " + this.basicauth
-  			}
+  			},
 			success : function(xml) {
 				successCallback(id);
 			},
@@ -175,7 +175,7 @@ var uwsLib = (function() {
 			dataType: "xml",
 			headers: {
     			"Authorization": "Basic " + this.basicauth
-  			}
+  			},
 			success : function(xml) {
 				var job = getJobFromXml(xml, jobName);
 				successCallback(job);
@@ -192,7 +192,7 @@ var uwsLib = (function() {
 			dataType: "xml",
 			headers: {
     			"Authorization": "Basic " + this.basicauth
-  			}
+  			},
 			success : function(xml) {
 				var results = readResults(xml);
 				successCallback(id, results);
@@ -209,7 +209,7 @@ var uwsLib = (function() {
 			type: 'GET',
 			headers: {
     			"Authorization": "Basic " + this.basicauth
-  			}
+  			},
 			success : function(xhr) {
 				successCallback(id, xhr);
 			},
@@ -227,7 +227,7 @@ var uwsLib = (function() {
 			dataType: "xml",
 			headers: {
     			"Authorization": "Basic " + this.basicauth
-  			}
+  			},
 		}).responseXML;
 	}
 	
@@ -239,7 +239,7 @@ var uwsLib = (function() {
 			dataType: "xml",
 			headers: {
     			"Authorization": "Basic " + this.basicauth
-  			}
+  			},
 		}).responseXML;
 	}
 	
