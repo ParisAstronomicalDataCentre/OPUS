@@ -356,7 +356,7 @@ def validate_job_definition(jobname):
         if os.path.isfile(jdl_dst):
             # save file with time stamp
             mt = dt.datetime.fromtimestamp(os.path.getmtime(jdl_dst)).isoformat()
-            jdl_dst_save = '{}/saved/{}_{}{}'.format(JDL_PATH, jobname, mt, jdl.extention)
+            jdl_dst_save = '{}/saved/{}_{}{}'.format(JDL_PATH, jobname, mt, jdl.extension)
             os.rename(jdl_dst, jdl_dst_save)
             logger.info('Previous job JDL saved: ' + jdl_dst_save)
         shutil.copy(jdl_src, jdl_dst)
