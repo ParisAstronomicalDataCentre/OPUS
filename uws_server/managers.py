@@ -96,8 +96,8 @@ class SLURMManager(Manager):
         sbatch = [
             '#!/bin/bash -l',
             '#SBATCH --job-name={}'.format(job.jobname),
-            '#SBATCH --error={}/{}/stderr.log'.format(self.jobdata_path, job.jobid),
-            '#SBATCH --output={}/{}/stdout.log'.format(self.jobdata_path, job.jobid),
+            '#SBATCH --error={}/{}/results/stderr.log'.format(self.jobdata_path, job.jobid),
+            '#SBATCH --output={}/{}/results/stdout.log'.format(self.jobdata_path, job.jobid),
             '#SBATCH --mail-user=' + self.mail,
             '#SBATCH --mail-type=ALL',
             '#SBATCH --no-requeue',
@@ -158,7 +158,7 @@ class SLURMManager(Manager):
             'echo "[`timestamp`] List files in workdir"',
             'ls -l',
             '### CP RESULTS',
-            'mkdir $jd/results',
+            #'mkdir $jd/results',
         ])
         # Need JDL for results description
         if not job.jdl.content:
@@ -200,7 +200,7 @@ class SLURMManager(Manager):
         """
         # Create jobdata dir (to upload the scripts, parameters and input files)
         cmd = ['ssh', self.ssh_arg,
-               'mkdir -p {}/{}/input'.format(self.jobdata_path, job.jobid)]
+               'mkdir -p {}/{}/{input,results}'.format(self.jobdata_path, job.jobid)]
         # logger.debug(' '.join(cmd))
         try:
             sp.check_output(cmd, stderr=sp.STDOUT)

@@ -445,9 +445,19 @@ class Job(object):
                         logger.info('add result ' + rname + ' ' + str(r))
                 # Set job.end_time
                 job.end_time = now.strftime(DT_FMT)
+                # Link job logs stdout and stderr (added as a result)
+                rfdir = '{}/{}/results/'.format(JOBDATA_PATH, job.jobid)
+                if os.path.isdir(rfdir):
+                    rname = 'stdout'
+                    rfname = 'stdout'
+
+                    url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
+                    job.results[rname] = {'url': url, 'mediaType': 'text/plain'}
+                    logger.info('add stdout.log file to results')
+                else:
+                    logger.warning('CANNOT add logs to results')
                 # Create Provenance XML file (added as a result)
                 pdoc = voprov.job2prov(job)
-                rfdir = '{}/{}/results/'.format(JOBDATA_PATH, job.jobid)
                 if os.path.isdir(rfdir):
                     # PROV XML
                     rname = 'provxml'
