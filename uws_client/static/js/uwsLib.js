@@ -62,6 +62,7 @@ var uwsLib = (function() {
             basicauth = btoa("anonymous:anonymous");
         };
 		this.basicauth = basicauth;
+		console.log(basicauth);
 	};
 	
 	uwsClient.prototype.getJobListInfos
