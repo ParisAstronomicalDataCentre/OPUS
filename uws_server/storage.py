@@ -129,6 +129,7 @@ class SQLiteStorage(Storage):
     # noinspection PyTypeChecker
     def read(self, job, get_attributes=True, get_parameters=False, get_results=False, from_jobid_cluster=False):
         """Read job from storage"""
+        # TODO: add owner and owner_pid to all SELECT (except if... admin?)
         if from_jobid_cluster:
             # Query db for jobname and jobid using jobid_cluster
             query = "SELECT jobname, jobid FROM jobs WHERE jobid_cluster='{}';".format(job.jobid_cluster)
@@ -192,7 +193,7 @@ class SQLiteStorage(Storage):
         """Query storage for job list"""
         query = "SELECT jobid, phase FROM jobs"
         where = ["jobname='{}'".format(joblist.jobname)]
-        if joblist.user not in ['localhost']:
+        if joblist.user.name not in ['admin']:
             where.append("owner='{}'".format(joblist.user.name))
             where.append("owner_pid='{}'".format(joblist.user.pid))
         query += " WHERE " + " AND ".join(where) + ";"

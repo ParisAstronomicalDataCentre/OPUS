@@ -31,6 +31,7 @@ def set_user():
     # logger.debug(str(request.environ))
     user_name = 'anonymous'
     user_pid = 'anonymous'
+    # TODO: Check request.auth --> directly gives tuple (username, pid) (??)
     # Set user from GET
     # if 'user' in request.GET:
     #     user_name = request.GET['user']
