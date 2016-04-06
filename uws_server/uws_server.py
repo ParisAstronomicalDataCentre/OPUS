@@ -1072,7 +1072,7 @@ def get_result_file(jobid, rname, rfname):
     media_type = job.results[rname]['mediaType']
     logger.debug('{} {} {} {} {}'.format(job.jobname, jobid, rname, rfname, media_type))
     response.set_header('Content-type', media_type)
-    if any(x in media_type for x in ['text', 'xml']):
+    if any(x in media_type for x in ['text', 'xml', 'json']):
         return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid), mimetype=media_type)
     else:
         return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid), mimetype=media_type, download=rfname)
