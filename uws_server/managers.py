@@ -137,9 +137,9 @@ class SLURMManager(Manager):
             'mkdir -p $wd',
             'cd $wd',
             'echo "SLURM_JOBID is $SLURM_JOBID"',
-            'echo "User is `id`"',
-            'echo "Working dir is $wd"',
-            'echo "JobData dir is $jd"',
+            #'echo "User is `id`"',
+            #'echo "Working dir is $wd"',
+            #'echo "JobData dir is $jd"',
             # Move uploaded files to working directory if they exist
             'echo "[`timestamp`] Prepare input files"',
             'for filename in $jd/input/*; do [ -f "$filename" ] && cp $filename $wd; done',
@@ -147,7 +147,7 @@ class SLURMManager(Manager):
             'curl -k -s -o $jd/curl_start_signal.log '
             '    -d "jobid=$SLURM_JOBID" -d "phase=RUNNING" '
             '    {}/handler/job_event'.format(BASE_URL),
-            'echo "[`timestamp`] Start job"',
+            'echo "[`timestamp`] ***** Start job *****"',
             'touch $jd/start',
             '### EXEC',
             # Load variables from params file
@@ -179,7 +179,7 @@ class SLURMManager(Manager):
             '### CLEAN',
             'rm -rf $wd',
             'touch $jd/done',
-            'echo "[`timestamp`] Job done"',
+            'echo "[`timestamp`] ***** Job done *****"',
             'trap - INT TERM EXIT',
             'exit 0',
         ])
