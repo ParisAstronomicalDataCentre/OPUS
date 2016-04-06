@@ -10,12 +10,17 @@ More information on the UWS pattern recommendation can be found
 [here](http://www.ivoa.net/documents/UWS/20101010/).
 
 The **UWS server** is composed of:
+
 * a REST interface following the bottle.py framework and the UWS recommendation,
+
 * a set of classes to define, create and manage UWS jobs and job lists
+
 * Storage classes to store job properties in a database (currently only the
   SQLiteStorage class is available),
+
 * Manager classes to communicate with a work cluster (currently only the
   SLURMManager class is available),
+
 * Job description language (JDL) functions to read and write descriptions
   (currently the WADL standard is used).
 
