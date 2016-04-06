@@ -48,6 +48,7 @@ def set_user():
         logger.debug('REMOTE_USER is set: {}'.format(user_name))
     # Use Basic access authentication
     auth = request.headers.get('Authorization')
+    logger.info(auth)
     # Using WSGI, the header is changed to HTTP_AUTHORIZATION
     # TODO: add 'WSGIPassAuthorization On' to Apache config on voparis-uws-test
     if not auth:
