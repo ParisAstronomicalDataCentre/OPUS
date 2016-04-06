@@ -9,7 +9,7 @@ as a REST service to manage job execution on a work cluster.
 More information on the UWS pattern recommendation can be found 
 [here](http://www.ivoa.net/documents/UWS/20101010/).
 
-The **UWS server** is composed of:
+The **UWS server** is a web application composed of:
 
 * a REST interface following the bottle.py framework and the UWS recommendation,
 
@@ -51,6 +51,7 @@ variable WWWUSER can be used to set the username used by the web server. it is
 set to `www` by default:
 
     $ make init
+    $ make init WWWUSER=wwwuser
     
 Run unit tests to check tha main features of the UWS server:
 
@@ -70,8 +71,8 @@ The following configuration file (e.g. `uws_server.conf`) should be placed in
         ServerName example.com
         ServerAdmin  a@b.com
         DocumentRoot /path_to_uws_server
-        ErrorLog "/var/log/error_ssl.log"
-        CustomLog "/var/log/access_ssl.log" combined
+        ErrorLog "/var/log/error.log"
+        CustomLog "/var/log/access.log" combined
         Header set Access-Control-Allow-Origin "*"
 
         WSGIDaemonProcess uws display-name=%{GROUP} processes=1 threads=5
@@ -91,7 +92,7 @@ Client only installation
 The `uws_client.py` file can be directly run to test the application on
 `localhost:8080`.
 
-With Apache 2 and mod_wsgi, use the script `uws_client/wsgi.py` as explaied above
+With Apache 2 and mod_wsgi, use the script `uws_client/wsgi.py` as explained above
 to install the client as is. However, one may adapt the web pages to integrate 
 the JavaScript web client to a specific web application.
 
@@ -144,7 +145,8 @@ Developer guide
 How to create new classes
 -------------------------
 Manager and Storage classes are empty parent classes with the minimum functions
-required:
+required. Child classes should thus be develop to fit one's need. Currently only the 
+`SQLiteStorage` and `SLURMManager` classes are implemented and can be used as examples.
 
 ```python
 class Manager(object):
@@ -214,7 +216,5 @@ class Storage(object):
         pass
 ```
 
-Child classes should thus be develop to fit one's need. Currently only the 
-`SQLiteStorage` and `SLURMManager` classes are implemented and can be used as examples.
 
 
