@@ -463,13 +463,19 @@ class Job(object):
                 else:
                     logger.warning('CANNOT add logs to results')
                 # Create PROV XML file (added as a result)
-                pdoc = voprov.job2prov(job)
                 if os.path.isdir(rfdir):
+                    pdoc = voprov.job2prov(job)
+                    # PROV JSON
+                    rname = 'provjson'
+                    rfname = 'provenance.json'
+                    voprov.prov2json(pdoc, rfdir + rfname)
+                    url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
+                    job.results[rname] = {'url': url, 'mediaType': 'application/json'}
+                    logger.info('add provenance.json file to results')
                     # PROV XML
                     rname = 'provxml'
                     rfname = 'provenance.xml'
                     voprov.prov2xml(pdoc, rfdir + rfname)
-                    #pdoc.serialize(rfdir + rfname, format='xml')
                     url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
                     job.results[rname] = {'url': url, 'mediaType': 'text/xml'}
                     logger.info('add provenance.xml file to results')
@@ -477,7 +483,6 @@ class Job(object):
                     rname = 'provsvg'
                     rfname = 'provenance.svg'
                     voprov.prov2svg(pdoc, rfdir + rfname)
-                    #pdoc.serialize(rfdir + rfname, format='xml')
                     url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
                     job.results[rname] = {'url': url, 'mediaType': 'image/svg+xml'}
                     logger.info('add provenance.svg file to results')

@@ -71,6 +71,16 @@ def job2prov(job):
     return pdoc
 
 
+def prov2json(prov_doc, fname):
+    """
+    Write ProvDocument as an JSON file
+    :param prov_doc: ProvDocument
+    :param fname: file name
+    :return:
+    """
+    prov_doc.serialize(fname, format='json')
+
+
 def prov2xml(prov_doc, fname):
     """
     Write ProvDocument as an XML file
@@ -95,6 +105,7 @@ def prov2svg(prov_doc, fname):
     """
     Convert ProvDocument to dot graphical format
     :param prov_doc:
+    :param fname: file name
     :return:
     """
     dot = prov2dot(prov_doc)

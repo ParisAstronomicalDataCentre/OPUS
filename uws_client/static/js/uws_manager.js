@@ -478,6 +478,7 @@ var uws_manager = (function($) {
             switch (r) {
                 case 'stdout':
                 case 'stderr':
+                case 'provjson':
                 case 'provxml':
                 case 'provsvg':
                     $('#details_list').append(r_panel);
