@@ -60,7 +60,8 @@ var uwsLib = (function() {
 		this.serviceUrl = serviceUrl;
 		this.jobName = serviceUrl.split('/').pop();
 		if(!!basicauth){
-            basicauth = btoa("anonymous:anonymous");
+            //basicauth = btoa("anonymous:anonymous");
+            console.log('!!basicauth...')
         };
 		this.basicauth = basicauth;
 	};
