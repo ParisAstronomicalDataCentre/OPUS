@@ -169,10 +169,12 @@ class SLURMManager(Manager):
         ]
         for rname, r in job.jdl.content['results'].iteritems():
             fname = job.get_result_filename(rname)
-            cp_results.append('[ -f $wd/{fname} ] '
-                              '&& {{ cp $wd/{fname} $jd/results; echo "{rname}: {fname} found and copied"; }} '
-                              '|| echo "{rname}: {fname} NOT FOUND"'
-                              ''.format(rname=rname, fname=fname))
+            cp_results.append(
+                '[ -f $wd/{fname} ] '
+                '&& {{ cp $wd/{fname} $jd/results; echo "Found and copied: {rname}={fname}"; }} '
+                '|| echo "NOT FOUND: {rname}={fname}"'
+                ''.format(rname=rname, fname=fname)
+            )
         sbatch.extend(cp_results)
         # Clean and terminate job
         sbatch.extend([
