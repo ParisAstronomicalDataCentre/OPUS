@@ -200,7 +200,7 @@ class SLURMManager(Manager):
         """
         # Create jobdata dir (to upload the scripts, parameters and input files)
         cmd = ['ssh', self.ssh_arg,
-               'mkdir -p {}/{}/{input,results}'.format(self.jobdata_path, job.jobid)]
+               'mkdir -p {}/{}/{{input,results}}'.format(self.jobdata_path, job.jobid)]
         # logger.debug(' '.join(cmd))
         try:
             sp.check_output(cmd, stderr=sp.STDOUT)
