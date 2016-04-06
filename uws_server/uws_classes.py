@@ -448,15 +448,21 @@ class Job(object):
                 # Link job logs stdout and stderr (added as a result)
                 rfdir = '{}/{}/results/'.format(JOBDATA_PATH, job.jobid)
                 if os.path.isdir(rfdir):
+                    # STDOUT
                     rname = 'stdout'
-                    rfname = 'stdout'
-
+                    rfname = 'stdout.log'
                     url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
                     job.results[rname] = {'url': url, 'mediaType': 'text/plain'}
                     logger.info('add stdout.log file to results')
+                    # STDERR
+                    rname = 'stderr'
+                    rfname = 'stderr.log'
+                    url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
+                    job.results[rname] = {'url': url, 'mediaType': 'text/plain'}
+                    logger.info('add stderr.log file to results')
                 else:
                     logger.warning('CANNOT add logs to results')
-                # Create Provenance XML file (added as a result)
+                # Create PROV XML file (added as a result)
                 pdoc = voprov.job2prov(job)
                 if os.path.isdir(rfdir):
                     # PROV XML
