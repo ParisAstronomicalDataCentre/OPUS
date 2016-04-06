@@ -53,8 +53,9 @@ def set_user():
     if not auth:
         auth = request.headers.get('HTTP_AUTHORIZATION')
     if auth:
+        logger.debug('Authorization: {}'.format(auth))
         user_name, user_pid = parse_auth(auth)
-        logger.debug('Authorization: {} ({}:{})'.format(auth, user_name, user_pid))
+        logger.debug('Authorization: {}:{}'.format(user_name, user_pid))
     # Create user object
     user = User(user_name, user_pid)
     return user
