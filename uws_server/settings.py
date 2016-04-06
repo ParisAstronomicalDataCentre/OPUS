@@ -54,6 +54,7 @@ JOB_SERVERS = {
 AUTHORIZED_CLIENTS = {
     '127.0.0.1': 'localhost',
     '145.238.193.69': 'voparis-uws-test.obspm.fr',
+    '145.238.168.3': 'voparis-uws-test.obspm.fr',
 }
 
 # Job Description Language
