@@ -16,7 +16,6 @@
         jobid = $('#jobid').attr('value');
         jobname = $('#jobname').attr('value');
         var auth = $('#auth').attr('value');
-        console.log(auth);
         // Display job
         if (jobname && jobid) {
             uws_manager.initManager([jobname], auth);

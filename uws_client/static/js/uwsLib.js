@@ -56,10 +56,9 @@ var uwsLib = (function() {
 	
 	
 	function uwsClient(serviceUrl, basicauth){
-		console.log(basicauth);
 		this.serviceUrl = serviceUrl;
 		this.jobName = serviceUrl.split('/').pop();
-		if(!!basicauth){
+		if(basicauth.length == 0){
             //basicauth = btoa("anonymous:anonymous");
             console.log('!!basicauth...')
         };
