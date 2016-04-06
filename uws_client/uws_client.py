@@ -69,14 +69,15 @@ def favicon():
 @jinja2_view('login_form.html')
 def login_form():
     """Serve login form"""
+    session = request.environ['beaker.session']
     next_page = request.query.get('next', '/')
     msg = request.query.get('msg', '')
     msg_text = {
         'failed': 'Authentication failed',
     }
     if msg in msg_text:
-        return {'next': next_page, 'message': msg_text[msg]}
-    return {'next': next_page}
+        return {'session': session, 'next': next_page, 'message': msg_text[msg]}
+    return {'session': session, 'next': next_page}
 
 
 @app.route('/sorry_page')
