@@ -49,7 +49,7 @@ def set_user():
     # Use Basic access authentication
     auth = request.headers.get('Authorization')
     # Using WSGI, the header is changed to HTTP_AUTHORIZATION
-    # TODO: add WSGIPassAuthorization On to Apache config on voparis-uws-test
+    # TODO: add 'WSGIPassAuthorization On' to Apache config on voparis-uws-test
     if not auth:
         auth = request.headers.get('HTTP_AUTHORIZATION')
     if auth:
