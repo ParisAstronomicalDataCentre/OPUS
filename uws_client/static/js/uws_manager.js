@@ -53,7 +53,7 @@ var uws_manager = (function($) {
         jobNames = jobNames_init;
         for (var i in jobNames) {
             // Init client
-            url = serviceUrl + jobs_url + jobNames[i];
+            var url = serviceUrl + jobs_url + jobNames[i];
             clients[jobNames[i]] = new uwsLib.uwsClient(url, basicauth);
             // Get JDL for job
             $.getJSON(serviceUrl + jdl_url + jobNames[i], function(jdl) {
