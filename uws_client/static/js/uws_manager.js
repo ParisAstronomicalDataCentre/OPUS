@@ -475,7 +475,7 @@ var uws_manager = (function($) {
                       </div>\
                 </div>';
             // Some results are shown in the details box if present
-            switch (r_name) {
+            switch (r) {
                 case 'stdout':
                 case 'stderr':
                 case 'provxml':
