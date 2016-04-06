@@ -15,9 +15,10 @@
         // Get jobname/jobid
         jobid = $('#jobid').attr('value');
         jobname = $('#jobname').attr('value');
+        var auth = $('#auth').attr('value');
         // Display job
         if (jobname && jobid) {
-            uws_manager.initManager([jobname]);
+            uws_manager.initManager([jobname], auth);
             uws_manager.displaySingleJob(jobname, jobid);
         };
         // Add events

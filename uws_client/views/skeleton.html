@@ -15,7 +15,9 @@
 </head>
 <body>
     <!-- Variables defined in div elements for JavaScript -->
-{% block variables %}{% endblock %}
+{% block variables %}
+    <div id="auth" style="display:none" value="{{ session.auth }}"></div>
+{% endblock %}
     <!-- Page header (banner and nav panel) -->
 {% block header %}{% include "header.html" %}{% endblock %}
     <!-- Message -->

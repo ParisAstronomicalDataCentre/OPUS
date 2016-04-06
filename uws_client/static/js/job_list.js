@@ -6,12 +6,11 @@
 (function($) {
     "use strict";
 
-    var jobNames = ['ctbin'] //, 'astrocheck']
-
     function load_job_list() {
         var jobname = $('select[name=jobname]').val();
+        var auth = $('#auth').attr('value');
         // init UWS Manager
-        uws_manager.initManager([jobname]);
+        uws_manager.initManager([jobname], auth);
         uws_manager.getJobList();
         if ( $( "#job_id" ).length ) {
             uws_manager.selectJob($( "#jobid" ).attr('value'));

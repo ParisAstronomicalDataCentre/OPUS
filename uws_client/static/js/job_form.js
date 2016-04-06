@@ -12,7 +12,8 @@
         
         // Look at URL to set jobName
         jobName = $('#jobname').attr('value');
-        uws_manager.initManager([jobName]);
+        var auth = $('#auth').attr('value');
+        uws_manager.initManager([jobName], auth);
         uws_manager.displayParamForm(jobName);
 
         // catch the form's submit event to validate form

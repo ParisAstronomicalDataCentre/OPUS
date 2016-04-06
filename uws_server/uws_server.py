@@ -32,13 +32,13 @@ def set_user():
     user_name = 'anonymous'
     user_pid = 'anonymous'
     # Set user from GET
-    if 'user' in request.GET:
-        user_name = request.GET['user']
-        if 'user_pid' in request.GET:
-            user_pid = request.GET['user_pid']
-        else:
-            user_pid = request.GET['user']
-        logger.debug('user information from GET ({}:{})'.format(user_name, user_pid))
+    # if 'user' in request.GET:
+    #     user_name = request.GET['user']
+    #     if 'user_pid' in request.GET:
+    #         user_pid = request.GET['user_pid']
+    #     else:
+    #         user_pid = request.GET['user']
+    #     logger.debug('user information from GET ({}:{})'.format(user_name, user_pid))
     # Set user from REMOTE_USER if not empty
     remote_user = request.environ.get('REMOTE_USER', '')
     if remote_user:
@@ -54,6 +54,7 @@ def set_user():
     if auth:
         user_name, user_pid = parse_auth(auth)
         logger.debug('Authorization: {} ({}:{})'.format(auth, user_name, user_pid))
+    # Create user object
     user = User(user_name, user_pid)
     return user
 

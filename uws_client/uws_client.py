@@ -7,6 +7,8 @@ UWS client implementation using bottle.py and javascript
 """
 
 import os
+import uuid
+import base64
 import logging
 from bottle import Bottle, request, response, abort, redirect, run, static_file, parse_auth, TEMPLATE_PATH, view, jinja2_view
 from beaker.middleware import SessionMiddleware
@@ -98,6 +100,11 @@ def login():
     password = post_get('password')
     next_page = post_get('next')
     aaa.login(username, password, success_redirect=next_page, fail_redirect='/accounts/login?msg=failed')
+    # Create Basic Auth for requests to UWS Server, Save to session
+    session = request.environ['beaker.session']
+    pid = uuid.uuid5(uuid.NAMESPACE_X500, APP_PATH + username)
+    session['auth'] = base64.b64encode(username + ':' + pid)
+    session.save()
 
 
 @app.route('/accounts/logout')

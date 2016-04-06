@@ -35,7 +35,7 @@ var uws_manager = (function($) {
     var jobNames;
     var clients = {};
 
-    // LOGGER (show info in console, and send to Django)
+    // LOGGER (show info in console or other logger)
     function logger(lvl_name, msg, exception) {
         console.log(lvl_name + ' ' + msg);
     }
@@ -49,11 +49,12 @@ var uws_manager = (function($) {
     }
 
     // CREATE MANAGER AND CLIENTS
-    function initManager(jobNames_init){
+    function initManager(jobNames_init, basicauth){
         jobNames = jobNames_init;
         for (var i in jobNames) {
             // Init client
-            clients[jobNames[i]] = new uwsLib.uwsClient(serviceUrl + jobs_url + jobNames[i]);
+            url = serviceUrl + jobs_url + jobNames[i]
+            clients[jobNames[i]] = new uwsLib.uwsClient(url, basicauth);
             // Get JDL for job
             $.getJSON(serviceUrl + jdl_url + jobNames[i], function(jdl) {
                 clients[jobNames[i]].jdl = jdl;
