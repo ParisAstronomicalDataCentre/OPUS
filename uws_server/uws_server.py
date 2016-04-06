@@ -347,8 +347,8 @@ def validate_job_definition(jobname):
         abort_403()
     # Copy script and jdl from new
     jdl = uws_jdl.__dict__[JDL]()
-    jdl_src = '{}/new/{}{}'.format(JDL_PATH, jobname, jdl.extention)
-    jdl_dst = '{}/{}{}'.format(JDL_PATH, jobname, jdl.extention)
+    jdl_src = '{}/new/{}{}'.format(JDL_PATH, jobname, jdl.extension)
+    jdl_dst = '{}/{}{}'.format(JDL_PATH, jobname, jdl.extension)
     script_src = '{}/new/{}.sh'.format(SCRIPT_PATH, jobname)
     script_dst = '{}/{}.sh'.format(SCRIPT_PATH, jobname)
     # save, then copy from new/
