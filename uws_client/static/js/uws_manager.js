@@ -147,8 +147,8 @@ var uws_manager = (function($) {
             case 'SUSPENDED':
                 phase_class = 'btn-default';
                 $('#'+jobId+' td button.abort').removeAttr("disabled");
-                 phase_icon = '<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span>&nbsp;';
-                   break;
+                phase_icon = '<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span>&nbsp;';
+                break;
         };
         $('#'+jobId+' td button.phase').html(phase_icon + phase);
         $('#'+jobId+' td button.phase').removeClass( function (index, css) {
@@ -482,7 +482,7 @@ var uws_manager = (function($) {
                 case 'provsvg':
                     $('#details_list').append(r_panel);
                     break;
-                else:
+                default:
                     $('#result_list').append(r_panel);
             }
             // Show preview according to result type (file extension)
