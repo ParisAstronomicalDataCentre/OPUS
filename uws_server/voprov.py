@@ -56,7 +56,8 @@ def job2prov(job):
     # Entities, in and out with relations
     e_in = []
     for pname, pdict in job.jdl.content['parameters'].iteritems():
-        if pname.startswith('in'):
+        #if pname.startswith('in'):
+        if any(x in pdict['type'] for x in ['file', 'xs:anyURI']):
             e_in.append(pdoc.entity('uwsdata:parameters/' + pname))
             # TODO: use publisher_did? add prov attributes, add voprov attributes?
             ctbin.used(e_in[-1])
