@@ -68,6 +68,16 @@ def is_job_server(ip):
         return False
 
 
+def is_authorized_client(ip):
+    """Test if request comes from a job server"""
+    # IP or part of an IP has to be in the AUTHORIZED_CLIENTS list
+    if any(x in ip for x in AUTHORIZED_CLIENTS):
+        return True
+    else:
+        logger.warning('{} wants to access {}'.format(ip, request.urlparts.path))
+        return False
+
+
 def is_localhost():
     """Test if localhost"""
     ip = request.environ.get('REMOTE_ADDR', '')
@@ -267,7 +277,9 @@ def show_db():
 def create_new_job_definition():
     """Use filled form to create a WADL file for the given job"""
     # no need to authenticate, users can propose new jobs that will be validated
-    #aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
+    ip = request.environ.get('REMOTE_ADDR', '')
+    if not is_authorized_client(ip):
+        abort_403()
     # Read form
     keys = request.forms.keys()
     jobname = request.forms.get('name').split('/')[-1]
@@ -330,6 +342,9 @@ def validate_job_definition(jobname):
     """Use filled form to create a JDL file for the given job"""
     # TODO: Restrict access to admin
     #aaa.require(role='admin', fail_redirect='/config/job_definition?jobname=new/{}&msg=restricted'.format(jobname))
+    ip = request.environ.get('REMOTE_ADDR', '')
+    if not is_authorized_client(ip):
+        abort_403()
     # Copy script and jdl from new
     jdl = uws_jdl.__dict__[JDL]()
     jdl_src = '{}/new/{}{}'.format(JDL_PATH, jobname, jdl.extention)
