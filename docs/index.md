@@ -83,6 +83,7 @@ The following configuration file (e.g. `uws_server.conf`) should be placed in
         WSGIDaemonProcess uws display-name=%{GROUP} processes=1 threads=5
         WSGIProcessGroup uws
         WSGIScriptAlias / "/path_to_uws_server/uws_server/wsgi.py"
+        WSGIPassAuthorization On
 
         <Directory "/path_to_uws_server">
         AllowOverride None
