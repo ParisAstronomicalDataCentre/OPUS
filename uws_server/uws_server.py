@@ -28,7 +28,7 @@ app = Bottle()
 
 def set_user():
     """Set user from request header"""
-    logger.debug(str(request.auth))
+    # logger.debug(str(request.auth))
     user_name = 'anonymous'
     user_pid = 'anonymous'
     # TODO: Check request.auth --> directly gives tuple (username, pid) (??)
