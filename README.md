@@ -1,14 +1,13 @@
 
-UWS Server
-==========
-The UWS Server is a job control system developed using the micro-framework
-bottle.py. The Universal Worker System pattern v1.0 (UWS) as defined
-by the International Virtual Observatory Alliance (IVOA) is implemented
-as a REST service to manage job execution on a work cluster.
+Overview
+========
+**OPUS** (**O**bservatoire de **P**aris **U**WS **S**ystem) is a job control 
+system developed using the micro-framework bottle.py. The Universal Worker System 
+pattern v1.0 (UWS) as defined by the International Virtual Observatory Alliance 
+(IVOA) is implemented as a REST service to manage job execution on a work cluster.
 
 Documentation
 =============
-
 The documentation located in `docs/` can be accessed at http://uws-server.readthedocs.org/.
 
 Installation
