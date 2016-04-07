@@ -51,6 +51,7 @@ The following configuration file (e.g. `uws_server.conf`) should be placed in
 
     </VirtualHost>
 
+-----
 
 Client only installation
 ========================
