@@ -29,9 +29,9 @@ used independently to send requests to the server. The core of the client is the
 `uws_manager.js` file that is used to create requests, parse responses, and then
 display job lists and job properties in web pages.A set of HTML pages use those
 scripts and are accessed through bottle.py functions. A separate web page allows
-the user to create and modify job descriptions. Note that the UWS client uses the
+the user to create and modify job definitions. Note that the UWS client uses the
 JavaScript frameworks [BootStrap3](http://getbootstrap.com/) and 
-[jQuery](https://jquery.com/).
+[jQuery](https://jquery.com/), they are thus requirements.
 
 
 Server Installation
