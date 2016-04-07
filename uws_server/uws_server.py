@@ -28,11 +28,13 @@ app = Bottle()
 
 def set_user():
     """Set user from request header"""
-    logger.debug(str(request.auth))
+    # Use anonymous as default
     user_name = 'anonymous'
     user_pid = 'anonymous'
+    # Check if REMOTE_USER is set or use Basic Auth
     if request.auth:
         user_name, user_pip = request.auth
+        logger.debug('Authorization: {}:{}'.format(user_name, user_pid))
     ### Set user from GET
     # if 'user' in request.GET:
     #     user_name = request.GET['user']
