@@ -10,7 +10,7 @@ import uuid
 import collections
 from subprocess import CalledProcessError
 
-from bottle import Bottle, request, response, abort, redirect, run, static_file, parse_auth, view, jinja2_view
+from bottle import Bottle, request, response, abort, redirect, run, static_file, parse_auth
 from beaker.middleware import SessionMiddleware
 # from cork import Cork
 
@@ -28,7 +28,7 @@ app = Bottle()
 
 def set_user():
     """Set user from request header"""
-    # logger.debug(str(request.environ))
+    logger.debug(str(request.auth))
     user_name = 'anonymous'
     user_pid = 'anonymous'
     # TODO: Check request.auth --> directly gives tuple (username, pid) (??)
@@ -71,10 +71,10 @@ def is_job_server(ip):
         return False
 
 
-def is_authorized_client(ip):
+def is_client_trusted(ip):
     """Test if request comes from a job server"""
-    # IP or part of an IP has to be in the AUTHORIZED_CLIENTS list
-    if any(x in ip for x in AUTHORIZED_CLIENTS):
+    # IP or part of an IP has to be in the TRUSTED_CLIENTS list
+    if any(x in ip for x in TRUSTED_CLIENTS):
         return True
     else:
         logger.warning('{} wants to access {}'.format(ip, request.urlparts.path))
@@ -279,9 +279,10 @@ def show_db():
 @app.post('/config/job_definition')
 def create_new_job_definition():
     """Use filled form to create a WADL file for the given job"""
-    # no need to authenticate, users can propose new jobs that will be validated
+    # No need to authenticate, users can propose new jobs that will be validated
+    # Check if client is trusted
     ip = request.environ.get('REMOTE_ADDR', '')
-    if not is_authorized_client(ip):
+    if not is_client_trusted(ip):
         abort_403()
     # Read form
     keys = request.forms.keys()
@@ -343,10 +344,9 @@ def create_new_job_definition():
 @app.get('/config/validate_job/<jobname>')
 def validate_job_definition(jobname):
     """Use filled form to create a JDL file for the given job"""
-    # TODO: Restrict access to admin
-    #aaa.require(role='admin', fail_redirect='/config/job_definition?jobname=new/{}&msg=restricted'.format(jobname))
+    # Check if client is trusted (only admin should be allowed to validate a job)
     ip = request.environ.get('REMOTE_ADDR', '')
-    if not is_authorized_client(ip):
+    if not is_client_trusted(ip):
         abort_403()
     # Copy script and jdl from new
     jdl = uws_jdl.__dict__[JDL]()
@@ -394,8 +394,10 @@ def validate_job_definition(jobname):
 @app.get('/config/cp_script/<jobname>')
 def cp_script(jobname):
     """Use filled form to create a WADL file for the given job"""
-    # TODO: Restrict access to admin
-    #aaa.require(role='admin', fail_redirect='/config/job_definition?jobname={}&msg=restricted'.format(jobname))
+    # Check if client is trusted (only admin should be allowed to validate a job)
+    ip = request.environ.get('REMOTE_ADDR', '')
+    if not is_client_trusted(ip):
+        abort_403()
     # Copy script to job manager
     script_dst = '{}/{}.sh'.format(SCRIPT_PATH, jobname)
     if os.path.isfile(script_dst):

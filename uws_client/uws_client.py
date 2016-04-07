@@ -15,6 +15,12 @@ from beaker.middleware import SessionMiddleware
 from cork import Cork
 
 
+# Settings
+APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+UWS_SERVER_URL = ''
+LOG_FILE = 'logs/client.log'
+ALLOW_ANONYMOUS = False
+
 # Create a new application
 app = Bottle()
 
@@ -31,12 +37,6 @@ session_opts = {
 # Start authentication system
 aaa = Cork('uws_client/cork_conf')
 
-# Settings
-APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
-UWS_SERVER_URL = ''
-LOG_FILE = 'logs/client.log'
-TEMPLATE_PATH.insert(0, APP_PATH + '/uws_client/views/')
-
 # Set logger
 logging.basicConfig(
     filename=LOG_FILE,
@@ -44,6 +44,9 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S',
     level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
+# Set path to uws_client templates
+TEMPLATE_PATH.insert(0, APP_PATH + '/uws_client/views/')
 
 
 # ----------
@@ -210,7 +213,8 @@ def home():
 def job_list():
     """Job list page"""
     logger.info('')
-    aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
+    if not ALLOW_ANONYMOUS:
+        aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
     session = request.environ['beaker.session']
     jobname = request.query.get('jobname', '')
     return {'session': session, 'jobname': jobname}
@@ -221,7 +225,8 @@ def job_list():
 def job_edit(jobname, jobid):
     """Job edit page"""
     logger.info(jobname + ' ' + jobid)
-    aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
+    if not ALLOW_ANONYMOUS:
+        aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
     session = request.environ['beaker.session']
     return {'session': session, 'jobname': jobname, 'jobid': jobid}
 
@@ -231,7 +236,8 @@ def job_edit(jobname, jobid):
 def job_form(jobname):
     """Job edit page"""
     logger.info(jobname)
-    aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
+    if not ALLOW_ANONYMOUS:
+        aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
     session = request.environ['beaker.session']
     return {'session': session, 'jobname': jobname}
 

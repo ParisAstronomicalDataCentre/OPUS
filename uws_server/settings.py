@@ -51,7 +51,7 @@ JOB_SERVERS = {
 #     '145.238.151.29': 'tycho',
 # }
 
-AUTHORIZED_CLIENTS = {
+TRUSTED_CLIENTS = {
     '127.0.0.1': 'localhost',
     '145.238.193.69': 'voparis-uws-test.obspm.fr',
     '145.238.168.3': 'voparis-uws-test.obspm.fr',
