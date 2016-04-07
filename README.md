@@ -15,7 +15,7 @@ Installation
 
 Get the code from the git repository
 ------------------------------------
-    $ git clone https://github.com/mservillat/uws-server.git
+    $ git clone https://github.com/mservillat/opus.git
 
 Initialize the package
 ----------------------
