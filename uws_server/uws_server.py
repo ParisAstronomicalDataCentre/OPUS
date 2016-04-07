@@ -31,8 +31,9 @@ def set_user():
     logger.debug(str(request.auth))
     user_name = 'anonymous'
     user_pid = 'anonymous'
-    # TODO: Check request.auth --> directly gives tuple (username, pid) (??)
-    # Set user from GET
+    if request.auth:
+        user_name, user_pip = request.auth
+    ### Set user from GET
     # if 'user' in request.GET:
     #     user_name = request.GET['user']
     #     if 'user_pid' in request.GET:
@@ -40,22 +41,21 @@ def set_user():
     #     else:
     #         user_pid = request.GET['user']
     #     logger.debug('user information from GET ({}:{})'.format(user_name, user_pid))
-    # Set user from REMOTE_USER if not empty
-    remote_user = request.environ.get('REMOTE_USER', '')
-    if remote_user:
-        user_name = remote_user
-        user_pid = remote_user
-        logger.debug('REMOTE_USER is set: {}'.format(user_name))
-    # Use Basic access authentication
-    auth = request.headers.get('Authorization')
+    ### Set user from REMOTE_USER if not empty
+    # remote_user = request.environ.get('REMOTE_USER', '')
+    # if remote_user:
+    #     user_name = remote_user
+    #     user_pid = remote_user
+    #     logger.debug('REMOTE_USER is set: {}'.format(user_name))
+    ### Use Basic access authentication
+    # auth = request.headers.get('Authorization')
     # Using WSGI, the header is changed to HTTP_AUTHORIZATION
-    # TODO: add 'WSGIPassAuthorization On' to Apache config on voparis-uws-test
-    if not auth:
-        auth = request.headers.get('HTTP_AUTHORIZATION')
-    if auth:
-        logger.debug('Authorization: {}'.format(auth))
-        user_name, user_pid = parse_auth(auth)
-        logger.debug('Authorization: {}:{}'.format(user_name, user_pid))
+    # if not auth:
+    #     auth = request.headers.get('HTTP_AUTHORIZATION')
+    # if auth:
+    #     logger.debug('Authorization: {}'.format(auth))
+    #     user_name, user_pid = parse_auth(auth)
+    #     logger.debug('Authorization: {}:{}'.format(user_name, user_pid))
     # Create user object
     user = User(user_name, user_pid)
     return user
