@@ -1,5 +1,7 @@
 site_name: OPUS
 pages:
-- 'index.md'
-- 'test2.md'
-- 'test.md'
+- Overview: 'index.md'
+- Installation: 'install.md'
+- Configuration: 'settings.md'
+- User guide: 'user_guide.md'
+- Developer guide: 'dev_guide.md'
