@@ -31,10 +31,12 @@ def set_user():
     # Use anonymous as default
     user_name = 'anonymous'
     user_pid = 'anonymous'
-    # Check if REMOTE_USER is set or use Basic Auth
+    # Check if REMOTE_USER is set by web server or use Basic Auth from header
     if request.auth:
         user_name, user_pid = request.auth
-        logger.debug('Authorization: {}:{}'.format(user_name, user_pid))
+        if not user_pid:
+            user_pid = 'remote_user'
+        logger.debug('{}:{}'.format(user_name, user_pid))
     ### Set user from GET
     # if 'user' in request.GET:
     #     user_name = request.GET['user']
