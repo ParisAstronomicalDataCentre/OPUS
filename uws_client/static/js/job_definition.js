@@ -45,10 +45,10 @@
                                 <span class="glyphicon glyphicon-remove-sign"></span>\
                             </button>\
                             <button id="moveup_param_' + iparam + '" class="btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;" >\
-                                <span class="glyphicons-circle-arrow-up"></span>\
+                                <span class="glyphicon glyphicons-circle-arrow-up"></span>\
                             </button>\
                             <button id="movedown_param_' + iparam + '" class="btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;" >\
-                                <span class="glyphicons-circle-arrow-down"></span>\
+                                <span class="glyphicon glyphicons-circle-arrow-down"></span>\
                             </button>\
                         </span>\
                         <input class="form-control" style="font-weight: bold;" name="param_name_' + iparam + '" type="text" placeholder="Name" />\
