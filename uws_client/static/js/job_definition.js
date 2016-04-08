@@ -8,7 +8,7 @@
 
     var editor
     var param_type_options = [
-        "xs:string</option>",
+        "xs:string",
         "xs:anyURI",
         "file",
         "xs:float",
@@ -21,6 +21,7 @@
         "text/plain",
         "text/xml",
         "text/x-votable+xml",
+        "application/json",
         "application/pdf",
         "image/jpeg",
         "image/png",
@@ -28,9 +29,8 @@
         "video/mp4",
     ];
 
-	function get_template(name) {
-	    // parameter or result
-	}
+    // ----------
+    // Parameters
 
 	function add_parameter() {
 	    var mytable = $("#parameter_list tbody");
@@ -70,7 +70,7 @@
                     <div style="height: 8px;"></div>\
                 </td>\
             </tr>';
-        //$(row).insertBefore('#parameter_list > tbody > tr:last');
+        // Append row
         $('#parameter_list > tbody').append($(row));
         // Initialize selectpicker
         $(".selectpicker").attr('data-width', '140px').selectpicker();
@@ -92,15 +92,17 @@
 	function reset_parameter_numbers(parent) {
         parent.children().each( function(i) {
             i++;
-            $(this).find('.remove_param').attr('id', 'remove_param_' + i);
-            $(this).find('.moveup_param').attr('id', 'moveup_param_' + i);
-            $(this).find('.movedown_param').attr('id', 'movedown_param_' + i);
-            $(this).find('.param_name').attr('name', 'param_name_' + i);
-            $(this).find('.param_default').attr('name', 'param_default_' + i);
-            $(this).find('.param_required').attr('name', 'param_required_' + i);
-            $(this).find('.param_type').attr('name', 'param_type_' + i);
-            $(this).find('.param_description').attr('name', 'param_description_' + i);
-            $(this).attr('id', 'param_' + i);
+            if ($(this).attr('id') != 'param_' + i) {
+                $(this).find('.remove_param').attr('id', 'remove_param_' + i);
+                $(this).find('.moveup_param').attr('id', 'moveup_param_' + i);
+                $(this).find('.movedown_param').attr('id', 'movedown_param_' + i);
+                $(this).find('.param_name').attr('name', 'param_name_' + i);
+                $(this).find('.param_default').attr('name', 'param_default_' + i);
+                $(this).find('.param_required').attr('name', 'param_required_' + i);
+                $(this).find('.param_type').attr('name', 'param_type_' + i);
+                $(this).find('.param_description').attr('name', 'param_description_' + i);
+                $(this).attr('id', 'param_' + i);
+            }
         });
         $('.selectpicker').selectpicker('refresh');
 	}
@@ -137,19 +139,11 @@
 	    var mytable = $("#parameter_list tbody");
 	    var nparam = mytable.children().length;
         $('#param_' + iparam).remove();
-	    for (var i = Number(iparam); i < nparam; i++) {
-	        var j = i + 1;
-    	    console.log(j + '->' + i);
-    	    console.log($('#param_' + j).prop('id'));
-    	    $('#param_' + j).prop('id', 'param_' + i);
-    	    $('#remove_param_' + j).prop('id', 'remove_param_' + i);
-    	    $('input[name=param_name_' + j + ']').attr('name', 'param_name_' + i);
-    	    $('input[name=param_default_' + j + ']').attr('name', 'param_default_' + i);
-    	    $('input[name=param_required_' + j + ']').attr('name', 'param_required_' + i);
-    	    $('select[name=param_type_' + j + ']').attr('name', 'param_type_' + i);
-    	    $('input[name=param_description_' + j + ']').attr('name', 'param_description_' + i);
-	    }
+        reset_parameter_numbers($node.parent())
     }
+
+    // ----------
+    // Results
 
 	function add_result() {
 	    var mytable = $("#result_list tbody");
@@ -160,33 +154,80 @@
                 <td>\
                     <div class="input-group input-group-sm col-md-12">\
                         <span class="input-group-btn">\
-                            <button id="remove_result_' + iresult + '" class="btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;">\
+                            <button id="remove_result_' + iresult + '" class="remove_result btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;">\
                                 <span class="glyphicon glyphicon-remove"></span>\
                             </button>\
+                            <button id="moveup_result_' + iresult + '" class="moveup_result btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;" >\
+                                <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>\
+                            </button>\
+                            <button id="movedown_result_' + iresult + '" class="movedown_result btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;" >\
+                                <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span>\
+                            </button>\
                         </span>\
-                        <input class="form-control" style="font-weight: bold;" name="result_name_' + iresult + '" type="text" placeholder="Name" />\
+                        <input class="result_name form-control" style="font-weight: bold;" name="result_name_' + iresult + '" type="text" placeholder="Name" />\
                         <span class="input-group-addon">=</span>\
-                        <input class="form-control" name="result_default_' + iresult + '" type="text" placeholder="Default value" />\
+                        <input class="result_default form-control" name="result_default_' + iresult + '" type="text" placeholder="Default value" />\
                         <span class="input-group-btn">\
-                            <select name="result_type_' + iresult + '" class="select-small selectpicker">\
+                            <select name="result_type_' + iresult + '" class="result_type select-small selectpicker">\
                                 ' + options + '\
                             </select>\
                         </span>\
                     </div>\
                     <div style="height: 1px;"></div>\
                     <div class="input-group input-group-sm col-md-12">\
-                        <input class="form-control" name="result_description_' + iresult + '" type="text" placeholder="Description" style="border-radius: 4px;" />\
+                        <input class="result_description form-control" name="result_description_' + iresult + '" type="text" placeholder="Description" style="border-radius: 4px;" />\
                     </div>\
                     <div style="height: 8px;"></div>\
                 </td>\
             </tr>';
-        $(row).insertBefore('#result_list > tbody > tr:last');
+        // Append row
+        $('#result_list > tbody').append($(row));
+        // Initialize selectpicker
         $(".selectpicker").attr('data-width', '140px').selectpicker();
+        // Add click events for remove/moveup/movedown
         $('#remove_result_' + iresult).click( function() {
             iresult = this.id.split('_').pop();
             remove_result(iresult);
         });
+        $('#moveup_result_' + iresult).click( function() {
+            iresult = this.id.split('_').pop();
+            move_resulteter_up(iresult);
+        });
+        $('#movedown_result_' + iresult).click( function() {
+            iresult = this.id.split('_').pop();
+            move_resulteter_down(iresult);
+        });
 	}
+
+	function reset_result_numbers(parent) {
+        parent.children().each( function(i) {
+            i++;
+            if ($(this).attr('id') != 'result_' + i) {
+                $(this).find('.remove_result').attr('id', 'remove_result_' + i);
+                $(this).find('.moveup_result').attr('id', 'moveup_result_' + i);
+                $(this).find('.movedown_result').attr('id', 'movedown_result_' + i);
+                $(this).find('.result_name').attr('name', 'result_name_' + i);
+                $(this).find('.result_default').attr('name', 'result_default_' + i);
+                $(this).find('.result_type').attr('name', 'result_type_' + i);
+                $(this).find('.result_description').attr('name', 'result_description_' + i);
+                $(this).attr('id', 'result_' + i);
+            }
+        });
+        $('.selectpicker').selectpicker('refresh');
+	}
+
+	function move_result_up(iresult) {
+	    var $node = $('#result_' + iresult)
+        $node.prev().before($node);
+        reset_result_numbers($node.parent())
+	}
+
+	function move_result_down(iresult) {
+	    var $node = $('#result_' + iresult)
+        $node.next().after($node);
+        reset_result_numbers($node.parent())
+	}
+
 
 	function remove_all_results() {
 	    var mytable = $("#result_list tbody");
@@ -220,6 +261,9 @@
     	    $('input[name=result_description_' + j + ']').attr('name', 'result_description_' + i);
 	    }
     }
+
+    // ----------
+    // Load/Read
 
 	function load_wadl() {
         var jobname = $('input[name=name]').val();
@@ -298,6 +342,9 @@
 			}
 		});
 	}
+
+    // ----------
+    // ready()
 
 	$(document).ready( function() {
 	    // Script editor with CodeMirror
