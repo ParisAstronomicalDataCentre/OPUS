@@ -191,11 +191,11 @@
         });
         $('#moveup_result_' + iresult).click( function() {
             iresult = this.id.split('_').pop();
-            move_resulteter_up(iresult);
+            move_result_up(iresult);
         });
         $('#movedown_result_' + iresult).click( function() {
             iresult = this.id.split('_').pop();
-            move_resulteter_down(iresult);
+            move_result_down(iresult);
         });
 	}
 
