@@ -9,6 +9,7 @@ Settings for the UWS server
 import os
 import sys
 import logging
+import logging.config
 
 # Set debug mode, HTTP 500 Errors include traceback
 DEBUG = True
@@ -19,8 +20,6 @@ APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 BASE_URL = 'http://localhost:8080'
 
 MERGE_CLIENT = True
-
-LOG_FILE = 'logs/app.log'
 
 # Those servers have access to /job_event/<jobid_manager> to change the phase or report an error
 JOB_SERVERS = {
@@ -191,12 +190,50 @@ JDL_PATH = APP_PATH + '/data/job_def/jdl'
 SCRIPT_PATH = APP_PATH + '/data/job_def/scripts'
 # Path for SLURM sbatch files created by SLURMManager
 SBATCH_PATH = APP_PATH + '/data/sbatch'
+# Logging
+LOG_PATH = APP_PATH + '/logs'
 #--- Set all _PATH based on APP_PATH -----------------------------------------------------------------------------------
 
 # Set logger
-logging.basicConfig(
-    filename=LOG_FILE,
-    format='[%(asctime)s] %(levelname)s %(module)s.%(funcName)s: %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S',
-    level=logging.DEBUG)
+# logging.basicConfig(
+#     filename=LOG_PATH + '/app.log',
+#     format='[%(asctime)s] %(levelname)s %(module)s.%(funcName)s: %(message)s',
+#     datefmt='%Y-%m-%d %H:%M:%S',
+#     level=logging.DEBUG)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'default': {
+            'format': '[%(asctime)s] %(levelname)s %(module)s.%(funcName)s: %(message)s'
+        },
+    },
+    'handlers': {
+        'file_server': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': LOG_PATH + '/server.log',
+            'formatter': 'default'
+        },
+        'file_client': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': LOG_PATH + '/client.log',
+            'formatter': 'default'
+        },
+    },
+    'loggers': {
+        'uws_server': {
+            'handlers': ['file_server'],
+            'level': 'DEBUG',
+        },
+        'uws_client': {
+            'handlers': ['file_client'],
+            'level': 'DEBUG',
+        },
+    }
+}
+
+logging.config.dictConfig(LOGGING)
 logger = logging.getLogger(__name__)

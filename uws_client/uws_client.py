@@ -205,7 +205,6 @@ def change_password():
 @jinja2_view('home.html')
 def home():
     """Home page"""
-    logger.debug(__name__)
     session = request.environ['beaker.session']
     msg = request.query.get('msg', '')
     msg_text = {
