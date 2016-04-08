@@ -34,7 +34,7 @@
 
 	function add_parameter() {
 	    var mytable = $("#parameter_list tbody");
-	    var iparam = mytable.children().length;
+	    var iparam = mytable.children().length + 1;
 	    var options = '<option>' + param_type_options.join('</option><option>') + '</option>';
         var row = '\
             <tr id="param_' + iparam + '">\
@@ -70,7 +70,8 @@
                     <div style="height: 8px;"></div>\
                 </td>\
             </tr>';
-        $(row).insertBefore('#parameter_list > tbody > tr:last');
+        //$(row).insertBefore('#parameter_list > tbody > tr:last');
+        $('#parameter_list > tbody').append($(row));
         // Initialize selectpicker
         $(".selectpicker").attr('data-width', '140px').selectpicker();
         // Add click events for remove/moveup/movedown
@@ -117,7 +118,7 @@
 
 	function remove_all_parameters() {
 	    var mytable = $("#parameter_list tbody");
-	    var nparam = mytable.children().length - 1;
+	    var nparam = mytable.children().length;
 	    for (var i = nparam; i > 0; i--) {
     	    $('#param_' + i).remove();
 	    }
@@ -125,7 +126,7 @@
 
 	function remove_last_parameter() {
 	    var mytable = $("#parameter_list tbody");
-	    var iparam = mytable.children().length - 1;
+	    var iparam = mytable.children().length;
 	    if (iparam > 0) {
     	    $('#param_' + iparam).remove();
 	    }
@@ -133,7 +134,7 @@
 
 	function remove_parameter(iparam) {
 	    var mytable = $("#parameter_list tbody");
-	    var nparam = mytable.children().length - 1;
+	    var nparam = mytable.children().length;
         $('#param_' + iparam).remove();
 	    for (var i = Number(iparam); i < nparam; i++) {
 	        var j = i + 1;
@@ -188,7 +189,7 @@
 
 	function remove_all_results() {
 	    var mytable = $("#result_list tbody");
-	    var nresult = mytable.children().length - 1;
+	    var nresult = mytable.children().length;
 	    for (var i = nresult; i > 0; i--) {
             $('#result_' + i).remove();
 	    }
@@ -196,7 +197,7 @@
 
 	function remove_last_result() {
 	    var mytable = $("#result_list tbody");
-	    var iresult = mytable.children().length - 1;
+	    var iresult = mytable.children().length;
 	    if (iresult > 0) {
 	        $('#result_' + iresult).remove();
 	    }
@@ -204,7 +205,7 @@
 
 	function remove_result(iresult) {
 	    var mytable = $("#result_list tbody");
-	    var nresult = mytable.children().length - 1;
+	    var nresult = mytable.children().length;
         $('#result_' + iresult).remove();
 	    for (var i = Number(iresult); i < nresult; i++) {
 	        var j = i + 1;
