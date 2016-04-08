@@ -8,8 +8,9 @@ pattern v1.0 (UWS) as defined by the International Virtual Observatory Alliance
 
 Documentation
 =============
-The documentation located in `docs/` can be accessed at http://uws-server.readthedocs.org/ 
 [![Documentation Status](https://readthedocs.org/projects/uws-server/badge/?version=latest)](http://uws-server.readthedocs.org/en/latest/?badge=latest)
+
+The documentation located in `docs/` can be accessed at http://uws-server.readthedocs.org/ 
 
 Installation
 ============
