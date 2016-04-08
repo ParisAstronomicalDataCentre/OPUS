@@ -240,3 +240,4 @@ LOGGING = {
 # Set logger
 logging.config.dictConfig(LOGGING)
 logger = logging.getLogger('uws_server')
+logger.debug(logging.Logger.manager.loggerDict)
