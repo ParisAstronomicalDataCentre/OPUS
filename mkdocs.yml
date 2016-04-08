@@ -1,4 +1,4 @@
-site_name: OPUS
+site_name: OPUS: Observatoire de Paris UWS Server
 pages:
 - Overview: 'index.md'
 - Installation: 'install.md'
