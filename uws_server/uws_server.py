@@ -81,7 +81,7 @@ def is_client_trusted(ip):
     """Test if request comes from a job server"""
     # IP or part of an IP has to be in the TRUSTED_CLIENTS list
     matching = [x for x in TRUSTED_CLIENTS if x in ip]
-    if matching):
+    if matching:
         logger.info('{} from {} ({})'.format(request.urlparts.path, ip, JOB_SERVERS[matching[0]]))
         return True
     else:
