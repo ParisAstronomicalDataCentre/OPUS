@@ -147,7 +147,7 @@
 
 	function add_result() {
 	    var mytable = $("#result_list tbody");
-	    var iresult = mytable.children().length;
+	    var iresult = mytable.children().length + 1;
 	    var options = '<option>' + result_type_options.join('</option><option>') + '</option>';
         var row = '\
             <tr id="result_' + iresult + '">\
