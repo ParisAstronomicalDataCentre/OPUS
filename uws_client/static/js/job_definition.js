@@ -89,13 +89,13 @@
 	}
 
 	function move_parameter_up(iparam) {
-	    var $node = $('#param_' + iparam),
-            $node.prev().before($node);
+	    var $node = $('#param_' + iparam)
+        $node.prev().before($node);
 	}
 
 	function move_parameter_down(iparam) {
-	    var $node = $('#param_' + iparam),
-            $node.next().after($node);
+	    var $node = $('#param_' + iparam)
+        $node.next().after($node);
 	}
 
 	function remove_all_parameters() {
