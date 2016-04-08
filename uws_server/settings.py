@@ -202,7 +202,7 @@ LOGGING = {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': LOG_PATH + '/debug' + LOG_FILE_SUFFIX + '.log',
-            'formatter': '%(module)s.'
+            'formatter': 'module'
         },
     },
     'loggers': {
