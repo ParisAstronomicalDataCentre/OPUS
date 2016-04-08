@@ -1,4 +1,4 @@
-site_name: OPUS - Observatoire de Paris UWS Server
+site_name: Observatoire de Paris UWS Server (OPUS)
 repo_url: https://github.com/mservillat/OPUS
 pages:
 - Overview: 'index.md'

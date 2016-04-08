@@ -8,7 +8,7 @@
 from distutils.core import setup
 
 setup(
-    name='UWS Server',
+    name='OPUS',
     version='0.1',
     description='Job controller server and client based on the IVOA standard UWS',
     long_description='Job controller server and client developed using the micro-framework '
