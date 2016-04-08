@@ -17,9 +17,18 @@ from cork import Cork
 
 # Settings
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+ENDPOINT = 'client'
 UWS_SERVER_URL = ''
 LOG_FILE = 'logs/client.log'
 ALLOW_ANONYMOUS = False
+JOBNAMES = [
+    'copy',
+    'ctbin',
+    'gammastart',
+    'anactools_v1.0',
+    'anactools_v1.1',
+    'serpe',
+]
 
 # Create a new application
 app = Bottle()
