@@ -145,10 +145,11 @@
         $(".selectpicker").attr('data-width', '140px').selectpicker();
         // Add click events for remove/moveup/movedown
         $('#remove_' + type + '_' + ii).click( function() {
-            ii = this.id.split('_').pop();
-            type = this.id.split('_').pop();
-            console.log(type + '_' + ii);
-            remove_item(type, ii);
+            var ids = this.id.split('_');
+            var f_ii = ids.pop();
+            var f_type = ids.pop();
+            console.log(f_type + '_' + f_ii);
+            remove_item(f_type, f_ii);
         });
         $('#moveup_' + type + '_' + ii).click( function() {
             var ids = this.id.split('_');
@@ -158,10 +159,11 @@
             move_item_up(f_type, f_ii);
         });
         $('#movedown_' + type + '_' + ii).click( function() {
-            ii = this.id.split('_').pop();
-            type = this.id.split('_').pop();
-            console.log(type + '_' + ii);
-            move_item_down(type, ii);
+            var ids = this.id.split('_');
+            var f_ii = ids.pop();
+            var f_type = ids.pop();
+            console.log(f_type + '_' + f_ii);
+            move_item_down(f_type, f_ii);
         });
 	}
 
