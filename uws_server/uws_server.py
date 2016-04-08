@@ -68,7 +68,9 @@ def set_user():
 def is_job_server(ip):
     """Test if request comes from a job server"""
     # IP or part of an IP has to be in the JOB_SERVERS list
-    if any(x in ip for x in JOB_SERVERS):
+    matching = [x for x in JOB_SERVERS if x in ip]
+    if matching:
+        logger.info('{} from {} ({})'.format(request.urlparts.path, ip, JOB_SERVERS[matching[0]]))
         return True
     else:
         logger.warning('{} wants to access {}'.format(ip, request.urlparts.path))
@@ -78,7 +80,9 @@ def is_job_server(ip):
 def is_client_trusted(ip):
     """Test if request comes from a job server"""
     # IP or part of an IP has to be in the TRUSTED_CLIENTS list
-    if any(x in ip for x in TRUSTED_CLIENTS):
+    matching = [x for x in TRUSTED_CLIENTS if x in ip]
+    if matching):
+        logger.info('{} from {} ({})'.format(request.urlparts.path, ip, JOB_SERVERS[matching[0]]))
         return True
     else:
         logger.warning('{} wants to access {}'.format(ip, request.urlparts.path))
