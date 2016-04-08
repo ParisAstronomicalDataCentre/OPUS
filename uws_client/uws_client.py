@@ -19,7 +19,7 @@ from cork import Cork
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 ENDPOINT = 'client'
 UWS_SERVER_URL = ''
-LOG_FILE = 'logs/client.log'
+LOG_FILE = 'logs/client_only.log'
 ALLOW_ANONYMOUS = False
 JOBNAMES = [
     'copy',
@@ -47,11 +47,12 @@ session_opts = {
 aaa = Cork('uws_client/cork_conf')
 
 # Set logger
-logging.basicConfig(
-    filename=LOG_FILE,
-    format='[%(asctime)s] %(levelname)s %(module)s.%(funcName)s: %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S',
-    level=logging.DEBUG)
+if (__name__ not in logging.Logger.manager.loggerDict):
+    logging.basicConfig(
+        filename=LOG_FILE,
+        format='[%(asctime)s] %(levelname)s %(module)s.%(funcName)s: %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S',
+        level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 # Set path to uws_client templates
