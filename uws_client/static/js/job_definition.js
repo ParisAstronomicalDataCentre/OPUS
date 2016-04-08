@@ -168,8 +168,8 @@
 	}
 
 	function reset_item_numbers(type) {
-	    var list_table = $('#' + type + '_list tbody');
-        list_table.each( function(i) {
+	    var list_table = $('#' + type + '_list > tbody');
+        list_table.children().each( function(i) {
             i++;
             if ($(this).attr('id') != type + '_' + i) {
                 $(this).find('.remove_' + type).attr('id', 'remove_' + type + '_' + i);
