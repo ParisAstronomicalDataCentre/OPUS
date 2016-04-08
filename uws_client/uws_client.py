@@ -64,12 +64,6 @@ LOGGING = {
         },
     },
     'handlers': {
-        'file_server': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': LOG_PATH + '/server' + LOG_FILE_SUFFIX + '.log',
-            'formatter': 'default'
-        },
         'file_client': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
@@ -78,10 +72,6 @@ LOGGING = {
         },
     },
     'loggers': {
-        'uws_server': {
-            'handlers': ['file_server'],
-            'level': 'DEBUG',
-        },
         'uws_client': {
             'handlers': ['file_client'],
             'level': 'DEBUG',
