@@ -93,6 +93,7 @@
         parent.children().each( function(i) {
             i++;
             if ($(this).attr('id') != 'param_' + i) {
+                console.log('renumber parameters');
                 $(this).find('.remove_param').attr('id', 'remove_param_' + i);
                 $(this).find('.moveup_param').attr('id', 'moveup_param_' + i);
                 $(this).find('.movedown_param').attr('id', 'movedown_param_' + i);
@@ -203,6 +204,7 @@
         parent.children().each( function(i) {
             i++;
             if ($(this).attr('id') != 'result_' + i) {
+                console.log('renumber results');
                 $(this).find('.remove_result').attr('id', 'remove_result_' + i);
                 $(this).find('.moveup_result').attr('id', 'moveup_result_' + i);
                 $(this).find('.movedown_result').attr('id', 'movedown_result_' + i);
