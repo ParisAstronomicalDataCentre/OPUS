@@ -54,7 +54,8 @@ JOB_SERVERS = {
 TRUSTED_CLIENTS = {
     '127.0.0.1': 'localhost',
     '145.238.193.69': 'voparis-uws-test.obspm.fr',
-    '145.238.168.3': 'voparis-uws-test.obspm.fr',
+    '145.238.168.3': 'savagnin_ucopia',
+    '145.238.180.240': 'savagnin_cable',
 }
 
 # Job Description Language
