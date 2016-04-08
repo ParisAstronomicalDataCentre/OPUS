@@ -169,7 +169,7 @@ def abort_500_except(msg=None):
 
 @app.route('/favicon.ico')
 def favicon():
-    return static_file('favicon.ico', root='{}/uws_server'.format(APP_PATH))
+    return static_file('favicon.ico', root=APP_PATH)
 
 
 # TODO: WADL should be one of the proposed JDL

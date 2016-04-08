@@ -101,7 +101,7 @@ def static(path):
 
 @app.route('/favicon.ico')
 def favicon():
-    return static_file('favicon.ico', root='{}/uws_client'.format(APP_PATH))
+    return static_file('favicon.ico', root=APP_PATH)
 
 
 # ----------
