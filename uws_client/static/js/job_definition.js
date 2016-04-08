@@ -42,13 +42,13 @@
                     <div class="input-group input-group-sm col-md-12">\
                         <span class="input-group-btn">\
                             <button id="remove_param_' + iparam + '" class="btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;" >\
-                                <span class="glyphicon glyphicon-remove-sign" aria-hidden="true"></span>\
+                                <span class="glyphicon glyphicon-remove-circle" aria-hidden="true"></span>\
                             </button>\
                             <button id="moveup_param_' + iparam + '" class="btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;" >\
-                                <span class="glyphicon glyphicon-menu-up" aria-hidden="true"></span>\
+                                <span class="glyphicon glyphicon-upload" aria-hidden="true"></span>\
                             </button>\
                             <button id="movedown_param_' + iparam + '" class="btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;" >\
-                                <span class="glyphicon glyphicon-menu-down" aria-hidden="true"></span>\
+                                <span class="glyphicon glyphicon-download" aria-hidden="true"></span>\
                             </button>\
                         </span>\
                         <input class="form-control" style="font-weight: bold;" name="param_name_' + iparam + '" type="text" placeholder="Name" />\
