@@ -114,6 +114,7 @@
 	function move_parameter_down(iparam) {
 	    var $node = $('#param_' + iparam)
         $node.next().after($node);
+        reset_parameter_numbers($node.parent())
 	}
 
 	function remove_all_parameters() {
