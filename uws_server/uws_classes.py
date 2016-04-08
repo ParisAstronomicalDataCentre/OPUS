@@ -72,8 +72,6 @@ class Job(object):
                               get_parameters=get_parameters,
                               get_results=get_results,
                               from_jobid_cluster=from_jobid_cluster)
-            # TODO: Check status on cluster, and change if necessary?
-            # self.get_status()
         elif from_post:
             # Create a new PENDING job and save to storage
             now = dt.datetime.now()
