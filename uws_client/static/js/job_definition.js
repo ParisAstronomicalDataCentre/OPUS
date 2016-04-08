@@ -177,12 +177,12 @@
         reset_item_numbers(type);
 	}
 
-	function remove_parameter(type, ii) {
+	function remove_item(type, ii) {
         $('#' + type + '_' + ii).remove();
         reset_item_numbers(type);
     }
 
-	function remove_last_parameter(type) {
+	function remove_last_item(type) {
 	    var list_table = $('#' + type + '_list tbody');
 	    list_table.children().last().remove();
     }
