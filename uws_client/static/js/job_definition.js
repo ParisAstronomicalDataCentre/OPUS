@@ -91,14 +91,14 @@
 	function reset_parameter_numbers(parent) {
         parent.children().each( function(i) {
             i++;
-            $(this).find('button.remove_param').attr('id', 'remove_param_' + i);
-            $(this).find('button.moveup_param').attr('id', 'moveup_param_' + i);
-            $(this).find('button.movedown_param').attr('id', 'movedown_param_' + i);
-            $(this).find('button.param_name').attr('name', 'param_name_' + i);
-            $(this).find('button.param_default').attr('name', 'param_default_' + i);
-            $(this).find('button.param_required').attr('name', 'param_required_' + i);
-            $(this).find('button.param_type').attr('name', 'param_type_' + i);
-            $(this).find('button.param_description').attr('name', 'param_description_' + i);
+            $(this).find('.remove_param').attr('id', 'remove_param_' + i);
+            $(this).find('.moveup_param').attr('id', 'moveup_param_' + i);
+            $(this).find('.movedown_param').attr('id', 'movedown_param_' + i);
+            $(this).find('.param_name').attr('name', 'param_name_' + i);
+            $(this).find('.param_default').attr('name', 'param_default_' + i);
+            $(this).find('.param_required').attr('name', 'param_required_' + i);
+            $(this).find('.param_type').attr('name', 'param_type_' + i);
+            $(this).find('.param_description').attr('name', 'param_description_' + i);
             $(this).attr('id', 'param_' + i);
         });
         $('.selectpicker').selectpicker('refresh');
