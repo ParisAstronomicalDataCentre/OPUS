@@ -147,16 +147,19 @@
         $('#remove_' + type + '_' + ii).click( function() {
             ii = this.id.split('_').pop();
             type = this.id.split('_').pop();
+            console.log(type + '_' + ii);
             remove_item(type, ii);
         });
         $('#moveup_' + type + '_' + ii).click( function() {
             ii = this.id.split('_').pop();
             type = this.id.split('_').pop();
+            console.log(type + '_' + ii);
             move_item_up(type, ii);
         });
         $('#movedown_' + type + '_' + ii).click( function() {
             ii = this.id.split('_').pop();
             type = this.id.split('_').pop();
+            console.log(type + '_' + ii);
             move_item_down(type, ii);
         });
 	}
