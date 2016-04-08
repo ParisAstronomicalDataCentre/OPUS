@@ -239,5 +239,4 @@ LOGGING = {
 
 # Set logger
 logging.config.dictConfig(LOGGING)
-logger = logging.getLogger(__name__)
-logger.debug(__name__)
+logger = logging.getLogger('uws_server')
