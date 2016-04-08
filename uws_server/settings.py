@@ -205,7 +205,7 @@ LOG_PATH = APP_PATH + '/logs'
 
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': True,
+    'disable_existing_loggers': False,
     'formatters': {
         'default': {
             'format': '[%(asctime)s] %(levelname)s %(funcName)s: %(message)s'
@@ -240,3 +240,4 @@ LOGGING = {
 # Set logger
 logging.config.dictConfig(LOGGING)
 logger = logging.getLogger(__name__)
+logger.debug(__name__)

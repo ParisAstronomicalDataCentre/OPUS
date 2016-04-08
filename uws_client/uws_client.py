@@ -47,13 +47,52 @@ session_opts = {
 aaa = Cork('uws_client/cork_conf')
 
 # Set logger
-if (__name__ not in logging.Logger.manager.loggerDict):
-    logging.basicConfig(
-        filename=LOG_FILE,
-        format='[%(asctime)s] %(levelname)s %(module)s.%(funcName)s: %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S',
-        level=logging.DEBUG)
+# if (__name__ not in logging.Logger.manager.loggerDict):
+#     logging.basicConfig(
+#         filename=LOG_FILE,
+#         format='[%(asctime)s] %(levelname)s %(module)s.%(funcName)s: %(message)s',
+#         datefmt='%Y-%m-%d %H:%M:%S',
+#         level=logging.DEBUG)
+LOG_PATH = APP_PATH + '/logs'
+LOG_FILE_SUFFIX = ''
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'default': {
+            'format': '[%(asctime)s] %(levelname)s %(funcName)s: %(message)s'
+        },
+    },
+    'handlers': {
+        'file_server': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': LOG_PATH + '/server' + LOG_FILE_SUFFIX + '.log',
+            'formatter': 'default'
+        },
+        'file_client': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': LOG_PATH + '/client' + LOG_FILE_SUFFIX + '.log',
+            'formatter': 'default'
+        },
+    },
+    'loggers': {
+        'uws_server': {
+            'handlers': ['file_server'],
+            'level': 'DEBUG',
+        },
+        'uws_client': {
+            'handlers': ['file_client'],
+            'level': 'DEBUG',
+        },
+    }
+}
+
+# Set logger
+logging.config.dictConfig(LOGGING)
 logger = logging.getLogger(__name__)
+logger.debug(__name__)
 
 # Set path to uws_client templates
 TEMPLATE_PATH.insert(0, APP_PATH + '/uws_client/views/')
