@@ -28,6 +28,10 @@
         "video/mp4",
     ];
 
+	function get_template(name) {
+	    // parameter or result
+	}
+
 	function add_parameter() {
 	    var mytable = $("#parameter_list tbody");
 	    var iparam = mytable.children().length;
@@ -38,6 +42,12 @@
                     <div class="input-group input-group-sm col-md-12">\
                         <span class="input-group-btn">\
                             <button id="remove_param_' + iparam + '" class="btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;" >\
+                                <span class="glyphicon glyphicon-remove"></span>\
+                            </button>\
+                            <button id="moveup_param_' + iparam + '" class="btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;" >\
+                                <span class="glyphicon glyphicon-remove"></span>\
+                            </button>\
+                            <button id="movedown_param_' + iparam + '" class="btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;" >\
                                 <span class="glyphicon glyphicon-remove"></span>\
                             </button>\
                         </span>\
@@ -61,19 +71,31 @@
                 </td>\
             </tr>';
         $(row).insertBefore('#parameter_list > tbody > tr:last');
+        // Initialize selectpicker
         $(".selectpicker").attr('data-width', '140px').selectpicker();
+        // Add click events for remove/moveup/movedown
         $('#remove_param_' + iparam).click( function() {
             iparam = this.id.split('_').pop();
             remove_parameter(iparam);
         });
-//        $('#moveup_param_' + iparam).click( function() {
-//            iparam = this.id.split('_').pop();
-//            move_parameter_up(iparam);
-//        });
-//        $('#movedw_param_' + iparam).click( function() {
-//            iparam = this.id.split('_').pop();
-//            move_parameter_down(iparam);
-//        });
+        $('#moveup_param_' + iparam).click( function() {
+            iparam = this.id.split('_').pop();
+            move_parameter_up(iparam);
+        });
+        $('#movedown_param_' + iparam).click( function() {
+            iparam = this.id.split('_').pop();
+            move_parameter_down(iparam);
+        });
+	}
+
+	function move_parameter_up(iparam) {
+	    var $node = $('#param_' + iparam),
+            $node.prev().before($node);
+	}
+
+	function move_parameter_down(iparam) {
+	    var $node = $('#param_' + iparam),
+            $node.next().after($node);
 	}
 
 	function remove_all_parameters() {
