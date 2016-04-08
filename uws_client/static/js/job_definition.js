@@ -151,10 +151,11 @@
             remove_item(type, ii);
         });
         $('#moveup_' + type + '_' + ii).click( function() {
-            ii = this.id.split('_').pop();
-            type = this.id.split('_').pop();
-            console.log(type + '_' + ii);
-            move_item_up(type, ii);
+            var ids = this.id.split('_');
+            var f_ii = ids.pop();
+            var f_type = ids.pop();
+            console.log(f_type + '_' + f_ii);
+            move_item_up(f_type, f_ii);
         });
         $('#movedown_' + type + '_' + ii).click( function() {
             ii = this.id.split('_').pop();
