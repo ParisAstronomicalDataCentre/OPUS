@@ -80,7 +80,8 @@ LOGGING = {
 }
 
 # Set logger
-logging.config.dictConfig(LOGGING)
+if ('uws_client' not in logging.Logger.manager.loggerDict):
+    logging.config.dictConfig(LOGGING)
 logger = logging.getLogger('uws_client')
 logger.debug(logging.Logger.manager.loggerDict)
 

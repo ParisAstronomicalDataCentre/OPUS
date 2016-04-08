@@ -224,6 +224,18 @@ LOGGING = {
             'filename': LOG_PATH + '/client' + LOG_FILE_SUFFIX + '.log',
             'formatter': 'default'
         },
+        'file_beaker': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': LOG_PATH + '/beaker' + LOG_FILE_SUFFIX + '.log',
+            'formatter': 'default'
+        },
+        'file_cork': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': LOG_PATH + '/cork' + LOG_FILE_SUFFIX + '.log',
+            'formatter': 'default'
+        },
     },
     'loggers': {
         'uws_server': {
@@ -232,6 +244,14 @@ LOGGING = {
         },
         'uws_client': {
             'handlers': ['file_client'],
+            'level': 'DEBUG',
+        },
+        'beaker': {
+            'handlers': ['file_beaker'],
+            'level': 'DEBUG',
+        },
+        'cork': {
+            'handlers': ['file_cork'],
             'level': 'DEBUG',
         },
     }
