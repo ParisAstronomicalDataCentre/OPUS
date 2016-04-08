@@ -82,7 +82,7 @@ LOGGING = {
 # Set logger
 logging.config.dictConfig(LOGGING)
 logger = logging.getLogger(__name__)
-logger.debug(__name__)
+logger.debug(logging.Logger.manager.loggerDict)
 
 # Set path to uws_client templates
 TEMPLATE_PATH.insert(0, APP_PATH + '/uws_client/views/')
