@@ -29,7 +29,7 @@
         "video/mp4",
     ];
 
-    type_options = {
+    var type_options = {
         'param': [
             'xs:string',
             'xs:anyURI',
