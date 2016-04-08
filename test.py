@@ -14,7 +14,7 @@ from webtest import TestApp
 # Redefine LOG_FILE, DB_FILE, MANAGER
 STORAGE = 'SQLiteStorage'
 DB_FILE = 'data/db/job_database_test.db'
-LOG_FILE = 'logs/app_test.log'
+LOG_FILE_SUFFIX = '_test'
 MANAGER = 'Manager'
 
 from uws_server import uws_server

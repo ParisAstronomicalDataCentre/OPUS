@@ -21,6 +21,8 @@ BASE_URL = 'http://localhost:8080'
 
 MERGE_CLIENT = True
 
+LOG_FILE_SUFFIX = ''
+
 # Those servers have access to /job_event/<jobid_manager> to change the phase or report an error
 JOB_SERVERS = {
     '127.0.0.1': 'localhost',
@@ -167,8 +169,8 @@ if os.path.exists('uws_server/settings_local.py'):
 main_dict = sys.modules['__main__'].__dict__
 if 'test.py' in main_dict.get('__file__', ''):
     print '\nPerforming tests'
-    if 'LOG_FILE' in main_dict:
-        LOG_FILE = main_dict['LOG_FILE']
+    if 'LOG_FILE_SUFFIX' in main_dict:
+        LOG_FILE_SUFFIX = main_dict['LOG_FILE_SUFFIX']
     if 'STORAGE' in main_dict:
         STORAGE = main_dict['STORAGE']
     if 'DB_FILE' in main_dict:
@@ -206,20 +208,20 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'default': {
-            'format': '[%(asctime)s] %(levelname)s %(module)s.%(funcName)s: %(message)s'
+            'format': '[%(asctime)s] %(levelname)s %(funcName)s: %(message)s'
         },
     },
     'handlers': {
         'file_server': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': LOG_PATH + '/server.log',
+            'filename': LOG_PATH + '/server' + LOG_FILE_SUFFIX + '.log',
             'formatter': 'default'
         },
         'file_client': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': LOG_PATH + '/client.log',
+            'filename': LOG_PATH + '/client' + LOG_FILE_SUFFIX + '.log',
             'formatter': 'default'
         },
     },
@@ -235,5 +237,6 @@ LOGGING = {
     }
 }
 
+# Set logger
 logging.config.dictConfig(LOGGING)
 logger = logging.getLogger(__name__)
