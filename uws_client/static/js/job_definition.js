@@ -195,11 +195,11 @@
     // ----------
     // Load/Read
 
-	function load_wadl() {
+	function load_jdl() {
         var jobname = $('input[name=name]').val();
         // ajax command to get JDL from UWS server
         $.ajax({
-			url : '/get_jdl/' + jobname, //.split("/").pop(),
+			url : '/get_jdl/' + jobname,  //.split("/").pop(),  // to remove new/ (not needed here)
 			async : true,
 			type : 'GET',
 			dataType: "json",
@@ -207,10 +207,10 @@
 				$('input[name=executionduration]').val(jdl.executionduration);
 				$('input[name=quote]').val(jdl.quote);
 				$('textarea[name=description]').val(jdl.description);
-				remove_all_parameters();
+				// Fill param_list table
+				remove_all_items('param');
 				var i = 0;
 				for (var param in jdl.parameters) {
-				    //add_parameter();
 				    add_item('param');
 				    i++;
 				    $('input[name=param_name_' + i + ']').val(param);
@@ -219,10 +219,10 @@
 				    $('input[name=param_required_' + i + ']').prop("checked", jdl.parameters[param]['required'].toLowerCase() == "true");
 				    $('input[name=param_description_' + i + ']').val(jdl.parameters[param]['description']);
 				};
-				remove_all_results();
+				// Fill result_list table
+				remove_all_items('result');
 				var i = 0;
 				for (var result in jdl.results) {
-				    //add_result();
                     add_item('result');
 				    i++;
 				    $('input[name=result_name_' + i + ']').val(result);
@@ -231,7 +231,7 @@
 				    $('input[name=result_description_' + i + ']').val(jdl.results[result]['description']);
 				};
                 $('.selectpicker').selectpicker('refresh');
-                // ajax command to get_script on UWS server
+                // ajax command to get_script from UWS server
                 $.ajax({
                     url : '/get_script/' + jobname, //.split("/").pop(),
                     async : true,
@@ -249,7 +249,7 @@
 			},
 			error : function(xhr, status, exception) {
 				console.log(exception);
-				$('#load_msg').text('No valid WADL found.');
+				$('#load_msg').text('No valid JDL found.');
 				$('#load_msg').show().delay(1000).fadeOut();
 			}
 		});
@@ -259,7 +259,7 @@
         var jobname = $('input[name=name]').val();
         // ajax command to get_wadl on UWS server
         $.ajax({
-			url : '/get_wadl/' + jobname, //.split("/").pop(),
+			url : '/get_wadl/' + jobname,  //.split("/").pop(),  // to remove new/ (not needed here)
 			async : true,
 			type : 'GET',
 			dataType: "text",
@@ -291,10 +291,10 @@
         var jobname = $('#jobname').attr('value');
         if (jobname) {
             $('input[name=name]').val(jobname);
-            load_wadl();
+            load_jdl();
         };
         // Add event functions
-        $('#load_wadl').click( function() { load_wadl(); });
+        $('#load_jdl').click( function() { load_jdl(); });
         $('#get_wadl').click( function() { get_wadl(); });
         $('#validate_job').click( function() {
             jobname = $('input[name=name]').val().split("/").pop();
@@ -320,7 +320,7 @@
         $('input[name=name]').keydown(function (event) {
             if (event.keyCode == 13) {
                 event.preventDefault();
-                load_wadl();
+                load_jdl();
             }
         });
 	}); // end ready
