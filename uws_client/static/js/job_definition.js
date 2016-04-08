@@ -29,6 +29,187 @@
         "video/mp4",
     ];
 
+    type_options = {
+        'param': [
+            'xs:string',
+            'xs:anyURI',
+            'file',
+            'xs:float',
+            'xs:double',
+            'xs:int',
+            'xs:long',
+            'xs:boolean',
+        ],
+        'result': [
+            'text/plain',
+            'text/xml',
+            'text/x-votable+xml',
+            'application/json',
+            'application/pdf',
+            'image/jpeg',
+            'image/png',
+            'image/fits',
+            'video/mp4',
+        ],
+    };
+
+    // ----------
+    // Item list numbered
+
+	function item_row(type, ii) {
+	    switch (type) {
+            // Parameters
+            case 'param':
+                var options = '<option>' + type_options[type].join('</option><option>') + '</option>';
+                var row = '\
+                    <tr id="param_' + ii + '">\
+                        <td>\
+                            <div class="input-group input-group-sm col-md-12">\
+                                <span class="input-group-btn">\
+                                    <button id="remove_param_' + ii + '" class="remove_param btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;" >\
+                                        <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>\
+                                    </button>\
+                                    <button id="moveup_param_' + ii + '" class="moveup_param btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;" >\
+                                        <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>\
+                                    </button>\
+                                    <button id="movedown_param_' + ii + '" class="movedown_param btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;" >\
+                                        <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span>\
+                                    </button>\
+                                </span>\
+                                <input class="param_name form-control" style="font-weight: bold;" name="param_name_' + ii + '" type="text" placeholder="Name" />\
+                                <span class="input-group-addon">=</span>\
+                                <input class="param_default form-control" name="param_default_' + ii + '" type="text" placeholder="Default value" />\
+                                <span class="input-group-addon">\
+                                    <input class="param_required" name="param_required_' + ii + '" type="checkbox" title="Required parameter?" checked/>\
+                                </span>\
+                                <span class="input-group-btn">\
+                                    <select class="param_type select-small selectpicker" name="param_type_' + ii + '">\
+                                        ' + options + '\
+                                    </select>\
+                                </span>\
+                            </div>\
+                            <div style="height: 1px;"></div>\
+                            <div class="input-group input-group-sm col-md-12">\
+                                <input class="param_description form-control" name="param_description_' + ii + '" type="text" placeholder="Description" style="border-radius: 4px;" />\
+                            </div>\
+                            <div style="height: 8px;"></div>\
+                        </td>\
+                    </tr>';
+                break;
+            // Results
+	        case 'result':
+                var options = '<option>' + type_options[type].join('</option><option>') + '</option>';
+                var row = '\
+                    <tr id="result_' + ii + '">\
+                        <td>\
+                            <div class="input-group input-group-sm col-md-12">\
+                                <span class="input-group-btn">\
+                                    <button id="remove_result_' + ii + '" class="remove_result btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;">\
+                                        <span class="glyphicon glyphicon-remove"></span>\
+                                    </button>\
+                                    <button id="moveup_result_' + ii + '" class="moveup_result btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;" >\
+                                        <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>\
+                                    </button>\
+                                    <button id="movedown_result_' + ii + '" class="movedown_result btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;" >\
+                                        <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span>\
+                                    </button>\
+                                </span>\
+                                <input class="result_name form-control" style="font-weight: bold;" name="result_name_' + ii + '" type="text" placeholder="Name" />\
+                                <span class="input-group-addon">=</span>\
+                                <input class="result_default form-control" name="result_default_' + ii + '" type="text" placeholder="Default value" />\
+                                <span class="input-group-btn">\
+                                    <select name="result_type_' + ii + '" class="result_type select-small selectpicker">\
+                                        ' + options + '\
+                                    </select>\
+                                </span>\
+                            </div>\
+                            <div style="height: 1px;"></div>\
+                            <div class="input-group input-group-sm col-md-12">\
+                                <input class="result_description form-control" name="result_description_' + ii + '" type="text" placeholder="Description" style="border-radius: 4px;" />\
+                            </div>\
+                            <div style="height: 8px;"></div>\
+                        </td>\
+                    </tr>';
+                break;
+        }
+        return row;
+	}
+
+	function add_item(type) {
+	    var list_table = $('#' + type + '_list tbody');
+	    var ii = list_table.children().length + 1;
+        // Append row
+        var row = item_row(type, ii)
+        list_table.append($(row));
+        // Initialize selectpicker
+        $(".selectpicker").attr('data-width', '140px').selectpicker();
+        // Add click events for remove/moveup/movedown
+        $('#remove_' + type + '_' + ii).click( function() {
+            ii = this.id.split('_').pop();
+            type = this.id.split('_').pop();
+            remove_item(type, ii);
+        });
+        $('#moveup_' + type + '_' + ii).click( function() {
+            ii = this.id.split('_').pop();
+            type = this.id.split('_').pop();
+            move_item_up(type, ii);
+        });
+        $('#movedown_' + type + '_' + ii).click( function() {
+            ii = this.id.split('_').pop();
+            type = this.id.split('_').pop();
+            move_item_down(type, ii);
+        });
+	}
+
+	function reset_item_numbers(type) {
+	    var list_table = $('#' + type + '_list tbody');
+        list_table.each( function(i) {
+            i++;
+            if ($(this).attr('id') != type + '_' + i) {
+                $(this).find('.remove_' + type).attr('id', 'remove_' + type + '_' + i);
+                $(this).find('.moveup_' + type).attr('id', 'moveup_' + type + '_' + i);
+                $(this).find('.movedown_' + type).attr('id', 'movedown_' + type + '_' + i);
+                $(this).find('.' + type + '_name').attr('name', type + '_name_' + i);
+                $(this).find('.' + type + '_default').attr('name', type + '_default_' + i);
+                $(this).find('.' + type + '_required').attr('name', type + '_required_' + i);
+                $(this).find('.' + type + '_type').attr('name', type + '_type_' + i);
+                $(this).find('.' + type + '_description').attr('name', type + '_description_' + i);
+                $(this).attr('id', type + '_' + i);
+            }
+        });
+        $('.selectpicker').selectpicker('refresh');
+	}
+
+	function move_item_up(type, ii) {
+	    var $node = $('#' + type + '_' + ii)
+        $node.prev().before($node);
+        reset_item_numbers(type);
+	}
+
+	function move_item_down(type, ii) {
+	    var $node = $('#param_' + ii)
+        $node.next().after($node);
+        reset_item_numbers(type);
+	}
+
+	function remove_all_items(type) {
+	    var list_table = $('#' + type + '_list tbody');
+	    list_table.children().remove();
+    }
+
+	function remove_last_parameter(type) {
+	    var list_table = $('#' + type + '_list tbody');
+	    var ii = list_table.children().length;
+	    if (ii > 0) {
+    	    $('#' + type + '_' + ii).remove();
+	    }
+    }
+
+	function remove_parameter(type, ii) {
+        $('#' + type + '_' + ii).remove();
+        reset_item_numbers(type);
+    }
+
     // ----------
     // Parameters
 
@@ -93,7 +274,6 @@
         parent.children().each( function(i) {
             i++;
             if ($(this).attr('id') != 'param_' + i) {
-                console.log('renumber parameters');
                 $(this).find('.remove_param').attr('id', 'remove_param_' + i);
                 $(this).find('.moveup_param').attr('id', 'moveup_param_' + i);
                 $(this).find('.movedown_param').attr('id', 'movedown_param_' + i);
@@ -282,7 +462,8 @@
 				remove_all_parameters();
 				var i = 0;
 				for (var param in jdl.parameters) {
-				    add_parameter();
+				    //add_parameter();
+				    add_item('param');
 				    i++;
 				    $('input[name=param_name_' + i + ']').val(param);
 				    $('select[name=param_type_' + i + ']').val(jdl.parameters[param]['type']);
@@ -293,7 +474,8 @@
 				remove_all_results();
 				var i = 0;
 				for (var result in jdl.results) {
-				    add_result();
+				    //add_result();
+                    add_item('result');
 				    i++;
 				    $('input[name=result_name_' + i + ']').val(result);
 				    $('select[name=result_type_' + i + ']').val(jdl.results[result]['mediaType']);
@@ -353,8 +535,10 @@
 	    editor = CodeMirror.fromTextArea( $('textarea[name=script]')[0], {mode: "text/x-sh", lineNumbers: true } );
         $('div.CodeMirror').addClass('panel panel-default');
         // Prepare empty form
-        add_parameter();
-        add_result();
+        //add_parameter();
+        //add_result();
+        add_item('param');
+        add_item('result');
         // Get jobname from DOM (if set), and fill input form
         var jobname = $('#jobname').attr('value');
         if (jobname) {
@@ -378,12 +562,12 @@
             }
             console.log('no jobname given');
         });
-        $('#add_parameter').click( function() { add_parameter(); });
-        $('#remove_last_parameter').click( function() { remove_last_parameter(); });
-        $('#remove_all_parameters').click( function() { remove_all_parameters(); });
-        $('#add_result').click( function() { add_result(); });
-        $('#remove_last_result').click( function() { remove_last_result(); });
-        $('#remove_all_results').click( function() { remove_all_results(); });
+        $('#add_parameter').click( function() { add_item('param'); });
+        $('#remove_last_parameter').click( function() { remove_last_item('param'); });
+        $('#remove_all_parameters').click( function() { remove_all_items('param'); });
+        $('#add_result').click( function() { add_item('result'); });
+        $('#remove_last_result').click( function() { remove_last_item('result'); });
+        $('#remove_all_results').click( function() { remove_all_items('result'); });
         $('input[name=name]').keydown(function (event) {
             if (event.keyCode == 13) {
                 event.preventDefault();
