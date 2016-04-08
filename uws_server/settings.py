@@ -28,29 +28,6 @@ JOB_SERVERS = {
     '127.0.0.1': 'localhost',
     '145.238.151.': 'tycho/quadri12',
 }
-#     '145.238.151.10': 'tycho.obspm.fr',
-#     '145.238.151.72': 'quadri12.obspm.fr',
-#     '145.238.151.130': 'tyctst0',
-#     '145.238.151.11': 'tycho',
-#     '145.238.151.12': 'tycho',
-#     '145.238.151.13': 'tycho',
-#     '145.238.151.14': 'tycho',
-#     '145.238.151.15': 'tycho',
-#     '145.238.151.16': 'tycho',
-#     '145.238.151.17': 'tycho',
-#     '145.238.151.18': 'tycho',
-#     '145.238.151.19': 'tycho',
-#     '145.238.151.20': 'tycho',
-#     '145.238.151.21': 'tycho',
-#     '145.238.151.22': 'tycho',
-#     '145.238.151.23': 'tycho',
-#     '145.238.151.24': 'tycho',
-#     '145.238.151.25': 'tycho',
-#     '145.238.151.26': 'tycho',
-#     '145.238.151.27': 'tycho',
-#     '145.238.151.28': 'tycho',
-#     '145.238.151.29': 'tycho',
-# }
 
 TRUSTED_CLIENTS = {
     '127.0.0.1': 'localhost',
@@ -197,18 +174,15 @@ LOG_PATH = APP_PATH + '/logs'
 #--- Set all _PATH based on APP_PATH -----------------------------------------------------------------------------------
 
 # Set logger
-# logging.basicConfig(
-#     filename=LOG_PATH + '/app.log',
-#     format='[%(asctime)s] %(levelname)s %(module)s.%(funcName)s: %(message)s',
-#     datefmt='%Y-%m-%d %H:%M:%S',
-#     level=logging.DEBUG)
-
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
         'default': {
             'format': '[%(asctime)s] %(levelname)s %(funcName)s: %(message)s'
+        },
+        'module': {
+            'format': '[%(asctime)s] %(levelname)s %(module)s.%(funcName)s: %(message)s'
         },
     },
     'handlers': {
@@ -224,17 +198,11 @@ LOGGING = {
             'filename': LOG_PATH + '/client' + LOG_FILE_SUFFIX + '.log',
             'formatter': 'default'
         },
-        'file_beaker': {
+        'file_debug': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': LOG_PATH + '/beaker' + LOG_FILE_SUFFIX + '.log',
-            'formatter': 'default'
-        },
-        'file_cork': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': LOG_PATH + '/cork' + LOG_FILE_SUFFIX + '.log',
-            'formatter': 'default'
+            'filename': LOG_PATH + '/debug' + LOG_FILE_SUFFIX + '.log',
+            'formatter': '%(module)s.'
         },
     },
     'loggers': {
@@ -247,17 +215,19 @@ LOGGING = {
             'level': 'DEBUG',
         },
         'beaker': {
-            'handlers': ['file_beaker'],
+            'handlers': ['file_debug'],
             'level': 'DEBUG',
         },
         'cork': {
-            'handlers': ['file_cork'],
+            'handlers': ['file_debug'],
+            'level': 'DEBUG',
+        },
+        'prov': {
+            'handlers': ['file_debug'],
             'level': 'DEBUG',
         },
     }
 }
 
-# Set logger
 logging.config.dictConfig(LOGGING)
 logger = logging.getLogger('uws_server')
-logger.debug(logging.Logger.manager.loggerDict)

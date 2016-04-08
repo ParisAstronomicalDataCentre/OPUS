@@ -15,7 +15,10 @@ from beaker.middleware import SessionMiddleware
 from cork import Cork
 
 
-# Settings
+# ----------
+#  Settings
+
+
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 ENDPOINT = 'client'
 UWS_SERVER_URL = ''
@@ -30,29 +33,7 @@ JOBNAMES = [
     'serpe',
 ]
 
-# Create a new application
-app = Bottle()
-
-# Session option (create session after code)
-session_opts = {
-    'session.cookie_expires': True,
-    'session.encrypt_key': 'please use a random key and keep it secret!',
-    'session.httponly': True,
-    'session.timeout': 3600 * 24,  # 1 day
-    'session.type': 'cookie',
-    'session.validate_key': True,
-}
-
-# Start authentication system
-aaa = Cork('uws_client/cork_conf')
-
 # Set logger
-# if (__name__ not in logging.Logger.manager.loggerDict):
-#     logging.basicConfig(
-#         filename=LOG_FILE,
-#         format='[%(asctime)s] %(levelname)s %(module)s.%(funcName)s: %(message)s',
-#         datefmt='%Y-%m-%d %H:%M:%S',
-#         level=logging.DEBUG)
 LOG_PATH = APP_PATH + '/logs'
 LOG_FILE_SUFFIX = ''
 LOGGING = {
@@ -83,10 +64,29 @@ LOGGING = {
 if ('uws_client' not in logging.Logger.manager.loggerDict):
     logging.config.dictConfig(LOGGING)
 logger = logging.getLogger('uws_client')
-logger.debug(logging.Logger.manager.loggerDict)
 
 # Set path to uws_client templates
 TEMPLATE_PATH.insert(0, APP_PATH + '/uws_client/views/')
+
+
+# ----------
+# Create application
+
+
+app = Bottle()
+
+# Session option (create session after code)
+session_opts = {
+    'session.cookie_expires': True,
+    'session.encrypt_key': 'please use a random key and keep it secret!',
+    'session.httponly': True,
+    'session.timeout': 3600 * 24,  # 1 day
+    'session.type': 'cookie',
+    'session.validate_key': True,
+}
+
+# Start authentication system
+aaa = Cork('uws_client/cork_conf')
 
 
 # ----------
