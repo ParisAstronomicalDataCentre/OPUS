@@ -82,7 +82,7 @@ def is_client_trusted(ip):
     # IP or part of an IP has to be in the TRUSTED_CLIENTS list
     matching = [x for x in TRUSTED_CLIENTS if x in ip]
     if matching:
-        logger.info('{} from {} ({})'.format(request.urlparts.path, ip, JOB_SERVERS[matching[0]]))
+        logger.info('{} from {} ({})'.format(request.urlparts.path, ip, TRUSTED_CLIENTS[matching[0]]))
         return True
     else:
         logger.warning('{} wants to access {}'.format(ip, request.urlparts.path))
