@@ -44,28 +44,28 @@
                             <button id="remove_param_' + iparam + '" class="remove_param btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;" >\
                                 <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>\
                             </button>\
-                            <button id="moveup_param_' + iparam + '" class="btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;" >\
+                            <button id="moveup_param_' + iparam + '" class="moveup_param btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;" >\
                                 <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>\
                             </button>\
-                            <button id="movedown_param_' + iparam + '" class="btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;" >\
+                            <button id="movedown_param_' + iparam + '" class="movedown_param btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;" >\
                                 <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span>\
                             </button>\
                         </span>\
-                        <input class="form-control" style="font-weight: bold;" name="param_name_' + iparam + '" type="text" placeholder="Name" />\
+                        <input class="param_name form-control" style="font-weight: bold;" name="param_name_' + iparam + '" type="text" placeholder="Name" />\
                         <span class="input-group-addon">=</span>\
-                        <input class="form-control" name="param_default_' + iparam + '" type="text" placeholder="Default value" />\
+                        <input class="param_default form-control" name="param_default_' + iparam + '" type="text" placeholder="Default value" />\
                         <span class="input-group-addon">\
-                            <input title="Required parameter?" name="param_required_' + iparam + '" type="checkbox" checked/>\
+                            <input class="param_required" name="param_required_' + iparam + '" type="checkbox" title="Required parameter?" checked/>\
                         </span>\
                         <span class="input-group-btn">\
-                            <select name="param_type_' + iparam + '" class="select-small selectpicker">\
+                            <select class="param_type select-small selectpicker" name="param_type_' + iparam + '">\
                                 ' + options + '\
                             </select>\
                         </span>\
                     </div>\
                     <div style="height: 1px;"></div>\
                     <div class="input-group input-group-sm col-md-12">\
-                        <input class="form-control" name="param_description_' + iparam + '" type="text" placeholder="Description" style="border-radius: 4px;" />\
+                        <input class="param_description form-control" name="param_description_' + iparam + '" type="text" placeholder="Description" style="border-radius: 4px;" />\
                     </div>\
                     <div style="height: 8px;"></div>\
                 </td>\
@@ -92,7 +92,16 @@
         parent.children().each( function(i) {
             i++;
             $(this).find('button.remove_param').attr('id', 'remove_param_' + i);
+            $(this).find('button.moveup_param').attr('id', 'moveup_param_' + i);
+            $(this).find('button.movedown_param').attr('id', 'movedown_param_' + i);
+            $(this).find('button.param_name').attr('name', 'param_name_' + i);
+            $(this).find('button.param_default').attr('name', 'param_default_' + i);
+            $(this).find('button.param_required').attr('name', 'param_required_' + i);
+            $(this).find('button.param_type').attr('name', 'param_type_' + i);
+            $(this).find('button.param_description').attr('name', 'param_description_' + i);
+            $(this).attr('id', 'param_' + i);
         });
+        $('.selectpicker').selectpicker('refresh');
 	}
 
 	function move_parameter_up(iparam) {
