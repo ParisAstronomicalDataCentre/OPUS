@@ -10,6 +10,7 @@ init:
 	mkdir -p data/uploads
 	chown -R $(WWWUSER) data
 	chown -R $(WWWUSER) uws_client/cork_conf
+	chown -R $(WWWUSER) logs
 
 test:
 	./test.py
