@@ -80,6 +80,8 @@ def is_job_server(ip):
 def is_client_trusted(ip):
     """Test if request comes from a job server"""
     # IP or part of an IP has to be in the TRUSTED_CLIENTS list
+    # TODO: ip here is the ip of the web browser (request sent from javascript...) should trust the client URL maybe?
+    # TODO: or access those pages from web server, not web browser
     matching = [x for x in TRUSTED_CLIENTS if x in ip]
     if matching:
         logger.info('{} from {} ({})'.format(request.urlparts.path, ip, TRUSTED_CLIENTS[matching[0]]))
