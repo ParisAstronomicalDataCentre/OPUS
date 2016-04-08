@@ -41,7 +41,7 @@
                 <td>\
                     <div class="input-group input-group-sm col-md-12">\
                         <span class="input-group-btn">\
-                            <button id="remove_param_' + iparam + '" class="btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;" >\
+                            <button id="remove_param_' + iparam + '" class="remove_param btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;" >\
                                 <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>\
                             </button>\
                             <button id="moveup_param_' + iparam + '" class="btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;" >\
@@ -88,9 +88,16 @@
         });
 	}
 
+	function reset_parameter_numbers(parent) {
+        parent.children().each( function(i) {
+            $(this).find('button.remove_param').attr('id', 'remove_param_' + i);
+        });
+	}
+
 	function move_parameter_up(iparam) {
 	    var $node = $('#param_' + iparam)
         $node.prev().before($node);
+        reset_parameter_numbers($node.parent())
 	}
 
 	function move_parameter_down(iparam) {
