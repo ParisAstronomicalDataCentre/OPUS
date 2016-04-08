@@ -90,6 +90,7 @@
 
 	function reset_parameter_numbers(parent) {
         parent.children().each( function(i) {
+            i++;
             $(this).find('button.remove_param').attr('id', 'remove_param_' + i);
         });
 	}
