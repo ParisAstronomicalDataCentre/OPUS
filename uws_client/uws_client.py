@@ -9,6 +9,7 @@ UWS client implementation using bottle.py and javascript
 import os
 import uuid
 import base64
+import requests
 import logging
 from bottle import Bottle, request, response, abort, redirect, run, static_file, parse_auth, TEMPLATE_PATH, view, jinja2_view
 from beaker.middleware import SessionMiddleware
@@ -298,15 +299,62 @@ def job_definition():
     jobname = request.query.get('jobname', '')
     msg = request.query.get('msg', '')
     msg_text = {
-        'new': 'New job definition has been saved as {}'.format(jobname),
         'restricted': 'Access is restricted to administrators',
-        'script_copied': 'Job script {}.sh has been copied to work cluster'.format(jobname),
+        'new': 'New job definition has been saved as {}'.format(jobname),
         'validated': 'Job definition for new/{jn} has been validated and renamed {jn}'.format(jn=jobname),
+        'script_copied': 'Job script {}.sh has been copied to work cluster'.format(jobname),
         'notfound': 'Job definition for new/{jn} was not found on the server. Cannot validate.'.format(jn=jobname),
     }
     if msg in msg_text:
         return {'session': session, 'is_admin': is_admin, 'jobname': jobname, 'message': msg_text[msg]}
     return {'session': session, 'is_admin': is_admin, 'jobname': jobname}
+
+
+@app.post('/client/job_definition')
+def client_create_new_job_definition():
+    """Use filled form to create a JDL file for the given job"""
+    jobname = request.forms.get('name').split('/')[-1]
+    data = request.POST.__dict__
+    r = requests.post('{}/config/job_definition'.format(UWS_SERVER_URL), data=data)
+    if r.status_code == 200:
+        msg = 'new'
+    else:
+        msg = 'notfound'
+    # redirect to job_definition with message
+    redirect('/client/job_definition?jobname=new/{}&msg={}'.format(jobname, msg), 303)
+
+
+@app.get('/client/validate_job/<jobname>')
+def client_validate_job(jobname):
+    """
+    Validate job on server
+    :param jobname:
+    :return:
+    """
+    # Send request to UWS Server
+    r = requests.get('{}/config/validate_job/{}'.format(UWS_SERVER_URL, jobname))
+    if r.status_code == 200:
+        msg = 'validated'
+    else:
+        msg = 'notfound'
+    # redirect to job_definition with message
+    redirect('/client/job_definition?jobname={}&msg={}'.format(jobname, msg), 303)
+
+
+@app.get('/client/cp_script/<jobname>')
+def client_cp_script(jobname):
+    """
+    Validate job on server
+    :param jobname:
+    :return:
+    """
+    r = requests.get('{}/config/cp_script/{}'.format(UWS_SERVER_URL, jobname))
+    if r.status_code == 200:
+        msg = 'script_copied'
+    else:
+        msg = 'notfound'
+    # redirect to job_definition with message
+    redirect('/client/job_definition?jobname={}&msg={}'.format(jobname, msg), 303)
 
 
 # ----------

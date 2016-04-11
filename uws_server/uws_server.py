@@ -319,67 +319,74 @@ def show_db():
 
 @app.post('/config/job_definition')
 def create_new_job_definition():
-    """Use filled form to create a WADL file for the given job"""
+    """Use posted parameters to create a new JDL file for the given job"""
     # No need to authenticate, users can propose new jobs that will have to be validated
     # Check if client is trusted? not really needed
-    # ip = request.environ.get('REMOTE_ADDR', '')
-    # if not is_client_trusted(ip):
-    #     abort_403()
-    # Read form
-    keys = request.forms.keys()
-    jobname = request.forms.get('name').split('/')[-1]
-    description = request.forms.get('description')
-    execdur = request.forms.get('executionduration')
-    quote = request.forms.get('quote')
-    script = request.forms.get('script')
-    params = collections.OrderedDict()
-    iparam = 1
-    while 'param_name_' + str(iparam) in keys:
-        pname = request.forms.get('param_name_' + str(iparam))
-        if pname:
-            ptype = request.forms.get('param_type_' + str(iparam))
-            pdefault = request.forms.get('param_default_' + str(iparam))
-            preq = request.forms.get('param_required_' + str(iparam))
-            pdesc = request.forms.get('param_description_' + str(iparam))
-            params[pname] = {
-                'type': ptype,
-                'default': pdefault,
-                'required': (preq == 'on'),
-                'description': pdesc,
-            }
-        iparam += 1
-    results = collections.OrderedDict()
-    iresult = 1
-    while 'result_name_' + str(iresult) in keys:
-        rname = request.forms.get('result_name_' + str(iresult))
-        if rname:
-            rtype = request.forms.get('result_type_' + str(iresult))
-            rdefault = request.forms.get('result_default_' + str(iresult))
-            rdesc = request.forms.get('result_description_' + str(iresult))
-            results[rname] = {
-                'mediaType': rtype,
-                'default': rdefault,
-                'description': rdesc,
-            }
-        iresult += 1
-    # Create job_jdl structure
-    job_def = {'description': description,
-               'parameters': params,
-               'results': results,
-               'executionduration': execdur,
-               'quote': quote}
-    # Create WADL file from job_jdl
-    jdl = uws_jdl.__dict__[JDL]()
-    jdl.content = job_def
-    jdl.save('new/' + jobname)
-    # Save bash script file in new/
-    script_fname = '{}/new/{}.sh'.format(SCRIPT_PATH, jobname)
-    with open(script_fname, 'w') as f:
-        f.write(script.replace('\r', ''))
-        logger.info('Job script save: ' + script_fname)
-        # TODO: send to work cluster?
-    # Back to filled form (request.headers.get('Referer')?)
-    redirect('/client/job_definition?jobname=new/{}&msg=new'.format(jobname), 303)
+    ip = request.environ.get('REMOTE_ADDR', '')
+    if not is_client_trusted(ip):
+        abort_403()
+    try:
+        # Read form
+        keys = request.forms.keys()
+        jobname = request.forms.get('name').split('/')[-1]
+        description = request.forms.get('description')
+        execdur = request.forms.get('executionduration')
+        quote = request.forms.get('quote')
+        script = request.forms.get('script')
+        params = collections.OrderedDict()
+        iparam = 1
+        while 'param_name_' + str(iparam) in keys:
+            pname = request.forms.get('param_name_' + str(iparam))
+            if pname:
+                ptype = request.forms.get('param_type_' + str(iparam))
+                pdefault = request.forms.get('param_default_' + str(iparam))
+                preq = request.forms.get('param_required_' + str(iparam))
+                pdesc = request.forms.get('param_description_' + str(iparam))
+                params[pname] = {
+                    'type': ptype,
+                    'default': pdefault,
+                    'required': (preq == 'on'),
+                    'description': pdesc,
+                }
+            iparam += 1
+        results = collections.OrderedDict()
+        iresult = 1
+        while 'result_name_' + str(iresult) in keys:
+            rname = request.forms.get('result_name_' + str(iresult))
+            if rname:
+                rtype = request.forms.get('result_type_' + str(iresult))
+                rdefault = request.forms.get('result_default_' + str(iresult))
+                rdesc = request.forms.get('result_description_' + str(iresult))
+                results[rname] = {
+                    'mediaType': rtype,
+                    'default': rdefault,
+                    'description': rdesc,
+                }
+            iresult += 1
+        # Create job_jdl structure
+        job_def = {
+            'description': description,
+            'parameters': params,
+            'results': results,
+            'executionduration': execdur,
+            'quote': quote,
+        }
+        # Create WADL file from job_jdl
+        jdl = uws_jdl.__dict__[JDL]()
+        jdl.content = job_def
+        jdl.save('new/' + jobname)
+        # Save bash script file in new/
+        script_fname = '{}/new/{}.sh'.format(SCRIPT_PATH, jobname)
+        with open(script_fname, 'w') as f:
+            f.write(script.replace('\r', ''))
+            logger.info('Job script save: ' + script_fname)
+            # TODO: send to work cluster?
+    except:
+        abort_500_except()
+    # Response
+    response.content_type = 'text/plain; charset=UTF-8'
+    return 'New job created: new/{}'.format(jobname)
+    # redirect('/client/job_definition?jobname=new/{}&msg=new'.format(jobname), 303)
 
 
 @app.get('/config/validate_job/<jobname>')
@@ -389,47 +396,50 @@ def validate_job_definition(jobname):
     ip = request.environ.get('REMOTE_ADDR', '')
     if not is_client_trusted(ip):
         abort_403()
-    # Copy script and jdl from new
-    jdl = uws_jdl.__dict__[JDL]()
-    jdl_src = '{}/new/{}{}'.format(JDL_PATH, jobname, jdl.extension)
-    jdl_dst = '{}/{}{}'.format(JDL_PATH, jobname, jdl.extension)
-    script_src = '{}/new/{}.sh'.format(SCRIPT_PATH, jobname)
-    script_dst = '{}/{}.sh'.format(SCRIPT_PATH, jobname)
-    # save, then copy from new/
-    if os.path.isfile(jdl_src):
-        if os.path.isfile(jdl_dst):
-            # save file with time stamp
-            mt = dt.datetime.fromtimestamp(os.path.getmtime(jdl_dst)).isoformat()
-            jdl_dst_save = '{}/saved/{}_{}{}'.format(JDL_PATH, jobname, mt, jdl.extension)
-            os.rename(jdl_dst, jdl_dst_save)
-            logger.info('Previous job JDL saved: ' + jdl_dst_save)
-        shutil.copy(jdl_src, jdl_dst)
-        logger.info('New job JDL copied: ' + jdl_dst)
-    else:
-        logger.info('No job JDL found for validation: ' + jdl_src)
-        redirect('/client/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
-    if os.path.isfile(script_src):
-        if os.path.isfile(script_dst):
-            # save file with time stamp
-            mt = dt.datetime.fromtimestamp(os.path.getmtime(script_dst)).isoformat()
-            script_dst_save = '{}/saved/{}_{}.sh'.format(SCRIPT_PATH, jobname, mt)
-            os.rename(script_dst, script_dst_save)
-            logger.info('Previous job script saved: ' + script_dst_save)
-        shutil.copy(script_src, script_dst)
-        logger.info('New job script copied: ' + script_dst)
-    else:
-        logger.info('No job script found for validation: ' + script_src)
-        redirect('/client/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
-    # Copy script to job manager
-    if os.path.isfile(script_dst):
-        manager = managers.__dict__[MANAGER]()
-        manager.cp_script(jobname)
-        logger.info('Job script copied to work cluster: ' + jobname)
-    else:
-        logger.info('No job script found for job: ' + jobname)
-        redirect('/client/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
-    # Redirect to job_definition with message
-    redirect('/client/job_definition?jobname={}&msg=validated'.format(jobname), 303)
+    try:
+        # Copy script and jdl from new
+        jdl = uws_jdl.__dict__[JDL]()
+        jdl_src = '{}/new/{}{}'.format(JDL_PATH, jobname, jdl.extension)
+        jdl_dst = '{}/{}{}'.format(JDL_PATH, jobname, jdl.extension)
+        script_src = '{}/new/{}.sh'.format(SCRIPT_PATH, jobname)
+        script_dst = '{}/{}.sh'.format(SCRIPT_PATH, jobname)
+        # Save, then copy from new/
+        if os.path.isfile(jdl_src):
+            if os.path.isfile(jdl_dst):
+                # Save file with time stamp
+                mt = dt.datetime.fromtimestamp(os.path.getmtime(jdl_dst)).isoformat()
+                jdl_dst_save = '{}/saved/{}_{}{}'.format(JDL_PATH, jobname, mt, jdl.extension)
+                os.rename(jdl_dst, jdl_dst_save)
+                logger.info('Previous job JDL saved: ' + jdl_dst_save)
+            shutil.copy(jdl_src, jdl_dst)
+            logger.info('New job JDL copied: ' + jdl_dst)
+        else:
+            logger.info('No job JDL found for validation: ' + jdl_src)
+            abort_500('No job JDL found for ' + jobname)
+            # redirect('/client/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
+        if os.path.isfile(script_src):
+            if os.path.isfile(script_dst):
+                # Save file with time stamp
+                mt = dt.datetime.fromtimestamp(os.path.getmtime(script_dst)).isoformat()
+                script_dst_save = '{}/saved/{}_{}.sh'.format(SCRIPT_PATH, jobname, mt)
+                os.rename(script_dst, script_dst_save)
+                logger.info('Previous job script saved: ' + script_dst_save)
+            shutil.copy(script_src, script_dst)
+            logger.info('Job script copied: ' + script_dst)
+            # Copy script to job manager
+            manager = managers.__dict__[MANAGER]()
+            manager.cp_script(jobname)
+            logger.info('Job script copied to work cluster: ' + jobname)
+        else:
+            logger.info('No job script found for validation: ' + script_src)
+            abort_500('No job script found for ' + jobname)
+            # redirect('/client/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
+    except:
+        abort_500_except()
+    # Return code 200
+    response.content_type = 'text/plain; charset=UTF-8'
+    return 'Job {} validated'.format(jobname)
+    # redirect('/client/job_definition?jobname={}&msg=validated'.format(jobname), 303)
 
 
 @app.get('/config/cp_script/<jobname>')
@@ -439,17 +449,23 @@ def cp_script(jobname):
     ip = request.environ.get('REMOTE_ADDR', '')
     if not is_client_trusted(ip):
         abort_403()
-    # Copy script to job manager
-    script_dst = '{}/{}.sh'.format(SCRIPT_PATH, jobname)
-    if os.path.isfile(script_dst):
-        manager = managers.__dict__[MANAGER]()
-        manager.cp_script(jobname)
-        logger.info('Job script copied to work cluster: ' + jobname)
-    else:
-        logger.info('No job script found for job: ' + jobname)
-        redirect('/client/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
-    # Redirect to job_definition with message
-    redirect('/client/job_definition?jobname={}&msg=script_copied'.format(jobname), 303)
+    try:
+        # Copy script to job manager
+        script_dst = '{}/{}.sh'.format(SCRIPT_PATH, jobname)
+        if os.path.isfile(script_dst):
+            manager = managers.__dict__[MANAGER]()
+            manager.cp_script(jobname)
+            logger.info('Job script copied to work cluster: ' + jobname)
+        else:
+            logger.info('No job script found for job: ' + jobname)
+            abort_500('No job script found for ' + jobname)
+            # redirect('/client/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
+    except:
+        abort_500_except()
+    # Return code 200
+    response.content_type = 'text/plain; charset=UTF-8'
+    return 'Script copied for job {}'.format(jobname)
+    # redirect('/client/job_definition?jobname={}&msg=script_copied'.format(jobname), 303)
 
 
 # ----------

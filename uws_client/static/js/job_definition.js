@@ -6,7 +6,7 @@
 ( function($) {
 	"use strict";
 
-    var editor
+    var editor;  // to use codemirror
 
     var type_options = {
         'param': [
@@ -283,8 +283,6 @@
 	    editor = CodeMirror.fromTextArea( $('textarea[name=script]')[0], {mode: "text/x-sh", lineNumbers: true } );
         $('div.CodeMirror').addClass('panel panel-default');
         // Prepare empty form
-        //add_parameter();
-        //add_result();
         add_item('param');
         add_item('result');
         // Get jobname from DOM (if set), and fill input form
@@ -294,10 +292,14 @@
             load_jdl();
         };
         // Add event functions
-        $('#load_jdl').click( function() { load_jdl(); });
-        $('#get_wadl').click( function() { get_wadl(); });
+        $('#load_jdl').click( function() {
+            load_jdl();
+        });
+        $('#get_wadl').click( function() {
+            get_wadl();
+        });
         $('#validate_job').click( function() {
-            jobname = $('input[name=name]').val().split("/").pop();
+            jobname = $('input[name=name]').val().split("/").pop();  // remove 'new/'
             if (jobname) {
                 window.location = '/config/validate_job/' + jobname;
             };
@@ -306,16 +308,22 @@
         $('#cp_script').click( function() {
             jobname = $('input[name=name]').val().split("/").pop();
             if (jobname) {
-                window.location = '/config/cp_script/' + jobname;
+                window.location = '/config/cp_script/' + jobname;  // remove 'new/'
             }
             console.log('no jobname given');
         });
-        $('#add_parameter').click( function() { add_item('param'); });
-        // $('#remove_last_parameter').click( function() { remove_last_item('param'); });
-        $('#remove_all_parameters').click( function() { remove_all_items('param'); });
-        $('#add_result').click( function() { add_item('result'); });
-        // $('#remove_last_result').click( function() { remove_last_item('result'); });
-        $('#remove_all_results').click( function() { remove_all_items('result'); });
+        $('#add_parameter').click( function() {
+            add_item('param');
+        });
+        $('#remove_all_parameters').click( function() {
+            remove_all_items('param');
+        });
+        $('#add_result').click( function() {
+            add_item('result');
+        });
+        $('#remove_all_results').click( function() {
+            remove_all_items('result');
+        });
         // Load JDL on return keydown for job name
         $('input[name=name]').keydown(function (event) {
             if (event.keyCode == 13) {
