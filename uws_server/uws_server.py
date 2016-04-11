@@ -320,11 +320,11 @@ def show_db():
 @app.post('/config/job_definition')
 def create_new_job_definition():
     """Use filled form to create a WADL file for the given job"""
-    # No need to authenticate, users can propose new jobs that will be validated
-    # Check if client is trusted
-    ip = request.environ.get('REMOTE_ADDR', '')
-    if not is_client_trusted(ip):
-        abort_403()
+    # No need to authenticate, users can propose new jobs that will have to be validated
+    # Check if client is trusted? not really needed
+    # ip = request.environ.get('REMOTE_ADDR', '')
+    # if not is_client_trusted(ip):
+    #     abort_403()
     # Read form
     keys = request.forms.keys()
     jobname = request.forms.get('name').split('/')[-1]
