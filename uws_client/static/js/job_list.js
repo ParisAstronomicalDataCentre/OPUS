@@ -16,7 +16,7 @@
             type : 'GET',
             dataType: "json",
             success : function(json) {
-                for each (jn in jobnames['jobnames']) {
+                for each (jn in json['jobnames']) {
                     $('.selectpicker').append('<option>' + jn + '</option>')
                 };
             $('.selectpicker').selectpicker('refresh');
