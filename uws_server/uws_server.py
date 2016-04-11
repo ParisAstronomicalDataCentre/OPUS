@@ -6,6 +6,7 @@
 """
 
 import traceback
+import glob
 import uuid
 import collections
 from subprocess import CalledProcessError
@@ -229,9 +230,9 @@ def get_joblist():
         jdl = uws_jdl.__dict__[JDL]()
         joblist = ['copy', 'ctbin']
         # List jdl files (=available jobs)
-
+        flist = glob.glob('{}/*{}'.format(SCRIPT_PATH, jdl.extension))
         # Check if script file exists on server? on work cluster?
-
+        joblist = [os.path.splitext(os.path.basename(f))[0] for f in flist]
         return joblist
     except UserWarning as e:
         abort_404(e.message)
