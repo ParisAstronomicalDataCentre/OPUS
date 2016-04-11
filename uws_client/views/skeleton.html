@@ -11,12 +11,12 @@
     <!-- CSS -->
 {% include "inc_css_common.html" %}{% block css %}{% endblock %}
     <!-- JavaScript common -->
-{% include "inc_js_common.html" %}<!-- JavaScript local -->{% block js %}{% endblock %}
+{% include "inc_js_common.html" %}
+    <!-- JavaScript local -->{% block js %}{% endblock %}
 </head>
 <body>
     <!-- Variables defined in div elements for JavaScript -->
-    <div id="auth" style="display:none" value="{{ session.auth }}"></div>
-{% block variables %}{% endblock %}
+    <div id="auth" style="display:none" value="{{ session.auth }}"></div>{% block variables %}{% endblock %}
     <!-- Page header (banner and nav panel) -->
 {% block header %}{% include "header.html" %}{% endblock %}
     <!-- Message -->
