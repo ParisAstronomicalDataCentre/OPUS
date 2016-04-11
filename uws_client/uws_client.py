@@ -315,6 +315,7 @@ def client_create_new_job_definition():
     """Use filled form to create a JDL file for the given job"""
     jobname = request.forms.get('name').split('/')[-1]
     data = request.POST.__dict__
+    logger.debug(str(data))
     r = requests.post('{}/config/job_definition'.format(UWS_SERVER_URL), data=data)
     if r.status_code == 200:
         msg = 'new'
