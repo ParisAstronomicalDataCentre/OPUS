@@ -175,7 +175,11 @@ def favicon():
 # TODO: WADL should be one of the proposed JDL
 @app.get('/get_wadl/<jobname:path>')
 def get_wadl(jobname):
-    """Get WADL file for jobname"""
+    """
+    Get WADL file for jobname
+    :param jobname:
+    :return: WADL file
+    """
     fname = '{}/{}.wadl'.format(JDL_PATH, jobname)
     if os.path.isfile(fname):
         with open(fname) as f:
@@ -187,7 +191,11 @@ def get_wadl(jobname):
 
 @app.get('/get_jdl/<jobname:path>')
 def get_jdl(jobname):
-    """Get json description file for jobname"""
+    """
+    Get json description file for jobname
+    :param jobname:
+    :return: json description
+    """
     try:
         jdl = uws_jdl.__dict__[JDL]()
         jdl.read(jobname)
@@ -198,12 +206,35 @@ def get_jdl(jobname):
 
 @app.get('/get_script/<jobname:path>')
 def get_script(jobname):
+    """
+    Get script file as text
+    :param jobname:
+    :return:
+    """
     fname = '{}/{}.sh'.format(SCRIPT_PATH, jobname)
     logger.info('Job script read: {}'.format(fname))
     if os.path.isfile(fname):
         response.content_type = 'text/plain; charset=UTF-8'
         return static_file(fname, root='/')
     abort_404('No script file found for ' + jobname)
+
+
+@app.get('/get_joblist')
+def get_joblist():
+    """
+    Get list of available jobs on server
+    :return: list of job names
+    """
+    try:
+        jdl = uws_jdl.__dict__[JDL]()
+        joblist = ['copy', 'ctbin']
+        # List jdl files (=available jobs)
+
+        # Check if script file exists on server? on work cluster?
+
+        return joblist
+    except UserWarning as e:
+        abort_404(e.message)
 
 
 # ----------
