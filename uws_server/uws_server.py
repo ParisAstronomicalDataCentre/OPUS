@@ -224,15 +224,14 @@ def get_script(jobname):
 def get_joblist():
     """
     Get list of available jobs on server
-    :return: list of job names
+    :return: list of job names in json
     """
     try:
-        jdl = uws_jdl.__dict__[JDL]()
-        joblist = ['copy', 'ctbin']
+        # joblist = ['copy', 'ctbin']
         # List jdl files (=available jobs)
-        flist = glob.glob('{}/*{}'.format(SCRIPT_PATH, jdl.extension))
-        # Check if script file exists on server? on work cluster?
-        joblist = {'jobnames':[os.path.splitext(os.path.basename(f))[0] for f in flist]}
+        flist = glob.glob('{}/*.sh'.format(SCRIPT_PATH))
+        # Check if JDL file exists on server?
+        joblist = {'jobnames': [os.path.splitext(os.path.basename(f))[0] for f in flist]}
         return joblist
     except UserWarning as e:
         abort_404(e.message)
