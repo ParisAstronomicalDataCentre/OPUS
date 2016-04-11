@@ -1,6 +1,7 @@
 bottle
 beaker
 bottle-cork
+requests
 webtest
 prov
 pydotplus

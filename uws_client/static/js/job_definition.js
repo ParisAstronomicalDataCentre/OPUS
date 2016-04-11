@@ -301,14 +301,14 @@
         $('#validate_job').click( function() {
             jobname = $('input[name=name]').val().split("/").pop();  // remove 'new/'
             if (jobname) {
-                window.location = '/config/validate_job/' + jobname;
+                window.location = '/client/validate_job/' + jobname;
             };
             console.log('no jobname given');
         });
         $('#cp_script').click( function() {
             jobname = $('input[name=name]').val().split("/").pop();
             if (jobname) {
-                window.location = '/config/cp_script/' + jobname;  // remove 'new/'
+                window.location = '/client/cp_script/' + jobname;  // remove 'new/'
             }
             console.log('no jobname given');
         });
