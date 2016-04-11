@@ -6,9 +6,9 @@ Get the code from the git repository
 
 Initialize the package
 ----------------------
-Install the required python packages:
+Move to the main directory and install the required python packages:
 
-    $ pip install -r requirements.txt
+    $ pip install -r pip-requirements.txt
     
 Intitialize the data tree structure and make it writable by the web server. The 
 variable WWWUSER can be used to set the username used by the web server. it is 

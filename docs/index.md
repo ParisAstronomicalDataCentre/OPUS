@@ -4,7 +4,7 @@ Overview
 **OPUS** (**O**bservatoire de **P**aris **U**WS **S**ystem) is a job control 
 system developed using the micro-framework bottle.py. The Universal Worker System 
 pattern v1.0 (UWS) as defined by the International Virtual Observatory Alliance 
-(IVOA) is implemented as a REST service to manage job execution on a work cluster.
+(IVOA) is implemented as a REST service to control job execution on a work cluster.
 
 More information on the UWS pattern recommendation can be found 
 [here](http://www.ivoa.net/documents/UWS/20101010/).
