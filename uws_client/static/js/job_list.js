@@ -18,7 +18,8 @@
             success : function(json) {
                 for each (jn in jobnames['jobnames']) {
                     $('.selectpicker').append('<option>' + jn + '</option>')
-                }
+                };
+            $('.selectpicker').selectpicker('refresh');
             },
             error : function(xhr, status, exception) {
                 console.log(exception);
@@ -48,7 +49,7 @@
         var jobname = $('#jobname').attr('value');
         if (jobname) {
             $('select[name=jobname]').val(jobname);
-            $('.selectpicker').selectpicker('refresh')
+            $('.selectpicker').selectpicker('refresh');
             load_job_list();
         };
         // Add events
