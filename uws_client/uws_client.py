@@ -317,6 +317,7 @@ def client_create_new_job_definition():
     data = request.POST.dict
     logger.debug(str(data))
     r = requests.post('{}/config/job_definition'.format(UWS_SERVER_URL), data=data)
+    logger.debug(r.status_code)
     if r.status_code == 200:
         msg = 'new'
     else:
