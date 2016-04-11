@@ -220,19 +220,19 @@ def get_script(jobname):
     abort_404('No script file found for ' + jobname)
 
 
-@app.get('/get_joblist')
-def get_joblist():
+@app.get('/get_jobnames')
+def get_jobnames():
     """
     Get list of available jobs on server
     :return: list of job names in json
     """
     try:
-        # joblist = ['copy', 'ctbin']
+        # jobnames = ['copy', 'ctbin']
         # List jdl files (=available jobs)
         flist = glob.glob('{}/*.sh'.format(SCRIPT_PATH))
         # Check if JDL file exists on server?
-        joblist = {'jobnames': [os.path.splitext(os.path.basename(f))[0] for f in flist]}
-        return joblist
+        jobnames = {'jobnames': [os.path.splitext(os.path.basename(f))[0] for f in flist]}
+        return jobnames
     except UserWarning as e:
         abort_404(e.message)
 
