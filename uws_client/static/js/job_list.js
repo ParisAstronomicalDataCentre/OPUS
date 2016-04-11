@@ -7,7 +7,7 @@
     "use strict";
 
     function get_jobnames() {
-        var server_url = 'https://voparis-uws-test.obspm.fr/';  // Get from page variables
+        var server_url = $('#server_url').attr('value');  //'https://voparis-uws-test.obspm.fr/';  // Get from page variables
         // Get jobnames from server
         $.ajax({
             url : server_url + '/get_jobnames',
@@ -28,10 +28,11 @@
     }
 
     function load_job_list() {
+        var server_url = $('#server_url').attr('value');  //'https://voparis-uws-test.obspm.fr/';  // Get from page variables
         var jobname = $('select[name=jobname]').val();
         var auth = $('#auth').attr('value');
         // init UWS Manager
-        uws_manager.initManager([jobname], auth);
+        uws_manager.initManager(server_url, [jobname], auth);
         uws_manager.getJobList();
         if ( $( "#job_id" ).length ) {
             uws_manager.selectJob($( "#jobid" ).attr('value'));

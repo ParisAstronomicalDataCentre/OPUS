@@ -5,6 +5,7 @@
     <script type="text/javascript" src="/static/js/job_form.js" defer></script>
 {% endblock %}
 {% block variables %}
+    <div id="server_url" style="display:none" value="{{ session.server_url }}"></div>
 	<div id="jobname" style="display:none" value="{{ jobname }}"></div>
 {% endblock %}
 {% block content %}

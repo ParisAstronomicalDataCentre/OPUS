@@ -25,7 +25,7 @@ var uws_manager = (function($) {
     var refreshPhaseTimeoutDelay = {}; //
     var timeoutDelays = [2000,3000,4000,5000,10000]; // delays in ms
     var selectedJobId;
-    var serviceUrl = $(location).attr('protocol') + '//' + $(location).attr('host');
+    // var serviceUrl = $(location).attr('protocol') + '//' + $(location).attr('host');
     // "https://voparis-uws-test.obspm.fr/"; // app_url+"/uws-v1.0/" //
     var jobs_url = '/rest/';
     var jdl_url = '/get_jdl/';
@@ -49,7 +49,7 @@ var uws_manager = (function($) {
     }
 
     // CREATE MANAGER AND CLIENTS
-    function initManager(jobNames_init, basicauth){
+    function initManager(serviceUrl, jobNames_init, basicauth){
         jobNames = jobNames_init;
         for (var i in jobNames) {
             // Init client

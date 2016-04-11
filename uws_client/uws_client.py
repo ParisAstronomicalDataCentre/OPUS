@@ -21,17 +21,8 @@ from cork import Cork
 
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 ENDPOINT = 'client'
-UWS_SERVER_URL = ''
-LOG_FILE = 'logs/client_only.log'
+UWS_SERVER_URL = ''  # same as client = ''
 ALLOW_ANONYMOUS = False
-JOBNAMES = [
-    'copy',
-    'ctbin',
-    'gammastart',
-    'anactools_v1.0',
-    'anactools_v1.1',
-    'serpe',
-]
 
 # Set logger
 LOG_PATH = APP_PATH + '/logs'
@@ -237,6 +228,8 @@ def change_password():
 def home():
     """Home page"""
     session = request.environ['beaker.session']
+    session['server_url'] = UWS_SERVER_URL
+    session.save()
     msg = request.query.get('msg', '')
     msg_text = {
         'restricted': 'Access is restricted to administrators',
@@ -256,6 +249,8 @@ def job_list():
     if not ALLOW_ANONYMOUS:
         aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
     session = request.environ['beaker.session']
+    session['server_url'] = UWS_SERVER_URL
+    session.save()
     jobname = request.query.get('jobname', '')
     return {'session': session, 'jobname': jobname}
 
@@ -268,6 +263,8 @@ def job_edit(jobname, jobid):
     if not ALLOW_ANONYMOUS:
         aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
     session = request.environ['beaker.session']
+    session['server_url'] = UWS_SERVER_URL
+    session.save()
     return {'session': session, 'jobname': jobname, 'jobid': jobid}
 
 
@@ -279,6 +276,8 @@ def job_form(jobname):
     if not ALLOW_ANONYMOUS:
         aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
     session = request.environ['beaker.session']
+    session['server_url'] = UWS_SERVER_URL
+    session.save()
     return {'session': session, 'jobname': jobname}
 
 
@@ -294,6 +293,8 @@ def job_definition():
         if aaa.current_user.role == 'admin':
             is_admin = True
     session = request.environ['beaker.session']
+    session['server_url'] = UWS_SERVER_URL
+    session.save()
     jobname = request.query.get('jobname', '')
     msg = request.query.get('msg', '')
     msg_text = {

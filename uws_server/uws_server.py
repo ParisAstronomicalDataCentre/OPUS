@@ -1163,7 +1163,6 @@ if MERGE_CLIENT:
     app = SessionMiddleware(app, session_opts)
 
 
-
 if __name__ == '__main__':
     # Run local web server
     run(app, host='localhost', port=8080, debug=False, reloader=True)
