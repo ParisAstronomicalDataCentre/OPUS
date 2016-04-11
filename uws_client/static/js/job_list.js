@@ -10,7 +10,7 @@
         server_url = 'https://voparis-uws-test.obspm.fr/';  // Get from page variables
         // Get jobnames from server
         $.ajax({
-            url : server_url + '/get_jobnames'
+            url : server_url + '/get_jobnames',
             async : true,
             cache : false,
             type : 'GET',
