@@ -17,7 +17,7 @@
             dataType: "json",
             success : function(json) {
                 for (var jn in json['jobnames']) {
-                    $('.selectpicker').append('<option>' + jn + '</option>')
+                    $('.selectpicker').append('<option>' + json['jobnames'][jn] + '</option>')
                 };
             $('.selectpicker').selectpicker('refresh');
             },
