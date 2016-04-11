@@ -6,8 +6,9 @@
 (function($) {
     "use strict";
 
+    var server_url;
+
     function get_jobnames() {
-        var server_url = $('#server_url').attr('value');  //'https://voparis-uws-test.obspm.fr/';  // Get from page variables
         // Get jobnames from server
         $.ajax({
             url : server_url + '/get_jobnames',
@@ -28,7 +29,6 @@
     }
 
     function load_job_list() {
-        var server_url = $('#server_url').attr('value');  //'https://voparis-uws-test.obspm.fr/';  // Get from page variables
         var jobname = $('select[name=jobname]').val();
         var auth = $('#auth').attr('value');
         // init UWS Manager
@@ -43,6 +43,7 @@
     // LOAD JOB LIST AT STARTUP
     $(document).ready( function() {
 
+        server_url = $('#server_url').attr('value');
         get_jobnames();
         $('.selectpicker').selectpicker('deselectAll');
         $('button.actions').attr('disabled', 'disabled');
