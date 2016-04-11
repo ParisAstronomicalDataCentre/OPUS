@@ -30,7 +30,7 @@ Configure your web server
 -------------------------
 For example with Apache 2 and mod_wsgi using the script `uws_server/wsgi.py`, 
 the following configuration file (e.g. uws_server.conf) should be placed in 
-`/etc/apache2/sites-available/` with a link to `/etc/apache2/sites-enabled/`.
+`/etc/apache2/sites-available/` with a link from `/etc/apache2/sites-enabled/`.
 
     <VirtualHost *:80>
     
