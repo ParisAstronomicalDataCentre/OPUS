@@ -531,8 +531,7 @@ var uws_manager = (function($) {
                     $.ajax({
                         url : r_url,
                         dataType: "text",
-                        context: r_id,
-                        // async: false,  // makes request synchronous
+                        context: r_id,  // Set this=r_id for success function
                         success : function (txt) {
                             $('#'+this+' div.panel-body textarea').html(txt);
                         }
@@ -546,7 +545,6 @@ var uws_manager = (function($) {
                     ');
                     var r_id_svg = r_id
                     $('#'+r_id+' div.panel-body').load(r_url, function() {
-                        console.log(r_id_svg);
                         $('#'+r_id_svg+' > div.panel-body > svg').attr('width', '100%');
                     });
                     break;
