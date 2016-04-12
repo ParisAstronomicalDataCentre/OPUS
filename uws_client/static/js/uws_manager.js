@@ -524,7 +524,7 @@ var uws_manager = (function($) {
                     // show textarea with log
                     $('#'+r_id).append('\
                         <div class="panel-body">\
-                            <textarea class="log form-control" rows="10" style="font-family: monospace;" readonly>
+                            <textarea class="log form-control" rows="10" style="font-family: monospace;" readonly>\
                             </textarea>\
                         </div>\
                     ');
