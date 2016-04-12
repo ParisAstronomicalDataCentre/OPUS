@@ -531,9 +531,10 @@ var uws_manager = (function($) {
                     $.ajax({
                         url : r_url,
                         dataType: "text",
-                        async: false,  // makes request synchronous
+                        context: r_id,
+                        // async: false,  // makes request synchronous
                         success : function (txt) {
-                            $('#'+r_id+' div.panel-body textarea').html(txt);
+                            $('#'+this+' div.panel-body textarea').html(txt);
                         }
                     });
                     break;
@@ -543,9 +544,10 @@ var uws_manager = (function($) {
                         <div class="panel-body">\
                         </div>\
                     ');
+                    r_id_svg = r_id
                     $('#'+r_id+' div.panel-body').load(r_url, function() {
-                        console.log(r_id);
-                        $('#'+r_id+' > div.panel-body > svg').attr('width', '100%');
+                        console.log(r_id_svg);
+                        $('#'+r_id_svg+' > div.panel-body > svg').attr('width', '100%');
                     });
                     break;
             };
