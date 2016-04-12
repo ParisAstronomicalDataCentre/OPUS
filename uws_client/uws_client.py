@@ -287,8 +287,9 @@ def job_form(jobname):
 def job_definition():
     """Show form for new job definition"""
     logger.info('')
-    # no need to authenticate, users can propose new jobs that will be validated
-    #aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
+    # No need to authenticate, users can propose new jobs that will be validated
+    # aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
+    # Set is_admin (will show validate button)
     is_admin = False
     if not aaa.user_is_anonymous:
         if aaa.current_user.role == 'admin':
@@ -312,17 +313,22 @@ def job_definition():
 
 @app.post('/client/job_definition')
 def client_create_new_job_definition():
-    """Use filled form to create a JDL file for the given job"""
-    jobname = request.forms.get('name').split('/')[-1]
+    """
+    Use filled form to create a JDL file on server for the given job
+    :return:
+    """
+    # Authenticate user
+    next_url = str(request.urlparts.path)
+    aaa.require(fail_redirect='/accounts/login?next=' + next_url)
+    # Send POST request to server
     data = request.POST.dict
-    logger.debug(str(data))
     r = requests.post('{}/config/job_definition'.format(UWS_SERVER_URL), data=data)
-    logger.debug(r.status_code)
+    # Redirect to job_definition with message
     if r.status_code == 200:
         msg = 'new'
     else:
         msg = 'notfound'
-    # redirect to job_definition with message
+    jobname = request.forms.get('name').split('/')[-1]
     redirect('/client/job_definition?jobname=new/{}&msg={}'.format(jobname, msg), 303)
 
 
@@ -333,13 +339,16 @@ def client_validate_job(jobname):
     :param jobname:
     :return:
     """
+    # Authenticate user
+    next_url = str(request.urlparts.path)
+    aaa.require(fail_redirect='/accounts/login?next=' + next_url)
     # Send request to UWS Server
     r = requests.get('{}/config/validate_job/{}'.format(UWS_SERVER_URL, jobname))
+    # redirect to job_definition with message
     if r.status_code == 200:
         msg = 'validated'
     else:
         msg = 'notfound'
-    # redirect to job_definition with message
     redirect('/client/job_definition?jobname={}&msg={}'.format(jobname, msg), 303)
 
 
@@ -350,12 +359,16 @@ def client_cp_script(jobname):
     :param jobname:
     :return:
     """
+    # Authenticate user
+    next_url = str(request.urlparts.path)
+    aaa.require(fail_redirect='/accounts/login?next=' + next_url)
+    # Send request to UWS Server
     r = requests.get('{}/config/cp_script/{}'.format(UWS_SERVER_URL, jobname))
+    # redirect to job_definition with message
     if r.status_code == 200:
         msg = 'script_copied'
     else:
         msg = 'notfound'
-    # redirect to job_definition with message
     redirect('/client/job_definition?jobname={}&msg={}'.format(jobname, msg), 303)
 
 
