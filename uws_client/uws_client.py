@@ -137,15 +137,18 @@ def login():
     next_page = post_get('next')
     # Create Basic Auth for requests to UWS Server, Save to session
     session = request.environ['beaker.session']
+    # PID is a UUID based on APP_PATH and username, so specific to user and client app
     pid = uuid.uuid5(uuid.NAMESPACE_X500, APP_PATH + username)
     session['auth'] = base64.b64encode(username + ':' + str(pid))
     session.save()
-    logger.info(session['auth'])
     # Login
+    logger.info(username)
     aaa.login(username, password, success_redirect=next_page, fail_redirect='/accounts/login?msg=failed')
 
 @app.route('/accounts/logout')
 def logout():
+    session = request.environ['beaker.session']
+    logger.info(session.username)
     aaa.logout(success_redirect='/')
 
 
@@ -317,6 +320,8 @@ def client_create_new_job_definition():
     Use filled form to create a JDL file on server for the given job
     :return:
     """
+    jobname = request.forms.get('name').split('/')[-1]
+    logger.info(jobname)
     # Authenticate user
     next_url = str(request.urlparts.path)
     aaa.require(fail_redirect='/accounts/login?next=' + next_url)
@@ -328,7 +333,6 @@ def client_create_new_job_definition():
         msg = 'new'
     else:
         msg = 'notfound'
-    jobname = request.forms.get('name').split('/')[-1]
     redirect('/client/job_definition?jobname=new/{}&msg={}'.format(jobname, msg), 303)
 
 
@@ -339,6 +343,7 @@ def client_validate_job(jobname):
     :param jobname:
     :return:
     """
+    logger.info(jobname)
     # Authenticate user
     next_url = str(request.urlparts.path)
     aaa.require(fail_redirect='/accounts/login?next=' + next_url)
@@ -359,6 +364,7 @@ def client_cp_script(jobname):
     :param jobname:
     :return:
     """
+    logger.info(jobname)
     # Authenticate user
     next_url = str(request.urlparts.path)
     aaa.require(fail_redirect='/accounts/login?next=' + next_url)
