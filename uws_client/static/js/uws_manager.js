@@ -524,7 +524,8 @@ var uws_manager = (function($) {
                     // show textarea with log
                     $('#'+r_id).append('\
                         <div class="panel-body">\
-                            <textarea class="log form-control" rows="10" style="font-family: monospace;" readonly></textarea>\
+                            <textarea class="log form-control" rows="10" style="font-family: monospace;" readonly>
+                            </textarea>\
                         </div>\
                     ');
                     $.ajax({
@@ -542,8 +543,9 @@ var uws_manager = (function($) {
                         <div class="panel-body">\
                         </div>\
                     ');
-                    $('#'+r_id+' div.panel-body').load(r_url, function() {
-                        $('#'+r_id+' > div.panel-body > svg').attr('width', '100%');
+                    $('#'+r_id+' div.panel-body').load(r_url, function(r_id_svg) {
+                        console.log(r_id_svg);
+                        $('#'+r_id_svg+' > div.panel-body > svg').attr('width', '100%');
                     });
                     break;
             };
