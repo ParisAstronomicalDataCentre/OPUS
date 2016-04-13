@@ -147,8 +147,8 @@ def login():
 
 @app.route('/accounts/logout')
 def logout():
-    session = request.environ['beaker.session']
-    logger.info(session.username)
+    #session = request.environ['beaker.session']
+    #logger.info(session.username)
     aaa.logout(success_redirect='/')
 
 
