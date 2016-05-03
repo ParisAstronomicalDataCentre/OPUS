@@ -53,7 +53,7 @@ def job2prov(job):
     ctbin = pdoc.activity('uws:' + job.jobname, job.start_time, job.end_time)
     # TODO: add job description, version, url, ...
     ctbin.add_attributes({
-        'description': job.jdl.content['description'],
+        'prov:label': job.jdl.content['description'],
     })
     # Agent
     pdoc.agent('cta:consortium', other_attributes={'prov:type': "Organization"})
