@@ -45,10 +45,12 @@ def job2prov(job):
     pdoc.add_namespace('prov', 'http://www.w3.org/ns/prov#')
     pdoc.add_namespace('voprov', 'http://www.ivoa.net/ns/voprov#')
     pdoc.add_namespace('cta', 'http://www.cta-observatory.org#')
+    pdoc.add_namespace('cta_jobs', 'http://www.cta-observatory.org#')
     pdoc.add_namespace('uws', 'https://voparis-uws-test.obspm.fr/rest/')
-    ns_uwsdata = job.jobid
-    pdoc.add_namespace(ns_uwsdata, 'https://voparis-uws-test.obspm.fr/rest/' + job.jobname + '/' + job.jobid + '/')
-    pdoc.add_namespace('ctajobs', 'http://www.cta-observatory.org#')
+    ns_uws_param = job.jobid + '_param'
+    pdoc.add_namespace(ns_uws_param, 'https://voparis-uws-test.obspm.fr/rest/' + job.jobname + '/' + job.jobid + '/parameters')
+    ns_uws_result = job.jobid + '_result'
+    pdoc.add_namespace(ns_uws_result, 'https://voparis-uws-test.obspm.fr/rest/' + job.jobname + '/' + job.jobid + '/results')
     # Activity
     ctbin = pdoc.activity('uws:' + job.jobname, job.start_time, job.end_time)
     # TODO: add job description, version, url, ...
@@ -65,20 +67,20 @@ def job2prov(job):
         #if pname.startswith('in'):
         if any(x in pdict['type'] for x in ['file', 'xs:anyURI']):
             # Add input Entities for the Activity
-            e_in.append(pdoc.entity(ns_uwsdata + ':parameters/' + pname))
+            e_in.append(pdoc.entity(ns_uws_param + ':' + pname))
             # TODO: use publisher_did? add prov attributes, add voprov attributes?
             ctbin.used(e_in[-1])
         else:
             if pname in job.parameters:
-                attr[ns_uwsdata + ':parameters/' + pname] = job.parameters[pname]['value']
+                attr[ns_uws_param + ':' + pname] = job.parameters[pname]['value']
             else:
-                attr[ns_uwsdata + ':parameters/' + pname] = pdict['default']
+                attr[ns_uws_param + ':' + pname] = pdict['default']
     # Add UWS parameters as attributes to the Activity
     if len(attr) > 0:
         ctbin.add_attributes(attr)
     e_out = []
     for rname, rdict in job.jdl.content['results'].iteritems():
-        e_out.append(pdoc.entity(ns_uwsdata + ':results/' + rname))
+        e_out.append(pdoc.entity(ns_uws_result + ':' + rname))
         # TODO: use publisher_did? add prov attributes, add voprov attributes?
         e_out[-1].wasGeneratedBy(ctbin)
         for e in e_in:
