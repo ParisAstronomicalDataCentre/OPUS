@@ -45,25 +45,37 @@ def job2prov(job):
     pdoc.add_namespace('prov', 'http://www.w3.org/ns/prov#')
     pdoc.add_namespace('voprov', 'http://www.ivoa.net/ns/voprov#')
     pdoc.add_namespace('cta', 'http://www.cta-observatory.org#')
-    pdoc.add_namespace('uwsdata', 'https://voparis-uws-test.obspm.fr/rest/' + job.jobname + '/' + job.jobid + '/')
+    pdoc.add_namespace('uws', 'https://voparis-uws-test.obspm.fr/rest/')
+    ns_uwsdata = job.jobid
+    pdoc.add_namespace(ns_uwsdata, 'https://voparis-uws-test.obspm.fr/rest/' + job.jobname + '/' + job.jobid + '/')
     pdoc.add_namespace('ctajobs', 'http://www.cta-observatory.org#')
     # Adding an activity
-    ctbin = pdoc.activity('ctajobs:' + job.jobname, job.start_time, job.end_time)
+    ctbin = pdoc.activity('uws:' + job.jobname, job.start_time, job.end_time)
     # TODO: add job description, version, url, ...
+    ctbin.add_attributes({
+        'description': job.jdl.content['description'],
+    })
     # Agent
     pdoc.agent('cta:consortium', other_attributes={'prov:type': "Organization"})
     pdoc.wasAssociatedWith(ctbin, 'cta:consortium')
     # Entities, in and out with relations
     e_in = []
+    attr = {}
     for pname, pdict in job.jdl.content['parameters'].iteritems():
         #if pname.startswith('in'):
         if any(x in pdict['type'] for x in ['file', 'xs:anyURI']):
-            e_in.append(pdoc.entity('uwsdata:parameters/' + pname))
+            e_in.append(pdoc.entity(ns_uwsdata + ':parameters/' + pname))
             # TODO: use publisher_did? add prov attributes, add voprov attributes?
             ctbin.used(e_in[-1])
+        else:
+            attr[pname] = pdict['default']
+            if pname in job.parameters:
+                attr[pname] = job.parameters[pname]['value']
+    if len(attr) > 0:
+        ctbin.add_attributes(attr)
     e_out = []
     for rname, rdict in job.jdl.content['results'].iteritems():
-        e_out.append(pdoc.entity('uwsdata:results/' + rname))
+        e_out.append(pdoc.entity(ns_uwsdata + ':results/' + rname))
         # TODO: use publisher_did? add prov attributes, add voprov attributes?
         e_out[-1].wasGeneratedBy(ctbin)
         for e in e_in:
