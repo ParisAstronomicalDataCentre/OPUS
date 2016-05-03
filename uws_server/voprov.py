@@ -45,11 +45,11 @@ def job2prov(job):
     pdoc.add_namespace('prov', 'http://www.w3.org/ns/prov#')
     pdoc.add_namespace('voprov', 'http://www.ivoa.net/ns/voprov#')
     pdoc.add_namespace('cta', 'http://www.cta-observatory.org#')
-    pdoc.add_namespace('cta_jobs', 'http://www.cta-observatory.org#')
+    pdoc.add_namespace('cta-jobs', 'http://www.cta-observatory.org#')
     pdoc.add_namespace('uws', 'https://voparis-uws-test.obspm.fr/rest/')
-    ns_uws_param = job.jobid + '_param'
+    ns_uws_param = job.jobid + '-param'
     pdoc.add_namespace(ns_uws_param, 'https://voparis-uws-test.obspm.fr/rest/' + job.jobname + '/' + job.jobid + '/parameters')
-    ns_uws_result = job.jobid + '_result'
+    ns_uws_result = job.jobid + '-result'
     pdoc.add_namespace(ns_uws_result, 'https://voparis-uws-test.obspm.fr/rest/' + job.jobname + '/' + job.jobid + '/results')
     # Activity
     ctbin = pdoc.activity('uws:' + job.jobname, job.start_time, job.end_time)
