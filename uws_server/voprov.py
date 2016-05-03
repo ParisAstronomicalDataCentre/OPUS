@@ -49,7 +49,7 @@ def job2prov(job):
     ns_uwsdata = job.jobid
     pdoc.add_namespace(ns_uwsdata, 'https://voparis-uws-test.obspm.fr/rest/' + job.jobname + '/' + job.jobid + '/')
     pdoc.add_namespace('ctajobs', 'http://www.cta-observatory.org#')
-    # Adding an activity
+    # Activity
     ctbin = pdoc.activity('uws:' + job.jobname, job.start_time, job.end_time)
     # TODO: add job description, version, url, ...
     ctbin.add_attributes({
@@ -64,13 +64,16 @@ def job2prov(job):
     for pname, pdict in job.jdl.content['parameters'].iteritems():
         #if pname.startswith('in'):
         if any(x in pdict['type'] for x in ['file', 'xs:anyURI']):
+            # Add input Entities for the Activity
             e_in.append(pdoc.entity(ns_uwsdata + ':parameters/' + pname))
             # TODO: use publisher_did? add prov attributes, add voprov attributes?
             ctbin.used(e_in[-1])
         else:
-            attr[pname] = pdict['default']
             if pname in job.parameters:
-                attr[pname] = job.parameters[pname]['value']
+                attr[ns_uwsdata + ':parameters/' + pname] = job.parameters[pname]['value']
+            else:
+                attr[ns_uwsdata + ':parameters/' + pname] = pdict['default']
+    # Add UWS parameters as attributes to the Activity
     if len(attr) > 0:
         ctbin.add_attributes(attr)
     e_out = []
