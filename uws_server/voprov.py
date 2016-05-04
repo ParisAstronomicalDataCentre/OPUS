@@ -76,7 +76,7 @@ def job2prov(job):
             e_in.append(pdoc.entity(pqn))
             # TODO: use publisher_did? add prov attributes, add voprov attributes?
             e_in[-1].add_attributes({
-                'voprov:format': pdict['mediaType']
+                'voprov:format': pdict['type']
             })
             ctbin.used(e_in[-1])
         else:
@@ -93,7 +93,7 @@ def job2prov(job):
         e_out.append(pdoc.entity(rqn))
         # TODO: use publisher_did? add prov attributes, add voprov attributes?
         e_out[-1].add_attributes({
-            'voprov:format': rdict['type']
+            'voprov:format': rdict['mediaType']
         })
         e_out[-1].wasGeneratedBy(ctbin)
         for e in e_in:
