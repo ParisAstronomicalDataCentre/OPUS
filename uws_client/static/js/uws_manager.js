@@ -407,7 +407,7 @@ var uws_manager = (function($) {
             if (p.type != 'file') {
                 $('#id_'+pname).wrap('<div class="input-group"></div>');
                 // Signal default value
-                if (!(pname in job['parameters'])) {
+                if (!(p.required)) {
                     $('#id_'+pname).parent().append('<span class="input-group-addon" style="line-height: 1.4;"><small>default used</small></span>');
                 };
                 // Add Update buttons (possible to update params when pĥase is PENDING in UWS 1.0 - but not yet implemented)
