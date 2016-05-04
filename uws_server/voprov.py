@@ -70,9 +70,9 @@ def job2prov(job):
     act_attr = {}
     for pname, pdict in job.jdl.content['parameters'].iteritems():
         pqn = ns_uws_param + ':' + pname
+        # Add some UWS parameters as input Entities
         #if pname.startswith('in'):
         if any(x in pdict['type'] for x in ['file', 'xs:anyURI']):
-            # Add input Entities for the Activity
             e_in.append(pdoc.entity(pqn))
             # TODO: use publisher_did? add prov attributes, add voprov attributes?
             e_in[-1].add_attributes({
@@ -80,11 +80,11 @@ def job2prov(job):
             })
             ctbin.used(e_in[-1])
         else:
+            # Otherwise add UWS parameters as attributes to the Activity
             if pname in job.parameters:
                 act_attr[pqn] = job.parameters[pname]['value']
             else:
                 act_attr[pqn] = pdict['default']
-    # Add UWS parameters as attributes to the Activity
     if len(act_attr) > 0:
         ctbin.add_attributes(act_attr)
     e_out = []
