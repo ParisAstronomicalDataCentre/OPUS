@@ -53,7 +53,7 @@ def job2prov(job):
     ns_uws_result = 'result_' + job.jobid
     pdoc.add_namespace(ns_uws_result, 'https://voparis-uws-test.obspm.fr/rest/' + job.jobname + '/' + job.jobid + '/results/')
     # Activity
-    ctbin = pdoc.activity('uws:' + job.jobname, job.start_time, job.end_time)
+    ctbin = pdoc.activity(ns_uws_job + ':' + job.jobname, job.start_time, job.end_time)
     # TODO: add job description, version, url, ...
     # ctbin.add_attributes({
     #     'prov:label': job.jdl.content['description'],
