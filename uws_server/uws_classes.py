@@ -143,18 +143,19 @@ class Job(object):
         self.execution_duration = int(post.pop('EXECUTION_DURATION', self.jdl.content.get('executionduration', EXECUTION_DURATION_DEF)))
         self.quote = int(post.pop('QUOTE', self.jdl.content.get('quote', self.execution_duration)))
         # Set parameters from POST
-        for pname, value in post.iteritems():
-            if pname not in ['PHASE']:
-                # TODO: use JDL to check if value is valid
+        #for pname, value in post.iteritems():
+        for pname in self.jdl.content['parameters']:
+            # TODO: use JDL to check if value is valid
+            ptype = self.jdl.content['parameters'][pname]['type']
+            if 'anyURI' in ptype:
+                byref = True
+            else:
                 byref = False
-                if pname not in self.jdl.content['parameters']:
-                    logger.warning('Parameter {} not found in JDL'.format(pname))
-                else:
-                    ptype = self.jdl.content['parameters'][pname]['type']
-                    if 'anyURI' in ptype:
-                        byref = True
-                self.parameters[pname] = {'value': value, 'byref': byref}
-        # TODO: add default parameters values from JDL
+            if pname in post:
+                value = post[pname]
+            else:
+                value = self.jdl.content['parameters'][pname]['default']
+            self.parameters[pname] = {'value': value, 'byref': byref}
         # Upload files for multipart/form-data
         for fname, f in files.iteritems():
             upload_dir = '{}/{}'.format(UPLOAD_PATH, self.jobid)
