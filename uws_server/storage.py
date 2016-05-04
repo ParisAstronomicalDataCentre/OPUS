@@ -166,7 +166,13 @@ class SQLiteStorage(Storage):
             query = "SELECT * FROM job_parameters WHERE jobid='{}';".format(job.jobid)
             params = self.cursor.execute(query).fetchall()
             # Format results to a parameter dict
-            params_dict = {row['name']: {'value': row['value'], 'byref': row['byref']} for row in params}
+            params_dict = {
+                row['name']: {
+                    'value': row['value'],
+                    'byref': row['byref']
+                }
+                for row in params
+            }
             job.parameters = params_dict
         else:
             job.parameters = {}
@@ -174,7 +180,13 @@ class SQLiteStorage(Storage):
             # Query db for job results
             query = "SELECT * FROM job_results WHERE jobid='{}';".format(job.jobid)
             results = self.cursor.execute(query).fetchall()
-            results_dict = {row['name']: {'url': row['url'], 'mediaType': row['mediaType']} for row in results}
+            results_dict = {
+                row['name']: {
+                    'url': row['url'],
+                    'mediaType': row['mediaType']
+                }
+                for row in results
+            }
             job.results = results_dict
         else:
             job.results = {}

@@ -165,7 +165,10 @@ class Job(object):
             logger.info('Parameter {} is a file and was downloaded ({})'.format(fname, f.filename))
             # Parameter value is set to the file name on server
             value = 'file://' + f.filename
-            self.parameters[fname] = {'value': value, 'byref': True}
+            self.parameters[fname] = {
+                'value': value,
+                'byref': True
+            }
         # Save to storage
         self.storage.save(self, save_attributes=True, save_parameters=True)
 

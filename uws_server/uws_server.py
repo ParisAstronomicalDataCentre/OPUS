@@ -11,7 +11,7 @@ import uuid
 import collections
 from subprocess import CalledProcessError
 
-from bottle import Bottle, request, response, abort, redirect, run, static_file, parse_auth
+from bottle import Bottle, request, response, abort, redirect, run, static_file
 from beaker.middleware import SessionMiddleware
 # from cork import Cork
 
