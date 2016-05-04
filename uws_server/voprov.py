@@ -46,23 +46,27 @@ def job2prov(job):
     pdoc.add_namespace('voprov', 'http://www.ivoa.net/ns/voprov#')
     pdoc.add_namespace('cta', 'http://www.cta-observatory.org#')
     pdoc.add_namespace('cta_jobs', 'http://www.cta-observatory.org#')
-    pdoc.add_namespace('uws', 'https://voparis-uws-test.obspm.fr/rest/')
+    ns_uws_job = 'job_' + job.jobid
+    pdoc.add_namespace(ns_uws_job, 'https://voparis-uws-test.obspm.fr/rest/')
     ns_uws_param = 'param_' + job.jobid
-    pdoc.add_namespace(ns_uws_param, 'https://voparis-uws-test.obspm.fr/rest/' + job.jobname + '/' + job.jobid + '/parameters')
-    ns_uws_result = 'results_' + job.jobid
-    pdoc.add_namespace(ns_uws_result, 'https://voparis-uws-test.obspm.fr/rest/' + job.jobname + '/' + job.jobid + '/results')
+    pdoc.add_namespace(ns_uws_param, 'https://voparis-uws-test.obspm.fr/rest/' + job.jobname + '/' + job.jobid + '/parameters/')
+    ns_uws_result = 'result_' + job.jobid
+    pdoc.add_namespace(ns_uws_result, 'https://voparis-uws-test.obspm.fr/rest/' + job.jobname + '/' + job.jobid + '/results/')
     # Activity
     ctbin = pdoc.activity('uws:' + job.jobname, job.start_time, job.end_time)
     # TODO: add job description, version, url, ...
-    ctbin.add_attributes({
-        'prov:label': job.jdl.content['description'],
+    # ctbin.add_attributes({
+    #     'prov:label': job.jdl.content['description'],
+    # })
+    # Agent: CTAC
+    ctac = pdoc.agent('cta:consortium')
+    ctac.add_attributes({
+        'prov:type': "Organization"
     })
-    # Agent
-    pdoc.agent('cta:consortium', other_attributes={'prov:type': "Organization"})
-    pdoc.wasAssociatedWith(ctbin, 'cta:consortium')
+    pdoc.wasAssociatedWith(ctbin, ctac)
     # Entities, in and out with relations
     e_in = []
-    attr = {}
+    act_attr = {}
     for pname, pdict in job.jdl.content['parameters'].iteritems():
         #if pname.startswith('in'):
         if any(x in pdict['type'] for x in ['file', 'xs:anyURI']):
@@ -72,12 +76,12 @@ def job2prov(job):
             ctbin.used(e_in[-1])
         else:
             if pname in job.parameters:
-                attr[ns_uws_param + ':' + pname] = job.parameters[pname]['value']
+                act_attr[ns_uws_param + ':' + pname] = job.parameters[pname]['value']
             else:
-                attr[ns_uws_param + ':' + pname] = pdict['default']
+                act_attr[ns_uws_param + ':' + pname] = pdict['default']
     # Add UWS parameters as attributes to the Activity
-    if len(attr) > 0:
-        ctbin.add_attributes(attr)
+    if len(act_attr) > 0:
+        ctbin.add_attributes(act_attr)
     e_out = []
     for rname, rdict in job.jdl.content['results'].iteritems():
         e_out.append(pdoc.entity(ns_uws_result + ':' + rname))
