@@ -406,10 +406,6 @@ var uws_manager = (function($) {
             displayParamFormInput(pname, p);
             if (p.type != 'file') {
                 $('#id_'+pname).wrap('<div class="input-group"></div>');
-                // Signal default value
-                if (!(p.required)) {
-                    $('#id_'+pname).parent().append('<span class="input-group-addon" style="line-height: 1.4;"><small>default used</small></span>');
-                };
                 // Add Update buttons (possible to update params when pĥase is PENDING in UWS 1.0 - but not yet implemented)
                 $('#id_'+pname).parent().append('<span class="input-group-btn"><button id="button_'+pname+'" class="btn btn-default" type="button">Update</button></span>');
                 // Change input type
