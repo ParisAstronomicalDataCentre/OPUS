@@ -89,7 +89,8 @@ def job2prov(job):
     if len(act_attr) > 0:
         ctbin.add_attributes(act_attr)
     e_out = []
-    for rname, rdict in job.jdl.content['results'].iteritems():
+    for rname in job.results:
+        rdict = job.jdl.content['results'][rname]
         rqn = ns_uws_result + ':' + rname
         e_out.append(pdoc.entity(rqn))
         # TODO: use publisher_did? add prov attributes, add voprov attributes?
