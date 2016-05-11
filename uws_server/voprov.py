@@ -90,17 +90,18 @@ def job2prov(job):
         ctbin.add_attributes(act_attr)
     e_out = []
     for rname in job.results:
-        rdict = job.jdl.content['results'][rname]
-        rqn = ns_uws_result + ':' + rname
-        e_out.append(pdoc.entity(rqn))
-        # TODO: use publisher_did? add prov attributes, add voprov attributes?
-        e_out[-1].add_attributes({
-            'prov:type': rdict['mediaType'],
-            'prov:value': job.results[rname]['url']
-        })
-        e_out[-1].wasGeneratedBy(ctbin)
-        for e in e_in:
-            e_out[-1].wasDerivedFrom(e)
+        if rname not in ['stdout', 'stderr', 'provjson', 'provxml', 'provsvg']:
+            rdict = job.jdl.content['results'][rname]
+            rqn = ns_uws_result + ':' + rname
+            e_out.append(pdoc.entity(rqn))
+            # TODO: use publisher_did? add prov attributes, add voprov attributes?
+            e_out[-1].add_attributes({
+                'prov:type': rdict['mediaType'],
+                'prov:value': job.results[rname]['url']
+            })
+            e_out[-1].wasGeneratedBy(ctbin)
+            for e in e_in:
+                e_out[-1].wasDerivedFrom(e)
     return pdoc
 
 
