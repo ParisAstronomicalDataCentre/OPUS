@@ -464,32 +464,33 @@ class Job(object):
                     logger.info('add stderr.log file to results')
                 else:
                     logger.warning('CANNOT add logs to results')
-                # Create PROV XML file (added as a result)
-                if os.path.isdir(rfdir):
-                    pdoc = voprov.job2prov(job)
-                    # PROV JSON
-                    rname = 'provjson'
-                    rfname = 'provenance.json'
-                    voprov.prov2json(pdoc, rfdir + rfname)
-                    url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
-                    job.results[rname] = {'url': url, 'mediaType': 'application/json'}
-                    logger.info('add provenance.json file to results')
-                    # PROV XML
-                    rname = 'provxml'
-                    rfname = 'provenance.xml'
-                    voprov.prov2xml(pdoc, rfdir + rfname)
-                    url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
-                    job.results[rname] = {'url': url, 'mediaType': 'text/xml'}
-                    logger.info('add provenance.xml file to results')
-                    # PROV SVG
-                    rname = 'provsvg'
-                    rfname = 'provenance.svg'
-                    voprov.prov2svg(pdoc, rfdir + rfname)
-                    url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
-                    job.results[rname] = {'url': url, 'mediaType': 'image/svg+xml'}
-                    logger.info('add provenance.svg file to results')
-                else:
-                    logger.warning('CANNOT add provenance file to results')
+                # Create PROV files (added as a result)
+                if GENERATE_PROV:
+                    if os.path.isdir(rfdir):
+                        pdoc = voprov.job2prov(job)
+                        # PROV JSON
+                        rname = 'provjson'
+                        rfname = 'provenance.json'
+                        voprov.prov2json(pdoc, rfdir + rfname)
+                        url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
+                        job.results[rname] = {'url': url, 'mediaType': 'application/json'}
+                        logger.info('add provenance.json file to results')
+                        # PROV XML
+                        rname = 'provxml'
+                        rfname = 'provenance.xml'
+                        voprov.prov2xml(pdoc, rfdir + rfname)
+                        url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
+                        job.results[rname] = {'url': url, 'mediaType': 'text/xml'}
+                        logger.info('add provenance.xml file to results')
+                        # PROV SVG
+                        rname = 'provsvg'
+                        rfname = 'provenance.svg'
+                        voprov.prov2svg(pdoc, rfdir + rfname)
+                        url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
+                        job.results[rname] = {'url': url, 'mediaType': 'image/svg+xml'}
+                        logger.info('add provenance.svg file to results')
+                    else:
+                        logger.warning('CANNOT add provenance file to results')
 
 
             def phase_error(job, error_msg):

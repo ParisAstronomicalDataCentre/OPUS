@@ -36,6 +36,8 @@ TRUSTED_CLIENTS = {
     '145.238.180.240': 'savagnin_cable',
 }
 
+GENERATE_PROV = True
+
 # Job Description Language
 JDL = 'WADLFile'
 
