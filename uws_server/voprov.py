@@ -75,12 +75,9 @@ def job2prov(job):
         if any(x in pdict['type'] for x in ['file', 'xs:anyURI']):
             e_in.append(pdoc.entity(pqn))
             # TODO: use publisher_did? add prov attributes, add voprov attributes?
-            fname = job.parameters[pname]['value'].split('/')[-1]
-            purl = job.parameters[pname]['value'].split(fname)[0]
-            pdoc.add_namespace(pname, purl)
             e_in[-1].add_attributes({
                 'prov:type': pdict['type'],
-                'prov:location': pname + ':' + fname
+                'prov:location': job.parameters[pname]['value']
             })
             ctbin.used(e_in[-1])
         else:
@@ -98,12 +95,9 @@ def job2prov(job):
             rqn = ns_uws_result + ':' + rname
             e_out.append(pdoc.entity(rqn))
             # TODO: use publisher_did? add prov attributes, add voprov attributes?
-            fname = job.results[rname]['url'].split('/')[-1]
-            rurl = job.results[rname]['url'].split(fname)[0]
-            pdoc.add_namespace(rname, rurl)
             e_out[-1].add_attributes({
                 'prov:type': rdict['mediaType'],
-                'prov:location': rname + ':' + fname
+                'prov:location': job.results[rname]['url']
             })
             e_out[-1].wasGeneratedBy(ctbin)
             for e in e_in:
