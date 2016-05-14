@@ -237,6 +237,31 @@ def get_jobnames():
         abort_404(e.message)
 
 
+@app.get('/get_prov/<jobname>/<jobid>')
+def get_prov(jobname, jobid):
+    """
+    Get list of available jobs on server
+    :return: list of job names in json
+    """
+    try:
+        user = set_user()
+        logger.info(jobname + ' ' + jobid)
+        # Get job properties from DB
+        job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True, get_results=True)
+        # Get JDL
+        job.jdl.read(jobname)
+        # Return job provenance
+        pdoc = voprov.job2prov(job)
+        dot = voprov.prov2dot(pdoc)
+        svg_content = voprov.dot.create(format="svg")
+        response.content_type = 'text/xml; charset=UTF-8'
+        return svg_content
+    except storage.NotFoundWarning as e:
+        abort_404(e.message)
+    except:
+        abort_500_except()
+
+
 # ----------
 # Database testing
 
@@ -329,10 +354,6 @@ def create_new_job_definition():
         # Read form
         keys = request.forms.keys()
         jobname = request.forms.get('name').split('/')[-1]
-        description = request.forms.get('description')
-        execdur = request.forms.get('executionduration')
-        quote = request.forms.get('quote')
-        script = request.forms.get('script')
         params = collections.OrderedDict()
         iparam = 1
         while 'param_name_' + str(iparam) in keys:
@@ -365,17 +386,23 @@ def create_new_job_definition():
             iresult += 1
         # Create job_jdl structure
         job_def = {
-            'description': description,
             'parameters': params,
             'results': results,
-            'executionduration': execdur,
-            'quote': quote,
         }
+        # Add job attributes
+        job_def['description'] = request.forms.get('description')
+        job_def['url'] = request.forms.get('url')
+        job_def['contact_name'] = request.forms.get('contact_name')
+        job_def['contact_affil'] = request.forms.get('contact_affil')
+        job_def['contact_email'] = request.forms.get('contact_email')
+        job_def['executionduration'] = request.forms.get('executionduration')
+        job_def['quote'] = request.forms.get('quote')
         # Create WADL file from job_jdl
         jdl = uws_jdl.__dict__[JDL]()
         jdl.content = job_def
         jdl.save('new/' + jobname)
         # Save bash script file in new/
+        script = request.forms.get('script')
         script_fname = '{}/new/{}.sh'.format(SCRIPT_PATH, jobname)
         with open(script_fname, 'w') as f:
             f.write(script.replace('\r', ''))
@@ -523,7 +550,7 @@ def job_event():
         logger.info('from {} with POST={}'.format(ip, str(request.POST.dict)))
         if 'jobid' in request.POST:
             jobid_cluster = request.POST['jobid']
-            # Get job description from DB based on jobid_cluster
+            # Get job properties from DB based on jobid_cluster
             job = Job('', jobid_cluster, user, get_attributes=True, from_jobid_cluster=True)
             # Update job
             if 'phase' in request.POST:
@@ -640,7 +667,7 @@ def get_job(jobname, jobid):
     try:
         user = set_user()
         logger.info(jobname + ' ' + jobid)
-        # Get job description from DB
+        # Get job properties from DB
         job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True, get_results=True)
         # Return job description in UWS format
         xml_out = job.to_xml()
@@ -664,7 +691,7 @@ def delete_job(jobname, jobid):
     try:
         user = set_user()
         logger.info(jobname + ' ' + jobid)
-        # Get job description from DB
+        # Get job properties from DB
         job = Job(jobname, jobid, user, get_attributes=True)
         # Delete job
         job.delete()
@@ -686,7 +713,7 @@ def post_job(jobname, jobid):
         user = set_user()
         logger.info('delete ' + jobname + ' ' + jobid)
         if request.forms.get('ACTION') == 'DELETE':
-            # Get job description from DB
+            # Get job properties from DB
             job = Job(jobname, jobid, user, get_attributes=True)
             # Delete job
             job.delete()
@@ -720,7 +747,7 @@ def get_phase(jobname, jobid):
     try:
         user = set_user()
         logger.info(jobname + ' ' + jobid)
-        # Get job description from DB
+        # Get job properties from DB
         job = Job(jobname, jobid, user, get_attributes=True)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
@@ -746,7 +773,7 @@ def post_phase(jobname, jobid):
             new_phase = request.forms.get('PHASE')
             logger.info('PHASE=' + new_phase + ' ' + jobname + ' ' + jobid)
             if new_phase == 'RUN':
-                # Get job description from DB
+                # Get job properties from DB
                 job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True)
                 # Check if phase is PENDING
                 if job.phase not in ['PENDING']:
@@ -755,7 +782,7 @@ def post_phase(jobname, jobid):
                 job.start()
                 logger.info(jobname + ' ' + jobid + ' STARTED with jobid_cluster=' + str(job.jobid_cluster))
             elif new_phase == 'ABORT':
-                # Get job description from DB
+                # Get job properties from DB
                 job = Job(jobname, jobid, user, get_attributes=True)
                 # Abort job
                 job.abort()
@@ -792,7 +819,7 @@ def get_executionduration(jobname, jobid):
     try:
         user = set_user()
         logger.info(jobname + ' ' + jobid)
-        # Get job description from DB
+        # Get job properties from DB
         job = Job(jobname, jobid, user, get_attributes=True)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
@@ -824,7 +851,7 @@ def post_executionduration(jobname, jobid):
             new_value = int(new_value)
         except ValueError:
             raise UserWarning('Execution duration must be an integer or a float')
-        # Get job description from DB
+        # Get job properties from DB
         job = Job(jobname, jobid, user, get_attributes=True)
         # TODO: check phase?
 
@@ -857,7 +884,7 @@ def get_destruction(jobname, jobid):
     try:
         user = set_user()
         logger.info(jobname + ' ' + jobid)
-        # Get job description from DB
+        # Get job properties from DB
         job = Job(jobname, jobid, user, get_attributes=True)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
@@ -892,7 +919,7 @@ def post_destruction(jobname, jobid):
                 new_value = new_value[:19]
             else:
                 raise UserWarning('Destruction time must be in ISO8601 format ({})'.format(e.message))
-        # Get job description from DB
+        # Get job properties from DB
         job = Job(jobname, jobid, user, get_attributes=True)
         # Change value
         # job.set_destruction_time(new_value)
@@ -925,7 +952,7 @@ def get_error(jobname, jobid):
     try:
         user = set_user()
         logger.info(jobname + ' ' + jobid)
-        # Get job description from DB
+        # Get job properties from DB
         job = Job(jobname, jobid, user, get_attributes=True)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
@@ -952,7 +979,7 @@ def get_quote(jobname, jobid):
     try:
         user = set_user()
         logger.info(jobname + ' ' + jobid)
-        # Get job description from DB
+        # Get job properties from DB
         job = Job(jobname, jobid, user, get_attributes=True)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
@@ -980,7 +1007,7 @@ def get_parameters(jobname, jobid):
     try:
         user = set_user()
         logger.info(jobname + ' ' + jobid)
-        # Get job description from DB
+        # Get job properties from DB
         job = Job(jobname, jobid, user, get_parameters=True)
         # Return job parameters in UWS format
         xml_out = job.parameters_to_xml()
@@ -1005,7 +1032,7 @@ def get_parameter(jobname, jobid, pname):
     try:
         user = set_user()
         logger.info('param=' + pname + ' ' + jobname + ' ' + jobid)
-        # Get job description from DB
+        # Get job properties from DB
         job = Job(jobname, jobid, user, get_parameters=True)
         # Check if param exists
         if pname not in job.parameters:
@@ -1035,7 +1062,7 @@ def post_parameter(jobname, jobid, pname):
         if 'VALUE' not in request.forms:
             raise UserWarning('VALUE keyword required')
         new_value = request.forms.get('VALUE')
-        # Get job description from DB
+        # Get job properties from DB
         job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True)
         # TODO: Check if new_value format is correct (from WADL?)
         # Change value
@@ -1072,7 +1099,7 @@ def get_results(jobname, jobid):
     try:
         user = set_user()
         logger.info(jobname + ' ' + jobid)
-        # Get job description from DB
+        # Get job properties from DB
         job = Job(jobname, jobid, user, get_results=True)
         # Return job results in UWS format
         xml_out = job.results_to_xml()
@@ -1097,7 +1124,7 @@ def get_result(jobname, jobid, rname):
     try:
         user = set_user()
         logger.info('rname=' + rname + ' ' + jobname + ' ' + jobid)
-        # Get job description from DB
+        # Get job properties from DB
         job = Job(jobname, jobid, user, get_parameters=True, get_results=True)
         # Check if result exists
         if rname not in job.results:
@@ -1122,7 +1149,7 @@ def get_result_file(jobid, rname, rfname):
         500 Internal Server Error (on error)
     """
     user = set_user()
-    # Get job description from DB
+    # Get job properties from DB
     job = Job('', jobid, user, get_parameters=True, get_results=True)
     # Check if result exists
     if rname not in job.results:
@@ -1156,7 +1183,7 @@ def get_owner(jobname, jobid):
     try:
         user = set_user()
         logger.info(jobname + ' ' + jobid)
-        # Get job description from DB
+        # Get job properties from DB
         job = Job(jobname, jobid, user, get_attributes=True)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'

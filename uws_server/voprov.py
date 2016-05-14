@@ -42,10 +42,10 @@ def job2prov(job):
 
     pdoc = ProvDocument()
     # Declaring namespaces for various prefixes used in the example
+    pdoc.set_default_namespace('https://voparis-uws-test.obspm.fr/get_jdl/' + job.jobname + '/#')
     pdoc.add_namespace('prov', 'http://www.w3.org/ns/prov#')
     pdoc.add_namespace('voprov', 'http://www.ivoa.net/ns/voprov#')
     pdoc.add_namespace('cta', 'http://www.cta-observatory.org#')
-    pdoc.add_namespace('cta_jobs', 'http://www.cta-observatory.org#')
     ns_uws_job = 'job'
     pdoc.add_namespace(ns_uws_job, 'https://voparis-uws-test.obspm.fr/rest/' + job.jobname + '/' + job.jobid + '/#')
     ns_uws_param = 'param'
@@ -55,16 +55,20 @@ def job2prov(job):
     # Activity
     ctbin = pdoc.activity(ns_uws_job + ':' + job.jobname, job.start_time, job.end_time)
     # TODO: add job description, version, url, ...
-    # ctbin.add_attributes({
-    #     'prov:label': job.jdl.content['description'],
-    # })
-    # Agent: CTAC
-    ctac = pdoc.agent('cta:consortium')
-    ctac.add_attributes({
-        'prov:label': 'CTA Consortium',
-        'prov:type': 'Organization',
+    ctbin.add_attributes({
+        # 'prov:label': job.jdl.content['description'],
+        'prov:location': job.jdl.content['url'],
+        'contact_name': job.jdl.content['contact_name'],
+        'contact_affil': job.jdl.content['contact_affil'],
+        'contact_email': job.jdl.content['contact_email'],
     })
-    pdoc.wasAssociatedWith(ctbin, ctac)
+    # Agent: owner of the job
+    agent = pdoc.agent(job.owner)
+    # ctac.add_attributes({
+    #     'prov:label': 'CTA Consortium',
+    #     'prov:type': 'Organization',
+    # })
+    pdoc.wasAssociatedWith(ctbin, agent)
     # Entities, in and out with relations
     e_in = []
     act_attr = {}

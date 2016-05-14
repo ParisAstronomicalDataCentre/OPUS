@@ -16,12 +16,21 @@ from settings import *
 # ---------
 # job_def structure (class or dict?)
 
+# job.jobname
 # job_def = {
-#     'description': description,
-#     'parameters': parameters,
-#     'results': results,
-#     'executionduration': execdur,
-#     'quote': quote
+#     'description':
+#     'group': ?
+#     'version': ?
+#     'job_type':
+#     'job_subtype':
+#     'url ':
+#     'contact_name':
+#     'contact_affil':
+#     'contact_email':
+#     'parameters': {}
+#     'results': {}
+#     'executionduration':
+#     'quote':
 # }
 # parameters[pname] = {
 #     'type': p.get('type'),
@@ -29,7 +38,7 @@ from settings import *
 #     'default': p.get('default'),
 #     'description': list(p)[0].text,
 # }
-# results[r.get('value')] = {
+# results[rname] = {
 #     'mediaType': r.get('mediaType'),
 #     'default': r.get('default'),
 #     'description': list(r)[0].text,
@@ -114,9 +123,13 @@ class WADLFile(JDLFile):
             wadl_string = f.read()
         wadl_tree = ETree.fromstring(wadl_string)
         xmlns = '{' + wadl_tree.nsmap[None] + '}'
-        # Insert raw_jobname
+        # Insert raw_jobname as the resource path
         joblist_block = wadl_tree.find(".//{}resource[@id='joblist']".format(xmlns))
         joblist_block.set('path', raw_jobname)
+        joblist_block.set('url', self.content['url'])
+        joblist_block.set('contact_name', self.content['contact_name'])
+        joblist_block.set('contact_affil', self.content['contact_affil'])
+        joblist_block.set('contact_email', self.content['contact_email'])
         # Insert job description
         job_list_description_block = wadl_tree.find(".//{}doc[@title='description']".format(xmlns))
         job_list_description_block.text = self.content['description'].decode()
@@ -183,15 +196,25 @@ class WADLFile(JDLFile):
                         'default': r.get('default'),
                         'description': list(r)[0].text,
                     }
+            job_def = {
+                'parameters': parameters,
+                'results': results,
+            }
             # Read execution duration
             execdur_block = wadl_tree.find(".//{}param[@name='EXECUTIONDURATION']".format(xmlns))
-            execdur = execdur_block.get('default')
+            job_def['executionduration'] = execdur_block.get('default')
             # Read default quote
             quote_block = wadl_tree.find(".//{}representation[@id='quote']".format(xmlns))
-            quote = quote_block.get('default')
+            job_def['quote'] = quote_block.get('default')
             # Read job description
-            job_list_description_block = wadl_tree.find(".//{}doc[@title='description']".format(xmlns))
-            description = job_list_description_block.text
+            joblist_description_block = wadl_tree.find(".//{}doc[@title='description']".format(xmlns))
+            description = joblist_description_block.text
+            # Read job attributes
+            joblist_block = wadl_tree.find(".//{}resource[@id='joblist']".format(xmlns))
+            job_def['url'] = joblist_block.get('url')
+            job_def['contact_name'] = joblist_block.get('contact_name')
+            job_def['contact_affil'] = joblist_block.get('contact_affil')
+            job_def['contact_email'] = joblist_block.get('contact_email')
             # Log wadl access
             frame, filename, line_number, function_name, lines, index = inspect.stack()[1]
             logger.debug('WADL read at {} ({}:{}): {}'.format(function_name, filename, line_number, fname))
@@ -200,11 +223,6 @@ class WADLFile(JDLFile):
             logger.debug('WADL not found for job {}'.format(jobname))
             raise UserWarning('WADL not found for job {}'.format(jobname))
             # return {}
-        job_def = {'description': description,
-                   'parameters': parameters,
-                   'results': results,
-                   'executionduration': execdur,
-                   'quote': quote}
         self.content = job_def
 
 
