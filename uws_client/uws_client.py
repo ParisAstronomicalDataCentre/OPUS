@@ -22,7 +22,7 @@ from cork import Cork
 
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 ENDPOINT = 'client'
-UWS_SERVER_URL = ''  # 'https://voparis-uws-test.obspm.fr'  # same as client = ''
+UWS_SERVER_URL = 'https://voparis-uws-test.obspm.fr'  # same as client = ''
 ALLOW_ANONYMOUS = False
 
 # Set logger
