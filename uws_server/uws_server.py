@@ -253,7 +253,7 @@ def get_prov(jobname, jobid):
         # Return job provenance
         pdoc = voprov.job2prov(job)
         dot = voprov.prov2dot(pdoc)
-        svg_content = voprov.dot.create(format="svg")
+        svg_content = dot.create(format="svg")
         response.content_type = 'text/xml; charset=UTF-8'
         return svg_content
     except storage.NotFoundWarning as e:

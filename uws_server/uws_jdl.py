@@ -208,7 +208,7 @@ class WADLFile(JDLFile):
             job_def['quote'] = quote_block.get('default')
             # Read job description
             joblist_description_block = wadl_tree.find(".//{}doc[@title='description']".format(xmlns))
-            description = joblist_description_block.text
+            job_def['description'] = joblist_description_block.text
             # Read job attributes
             joblist_block = wadl_tree.find(".//{}resource[@id='joblist']".format(xmlns))
             job_def['url'] = joblist_block.get('url')
