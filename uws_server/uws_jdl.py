@@ -14,10 +14,11 @@ from settings import *
 
 
 # ---------
-# job_def structure (class or dict?)
+# jdl.content structure (class or dict?)
 
 # job.jobname
-# job_def = {
+# jdl.content = {
+#     'name':
 #     'description':
 #     'group': ?
 #     'version': ?
@@ -87,26 +88,29 @@ class WADLFile(JDLFile):
     def save(self, jobname):
         """Save job description to WADL file"""
         raw_jobname = jobname
-        raw_jobname.split('/')[-1]  # remove new/ prefix
-        logger.info(jobname)
-        logger.info(raw_jobname)
+        raw_jobname = raw_jobname.split('/')[-1]  # remove new/ prefix
         # Prepare parameter blocks
         wadl_params = []
         wadl_popts = []
         for pname, p in self.content['parameters'].iteritems():
             # pline = '<param style="query" name="{}" type="{}" required="{}" default="{}"><doc>{}</doc></param>' \
             #        ''.format(pname, p['type'], p['required'], p['default'], p.get('description', ''))
-            pelt_attrib = {'style': 'query',
-                           'name': pname,
-                           'type': p['type'],
-                           'required': str(p['required']),
-                           'default': p['default']}
+            pelt_attrib = {
+                'style': 'query',
+                'name': pname,
+                'type': p['type'],
+                'required': str(p['required']),
+                'default': p['default']
+            }
             pelt = ETree.Element('param', attrib=pelt_attrib)
             ETree.SubElement(pelt, 'doc').text = p.get('description', '')
             wadl_params.append(pelt)
             # line = '<option value="{}" mediaType="text/plain"><doc>{}</doc></option>' \
             #        ''.format(pname, p['description'])
-            poelt = ETree.Element('option', attrib={'value': pname, 'mediaType': 'text/plain'})
+            poelt = ETree.Element('option', attrib={
+                'value': pname,
+                'mediaType': 'text/plain'
+            })
             ETree.SubElement(poelt, 'doc').text = p.get('description', '')
             wadl_popts.append(poelt)
         # Prepare result block
@@ -114,7 +118,11 @@ class WADLFile(JDLFile):
         for rname, r in self.content['results'].iteritems():
             # rline = '<option value="{}" mediaType="{}" default="{}"><doc>{}</doc></option>' \
             #         ''.format(rname, r['mediaType'], r['default'], r.get('description', ''))
-            roelt = ETree.Element('option', attrib={'value': rname, 'mediaType': r['mediaType'], 'default': r['default']})
+            roelt = ETree.Element('option', attrib={
+                'value': rname,
+                'mediaType': r['mediaType'],
+                'default': r['default']
+            })
             ETree.SubElement(roelt, 'doc').text = r.get('description', '')
             wadl_ropts.append(roelt)
         # Read WADL UWS template as XML Tree
@@ -197,15 +205,10 @@ class WADLFile(JDLFile):
                         'description': list(r)[0].text,
                     }
             job_def = {
+                'name': jobname,
                 'parameters': parameters,
                 'results': results,
             }
-            # Read execution duration
-            execdur_block = wadl_tree.find(".//{}param[@name='EXECUTIONDURATION']".format(xmlns))
-            job_def['executionduration'] = execdur_block.get('default')
-            # Read default quote
-            quote_block = wadl_tree.find(".//{}representation[@id='quote']".format(xmlns))
-            job_def['quote'] = quote_block.get('default')
             # Read job description
             joblist_description_block = wadl_tree.find(".//{}doc[@title='description']".format(xmlns))
             job_def['description'] = joblist_description_block.text
@@ -215,6 +218,12 @@ class WADLFile(JDLFile):
             job_def['contact_name'] = joblist_block.get('contact_name')
             job_def['contact_affil'] = joblist_block.get('contact_affil')
             job_def['contact_email'] = joblist_block.get('contact_email')
+            # Read execution duration
+            execdur_block = wadl_tree.find(".//{}param[@name='EXECUTIONDURATION']".format(xmlns))
+            job_def['executionduration'] = execdur_block.get('default')
+            # Read default quote
+            quote_block = wadl_tree.find(".//{}representation[@id='quote']".format(xmlns))
+            job_def['quote'] = quote_block.get('default')
             # Log wadl access
             frame, filename, line_number, function_name, lines, index = inspect.stack()[1]
             logger.debug('WADL read at {} ({}:{}): {}'.format(function_name, filename, line_number, fname))
