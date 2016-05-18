@@ -303,7 +303,7 @@ class Job(object):
         xml_job = ETree.Element('uws:job', attrib=xmlns_uris)
         add_sub_elt(xml_job, 'uws:jobId', self.jobid)
         add_sub_elt(xml_job, 'uws:phase', self.phase)
-        add_sub_elt(xml_job, 'uws:executionduration', self.execution_duration)
+        add_sub_elt(xml_job, 'uws:executionDuration', self.execution_duration)
         add_sub_elt(xml_job, 'uws:quote', self.quote)
         add_sub_elt(xml_job, 'uws:error', self.error)
         add_sub_elt(xml_job, 'uws:startTime', self.start_time)
