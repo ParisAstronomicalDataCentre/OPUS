@@ -45,6 +45,12 @@ JDL = 'WADLFile'
 STORAGE = 'SQLiteStorage'
 SQLITE_FILE = 'data/db/job_database.db'
 
+PGSQL_HOST = 'localhost'
+PGSQL_PORT = 5432
+PGSQL_DATABASE = 'opus'
+PGSQL_USER = 'opus'
+PGSQL_PASSWORD = 'opus'
+
 # Define a Manager and its properties
 MANAGER = 'SLURMManager'
 SLURM_URL = 'tycho.obspm.fr'  # 'quadri12.obspm.fr'  #
