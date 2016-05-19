@@ -11,9 +11,9 @@ import unittest
 from webtest import TestApp
 
 
-# Redefine LOG_FILE, DB_FILE, MANAGER
+# Redefine LOG_FILE, SQLITE_FILE, MANAGER
 STORAGE = 'SQLiteStorage'
-DB_FILE = 'data/db/job_database_test.db'
+SQLITE_FILE = 'data/db/job_database_test.db'
 LOG_FILE_SUFFIX = '_test'
 MANAGER = 'Manager'
 

@@ -43,7 +43,7 @@ JDL = 'WADLFile'
 
 # Storage of job information
 STORAGE = 'SQLiteStorage'
-DB_FILE = 'data/db/job_database.db'
+SQLITE_FILE = 'data/db/job_database.db'
 
 # Define a Manager and its properties
 MANAGER = 'SLURMManager'
@@ -152,8 +152,8 @@ if 'test.py' in main_dict.get('__file__', ''):
         LOG_FILE_SUFFIX = main_dict['LOG_FILE_SUFFIX']
     if 'STORAGE' in main_dict:
         STORAGE = main_dict['STORAGE']
-    if 'DB_FILE' in main_dict:
-        DB_FILE = main_dict['DB_FILE']
+    if 'SQLITE_FILE' in main_dict:
+        SQLITE_FILE = main_dict['SQLITE_FILE']
     if 'MANAGER' in main_dict:
         MANAGER = main_dict['MANAGER']
 #--- If imported from test.py, redefine settings -----------------------------------------------------------------------
