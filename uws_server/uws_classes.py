@@ -82,8 +82,8 @@ class Job(object):
             self.execution_duration = duration.total_seconds()
             self.error = None
             self.creation_time = now.strftime(DT_FMT)
-            self.start_time = now.strftime(DT_FMT)
-            self.end_time = (now + duration).strftime(DT_FMT)
+            self.start_time = None  # now.strftime(DT_FMT)
+            self.end_time = None  # (now + duration).strftime(DT_FMT)
             self.destruction_time = (now + destruction).strftime(DT_FMT)
             self.owner = user.name
             self.owner_pid = user.pid
@@ -341,7 +341,7 @@ class Job(object):
         destruction = dt.timedelta(DESTRUCTION_INTERVAL)
         self.phase = 'QUEUED'
         self.start_time = now.strftime(DT_FMT)
-        self.end_time = (now + duration).strftime(DT_FMT)
+        self.end_time = None  # (now + duration).strftime(DT_FMT)
         self.destruction_time = (now + destruction).strftime(DT_FMT)
         self.jobid_cluster = jobid_cluster
         # Save changes to storage
@@ -365,8 +365,8 @@ class Job(object):
             raise UserWarning('Job {} cannot be aborted while in phase {}'.format(self.jobid, self.phase))
         # Change phase to ABORTED
         now = dt.datetime.now()
-        self.phase = 'ABORTED'
         self.end_time = now.strftime(DT_FMT)
+        self.phase = 'ABORTED'
         self.error = 'Job aborted by user ' + self.user.name
         # Save job description
         self.storage.save(self)
@@ -427,9 +427,9 @@ class Job(object):
                 # Set job.start_time
                 job.start_time = now.strftime(DT_FMT)
                 # Estimates job.end_time from job.start_time + duration
-                duration = dt.timedelta(0, self.execution_duration)
-                end_time = dt.datetime.strptime(job.start_time, DT_FMT) + duration
-                job.end_time = end_time.strftime(DT_FMT)
+                # duration = dt.timedelta(0, self.execution_duration)
+                # end_time = dt.datetime.strptime(job.start_time, DT_FMT) + duration
+                # job.end_time = end_time.strftime(DT_FMT)
 
             def phase_completed(job, error_msg):
                 if not job.jdl.content:
