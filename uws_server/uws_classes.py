@@ -260,10 +260,12 @@ class Job(object):
 
     def parameters_to_xml(self):
         """Returns the XML representation of job parameters"""
-        xmlns_uris = {'xmlns:uws': 'http://www.ivoa.net/xml/UWS/v1.0',
-                      'xmlns:xlink': 'http://www.w3.org/1999/xlink',
-                      'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
-                      'xsi:schemaLocation': 'http://www.ivoa.net/xml/UWS/v1.0 http://ivoa.net/xml/UWS/UWS-v1.0.xsd'}
+        xmlns_uris = {
+            'xmlns:uws': 'http://www.ivoa.net/xml/UWS/v1.0',
+            'xmlns:xlink': 'http://www.w3.org/1999/xlink',
+            'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+            'xsi:schemaLocation': 'http://www.ivoa.net/xml/UWS/v1.0 http://ivoa.net/xml/UWS/UWS-v1.0.xsd'
+        }
         xml_params = ETree.Element('uws:parameters', attrib=xmlns_uris)
         # Add each parameter that has a value
         self._parameters_to_xml_fill(xml_params)
@@ -276,10 +278,12 @@ class Job(object):
 
     def results_to_xml(self):
         """Returns the XML representation of job results"""
-        xmlns_uris = {'xmlns:uws': 'http://www.ivoa.net/xml/UWS/v1.0',
-                      'xmlns:xlink': 'http://www.w3.org/1999/xlink',
-                      'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
-                      'xsi:schemaLocation': 'http://www.ivoa.net/xml/UWS/v1.0 http://ivoa.net/xml/UWS/UWS-v1.0.xsd'}
+        xmlns_uris = {
+            'xmlns:uws': 'http://www.ivoa.net/xml/UWS/v1.0',
+            'xmlns:xlink': 'http://www.w3.org/1999/xlink',
+            'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+            'xsi:schemaLocation': 'http://www.ivoa.net/xml/UWS/v1.0 http://ivoa.net/xml/UWS/UWS-v1.0.xsd'
+        }
         xml_results = ETree.Element('uws:results', attrib=xmlns_uris)
         # Add each result that has a value
         self._results_to_xml_fill(xml_results)
@@ -296,10 +300,12 @@ class Job(object):
             else:
                 ETree.SubElement(root, tag, attrib={'xsi:nil': 'true'})
 
-        xmlns_uris = {'xmlns:uws': 'http://www.ivoa.net/xml/UWS/v1.0',
-                      'xmlns:xlink': 'http://www.w3.org/1999/xlink',
-                      'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
-                      'xsi:schemaLocation': 'http://www.ivoa.net/xml/UWS/v1.0 http://ivoa.net/xml/UWS/UWS-v1.0.xsd'}
+        xmlns_uris = {
+            'xmlns:uws': 'http://www.ivoa.net/xml/UWS/v1.0',
+            'xmlns:xlink': 'http://www.w3.org/1999/xlink',
+            'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+            'xsi:schemaLocation': 'http://www.ivoa.net/xml/UWS/v1.0 http://ivoa.net/xml/UWS/UWS-v1.0.xsd'
+        }
         xml_job = ETree.Element('uws:job', attrib=xmlns_uris)
         add_sub_elt(xml_job, 'uws:jobId', self.jobid)
         add_sub_elt(xml_job, 'uws:phase', self.phase)
@@ -504,11 +510,13 @@ class Job(object):
                     job.error = error_msg
 
             # Switch
-            cases = {'HELD': nul,
-                     'SUSPENDED': nul,
-                     'EXECUTING': phase_executing,
-                     'COMPLETED': phase_completed,
-                     'ERROR': phase_error}
+            cases = {
+                'HELD': nul,
+                'SUSPENDED': nul,
+                'EXECUTING': phase_executing,
+                'COMPLETED': phase_completed,
+                'ERROR': phase_error
+            }
             if new_phase not in cases:
                 raise UserWarning('Phase change not allowed: {} --> {}'.format(self.phase, new_phase))
             # Run case
@@ -539,21 +547,38 @@ class JobList(object):
 
     def to_xml(self):
         """Returns the XML representation of jobs (uws:jobs)"""
-        xml_out = [
-            '<?xml version="1.0" encoding="UTF-8"?>',
-            '<uws:jobs ',
-            'xmlns:uws="http://www.ivoa.net/xml/UWS/v1.0" ',
-            'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ',
-            'xsi:schemaLocation="http://www.ivoa.net/xml/UWS/v1.0 http://ivoa.net/xml/UWS/UWS-v1.0.xsd" ',
-            'xmlns:xlink="http://www.w3.org/1999/xlink">',
-        ]
+        # xml_out = [
+        #     '<?xml version="1.0" encoding="UTF-8"?>',
+        #     '<uws:jobs ',
+        #     'xmlns:uws="http://www.ivoa.net/xml/UWS/v1.0" ',
+        #     'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ',
+        #     'xsi:schemaLocation="http://www.ivoa.net/xml/UWS/v1.0 http://ivoa.net/xml/UWS/UWS-v1.0.xsd" ',
+        #     'xmlns:xlink="http://www.w3.org/1999/xlink">',
+        # ]
+        # for job in self.jobs:
+        #     href = '{}/{}/{}'.format(BASE_URL, self.jobname, job['jobid'])
+        #     xml_out.append('<uws:jobref id="{}" xlink:href="{}">'.format(job['jobid'], href))
+        #     xml_out.append('<uws:phase>{}</uws:phase>'.format(job['phase']))
+        #     xml_out.append('</uws:jobref>')
+        # xml_out.append('</uws:jobs>')
+        # return ''.join(xml_out)
+
+        xmlns_uris = {
+            'xmlns:uws': 'http://www.ivoa.net/xml/UWS/v1.0',
+            'xmlns:xlink': 'http://www.w3.org/1999/xlink',
+            'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+            'xsi:schemaLocation': 'http://www.ivoa.net/xml/UWS/v1.0 http://ivoa.net/xml/UWS/UWS-v1.0.xsd'
+        }
+        xml_jobs = ETree.Element('uws:jobs', attrib=xmlns_uris)
         for job in self.jobs:
             href = '{}/{}/{}'.format(BASE_URL, self.jobname, job['jobid'])
-            xml_out.append('<uws:jobref id="{}" xlink:href="{}">'.format(job['jobid'], href))
-            xml_out.append('<uws:phase>{}</uws:phase>'.format(job['phase']))
-            xml_out.append('</uws:jobref>')
-        xml_out.append('</uws:jobs>')
-        return ''.join(xml_out)
+            xml_job = ETree.SubElement(xml_jobs, 'uws:jobref', attrib={
+                'id': job['jobid'],
+                'xlink:href': href,
+            })
+            ETree.SubElement(xml_job, 'uws:phase').text = job['phase']
+        return ETree.tostring(xml_job)
+
 
     def to_html(self):
         """Returns the HTML representation of jobs"""
