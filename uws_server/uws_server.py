@@ -499,8 +499,8 @@ def cp_script(jobname):
 # Server maintenance
 
 
-@app.route('/handler/maintenance')
-def maintenance():
+@app.route('/handler/maintenance/<jobname>')
+def maintenance(jobname):
     """Performs server maintenance, e.g. executed regularly by the server itself (localhost)
 
     Returns:
@@ -511,10 +511,18 @@ def maintenance():
     if not is_localhost():
         abort_403()
     try:
+        user = User('admin', 'admin')
+        logger.info('Maintenance for {}'.format(jobname))
         # Get joblist
         # For each job:
         # TODO: Check consistency of dates (destruction_time > end_time > start_time > creation_time)
         # TODO: Update status if phase is not PENDING or terminal (or for all jobs?)
+        joblist = JobList(jobname, user, phase=['QUEUED', 'EXECUTING'])
+        for job in joblist.jobs:
+            phase = job.phase
+            new_phase = job.get_status()  # will update the phase from manager
+            if new_phase != phase:
+                logger.info('{} {} phase {} --> {}'.format(jobname, job.jobid, phase, new_phase))
         # TODO: If job is SUSPENDED, try to restart the job
         # TODO: If destruction time is passed, delete job
         pass
