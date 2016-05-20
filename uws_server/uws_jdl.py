@@ -226,7 +226,7 @@ class WADLFile(JDLFile):
             job_def['quote'] = quote_block.get('default')
             # Log wadl access
             frame, filename, line_number, function_name, lines, index = inspect.stack()[1]
-            logger.debug('WADL read at {} ({}:{}): {}'.format(function_name, filename, line_number, fname))
+            # logger.debug('WADL read at {} ({}:{}): {}'.format(function_name, filename, line_number, fname))
         except IOError:
             # if file does not exist, continue and return an empty dict
             logger.debug('WADL not found for job {}'.format(jobname))
