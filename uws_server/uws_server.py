@@ -1179,6 +1179,8 @@ def get_result_file(jobid, rname, rfname):
             return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid), mimetype=media_type, download=rfname)
     except storage.NotFoundWarning as e:
         abort_404(e.message)
+    except JobAccessDenied as e:
+        abort_403()
     except:
         abort_500_except()
 
