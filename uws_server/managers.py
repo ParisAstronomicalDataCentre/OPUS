@@ -296,9 +296,8 @@ class SLURMManager(Manager):
         cmd = ['ssh', self.ssh_arg,
                'sacct -j {}'.format(job.jobid_cluster),
                '-o state -P -n']
-        logger.debug(' '.join(cmd))
         phase = sp.check_output(cmd, stderr=sp.STDOUT)
-        # take first line: there is a trailing \n in output, and possibly several lines
+        # Take first line: there is a trailing \n in output, and possibly several lines
         phase = phase.split('\n')[0]
         return phase
 
