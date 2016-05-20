@@ -300,7 +300,7 @@ class SLURMManager(Manager):
         # Take first line: there is a trailing \n in output, and possibly several lines
         phase = phase.split('\n')[0]
         if phase in PHASE_CONVERT:
-            phase = PHASE_CONVERT['phase']['phase']
+            phase = PHASE_CONVERT[phase]['phase']
         return phase
 
     def get_info(self, job):
