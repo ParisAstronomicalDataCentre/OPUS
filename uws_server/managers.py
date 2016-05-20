@@ -298,8 +298,9 @@ class SLURMManager(Manager):
                '-o state -P -n']
         logger.debug(' '.join(cmd))
         phase = sp.check_output(cmd, stderr=sp.STDOUT)
-        # Remove trailing \n from output
-        return phase[:-1]
+        # take first line: there is a trailing \n in output, and possibly several lines
+        phase = phase.split('\n')[0]
+        return phase
 
     def get_info(self, job):
         """Get job info from SLURM server
