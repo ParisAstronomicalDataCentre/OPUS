@@ -53,7 +53,7 @@ class Storage(object):
         """Delete job information from storage"""
         pass
 
-    def get_list(self, joblist):
+    def get_list(self, joblist, phase=None):
         """Delete job information from storage"""
         pass
 
@@ -192,7 +192,7 @@ class SQLStorage(Storage):
         self.cursor.execute(query3)
         self.conn.commit()
 
-    def get_list(self, joblist):
+    def get_list(self, joblist, phase=None):
         """Query storage for job list"""
         query = "SELECT jobid, phase FROM jobs"
         where = ["jobname='{}'".format(joblist.jobname)]
