@@ -746,7 +746,7 @@ def get_phase(jobname, jobid):
     """
     try:
         user = set_user()
-        logger.info(jobname + ' ' + jobid)
+        # logger.info(jobname + ' ' + jobid)
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_attributes=True)
         # Return value
