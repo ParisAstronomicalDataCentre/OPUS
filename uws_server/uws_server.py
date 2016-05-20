@@ -1182,7 +1182,7 @@ def get_result_file(jobid, rname, rfname):
     except storage.NotFoundWarning as e:
         abort_404(e.message)
     except JobAccessDenied as e:
-        abort_403()
+        abort_403(e.message)
     except:
         abort_500_except()
 
