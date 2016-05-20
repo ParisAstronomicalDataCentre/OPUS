@@ -221,6 +221,7 @@ LOGGING = {
     },
     'loggers': {
         'uws_server': {
+            'level': 'DEBUG',
             'handlers': ['file_server', 'file_server_debug'],
         },
         'uws_client': {
