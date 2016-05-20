@@ -522,18 +522,20 @@ def maintenance(jobname):
         # Get joblist
         joblist = JobList(jobname, user, check_user=False)
         for j in joblist.jobs:
-        # For each job:
-        # TODO: Check consistency of dates (destruction_time > end_time > start_time > creation_time)
-        # TODO: Update status if phase is not PENDING or terminal (or for all jobs?)
-            if j['phase'] in ['QUEUED', 'EXECUTING']:
-                job = Job(jobname, j['jobid'], user, get_attributes=True, get_parameters=False, get_results=False, check_user=False)
+            # For each job:
+            job = Job(jobname, j['jobid'], user, get_attributes=True, get_parameters=False, get_results=False, check_user=False)
+            # TODO: Check consistency of dates (destruction_time > end_time > start_time > creation_time)
+            if not job.start_time and job.phase not in ['PENDING','QUEUED']:
+                logger.warning('Start time not set for {} {}'.format(jobname, job.jobid))
+            # TODO: Update status if phase is not PENDING or terminal (or for all jobs?)
+            if job.phase in ['QUEUED', 'EXECUTING','UNKNOWN']:
                 logger.info('Check status for {} {}'.format(jobname, job.jobid))
                 phase = job.phase
                 new_phase = job.get_status()  # will update the phase from manager
                 if new_phase != phase:
                     logger.info('{} {} phase {} --> {}'.format(jobname, job.jobid, phase, new_phase))
-        # TODO: If job is SUSPENDED, try to restart the job
-        # TODO: If destruction time is passed, delete job
+            # TODO: If job is SUSPENDED, try to restart the job
+            # TODO: If destruction time is passed, delete job
         pass
     except JobAccessDenied as e:
         abort_403(e.message)
