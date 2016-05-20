@@ -517,20 +517,21 @@ def maintenance(jobname):
     if not is_localhost():
         abort_403()
     try:
-        user = User('admin', 'admin')
-        logger.info('Maintenance for {}'.format(jobname))
+        user = User('maintenance', 'maintenance')
+        logger.info('Maintenance checks for {}'.format(jobname))
         # Get joblist
+        joblist = JobList(jobname, user, check_user=False)
+        for j in joblist.jobs:
         # For each job:
         # TODO: Check consistency of dates (destruction_time > end_time > start_time > creation_time)
         # TODO: Update status if phase is not PENDING or terminal (or for all jobs?)
-        joblist = JobList(jobname, user, phase=['QUEUED', 'EXECUTING'])
-        for j in joblist.jobs:
-            job = Job(jobname, j['jobid'], user, get_attributes=True, get_parameters=False, get_results=False, check_user=False)
-            logger.info('Check status for {} {}'.format(jobname, job.jobid))
-            phase = job.phase
-            new_phase = job.get_status()  # will update the phase from manager
-            if new_phase != phase:
-                logger.info('{} {} phase {} --> {}'.format(jobname, job.jobid, phase, new_phase))
+            if j['phase'] in ['QUEUED', 'EXECUTING']:
+                job = Job(jobname, j['jobid'], user, get_attributes=True, get_parameters=False, get_results=False, check_user=False)
+                logger.info('Check status for {} {}'.format(jobname, job.jobid))
+                phase = job.phase
+                new_phase = job.get_status()  # will update the phase from manager
+                if new_phase != phase:
+                    logger.info('{} {} phase {} --> {}'.format(jobname, job.jobid, phase, new_phase))
         # TODO: If job is SUSPENDED, try to restart the job
         # TODO: If destruction time is passed, delete job
         pass

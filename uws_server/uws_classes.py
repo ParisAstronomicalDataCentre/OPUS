@@ -560,12 +560,12 @@ class Job(object):
 class JobList(object):
     """JobList with attributes and function to fetch from storage and return as XML"""
 
-    def __init__(self, jobname, user, phase=None):
+    def __init__(self, jobname, user, phase=None, check_user=True):
         self.jobname = jobname
         self.user = user
         # Link to the storage, e.g. SQLiteStorage, see settings.py
         self.storage = storage.__dict__[STORAGE]()
-        self.jobs = self.storage.get_list(self, phase=phase)
+        self.jobs = self.storage.get_list(self, phase=phase, check_user=check_user)
 
     def to_xml(self):
         """Returns the XML representation of jobs (uws:jobs)"""

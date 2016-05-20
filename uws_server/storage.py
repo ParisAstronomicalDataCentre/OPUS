@@ -192,7 +192,7 @@ class SQLStorage(Storage):
         self.cursor.execute(query3)
         self.conn.commit()
 
-    def get_list(self, joblist, phase=None):
+    def get_list(self, joblist, phase=None, check_user=True):
         """Query storage for job list"""
         query = "SELECT jobid, phase FROM jobs"
         where = ["jobname='{}'".format(joblist.jobname)]
@@ -201,9 +201,10 @@ class SQLStorage(Storage):
             for p in phase:
                 where_phase.append("phase='{}'".format(p))
             where.append('({})'.format(" OR ".join(where_phase)))
-        if joblist.user.name not in ['admin']:
-            where.append("owner='{}'".format(joblist.user.name))
-            where.append("owner_pid='{}'".format(joblist.user.pid))
+        if check_user:
+            if joblist.user.name not in ['admin']:
+                where.append("owner='{}'".format(joblist.user.name))
+                where.append("owner_pid='{}'".format(joblist.user.pid))
         query += " WHERE " + " AND ".join(where) + ";"
         logger.debug('query = {}'.format(query))
         jobs = self.cursor.execute(query).fetchall()
