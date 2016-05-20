@@ -520,7 +520,7 @@ def maintenance(jobname):
         # TODO: Update status if phase is not PENDING or terminal (or for all jobs?)
         joblist = JobList(jobname, user, phase=['QUEUED', 'EXECUTING'])
         for job in joblist.jobs:
-            phase = job.phase
+            phase = job['phase']
             new_phase = job.get_status()  # will update the phase from manager
             if new_phase != phase:
                 logger.info('{} {} phase {} --> {}'.format(jobname, job.jobid, phase, new_phase))
