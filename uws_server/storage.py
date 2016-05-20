@@ -200,7 +200,7 @@ class SQLStorage(Storage):
             where_phase = []
             for p in phase:
                 where_phase.append("phase='{}'".format(p))
-            where += '({})'.format(" OR ".join(where_phase))
+            where.append('({})'.format(" OR ".join(where_phase)))
         if joblist.user.name not in ['admin']:
             where.append("owner='{}'".format(joblist.user.name))
             where.append("owner_pid='{}'".format(joblist.user.pid))
