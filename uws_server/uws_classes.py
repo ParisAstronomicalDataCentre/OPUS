@@ -556,13 +556,12 @@ class Job(object):
 class JobList(object):
     """JobList with attributes and function to fetch from storage and return as XML"""
 
-    def __init__(self, jobname, user):
+    def __init__(self, jobname, user, phase=None):
         self.jobname = jobname
         self.user = user
-        # The URL is required to include a link for each job in the XML representation
         # Link to the storage, e.g. SQLiteStorage, see settings.py
         self.storage = storage.__dict__[STORAGE]()
-        self.jobs = self.storage.get_list(self)
+        self.jobs = self.storage.get_list(self, phase=phase)
 
     def to_xml(self):
         """Returns the XML representation of jobs (uws:jobs)"""
@@ -596,7 +595,7 @@ class JobList(object):
                 'xlink:href': href,
             })
             ETree.SubElement(xml_job, 'uws:phase').text = job['phase']
-        return ETree.tostring(xml_job)
+        return ETree.tostring(xml_jobs)
 
 
     def to_html(self):
