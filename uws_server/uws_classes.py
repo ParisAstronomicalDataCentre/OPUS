@@ -45,12 +45,6 @@ class User(object):
     def __str__(self):
         return self.name
 
-    def __getitem__(self, item):
-        return self.name
-
-    def __iter__(self):
-        return iter(['username'])
-
 
 # ---------
 # Job class
