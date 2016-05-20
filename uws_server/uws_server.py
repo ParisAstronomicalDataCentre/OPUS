@@ -95,6 +95,7 @@ def is_client_trusted(ip):
 def is_localhost():
     """Test if localhost"""
     ip = request.environ.get('REMOTE_ADDR', '')
+    logger.debug(ip)
     if ip == '127.0.0.1':
         return True
     else:
