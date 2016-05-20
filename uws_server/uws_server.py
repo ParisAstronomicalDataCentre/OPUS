@@ -106,13 +106,15 @@ def is_localhost():
 # Abort functions
 
 
-def abort_403():
+def abort_403(msg=''):
     """HTTP Error 403
 
     Returns:
         403 Forbidden
     """
-    abort(403, 'You don\'t have permission to access {} on this server.'.format(request.urlparts.path))
+    logger.warning('403 Forbidden: ' + msg)
+    abort(403, 'You don\'t have permission to access {} on this server.\n {}'
+               ''.format(request.urlparts.path, msg))
 
 
 def abort_404(msg=None):
@@ -123,7 +125,7 @@ def abort_404(msg=None):
         404 Not Found + message
     """
     if msg:
-        logger.warning(msg)
+        logger.warning('404 Not Found: ' + msg)
         abort(404, msg)
     else:
         logger.warning('404 Not Found')
@@ -1162,7 +1164,7 @@ def get_result_file(jobid, rname, rfname):
     try:
         user = set_user()
         # Get job properties from DB
-        job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True, check_user=False)
+        job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True)  #, check_user=False)
         # Check if result exists
         if rname not in job.results:
             raise storage.NotFoundWarning('Result "{}" NOT FOUND for job "{}"'.format(rname, jobid))
