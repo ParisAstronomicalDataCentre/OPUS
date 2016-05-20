@@ -362,13 +362,14 @@ class Job(object):
             raise RuntimeError('Bad jobid_cluster returned for job {}:\njobid_cluster:\n{}'
                                ''.format(self.jobid, jobid_cluster))
         # Change phase to QUEUED
-        now = dt.datetime.now()
-        # duration = dt.timedelta(0, self.execution_duration)
-        destruction = dt.timedelta(DESTRUCTION_INTERVAL)
         self.phase = 'QUEUED'
-        self.start_time = now.strftime(DT_FMT)
-        self.end_time = None  # (now + duration).strftime(DT_FMT)
-        self.destruction_time = (now + destruction).strftime(DT_FMT)
+        # No need to change times: job not started yet
+        # now = dt.datetime.now()
+        # duration = dt.timedelta(0, self.execution_duration)
+        # destruction = dt.timedelta(DESTRUCTION_INTERVAL)
+        # self.start_time = now.strftime(DT_FMT)
+        # self.end_time = None  # (now + duration).strftime(DT_FMT)
+        # self.destruction_time = (now + destruction).strftime(DT_FMT)
         self.jobid_cluster = jobid_cluster
         # Save changes to storage
         self.storage.save(self)
