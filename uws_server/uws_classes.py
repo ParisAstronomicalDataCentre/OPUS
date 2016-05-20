@@ -539,6 +539,7 @@ class Job(object):
                 'ERROR': phase_error
             }
             if new_phase not in cases:
+                logger.debug(new_phase)
                 raise UserWarning('Phase change not allowed: {} --> {}'.format(self.phase, new_phase))
             # Run case
             cases[new_phase](self, error)
