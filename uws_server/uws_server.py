@@ -112,7 +112,7 @@ def abort_403(msg=''):
     Returns:
         403 Forbidden
     """
-    logger.warning('403 Forbidden: {} \n{}'.format(request.urlparts.path, msg))
+    logger.warning('403 Forbidden: {} ({})'.format(msg, request.urlparts.path))
     abort(403, 'You don\'t have permission to access {} on this server. \n{}'
                ''.format(request.urlparts.path, msg))
 
