@@ -205,7 +205,8 @@ class SQLStorage(Storage):
             if joblist.user.name not in ['admin']:
                 where.append("owner='{}'".format(joblist.user.name))
                 where.append("owner_pid='{}'".format(joblist.user.pid))
-        query += " WHERE " + " AND ".join(where) + ";"
+        query += " WHERE " + " AND ".join(where)
+        query += " ORDER BY start_time DESC;"
         logger.debug('query = {}'.format(query))
         jobs = self.cursor.execute(query).fetchall()
         return jobs
