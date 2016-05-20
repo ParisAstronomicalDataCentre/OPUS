@@ -620,7 +620,7 @@ def get_joblist(jobname):
     """
     try:
         user = set_user()
-        logger.info(jobname)
+        # logger.info(jobname)
         joblist = JobList(jobname, user)
         xml_out = joblist.to_xml()
         response.content_type = 'text/xml; charset=UTF-8'
@@ -676,7 +676,7 @@ def get_job(jobname, jobid):
     """
     try:
         user = set_user()
-        logger.info(jobname + ' ' + jobid)
+        # logger.info(jobname + ' ' + jobid)
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True, get_results=True)
         # Return job description in UWS format
