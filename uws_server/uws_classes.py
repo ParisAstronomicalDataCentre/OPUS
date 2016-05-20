@@ -55,7 +55,8 @@ class Job(object):
 
     def __init__(self, jobname, jobid, user,
                  get_attributes=False, get_parameters=False, get_results=False,
-                 from_post=None, from_jobid_cluster=False):
+                 from_post=None, from_jobid_cluster=False,
+                 check_user=True):
         """Initialize from storage or from POST
 
         from_post should contain the request object if not None
@@ -84,13 +85,14 @@ class Job(object):
                               get_parameters=get_parameters,
                               get_results=get_results,
                               from_jobid_cluster=from_jobid_cluster)
-            # Check if user has rights to manipulate the job
-            if user.name != 'admin':
-                if self.owner == user.name:
-                    if self.owner_pid != user.pid:
-                        raise JobAccessDenied('User {} is the owner of the job but has a wrong PID'.format(user.name))
-                else:
-                    raise JobAccessDenied('User {} is not the owner of the job'.format(user.name))
+            if check_user:
+                # Check if user has rights to manipulate the job
+                if user.name != 'admin':
+                    if self.owner == user.name:
+                        if self.owner_pid != user.pid:
+                            raise JobAccessDenied('User {} is the owner of the job but has a wrong PID'.format(user.name))
+                    else:
+                        raise JobAccessDenied('User {} is not the owner of the job'.format(user.name))
         elif from_post:
             # Create a new PENDING job and save to storage
             now = dt.datetime.now()

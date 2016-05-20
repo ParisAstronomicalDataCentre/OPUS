@@ -1162,7 +1162,7 @@ def get_result_file(jobid, rname, rfname):
     try:
         user = set_user()
         # Get job properties from DB
-        job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True)
+        job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True, check_user=False)
         # Check if result exists
         if rname not in job.results:
             raise storage.NotFoundWarning('Result "{}" NOT FOUND for job "{}"'.format(rname, jobid))
