@@ -42,6 +42,9 @@ class User(object):
         self.name = name
         self.pid = pid
 
+    def __str__(self):
+        return self.name
+
 
 # ---------
 # Job class

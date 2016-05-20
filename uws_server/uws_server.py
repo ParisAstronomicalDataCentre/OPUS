@@ -37,7 +37,7 @@ def set_user():
         user_name, user_pid = request.auth
         if not user_pid:
             user_pid = 'remote_user'
-        logger.debug('{}:{}'.format(user_name, user_pid))
+        # logger.debug('{}:{}'.format(user_name, user_pid))
     ### Set user from GET
     # if 'user' in request.GET:
     #     user_name = request.GET['user']

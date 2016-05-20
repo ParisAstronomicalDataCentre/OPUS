@@ -195,9 +195,15 @@ LOGGING = {
     },
     'handlers': {
         'file_server': {
-            'level': 'DEBUG',
+            'level': 'INFO',
             'class': 'logging.FileHandler',
             'filename': LOG_PATH + '/server' + LOG_FILE_SUFFIX + '.log',
+            'formatter': 'default'
+        },
+        'file_server_debug': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': LOG_PATH + '/server' + LOG_FILE_SUFFIX + '_debug.log',
             'formatter': 'default'
         },
         'file_client': {
@@ -216,6 +222,10 @@ LOGGING = {
     'loggers': {
         'uws_server': {
             'handlers': ['file_server'],
+            'level': 'INFO',
+        },
+        'uws_server': {
+            'handlers': ['file_server_debug'],
             'level': 'DEBUG',
         },
         'uws_client': {
