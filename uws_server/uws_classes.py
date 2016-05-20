@@ -101,8 +101,8 @@ class Job(object):
             self.execution_duration = duration.total_seconds()
             self.error = None
             self.creation_time = now.strftime(DT_FMT)
-            self.start_time = None  # now.strftime(DT_FMT)
-            self.end_time = None  # (now + duration).strftime(DT_FMT)
+            self.start_time = ''  # now.strftime(DT_FMT)
+            self.end_time = ''  # (now + duration).strftime(DT_FMT)
             self.destruction_time = (now + destruction).strftime(DT_FMT)
             self.owner = user.name
             self.owner_pid = user.pid
@@ -113,13 +113,14 @@ class Job(object):
             self.set_from_post(from_post.POST, from_post.files)
         else:
             # Create blank job with None values, do not save to storage
+            now = dt.datetime.now()
             self.phase = 'UNKONWN'
             self.quote = None
             self.execution_duration = None
             self.error = None
-            self.creation_time = None
-            self.start_time = None
-            self.end_time = None
+            self.creation_time = now.strftime(DT_FMT)
+            self.start_time = ''
+            self.end_time = ''
             self.destruction_time = None
             self.owner = None
             self.owner_pid = None
