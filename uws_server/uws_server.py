@@ -518,6 +518,7 @@ def maintenance(jobname):
         abort_403()
     try:
         user = User('maintenance', 'maintenance')
+        logger = logger_init
         logger.info('Maintenance checks for {}'.format(jobname))
         # Get joblist
         joblist = JobList(jobname, user, check_user=False)
@@ -568,6 +569,7 @@ def job_event():
         abort_403()
     try:
         user = User('job_event', 'job_event')
+        logger = logger_init
         logger.info('from {} with POST={}'.format(ip, str(request.POST.dict)))
         if 'jobid' in request.POST:
             jobid_cluster = request.POST['jobid']
