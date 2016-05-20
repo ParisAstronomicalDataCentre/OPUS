@@ -96,7 +96,7 @@ def is_localhost():
     """Test if localhost"""
     ip = request.environ.get('REMOTE_ADDR', '')
     logger.debug(ip)
-    if ip == '127.0.0.1':
+    if ip == BASE_IP:
         return True
     else:
         return False

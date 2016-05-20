@@ -18,6 +18,7 @@ APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 #'/home/mservillat/CTA/git_voparis/uws_server'
 
 BASE_URL = 'http://localhost:8080'
+BASE_IP = '127.0.0.1'
 
 MERGE_CLIENT = True
 
