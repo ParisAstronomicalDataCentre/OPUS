@@ -525,7 +525,7 @@ def maintenance(jobname):
         # TODO: Update status if phase is not PENDING or terminal (or for all jobs?)
         joblist = JobList(jobname, user, phase=['QUEUED', 'EXECUTING'])
         for j in joblist.jobs:
-            job = Job(jobname, j['jobid'], user, get_attributes=True, get_parameters=False, get_results=False)
+            job = Job(jobname, j['jobid'], user, get_attributes=True, get_parameters=False, get_results=False, check_user=False)
             logger.info('Check status for {} {}'.format(jobname, job.jobid))
             phase = job.phase
             new_phase = job.get_status()  # will update the phase from manager
@@ -534,6 +534,8 @@ def maintenance(jobname):
         # TODO: If job is SUSPENDED, try to restart the job
         # TODO: If destruction time is passed, delete job
         pass
+    except JobAccessDenied as e:
+        abort_403(e.message)
     except:
         abort_500_except()
     # Response
@@ -567,7 +569,7 @@ def job_event():
         if 'jobid' in request.POST:
             jobid_cluster = request.POST['jobid']
             # Get job properties from DB based on jobid_cluster
-            job = Job('', jobid_cluster, user, get_attributes=True, from_jobid_cluster=True)
+            job = Job('', jobid_cluster, user, get_attributes=True, from_jobid_cluster=True, check_user=False)
             # Update job
             if 'phase' in request.POST:
                 cur_phase = job.phase
@@ -600,6 +602,8 @@ def job_event():
                 raise UserWarning('Unknown event sent for job ' + job.jobid)
         else:
             raise UserWarning('jobid is not defined in POST')
+    except JobAccessDenied as e:
+        abort_403(e.message)
     except storage.NotFoundWarning as e:
         abort_404(e.message)
     except UserWarning as e:
@@ -689,6 +693,8 @@ def get_job(jobname, jobid):
         xml_out = job.to_xml()
         response.content_type = 'text/xml; charset=UTF-8'
         return xml_out
+    except JobAccessDenied as e:
+        abort_403(e.message)
     except storage.NotFoundWarning as e:
         abort_404(e.message)
     except:
@@ -712,6 +718,8 @@ def delete_job(jobname, jobid):
         # Delete job
         job.delete()
         logger.info(jobname + ' ' + jobid + ' DELETED')
+    except JobAccessDenied as e:
+        abort_403(e.message)
     except storage.NotFoundWarning as e:
         abort_404(e.message)
     except CalledProcessError as e:
@@ -736,6 +744,8 @@ def post_job(jobname, jobid):
             logger.info(jobname + ' ' + jobid + ' DELETED')
         else:
             raise UserWarning('ACTION=DELETE is not specified in POST')
+    except JobAccessDenied as e:
+        abort_403(e.message)
     except storage.NotFoundWarning as e:
         abort_404(e.message)
     except UserWarning as e:
@@ -768,6 +778,8 @@ def get_phase(jobname, jobid):
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return job.phase
+    except JobAccessDenied as e:
+        abort_403(e.message)
     except storage.NotFoundWarning as e:
         abort_404(e.message)
     except:
@@ -807,6 +819,8 @@ def post_phase(jobname, jobid):
                 raise UserWarning('PHASE=' + new_phase + ' not expected')
         else:
             raise UserWarning('PHASE keyword is not specified in POST')
+    except JobAccessDenied as e:
+        abort_403(e.message)
     except storage.NotFoundWarning as e:
         abort_404(e.message)
     except UserWarning as e:
@@ -840,6 +854,8 @@ def get_executionduration(jobname, jobid):
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return str(job.execution_duration)
+    except JobAccessDenied as e:
+        abort_403(e.message)
     except storage.NotFoundWarning as e:
         abort_404(e.message)
     except:
@@ -874,6 +890,8 @@ def post_executionduration(jobname, jobid):
         # Change value
         job.set_attribute('execution_duration', new_value)
         logger.info(jobname + ' ' + jobid + ' set execution_duration=' + str(new_value))
+    except JobAccessDenied as e:
+        abort_403(e.message)
     except storage.NotFoundWarning as e:
         abort_404(e.message)
     except UserWarning as e:
@@ -905,6 +923,8 @@ def get_destruction(jobname, jobid):
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return job.destruction_time
+    except JobAccessDenied as e:
+        abort_403(e.message)
     except storage.NotFoundWarning as e:
         abort_404(e.message)
     except:
@@ -941,6 +961,8 @@ def post_destruction(jobname, jobid):
         # job.set_destruction_time(new_value)
         job.set_attribute('destruction_time', new_value)
         logger.info(jobname + ' ' + jobid + ' set destruction_time=' + new_value)
+    except JobAccessDenied as e:
+        abort_403(e.message)
     except storage.NotFoundWarning as e:
         abort_404(e.message)
     except UserWarning as e:
@@ -973,6 +995,8 @@ def get_error(jobname, jobid):
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return job.error
+    except JobAccessDenied as e:
+        abort_403(e.message)
     except storage.NotFoundWarning as e:
         abort_404(e.message)
     except:
@@ -1000,6 +1024,8 @@ def get_quote(jobname, jobid):
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return str(job.quote)
+    except JobAccessDenied as e:
+        abort_403(e.message)
     except storage.NotFoundWarning as e:
         abort_404(e.message)
     except:
@@ -1029,6 +1055,8 @@ def get_parameters(jobname, jobid):
         xml_out = job.parameters_to_xml()
         response.content_type = 'text/xml; charset=UTF-8'
         return xml_out
+    except JobAccessDenied as e:
+        abort_403(e.message)
     except storage.NotFoundWarning as e:
         abort_404(e.message)
     except:
@@ -1056,6 +1084,8 @@ def get_parameter(jobname, jobid, pname):
         # Return parameter
         response.content_type = 'text/plain; charset=UTF-8'
         return str(job.parameters[pname]['value'])
+    except JobAccessDenied as e:
+        abort_403(e.message)
     except storage.NotFoundWarning as e:
         abort_404(e.message)
     except:
@@ -1088,6 +1118,8 @@ def post_parameter(jobname, jobid, pname):
         else:
             raise UserWarning('Job "{}" must be in PENDING state (currently {}) to change parameter'
                               ''.format(jobid, job.phase))
+    except JobAccessDenied as e:
+        abort_403(e.message)
     except storage.NotFoundWarning as e:
         abort_404(e.message)
     except UserWarning as e:
@@ -1121,6 +1153,8 @@ def get_results(jobname, jobid):
         xml_out = job.results_to_xml()
         response.content_type = 'text/xml; charset=UTF-8'
         return xml_out
+    except JobAccessDenied as e:
+        abort_403(e.message)
     except storage.NotFoundWarning as e:
         abort_404(e.message)
     except:
@@ -1148,6 +1182,8 @@ def get_result(jobname, jobid, rname):
         # Return result
         response.content_type = 'text/plain; charset=UTF-8'
         return str(job.results[rname]['url'])
+    except JobAccessDenied as e:
+        abort_403(e.message)
     except storage.NotFoundWarning as e:
         abort_404(e.message)
     except:
@@ -1167,7 +1203,7 @@ def get_result_file(jobid, rname, rfname):
     try:
         user = set_user()
         # Get job properties from DB
-        job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True)  #, check_user=False)
+        job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True, check_user=False)
         # Check if result exists
         if rname not in job.results:
             raise storage.NotFoundWarning('Result "{}" NOT FOUND for job "{}"'.format(rname, jobid))
@@ -1182,10 +1218,10 @@ def get_result_file(jobid, rname, rfname):
             return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid), mimetype=media_type)
         else:
             return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid), mimetype=media_type, download=rfname)
-    except storage.NotFoundWarning as e:
-        abort_404(e.message)
     except JobAccessDenied as e:
         abort_403(e.message)
+    except storage.NotFoundWarning as e:
+        abort_404(e.message)
     except:
         abort_500_except()
 
@@ -1211,6 +1247,8 @@ def get_owner(jobname, jobid):
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return job.owner
+    except JobAccessDenied as e:
+        abort_403(e.message)
     except storage.NotFoundWarning as e:
         abort_404(e.message)
     except:
