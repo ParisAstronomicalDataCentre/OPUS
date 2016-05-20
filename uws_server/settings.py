@@ -225,15 +225,19 @@ LOGGING = {
             'handlers': ['file_server', 'file_server_debug'],
         },
         'uws_client': {
+            'level': 'DEBUG',
             'handlers': ['file_client'],
         },
         'beaker': {
+            'level': 'DEBUG',
             'handlers': ['file_debug'],
         },
         'cork': {
+            'level': 'DEBUG',
             'handlers': ['file_debug'],
         },
         'prov': {
+            'level': 'DEBUG',
             'handlers': ['file_debug'],
         },
     }
