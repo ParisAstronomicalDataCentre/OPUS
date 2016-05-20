@@ -221,28 +221,19 @@ LOGGING = {
     },
     'loggers': {
         'uws_server': {
-            'handlers': ['file_server'],
-            'level': 'INFO',
-        },
-        'uws_server': {
-            'handlers': ['file_server_debug'],
-            'level': 'DEBUG',
+            'handlers': ['file_server', 'file_server_debug'],
         },
         'uws_client': {
             'handlers': ['file_client'],
-            'level': 'DEBUG',
         },
         'beaker': {
             'handlers': ['file_debug'],
-            'level': 'DEBUG',
         },
         'cork': {
             'handlers': ['file_debug'],
-            'level': 'DEBUG',
         },
         'prov': {
             'handlers': ['file_debug'],
-            'level': 'DEBUG',
         },
     }
 }
