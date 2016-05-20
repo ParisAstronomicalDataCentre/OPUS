@@ -565,7 +565,7 @@ def job_event():
     if not is_job_server(ip):
         abort_403()
     try:
-        user = set_user()
+        user = User('job_event', 'job_event')
         logger.info('from {} with POST={}'.format(ip, str(request.POST.dict)))
         if 'jobid' in request.POST:
             jobid_cluster = request.POST['jobid']
