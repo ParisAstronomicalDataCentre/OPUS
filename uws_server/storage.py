@@ -64,6 +64,8 @@ class SQLStorage(Storage):
     This class defines required functions executed by the UWS server:
     save(), read(), delete()
     """
+
+    # connector and cursor to be initialized by subclass
     conn = None
     cursor = None
 
