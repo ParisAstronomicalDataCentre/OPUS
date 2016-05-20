@@ -101,8 +101,8 @@ class Job(object):
             self.execution_duration = duration.total_seconds()
             self.error = None
             self.creation_time = now.strftime(DT_FMT)
-            self.start_time = ''  # now.strftime(DT_FMT)
-            self.end_time = ''  # (now + duration).strftime(DT_FMT)
+            self.start_time = None  # now.strftime(DT_FMT)
+            self.end_time = None  # (now + duration).strftime(DT_FMT)
             self.destruction_time = (now + destruction).strftime(DT_FMT)
             self.owner = user.name
             self.owner_pid = user.pid
@@ -119,8 +119,8 @@ class Job(object):
             self.execution_duration = None
             self.error = None
             self.creation_time = now.strftime(DT_FMT)
-            self.start_time = ''
-            self.end_time = ''
+            self.start_time = None
+            self.end_time = None
             self.destruction_time = None
             self.owner = None
             self.owner_pid = None
@@ -363,7 +363,7 @@ class Job(object):
                                ''.format(self.jobid, jobid_cluster))
         # Change phase to QUEUED
         now = dt.datetime.now()
-        duration = dt.timedelta(0, self.execution_duration)
+        # duration = dt.timedelta(0, self.execution_duration)
         destruction = dt.timedelta(DESTRUCTION_INTERVAL)
         self.phase = 'QUEUED'
         self.start_time = now.strftime(DT_FMT)
