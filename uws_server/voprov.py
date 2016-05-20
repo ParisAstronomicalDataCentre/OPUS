@@ -45,7 +45,7 @@ def job2prov(job):
     pdoc.set_default_namespace('https://voparis-uws-test.obspm.fr/get_jdl/' + job.jobname + '/#')
     pdoc.add_namespace('prov', 'http://www.w3.org/ns/prov#')
     pdoc.add_namespace('voprov', 'http://www.ivoa.net/ns/voprov#')
-    pdoc.add_namespace('cta', 'http://www.cta-observatory.org#')
+    pdoc.add_namespace('org', 'http://www.cta-observatory.org#')
     ns_uws_job = 'job'
     pdoc.add_namespace(ns_uws_job, 'https://voparis-uws-test.obspm.fr/rest/' + job.jobname + '/' + job.jobid + '/#')
     ns_uws_param = 'param'
@@ -63,7 +63,7 @@ def job2prov(job):
         'contact_email': job.jdl.content['contact_email'],
     })
     # Agent: owner of the job
-    agent = pdoc.agent(job.owner)
+    agent = pdoc.agent('org:' + job.owner)
     # ctac.add_attributes({
     #     'prov:label': 'CTA Consortium',
     #     'prov:type': 'Organization',

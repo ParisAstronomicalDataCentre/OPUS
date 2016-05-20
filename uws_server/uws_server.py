@@ -521,6 +521,7 @@ def maintenance(jobname):
         joblist = JobList(jobname, user, phase=['QUEUED', 'EXECUTING'])
         for j in joblist.jobs:
             job = Job(jobname, j['jobid'], user, get_attributes=True, get_parameters=False, get_results=False)
+            logger.info('Check status for {} {}'.format(jobname, job.jobid))
             phase = job.phase
             new_phase = job.get_status()  # will update the phase from manager
             if new_phase != phase:
