@@ -28,6 +28,7 @@ app = Bottle()
 
 
 def set_user():
+    global logger
     """Set user from request header"""
     # Use anonymous as default
     user_name = 'anonymous'
@@ -63,6 +64,8 @@ def set_user():
     #     logger.debug('Authorization: {}:{}'.format(user_name, user_pid))
     # Create user object
     user = User(user_name, user_pid)
+    # Add user name at the end of each log entry
+    logger = CustomAdapter(logger, {'username': user_name})
     return user
 
 

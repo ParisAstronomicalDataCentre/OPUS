@@ -244,5 +244,13 @@ LOGGING = {
     }
 }
 
+class CustomAdapter(logging.LoggerAdapter):
+    """
+    This adapter expects the passed in dict-like object to have a
+    'username' key, whose value in brackets is appended to the log message.
+    """
+    def process(self, msg, kwargs):
+        return '{} [{}]'.format(msg, self.extra['username']), kwargs
+
 logging.config.dictConfig(LOGGING)
 logger = logging.getLogger('uws_server')
