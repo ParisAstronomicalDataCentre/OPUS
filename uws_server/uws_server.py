@@ -533,7 +533,7 @@ def maintenance(jobname):
         abort_500_except()
     # Response
     response.content_type = 'text/plain; charset=UTF-8'
-    return 'Maintenance performed'
+    return 'Maintenance performed\n'
 
 
 # ----------
