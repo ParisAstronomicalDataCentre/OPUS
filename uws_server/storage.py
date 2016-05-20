@@ -136,18 +136,18 @@ class SQLStorage(Storage):
             if not row:
                 raise NotFoundWarning('Job "{}" NOT FOUND'.format(job.jobid))
             # creation_time = dt.datetime.strptime(job['creation_time'], DT_FMT)
-            start_time = dt.datetime.strptime(row['start_time'], DT_FMT)
-            end_time = dt.datetime.strptime(row['end_time'], DT_FMT)
-            destruction_time = dt.datetime.strptime(row['destruction_time'], DT_FMT)
+            # start_time = dt.datetime.strptime(row['start_time'], DT_FMT)
+            # end_time = dt.datetime.strptime(row['end_time'], DT_FMT)
+            # destruction_time = dt.datetime.strptime(row['destruction_time'], DT_FMT)
             job.jobname = row['jobname']
             job.phase = row['phase']
             job.quote = row['quote']
             job.execution_duration = row['execution_duration']
             job.error = row['error']
             # self.creation_time = creation_time.strftime(DT_FMT)
-            job.start_time = start_time.strftime(DT_FMT)
-            job.end_time = end_time.strftime(DT_FMT)
-            job.destruction_time = destruction_time.strftime(DT_FMT)
+            job.start_time = row['start_time']  # start_time.strftime(DT_FMT)
+            job.end_time = row['end_time']  # end_time.strftime(DT_FMT)
+            job.destruction_time = row['destruction_time']  # destruction_time.strftime(DT_FMT)
             job.owner = row['owner']
             job.owner_pid = row['owner_pid']
             job.run_id = row['run_id']
