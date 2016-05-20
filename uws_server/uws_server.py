@@ -65,7 +65,7 @@ def set_user():
     # Create user object
     user = User(user_name, user_pid)
     # Add user name at the end of each log entry
-    logger = CustomAdapter(logger, {'username': user_name})
+    logger = CustomAdapter(logger_init, {'username': user_name})
     return user
 
 

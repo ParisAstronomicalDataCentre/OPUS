@@ -253,4 +253,5 @@ class CustomAdapter(logging.LoggerAdapter):
         return '{} [{}]'.format(msg, self.extra['username']), kwargs
 
 logging.config.dictConfig(LOGGING)
-logger = logging.getLogger('uws_server')
+logger_init = logging.getLogger('uws_server')
+logger = logger_init
