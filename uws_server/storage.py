@@ -206,7 +206,7 @@ class SQLStorage(Storage):
                 where.append("owner='{}'".format(joblist.user.name))
                 where.append("owner_pid='{}'".format(joblist.user.pid))
         query += " WHERE " + " AND ".join(where)
-        query += " ORDER BY destruction_time DESC"
+        query += " ORDER BY destruction_time ASC"
         logger.debug('query = {}'.format(query))
         jobs = self.cursor.execute(query).fetchall()
         return jobs
