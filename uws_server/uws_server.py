@@ -1092,7 +1092,7 @@ def get_parameters(jobname, jobid):
         user = set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_parameters=True)
+        job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True)
         # Return job parameters in UWS format
         xml_out = job.parameters_to_xml()
         response.content_type = 'text/xml; charset=UTF-8'
@@ -1119,7 +1119,7 @@ def get_parameter(jobname, jobid, pname):
         user = set_user()
         logger.info('param=' + pname + ' ' + jobname + ' ' + jobid)
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_parameters=True)
+        job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True)
         # Check if param exists
         if pname not in job.parameters:
             raise storage.NotFoundWarning('Parameter "{}" NOT FOUND for job "{}"'.format(pname, jobid))
@@ -1190,7 +1190,7 @@ def get_results(jobname, jobid):
         user = set_user()
         logger.info(jobname + ' ' + jobid)
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_results=True)
+        job = Job(jobname, jobid, user, get_attributes=True, get_results=True)
         # Return job results in UWS format
         xml_out = job.results_to_xml()
         response.content_type = 'text/xml; charset=UTF-8'
@@ -1217,7 +1217,7 @@ def get_result(jobname, jobid, rname):
         user = set_user()
         logger.info('rname=' + rname + ' ' + jobname + ' ' + jobid)
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_parameters=True, get_results=True)
+        job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True, get_results=True)
         # Check if result exists
         if rname not in job.results:
             raise storage.NotFoundWarning('Result "{}" NOT FOUND for job "{}"'.format(rname, jobid))

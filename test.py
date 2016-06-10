@@ -19,7 +19,7 @@ MANAGER = 'Manager'
 
 from uws_server import uws_server
 
-test_app = TestApp(uws_server.app, extra_environ=dict(REMOTE_USER='test'))
+test_app = TestApp(uws_server.app)  # , extra_environ=dict(REMOTE_USER='test'))
 
 jobname = 'ctbin'
 
