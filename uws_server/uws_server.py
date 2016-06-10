@@ -414,7 +414,6 @@ def create_new_job_definition():
         with open(script_fname, 'w') as f:
             f.write(script.replace('\r', ''))
             logger.info('Job script save: ' + script_fname)
-            # TODO: send to work cluster?
     except:
         abort_500_except()
     # Response
@@ -590,7 +589,6 @@ def job_event():
                 new_phase = request.POST['phase']
                 msg = ''
                 if new_phase not in PHASES:
-                    # TODO: remove PHASE_CONVERT, will be handled by cluster uws_oncompletion.sh
                     if new_phase in PHASE_CONVERT:
                         msg = PHASE_CONVERT[new_phase]['msg']
                         new_phase = PHASE_CONVERT[new_phase]['phase']
@@ -608,10 +606,6 @@ def job_event():
                                 ''.format(job.jobname, job.jobid, cur_phase, new_phase, ip))
                 else:
                     raise UserWarning('Phase is already ' + new_phase)
-            elif 'result' in request.POST:
-                # TODO: get result from job.manager
-                # TODO: add result to job.results and save to storage
-                pass
             else:
                 raise UserWarning('Unknown event sent for job ' + job.jobid)
         else:
@@ -647,8 +641,9 @@ def get_joblist(jobname):
         logger.info('{} [{}]'.format(jobname, user))
         # TODO: add PHASE keyword (v1.1)
         if 'PHASE' in request.query:
-            pass
-        joblist = JobList(jobname, user)
+            joblist = JobList(jobname, user, phase=request.query.get('PHASE'))
+        else:
+            joblist = JobList(jobname, user)
         xml_out = joblist.to_xml()
         response.content_type = 'text/xml; charset=UTF-8'
         return xml_out
