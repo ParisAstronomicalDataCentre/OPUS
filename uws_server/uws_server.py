@@ -252,7 +252,7 @@ def get_prov(jobname, jobid):
     """
     try:
         user = set_user()
-        logger.info(jobname + ' ' + jobid)
+        logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True, get_results=True)
         # Get JDL
@@ -672,11 +672,12 @@ def create_job(jobname):
         # TODO: add attributes: execution_duration, mem, nodes, ntasks-per-node
         # Set new job description from POSTed parameters
         job = Job(jobname, jobid, user, from_post=request)
-        logger.info(jobname + ' ' + jobid + ' CREATED')
+        logger.info('{} {} CREATED [{}]'.format(jobname, jobid, user))
         # If PHASE=RUN, start job
         if request.forms.get('PHASE') == 'RUN':
             job.start()
-            logger.info(jobname + ' ' + jobid + ' started with jobid_cluster=' + str(job.jobid_cluster))
+            logger.info('{} {} started with jobid_cluster={} [{}]'
+                        ''.format(jobname, jobid, str(job.jobid_cluster), user))
     except UserWarning as e:
         abort_500(e.message)
     except CalledProcessError as e:
@@ -703,7 +704,7 @@ def get_job(jobname, jobid):
     """
     try:
         user = set_user()
-        # logger.info(jobname + ' ' + jobid)
+        # logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
         job = Job(jobname, jobid, user,
                   get_attributes=True, get_parameters=True, get_results=True,
@@ -718,7 +719,7 @@ def get_job(jobname, jobid):
                 change_status_event = threading.Event()
 
                 def receiver(sender, **kw):
-                    logger.info(sender + ' ' + kw.get('sig_jobid') + ' ' + kw.get('sig_phase'), extra={'user': user})
+                    logger.info('{} {} {} [{}]'.format(sender, kw.get('sig_jobid'), kw.get('sig_phase'), user)
                     # Set event if job changed
                     if (kw.get('sig_jobid') == jobid) and (kw.get('sig_phase') != job.phase):
                         change_status_event.set()
@@ -728,10 +729,10 @@ def get_job(jobname, jobid):
                 # Connect to signal
                 change_status_signal.connect(receiver)
                 # Wait for signal event
-                logger.info('Blocking for {} seconds'.format(wait_time), extra={'user': user})
+                logger.info('Blocking for {} seconds [{}]'.format(wait_time, user))
                 #time.sleep(wait_time)
                 event_is_set = change_status_event.wait(wait_time)
-                logger.info('Continue execution', extra={'user': user})
+                logger.info('Continue execution [{}]'.format(user))
                 change_status_signal.disconnect(receiver)
                 # Reload job if necessary
                 if event_is_set:
@@ -761,12 +762,12 @@ def delete_job(jobname, jobid):
     """
     try:
         user = set_user()
-        logger.info(jobname + ' ' + jobid)
+        logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_attributes=True)
         # Delete job
         job.delete()
-        logger.info(jobname + ' ' + jobid + ' DELETED')
+        logger.info('{} {} DELETED [{}]'.format(jobname, jobid, user))
     except JobAccessDenied as e:
         abort_403(e.message)
     except storage.NotFoundWarning as e:
@@ -784,13 +785,13 @@ def post_job(jobname, jobid):
     """Alias for delete_job() if ACTION=DELETE"""
     try:
         user = set_user()
-        logger.info('delete ' + jobname + ' ' + jobid)
+        logger.info('deleting {} {} [{}]'.format(jobname, jobid, user))
         if request.forms.get('ACTION') == 'DELETE':
             # Get job properties from DB
             job = Job(jobname, jobid, user, get_attributes=True)
             # Delete job
             job.delete()
-            logger.info(jobname + ' ' + jobid + ' DELETED')
+            logger.info('{} {} DELETED [{}]'.format(jobname, jobid, user))
         else:
             raise UserWarning('ACTION=DELETE is not specified in POST')
     except JobAccessDenied as e:
@@ -821,7 +822,7 @@ def get_phase(jobname, jobid):
     """
     try:
         user = set_user()
-        # logger.info(jobname + ' ' + jobid)
+        # logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_attributes=True)
         # Return value
@@ -848,7 +849,7 @@ def post_phase(jobname, jobid):
         user = set_user()
         if 'PHASE' in request.forms:
             new_phase = request.forms.get('PHASE')
-            logger.info('PHASE=' + new_phase + ' ' + jobname + ' ' + jobid)
+            logger.info('PHASE={} {} {} [{}]'.format(new_phase, jobname, jobid, user))
             if new_phase == 'RUN':
                 # Get job properties from DB
                 job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True)
@@ -857,13 +858,14 @@ def post_phase(jobname, jobid):
                     raise UserWarning('Job has to be in PENDING phase')
                 # Start job
                 job.start()
-                logger.info(jobname + ' ' + jobid + ' STARTED with jobid_cluster=' + str(job.jobid_cluster))
+                logger.info('{} {} STARTED with jobid_cluster={} [{}]'
+                            ''.format(jobname, jobid, str(job.jobid_cluster), user))
             elif new_phase == 'ABORT':
                 # Get job properties from DB
                 job = Job(jobname, jobid, user, get_attributes=True)
                 # Abort job
                 job.abort()
-                logger.info(jobname + ' ' + jobid + ' ABORTED by user ' + user.name)
+                logger.info('{} {} ABORTED [{}]'.format(jobname, jobid, user))
             else:
                 raise UserWarning('PHASE=' + new_phase + ' not expected')
         else:
@@ -897,7 +899,7 @@ def get_executionduration(jobname, jobid):
     """
     try:
         user = set_user()
-        logger.info(jobname + ' ' + jobid)
+        logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_attributes=True)
         # Return value
@@ -922,7 +924,7 @@ def post_executionduration(jobname, jobid):
     """
     try:
         user = set_user()
-        logger.info(jobname + ' ' + jobid)
+        logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get value from POST
         if 'EXECUTIONDURATION' not in request.forms:
             raise UserWarning('EXECUTIONDURATION keyword required')
@@ -938,7 +940,7 @@ def post_executionduration(jobname, jobid):
 
         # Change value
         job.set_attribute('execution_duration', new_value)
-        logger.info(jobname + ' ' + jobid + ' set execution_duration=' + str(new_value))
+        logger.info('{} {} set execution_duration= [{}]'.format(jobname, jobid, str(new_value), user))
     except JobAccessDenied as e:
         abort_403(e.message)
     except storage.NotFoundWarning as e:
@@ -966,7 +968,7 @@ def get_destruction(jobname, jobid):
     """
     try:
         user = set_user()
-        logger.info(jobname + ' ' + jobid)
+        logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_attributes=True)
         # Return value
@@ -991,7 +993,7 @@ def post_destruction(jobname, jobid):
     """
     try:
         user = set_user()
-        logger.info(jobname + ' ' + jobid)
+        logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get value from POST
         if 'DESTRUCTION' not in request.forms:
             raise UserWarning('DESTRUCTION keyword required')
@@ -1009,7 +1011,7 @@ def post_destruction(jobname, jobid):
         # Change value
         # job.set_destruction_time(new_value)
         job.set_attribute('destruction_time', new_value)
-        logger.info(jobname + ' ' + jobid + ' set destruction_time=' + new_value)
+        logger.info('{} {} set destruction_time={} [{}]'.format(jobname, jobid, new_value, user))
     except JobAccessDenied as e:
         abort_403(e.message)
     except storage.NotFoundWarning as e:
@@ -1038,7 +1040,7 @@ def get_error(jobname, jobid):
     """
     try:
         user = set_user()
-        logger.info(jobname + ' ' + jobid)
+        logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_attributes=True)
         # Return value
@@ -1067,7 +1069,7 @@ def get_quote(jobname, jobid):
     """
     try:
         user = set_user()
-        logger.info(jobname + ' ' + jobid)
+        logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_attributes=True)
         # Return value
@@ -1097,7 +1099,7 @@ def get_parameters(jobname, jobid):
     """
     try:
         user = set_user()
-        logger.info(jobname + ' ' + jobid)
+        logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True)
         # Return job parameters in UWS format
@@ -1152,7 +1154,7 @@ def post_parameter(jobname, jobid, pname):
     """
     try:
         user = set_user()
-        logger.info('pname=' + pname + ' ' + jobname + ' ' + jobid)
+        logger.info('pname={} {} {} [{}]'.format(pname, jobname, jobid, user))
         # Get value from POST
         if 'VALUE' not in request.forms:
             raise UserWarning('VALUE keyword required')
@@ -1163,7 +1165,7 @@ def post_parameter(jobname, jobid, pname):
         # Change value
         if job.phase == 'PENDING':
             job.set_parameter(pname, new_value)
-            logger.info(jobname + ' ' + jobid + ' set parameter ' + pname + '=' + new_value)
+            logger.info('{} {} set parameter {}={} [{}]'.format(jobname, jobid, pname, new_value, user))
         else:
             raise UserWarning('Job "{}" must be in PENDING state (currently {}) to change parameter'
                               ''.format(jobid, job.phase))
@@ -1195,7 +1197,7 @@ def get_results(jobname, jobid):
     """
     try:
         user = set_user()
-        logger.info(jobname + ' ' + jobid)
+        logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_attributes=True, get_results=True)
         # Return job results in UWS format
@@ -1222,7 +1224,7 @@ def get_result(jobname, jobid, rname):
     """
     try:
         user = set_user()
-        logger.info('rname=' + rname + ' ' + jobname + ' ' + jobid)
+        logger.info('rname={} {} {} [{}]'.format(rname, jobname, jobid, user))
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True, get_results=True)
         # Check if result exists
@@ -1261,7 +1263,7 @@ def get_result_file(jobid, rname, rfname):
         #response.content_type = 'text/plain; charset=UTF-8'
         #return str(job.results[result]['url'])
         media_type = job.results[rname]['mediaType']
-        logger.debug('{} {} {} {} {}'.format(job.jobname, jobid, rname, rfname, media_type))
+        logger.debug('{} {} {} {} {} [{}]'.format(job.jobname, jobid, rname, rfname, media_type, user))
         response.set_header('Content-type', media_type)
         if any(x in media_type for x in ['text', 'xml', 'json']):
             return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid),
@@ -1292,7 +1294,7 @@ def get_owner(jobname, jobid):
     """
     try:
         user = set_user()
-        logger.info(jobname + ' ' + jobid)
+        logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_attributes=True)
         # Return value
