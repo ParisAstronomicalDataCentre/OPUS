@@ -641,7 +641,7 @@ def get_joblist(jobname):
         # TODO: add PHASE keyword (v1.1)
         if 'PHASE' in request.query:
             phase = request.query.get('PHASE')
-            logger.info(request.query)
+            logger.info(str(request.query))
             logger.info('{} PHASE={} [{}]'.format(phase, jobname, user))
             joblist = JobList(jobname, user, phase=phase)
         else:
