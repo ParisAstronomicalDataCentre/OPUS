@@ -10,7 +10,7 @@ import shutil
 import urllib
 import datetime as dt
 import xml.etree.ElementTree as ETree
-
+from blinker import signal
 import uws_jdl
 import storage
 import managers
@@ -545,9 +545,14 @@ class Job(object):
             # Run case
             cases[new_phase](self, error)
             # Update phase
+            previous_phase = self.phase
             self.phase = new_phase
             # Save job description
             self.storage.save(self, save_results=True)
+            # Send signal (e.g. if WAIT command expecting signal)
+            change_status_signal = signal('job_status')
+            result = change_status_signal.send('change_status', sig_jobid=self.jobid, sig_phase=self.phase)
+            logger.info('Signal sent for status change ({} --> {}). Results: \n{}'.format(previous_phase, self.phase, str(result)))
         else:
             raise UserWarning('Job {} cannot be updated to {} while in phase {}'
                               ''.format(self.jobid, new_phase, self.phase))

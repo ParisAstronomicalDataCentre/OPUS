@@ -137,6 +137,13 @@ PHASES = [
     'SUSPENDED',
 ]
 
+# Active phases (evolution expected for job)
+ACTIVE_PHASES = [
+    'PENDING',
+    'QUEUED',
+    'EXECUTING',
+]
+
 # Terminal phases (no evolution expected for job)
 TERMINAL_PHASES = [
     'COMPLETED',

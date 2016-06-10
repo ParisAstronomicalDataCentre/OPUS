@@ -9,6 +9,7 @@ import traceback
 import glob
 import uuid
 import collections
+import time
 from subprocess import CalledProcessError
 
 from bottle import Bottle, request, response, abort, redirect, run, static_file
@@ -639,6 +640,9 @@ def get_joblist(jobname):
     try:
         user = set_user()
         # logger.info(jobname)
+        # TODO: add PHASE keyword (v1.1)
+        if 'PHASE' in request.query:
+            pass
         joblist = JobList(jobname, user)
         xml_out = joblist.to_xml()
         response.content_type = 'text/xml; charset=UTF-8'
@@ -682,6 +686,7 @@ def create_job(jobname):
 # /<jobname>/<jobid>
 
 
+
 @app.route('/rest/<jobname>/<jobid>')
 def get_job(jobname, jobid):
     """Get description for job <jobid>
@@ -697,6 +702,22 @@ def get_job(jobname, jobid):
         # logger.info(jobname + ' ' + jobid)
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True, get_results=True)
+        # UWS v1.1 blocking behaviour
+        if job.phase in ACTIVE_PHASES:
+            client_phase = request.query.get('PHASE', False)
+            wait_time = request.query.get('WAIT', False)
+            if (client_phase == job.phase) and (wait_time > 0):
+                # TODO: use blinker to send/receive signals
+                change_status_signal = signal('job_status')
+                def receiver(sender, **kw):
+                    logger.info("Got a signal sent by %r" % sender)
+                    logger.info(jobname + ' ' + jobid)
+                    logger.info(jobname + ' ' + kw.get('sig_jobid') + ' ' + kw.get('sig_phase'))
+                    # do something...
+                    # return updated job
+                change_status_signal.connect(receiver)
+                time.sleep(wait_time)
+                change_status_signal.disconnect(receiver)
         # Return job description in UWS format
         xml_out = job.to_xml()
         response.content_type = 'text/xml; charset=UTF-8'
