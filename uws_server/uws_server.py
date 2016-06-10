@@ -713,11 +713,12 @@ def get_job(jobname, jobid):
                 change_status_event = threading.Event()
 
                 def receiver(sender, **kw):
-                    logger.info("Got a signal sent by %r" % sender)
-                    logger.info(jobname + ' ' + jobid)
                     logger.info(jobname + ' ' + kw.get('sig_jobid') + ' ' + kw.get('sig_phase'))
-                    # Set event
-                    change_status_event.set()
+                    # Set event if job changed
+                    if (kw.get('sig_jobid') == jobid) and (kw.get('sig_phase') != job.phase):
+                        change_status_event.set()
+                        return 'Received and job updated'
+                    return 'Received but no job concerned'
 
                 # Connect to signal
                 change_status_signal.connect(receiver)
