@@ -254,7 +254,7 @@ def get_prov(jobname, jobid):
         user = set_user()
         logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True, get_results=True)
+        job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True, get_results=True, check_user=False)
         # Get JDL
         job.jdl.read(jobname)
         # Return job provenance
