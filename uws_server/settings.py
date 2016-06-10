@@ -209,13 +209,13 @@ LOGGING = {
             'level': 'INFO',
             'class': 'logging.FileHandler',
             'filename': LOG_PATH + '/server' + LOG_FILE_SUFFIX + '.log',
-            'formatter': 'with_user'
+            'formatter': 'default'
         },
         'file_server_debug': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': LOG_PATH + '/server' + LOG_FILE_SUFFIX + '_debug.log',
-            'formatter': 'with_user'
+            'formatter': 'default'
         },
         'file_client': {
             'level': 'DEBUG',
