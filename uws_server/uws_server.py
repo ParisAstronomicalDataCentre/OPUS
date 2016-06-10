@@ -7,6 +7,7 @@
 
 import traceback
 import glob
+import re
 import uuid
 import collections
 import threading
@@ -640,11 +641,10 @@ def get_joblist(jobname):
         user = set_user()
         # TODO: add PHASE keyword (v1.1)
         if 'PHASE' in request.query:
-            # Check if multiple PHASE keywords are sent
-            logger.info(request.query_string)
-            phase = request.query.get('PHASE')
+            # Allow for multiple PHASE keywords to be sent
+            phase = re.split('&?PHASE=', request.query_string)[1:]
             logger.info('{} PHASE={} [{}]'.format(jobname, phase, user))
-            joblist = JobList(jobname, user, phase=[phase])
+            joblist = JobList(jobname, user, phase=phase)
         else:
             logger.info('{} [{}]'.format(jobname, user))
             joblist = JobList(jobname, user)
