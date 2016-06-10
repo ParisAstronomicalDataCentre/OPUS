@@ -364,6 +364,7 @@ class Job(object):
             raise RuntimeError('Bad jobid_cluster returned for job {}:\njobid_cluster:\n{}'
                                ''.format(self.jobid, jobid_cluster))
         # Change phase to QUEUED
+        previous_phase = self.phase
         self.phase = 'QUEUED'
         # No need to change times: job not started yet
         # now = dt.datetime.now()
@@ -375,6 +376,10 @@ class Job(object):
         self.jobid_cluster = jobid_cluster
         # Save changes to storage
         self.storage.save(self)
+        # Send signal (e.g. if WAIT command expecting signal)
+        change_status_signal = signal('job_status')
+        result = change_status_signal.send('change_status', sig_jobid=self.jobid, sig_phase=self.phase)
+        logger.info('Signal sent for status change ({} --> {}). Results: \n{}'.format(previous_phase, self.phase, str(result)))
 
     def abort(self):
         """Abort job
