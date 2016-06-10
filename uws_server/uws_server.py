@@ -638,11 +638,13 @@ def get_joblist(jobname):
     """
     try:
         user = set_user()
-        logger.info('{} [{}]'.format(jobname, user))
         # TODO: add PHASE keyword (v1.1)
         if 'PHASE' in request.query:
-            joblist = JobList(jobname, user, phase=request.query.get('PHASE'))
+            phase = request.query.get('PHASE')
+            logger.info('PHASE={} {} [{}]'.format(phase, jobname, user))
+            joblist = JobList(jobname, user, phase=phase)
         else:
+            logger.info('{} [{}]'.format(jobname, user))
             joblist = JobList(jobname, user)
         xml_out = joblist.to_xml()
         response.content_type = 'text/xml; charset=UTF-8'
