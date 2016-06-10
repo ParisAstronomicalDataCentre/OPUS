@@ -701,7 +701,7 @@ def get_job(jobname, jobid):
         user = set_user()
         # logger.info(jobname + ' ' + jobid)
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True, get_results=True)
+        job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True, get_results=True, check_user=False)
         # UWS v1.1 blocking behaviour
         if job.phase in ACTIVE_PHASES:
             client_phase = request.query.get('PHASE', False)
