@@ -644,7 +644,7 @@ def get_joblist(jobname):
     """
     try:
         user = set_user()
-        # logger.info(jobname)
+        logger.info('{} [{}]'.format(jobname, user))
         # TODO: add PHASE keyword (v1.1)
         if 'PHASE' in request.query:
             pass
@@ -719,20 +719,19 @@ def get_job(jobname, jobid):
                 change_status_event = threading.Event()
 
                 def receiver(sender, **kw):
-                    logger.info('{} {} {} [{}]'.format(sender, kw.get('sig_jobid'), kw.get('sig_phase'), user))
+                    logger.info('{}: {} is now {} [{}]'.format(sender, kw.get('sig_jobid'), kw.get('sig_phase'), user))
                     # Set event if job changed
                     if (kw.get('sig_jobid') == jobid) and (kw.get('sig_phase') != job.phase):
                         change_status_event.set()
-                        return 'Received and job updated'
-                    return 'Received but no job concerned'
+                        return '{}: signal received and job updated'.format(jobid)
+                    return '{}: signal received but job not concerned'.format(jobid)
 
                 # Connect to signal
                 change_status_signal.connect(receiver)
                 # Wait for signal event
-                logger.info('Blocking for {} seconds [{}]'.format(wait_time, user))
-                #time.sleep(wait_time)
+                logger.info('{}: Blocking for {} seconds [{}]'.format(jobid, wait_time, user))
                 event_is_set = change_status_event.wait(wait_time)
-                logger.info('Continue execution [{}]'.format(user))
+                logger.info('{}: Continue execution [{}]'.format(jobid, user))
                 change_status_signal.disconnect(receiver)
                 # Reload job if necessary
                 if event_is_set:
@@ -824,7 +823,7 @@ def get_phase(jobname, jobid):
         user = set_user()
         # logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True)
+        job = Job(jobname, jobid, user, get_attributes=True, check_user=False)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return job.phase
@@ -901,7 +900,7 @@ def get_executionduration(jobname, jobid):
         user = set_user()
         logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True)
+        job = Job(jobname, jobid, user, get_attributes=True, check_user=False)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return str(job.execution_duration)
@@ -970,7 +969,7 @@ def get_destruction(jobname, jobid):
         user = set_user()
         logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True)
+        job = Job(jobname, jobid, user, get_attributes=True, check_user=False)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return job.destruction_time
@@ -1042,7 +1041,7 @@ def get_error(jobname, jobid):
         user = set_user()
         logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True)
+        job = Job(jobname, jobid, user, get_attributes=True, check_user=False)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return job.error
@@ -1071,7 +1070,7 @@ def get_quote(jobname, jobid):
         user = set_user()
         logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True)
+        job = Job(jobname, jobid, user, get_attributes=True, check_user=False)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return str(job.quote)
@@ -1101,7 +1100,7 @@ def get_parameters(jobname, jobid):
         user = set_user()
         logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True)
+        job = Job(jobname, jobid, user, get_parameters=True, check_user=False)
         # Return job parameters in UWS format
         xml_out = job.parameters_to_xml()
         response.content_type = 'text/xml; charset=UTF-8'
@@ -1128,7 +1127,7 @@ def get_parameter(jobname, jobid, pname):
         user = set_user()
         logger.info('param=' + pname + ' ' + jobname + ' ' + jobid)
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True)
+        job = Job(jobname, jobid, user, get_parameters=True, check_user=False)
         # Check if param exists
         if pname not in job.parameters:
             raise storage.NotFoundWarning('Parameter "{}" NOT FOUND for job "{}"'.format(pname, jobid))
@@ -1199,7 +1198,7 @@ def get_results(jobname, jobid):
         user = set_user()
         logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True, get_results=True)
+        job = Job(jobname, jobid, user, get_results=True, check_user=False)
         # Return job results in UWS format
         xml_out = job.results_to_xml()
         response.content_type = 'text/xml; charset=UTF-8'
@@ -1226,7 +1225,7 @@ def get_result(jobname, jobid, rname):
         user = set_user()
         logger.info('rname={} {} {} [{}]'.format(rname, jobname, jobid, user))
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True, get_results=True)
+        job = Job(jobname, jobid, user, get_results=True, check_user=False)
         # Check if result exists
         if rname not in job.results:
             raise storage.NotFoundWarning('Result "{}" NOT FOUND for job "{}"'.format(rname, jobid))
@@ -1254,7 +1253,7 @@ def get_result_file(jobid, rname, rfname):
     try:
         user = set_user()
         # Get job properties from DB
-        job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True, check_user=False)
+        job = Job('', jobid, user, get_results=True, check_user=False)
         # Check if result exists
         if rname not in job.results:
             raise storage.NotFoundWarning('Result "{}" NOT FOUND for job "{}"'.format(rname, jobid))
@@ -1296,7 +1295,7 @@ def get_owner(jobname, jobid):
         user = set_user()
         logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True)
+        job = Job(jobname, jobid, user, get_attributes=True, check_user=False)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return job.owner
