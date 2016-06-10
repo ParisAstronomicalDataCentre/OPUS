@@ -638,11 +638,11 @@ def get_joblist(jobname):
     """
     try:
         user = set_user()
+        logger.info({k: request.query[k] for k in request.query})
+        logger.info({k: request.GET[k] for k in request.GET})
         # TODO: add PHASE keyword (v1.1)
         if 'PHASE' in request.query:
             phase = request.query.get('PHASE')
-            logger.info({k: request.query[k] for k in request.query})
-            logger.info({k: request.GET[k] for k in request.GET})
             logger.info('{} PHASE={} [{}]'.format(jobname, phase, user))
             joblist = JobList(jobname, user, phase=phase)
         else:
