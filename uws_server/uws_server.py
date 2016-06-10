@@ -9,7 +9,6 @@ import traceback
 import glob
 import uuid
 import collections
-import time
 import threading
 from subprocess import CalledProcessError
 
@@ -41,7 +40,7 @@ def set_user():
         if not user_pid:
             user_pid = 'remote_user'
         # logger.debug('{}:{}'.format(user_name, user_pid))
-    ### Set user from GET
+    # # Set user from GET
     # if 'user' in request.GET:
     #     user_name = request.GET['user']
     #     if 'user_pid' in request.GET:
@@ -49,13 +48,13 @@ def set_user():
     #     else:
     #         user_pid = request.GET['user']
     #     logger.debug('user information from GET ({}:{})'.format(user_name, user_pid))
-    ### Set user from REMOTE_USER if not empty
+    # # Set user from REMOTE_USER if not empty
     # remote_user = request.environ.get('REMOTE_USER', '')
     # if remote_user:
     #     user_name = remote_user
     #     user_pid = remote_user
     #     logger.debug('REMOTE_USER is set: {}'.format(user_name))
-    ### Use Basic access authentication
+    # # Use Basic access authentication
     # auth = request.headers.get('Authorization')
     # Using WSGI, the header is changed to HTTP_AUTHORIZATION
     # if not auth:
@@ -355,6 +354,7 @@ def create_new_job_definition():
     """Use posted parameters to create a new JDL file for the given job"""
     # No need to authenticate, users can propose new jobs that will have to be validated
     # Check if client is trusted? not really needed
+    jobname = ''
     ip = request.environ.get('REMOTE_ADDR', '')
     if not is_client_trusted(ip):
         abort_403()
@@ -396,15 +396,14 @@ def create_new_job_definition():
         job_def = {
             'parameters': params,
             'results': results,
+            'description': request.forms.get('description'),
+            'url': request.forms.get('url'),
+            'contact_name': request.forms.get('contact_name'),
+            'contact_affil': request.forms.get('contact_affil'),
+            'contact_email': request.forms.get('contact_email'),
+            'executionduration': request.forms.get('executionduration'),
+            'quote': request.forms.get('quote'),
         }
-        # Add job attributes
-        job_def['description'] = request.forms.get('description')
-        job_def['url'] = request.forms.get('url')
-        job_def['contact_name'] = request.forms.get('contact_name')
-        job_def['contact_affil'] = request.forms.get('contact_affil')
-        job_def['contact_email'] = request.forms.get('contact_email')
-        job_def['executionduration'] = request.forms.get('executionduration')
-        job_def['quote'] = request.forms.get('quote')
         # Create WADL file from job_jdl
         jdl = uws_jdl.__dict__[JDL]()
         jdl.content = job_def
@@ -516,6 +515,7 @@ def maintenance(jobname):
         403 Forbidden (if not localhost)
         500 Internal Server Error (on error)
     """
+    global logger
     if not is_localhost():
         abort_403()
     try:
@@ -527,16 +527,19 @@ def maintenance(jobname):
         for j in joblist.jobs:
             # For each job:
             now = dt.datetime.now()
-            job = Job(jobname, j['jobid'], user, get_attributes=True, get_parameters=False, get_results=False, check_user=False)
+            job = Job(jobname, j['jobid'], user,
+                      get_attributes=True, get_parameters=False, get_results=False,
+                      check_user=False)
             # TODO: Check consistency of dates (destruction_time > end_time > start_time > creation_time)
-            if not job.start_time and job.phase not in ['PENDING','QUEUED']:
+            if not job.start_time and job.phase not in ['PENDING', 'QUEUED']:
                 logger.warning('Start time not set for {} {}'.format(jobname, job.jobid))
             # TODO: Update status if phase is not PENDING or terminal (or for all jobs?)
-            if job.phase in ['QUEUED', 'EXECUTING','UNKNOWN']:
+            if job.phase in ['QUEUED', 'EXECUTING', 'UNKNOWN']:
                 phase = job.phase
                 new_phase = job.get_status()  # will update the phase from manager
                 if new_phase != phase:
-                    logger.warning('Status has changed for {} {}: {} --> {}'.format(jobname, job.jobid, phase, new_phase))
+                    logger.warning('Status has changed for {} {}: {} --> {}'
+                                   ''.format(jobname, job.jobid, phase, new_phase))
             # TODO: If job is SUSPENDED, try to restart the job
             # TODO: If destruction time is passed, delete or archive job
             destruction_time = dt.datetime.strptime(job.destruction_time, DT_FMT)
@@ -569,6 +572,7 @@ def job_event():
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
+    global logger
     ip = request.environ.get('REMOTE_ADDR', '')
     if not is_job_server(ip):
         abort_403()
@@ -687,7 +691,6 @@ def create_job(jobname):
 # /<jobname>/<jobid>
 
 
-
 @app.route('/rest/<jobname>/<jobid>')
 def get_job(jobname, jobid):
     """Get description for job <jobid>
@@ -702,7 +705,9 @@ def get_job(jobname, jobid):
         user = set_user()
         # logger.info(jobname + ' ' + jobid)
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True, get_results=True, check_user=False)
+        job = Job(jobname, jobid, user,
+                  get_attributes=True, get_parameters=True, get_results=True,
+                  check_user=False)
         # UWS v1.1 blocking behaviour
         if job.phase in ACTIVE_PHASES:
             client_phase = request.query.get('PHASE', job.phase)
@@ -713,7 +718,7 @@ def get_job(jobname, jobid):
                 change_status_event = threading.Event()
 
                 def receiver(sender, **kw):
-                    logger.info(jobname + ' ' + kw.get('sig_jobid') + ' ' + kw.get('sig_phase'))
+                    logger.info(sender + ' ' + kw.get('sig_jobid') + ' ' + kw.get('sig_phase'))
                     # Set event if job changed
                     if (kw.get('sig_jobid') == jobid) and (kw.get('sig_phase') != job.phase):
                         change_status_event.set()
@@ -730,7 +735,9 @@ def get_job(jobname, jobid):
                 change_status_signal.disconnect(receiver)
                 # Reload job if necessary
                 if event_is_set:
-                    job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True, get_results=True, check_user=False)
+                    job = Job(jobname, jobid, user,
+                              get_attributes=True, get_parameters=True, get_results=True,
+                              check_user=False)
         # Return job description in UWS format
         xml_out = job.to_xml()
         response.content_type = 'text/xml; charset=UTF-8'
@@ -1257,9 +1264,11 @@ def get_result_file(jobid, rname, rfname):
         logger.debug('{} {} {} {} {}'.format(job.jobname, jobid, rname, rfname, media_type))
         response.set_header('Content-type', media_type)
         if any(x in media_type for x in ['text', 'xml', 'json']):
-            return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid), mimetype=media_type)
+            return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid),
+                               mimetype=media_type)
         else:
-            return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid), mimetype=media_type, download=rfname)
+            return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid),
+                               mimetype=media_type, download=rfname)
     except JobAccessDenied as e:
         abort_403(e.message)
     except storage.NotFoundWarning as e:

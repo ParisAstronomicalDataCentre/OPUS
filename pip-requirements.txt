@@ -1,6 +1,7 @@
 bottle
 beaker
 bottle-cork
+blinker
 requests
 webtest
 prov

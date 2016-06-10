@@ -197,6 +197,9 @@ LOGGING = {
         'default': {
             'format': '[%(asctime)s] %(levelname)s %(funcName)s: %(message)s'
         },
+        'with_user': {
+            'format': '[%(asctime)s] %(levelname)s %(funcName)s: %(message)s [%(user)s]'
+        },
         'module': {
             'format': '[%(asctime)s] %(levelname)s %(module)s.%(funcName)s: %(message)s'
         },
@@ -206,13 +209,13 @@ LOGGING = {
             'level': 'INFO',
             'class': 'logging.FileHandler',
             'filename': LOG_PATH + '/server' + LOG_FILE_SUFFIX + '.log',
-            'formatter': 'default'
+            'formatter': 'with_user'
         },
         'file_server_debug': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': LOG_PATH + '/server' + LOG_FILE_SUFFIX + '_debug.log',
-            'formatter': 'default'
+            'formatter': 'with_user'
         },
         'file_client': {
             'level': 'DEBUG',

@@ -18,4 +18,5 @@ setup(
     author='Mathieu Servillat',
     author_email='mathieu.servillat@obspm.fr',
     license='MIT',
+    requires=['bottle', 'beaker', 'bottle-cork', 'blinker', 'requests', 'webtest', 'prov', 'pydotplus']
 )
