@@ -704,7 +704,7 @@ def get_job(jobname, jobid):
         job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True, get_results=True, check_user=False)
         # UWS v1.1 blocking behaviour
         if job.phase in ACTIVE_PHASES:
-            client_phase = request.query.get('PHASE', False)
+            client_phase = request.query.get('PHASE', job.phase)
             wait_time = request.query.get('WAIT', False)
             if (client_phase == job.phase) and (wait_time > 0):
                 # TODO: use blinker to send/receive signals
