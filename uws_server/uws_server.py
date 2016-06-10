@@ -718,6 +718,7 @@ def get_job(jobname, jobid):
                 change_status_signal.connect(receiver)
                 logger.info('Blocking for {} seconds'.format(wait_time))
                 time.sleep(wait_time)
+                logger.info('Continue execution')
                 change_status_signal.disconnect(receiver)
         # Return job description in UWS format
         xml_out = job.to_xml()
