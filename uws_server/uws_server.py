@@ -66,7 +66,7 @@ def set_user():
     # Create user object
     user = User(user_name, user_pid)
     # Add user name at the end of each log entry
-    logger = CustomAdapter(logger_init, {'username': user_name})
+    #logger = CustomAdapter(logger_init, {'username': user_name})
     return user
 
 
@@ -718,7 +718,7 @@ def get_job(jobname, jobid):
                 change_status_event = threading.Event()
 
                 def receiver(sender, **kw):
-                    logger.info(sender + ' ' + kw.get('sig_jobid') + ' ' + kw.get('sig_phase'), extra={'user': user.name})
+                    logger.info(sender + ' ' + kw.get('sig_jobid') + ' ' + kw.get('sig_phase'), extra={'user': user})
                     # Set event if job changed
                     if (kw.get('sig_jobid') == jobid) and (kw.get('sig_phase') != job.phase):
                         change_status_event.set()
@@ -728,10 +728,10 @@ def get_job(jobname, jobid):
                 # Connect to signal
                 change_status_signal.connect(receiver)
                 # Wait for signal event
-                logger.info('Blocking for {} seconds'.format(wait_time))
+                logger.info('Blocking for {} seconds'.format(wait_time), extra={'user': user})
                 #time.sleep(wait_time)
                 event_is_set = change_status_event.wait(wait_time)
-                logger.info('Continue execution')
+                logger.info('Continue execution', extra={'user': user})
                 change_status_signal.disconnect(receiver)
                 # Reload job if necessary
                 if event_is_set:
