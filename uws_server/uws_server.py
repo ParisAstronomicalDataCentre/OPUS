@@ -719,7 +719,7 @@ def get_job(jobname, jobid):
                 change_status_event = threading.Event()
 
                 def receiver(sender, **kw):
-                    logger.info('{} {} {} [{}]'.format(sender, kw.get('sig_jobid'), kw.get('sig_phase'), user)
+                    logger.info('{} {} {} [{}]'.format(sender, kw.get('sig_jobid'), kw.get('sig_phase'), user))
                     # Set event if job changed
                     if (kw.get('sig_jobid') == jobid) and (kw.get('sig_phase') != job.phase):
                         change_status_event.set()
