@@ -716,6 +716,7 @@ def get_job(jobname, jobid):
                     # do something...
                     # return updated job
                 change_status_signal.connect(receiver)
+                logger.info('Blocking for {} seconds'.format(wait_time))
                 time.sleep(wait_time)
                 change_status_signal.disconnect(receiver)
         # Return job description in UWS format
