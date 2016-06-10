@@ -639,15 +639,16 @@ def get_joblist(jobname):
     """
     try:
         user = set_user()
-        # TODO: add PHASE keyword (v1.1)
+        logger.info('{} [{}]'.format(jobname, user))
+        # UWS v1.1 PHASE keyword
+        phase = None
         if 'PHASE' in request.query:
             # Allow for multiple PHASE keywords to be sent
             phase = re.split('&?PHASE=', request.query_string)[1:]
-            logger.info('{} PHASE={} [{}]'.format(jobname, phase, user))
-            joblist = JobList(jobname, user, phase=phase)
-        else:
-            logger.info('{} [{}]'.format(jobname, user))
-            joblist = JobList(jobname, user)
+
+        # TODO: UWS v1.1 AFTER keyword
+        # TODO: UWS v1.1 LAST keyword
+        joblist = JobList(jobname, user, phase=phase)
         xml_out = joblist.to_xml()
         response.content_type = 'text/xml; charset=UTF-8'
         return xml_out
