@@ -10,6 +10,7 @@ import glob
 import uuid
 import collections
 import time
+import threading
 from subprocess import CalledProcessError
 
 from bottle import Bottle, request, response, abort, redirect, run, static_file
@@ -709,17 +710,26 @@ def get_job(jobname, jobid):
             if (client_phase == job.phase) and (wait_time > 0):
                 # TODO: use blinker to send/receive signals
                 change_status_signal = signal('job_status')
+                change_status_event = threading.Event()
+
                 def receiver(sender, **kw):
                     logger.info("Got a signal sent by %r" % sender)
                     logger.info(jobname + ' ' + jobid)
                     logger.info(jobname + ' ' + kw.get('sig_jobid') + ' ' + kw.get('sig_phase'))
-                    # do something...
-                    # return updated job
+                    # Set event
+                    change_status_event.set()
+
+                # Connect to signal
                 change_status_signal.connect(receiver)
+                # Wait for signal event
                 logger.info('Blocking for {} seconds'.format(wait_time))
-                time.sleep(wait_time)
+                #time.sleep(wait_time)
+                event_is_set = change_status_event.wait(wait_time)
                 logger.info('Continue execution')
                 change_status_signal.disconnect(receiver)
+                # Reload job if necessary
+                if event_is_set:
+                    job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True, get_results=True, check_user=False)
         # Return job description in UWS format
         xml_out = job.to_xml()
         response.content_type = 'text/xml; charset=UTF-8'
