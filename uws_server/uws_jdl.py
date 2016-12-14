@@ -57,6 +57,10 @@ class JDLFile(object):
     """
     content = {}
     extension = ''
+    jdl_path = '.'
+
+    def _get_filename(self, jobname):
+        return '{}/{}{}'.format(self.jdl_path, jobname, self.extension)
 
     def save(self, jobname):
         """Save job description to file"""
@@ -65,6 +69,96 @@ class JDLFile(object):
     def read(self, jobname):
         """Read job description from file"""
         pass
+
+
+class VOTFile(JDLFile):
+
+    def __init__(self, jdl_path=JDL_PATH):
+        self.extension = '.xml'
+        self.jdl_path = jdl_path
+        self.xmlns_uris = {
+            'xmlns': 'http://www.ivoa.net/xml/VOTable/v1.3',
+            'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+            'xsi:schemaLocation':
+                'http://www.ivoa.net/xml/VOTable/v1.3 http://www.ivoa.net/xml/VOTable/v1.3',
+        }
+
+    def save(self, jobname):
+        """Save job description to VOTable file"""
+        raw_jobname = jobname
+        raw_jobname = raw_jobname.split('/')[-1]  # remove new/ prefix
+        # Prepare blocks
+        vot_params = []
+        vot_used = []
+        vot_wgb = []
+        for pname, p in self.content['parameters'].iteritems():
+            # pline = '<param style="query" name="{}" type="{}" required="{}" default="{}"><doc>{}</doc></param>' \
+            #        ''.format(pname, p['type'], p['required'], p['default'], p.get('description', ''))
+            param_attrib = {
+                'name': pname,
+                'datatype': p['type'],
+                'value': p['default']
+            }
+#                'required': str(p['required']),
+#                'mediaType': 'text/plain'
+            param = ETree.Element('PARAM', attrib=param_attrib)
+            ETree.SubElement(param, 'DESCRIPTION').text = p.get('description', '')
+            vot_params.append(param)
+            # TODO: if it is an entity, list it in Used or WasGeneratedBy groups
+        # Prepare result block
+        jdl_ropts = []
+        for rname, r in self.content['results'].iteritems():
+            # rline = '<option value="{}" mediaType="{}" default="{}"><doc>{}</doc></option>' \
+            #         ''.format(rname, r['mediaType'], r['default'], r.get('description', ''))
+            roelt = ETree.Element('option', attrib={
+                'value': rname,
+                'mediaType': r['mediaType'],
+                'default': r['default']
+            })
+            ETree.SubElement(roelt, 'doc').text = r.get('description', '')
+            jdl_ropts.append(roelt)
+        # Read WADL UWS template as XML Tree
+        filename = '{}/uws_template.wadl'.format(JDL_PATH)
+        with open(filename, 'r') as f:
+            jdl_string = f.read()
+        jdl_tree = ETree.fromstring(jdl_string)
+        xmlns = '{' + jdl_tree.nsmap[None] + '}'
+        # Insert raw_jobname as the resource path
+        joblist_block = jdl_tree.find(".//{}resource[@id='joblist']".format(xmlns))
+        joblist_block.set('path', raw_jobname)
+        joblist_block.set('url', self.content['url'])
+        joblist_block.set('contact_name', self.content['contact_name'])
+        joblist_block.set('contact_affil', self.content['contact_affil'])
+        joblist_block.set('contact_email', self.content['contact_email'])
+        # Insert job description
+        job_list_description_block = jdl_tree.find(".//{}doc[@title='description']".format(xmlns))
+        job_list_description_block.text = self.content['description'].decode()
+        # Insert parameters
+        params_block = {}
+        for block in ['create_job_parameters', 'control_job_parameters', 'set_job_parameters']:
+            params_block[block] = jdl_tree.find(".//{}request[@id='{}']".format(xmlns, block))
+            for pelt in jdl_params:
+                params_block[block].append(copy.copy(pelt))
+        # Insert parameters as options
+        param_opts_block = jdl_tree.find(".//{}param[@name='parameter-name']".format(xmlns))
+        for poelt in jdl_popts:
+            param_opts_block.append(poelt)
+        # Insert results as options
+        result_opts_block = jdl_tree.find(".//{}param[@name='result-id']".format(xmlns))
+        for roelt in jdl_ropts:
+            result_opts_block.append(roelt)
+        # Insert default execution duration
+        execdur_block = jdl_tree.find(".//{}param[@name='EXECUTIONDURATION']".format(xmlns))
+        execdur_block.set('default', self.content['executionduration'])
+        # Insert default quote
+        quote_block = jdl_tree.find(".//{}representation[@id='quote']".format(xmlns))
+        quote_block.set('default', self.content['quote'])
+        jdl_content = ETree.tostring(jdl_tree, pretty_print=True)
+        jdl_fname = self._get_filename(jobname)
+        with open(jdl_fname, 'w') as f:
+            f.write(jdl_content)
+            logger.info('JDL saved as VOTable: ' + jdl_fname)
+
 
 
 class WADLFile(JDLFile):
@@ -81,9 +175,6 @@ class WADLFile(JDLFile):
                 'http://wadl.dev.java.net/2009/02 '
                 'http://www.w3.org/Submission/wadl/wadl.xsd',
         }
-
-    def _get_filename(self, jobname):
-        return '{}/{}{}'.format(self.jdl_path, jobname, self.extension)
 
     def save(self, jobname):
         """Save job description to WADL file"""
