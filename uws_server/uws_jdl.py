@@ -109,7 +109,7 @@ class VOTFile(JDLFile):
     }
 
     def __init__(self, jdl_path=JDL_PATH):
-        self.extension = '.xml'
+        self.extension = '_vot_v2.xml'
         self.jdl_path = jdl_path
         self.xmlns_uris = {
             'xmlns': 'http://www.ivoa.net/xml/VOTable/v1.3',
@@ -134,35 +134,35 @@ class VOTFile(JDLFile):
             'ID': raw_jobname,
             'name': raw_jobname,
             'type': "meta",
-            'utype': "ProvenanceDM:ActivityDescription"
+            'utype': "voprov:ActivityDescription"
         })
         # Job attributes
         ETree.SubElement(resource, 'DESCRIPTION').text = self.content['description'].decode()
         job_attr = [
-            '<PARAM name="label" datatype="char" arraysize="*" value="{}" utype="ProvenanceDM:ActivityDescription.label"/>'.format(self.content.get('label', raw_jobname)),
-            '<PARAM name="type" datatype="char" arraysize="*" value="{}" utype="ProvenanceDM:ActivityDescription.type"/>'.format(self.content.get('job_type', '')),
-            '<PARAM name="subtype" datatype="char" arraysize="*" value="{}" utype="ProvenanceDM:ActivityDescription.subtype"/>'.format(self.content.get('job_subtype', '')),
-            '<PARAM name="version" datatype="float" value="{}" utype="ProvenanceDM:ActivityDescription.version"/>'.format(self.content.get('version', '')),
-            '<PARAM name="doculink" datatype="char" arraysize="*" value="{}" utype="ProvenanceDM:ActivityDescription.doculink"/>'.format(self.content.get('doculink', '')),
-            '<PARAM name="contact_name" datatype="char" arraysize="*" value="{}" utype="ProvenanceDM:Agent.name"/>'.format(self.content.get('contact_name', '')),
-            '<PARAM name="contact_email" datatype="char" arraysize="*" value="{}" utype="ProvenanceDM:Agent.email"/>'.format(self.content.get('contact_email', '')),
-            '<PARAM name="executionduration" datatype="int" value="{}" utype="UWS:Job.executionduration"/>'.format(self.content.get('executionduration', '1')),
-            '<PARAM name="quote" datatype="int" value="{}" utype="UWS:Job.quote"/>'.format(self.content.get('quote', '1')),
+            '<PARAM name="label" datatype="char" arraysize="*" value="{}" utype="voprov:ActivityDescription.label"/>'.format(self.content.get('label', raw_jobname)),
+            '<PARAM name="type" datatype="char" arraysize="*" value="{}" utype="voprov:ActivityDescription.type"/>'.format(self.content.get('job_type', '')),
+            '<PARAM name="subtype" datatype="char" arraysize="*" value="{}" utype="voprov:ActivityDescription.subtype"/>'.format(self.content.get('job_subtype', '')),
+            '<PARAM name="version" datatype="float" value="{}" utype="voprov:ActivityDescription.version"/>'.format(self.content.get('version', '')),
+            '<PARAM name="doculink" datatype="char" arraysize="*" value="{}" utype="voprov:ActivityDescription.doculink"/>'.format(self.content.get('doculink', '')),
+            '<PARAM name="contact_name" datatype="char" arraysize="*" value="{}" utype="voprov:Agent.name"/>'.format(self.content.get('contact_name', '')),
+            '<PARAM name="contact_email" datatype="char" arraysize="*" value="{}" utype="voprov:Agent.email"/>'.format(self.content.get('contact_email', '')),
+            '<PARAM name="executionduration" datatype="int" value="{}" utype="uws:Job.executionduration"/>'.format(self.content.get('executionduration', '1')),
+            '<PARAM name="quote" datatype="int" value="{}" utype="uws:Job.quote"/>'.format(self.content.get('quote', '1')),
         ]
         for attr in job_attr:
             resource.append(ETree.fromstring(attr))
         # Insert groups
         group_params = ETree.SubElement(resource, 'GROUP', attrib={
             'name': "InputParams",
-            'utype': "ProvenanceDM:Parameter",
+            'utype': "voprov:Parameter",
         })
         group_used = ETree.SubElement(resource, 'GROUP', attrib={
             'name': "Used",
-            'utype': "ProvenanceDM:Used",
+            'utype': "voprov:Used",
         })
         group_results = ETree.SubElement(resource, 'GROUP', attrib={
             'name': "Generated",
-            'utype': "ProvenanceDM:WasGeneratedBy",
+            'utype': "voprov:WasGeneratedBy",
         })
         # Prepare InputParams group
         for pname, p in self.content['parameters'].iteritems():
@@ -170,10 +170,10 @@ class VOTFile(JDLFile):
                 'ID': pname,
                 'name': pname,
                 'datatype': self.datatype_xs2vo[p['type']],
-                'value': p['default']
-                'utype': 'ProvenanceDM:Entity',
+                'value': p['default'],
+                'utype': 'voprov:Entity',
             }
-            if p['type'] == 'char':
+            if param_attrib['datatype'] == 'char':
                 param_attrib['arraysize'] = '*'
             if p['required']:
                 param_attrib['type'] = 'no_query'
@@ -181,30 +181,41 @@ class VOTFile(JDLFile):
 #                'mediaType': 'text/plain'
             param = ETree.Element('PARAM', attrib=param_attrib)
             ETree.SubElement(param, 'DESCRIPTION').text = p.get('description', '')
-            if p['min'] or p['max'] or p['options']:
+            if p.get('min', False) or p.get('max', False) or p.get('options', False):
                 values = ETree.SubElement(param, 'VALUES')
-                if p['min']:
-                    ETree.SubElement(values, 'MIN').text = p['min']
-                if p['max']:
-                    ETree.SubElement(values, 'MAX').text = p['max']
-                if p['options']:
+                if p.get('min', False):
+                    ETree.SubElement(values, 'MIN', attrib={'value': p['min']})
+                if p.get('max', False):
+                    ETree.SubElement(values, 'MAX', attrib={'value': p['max']})
+                if p.get('options', False):
                     for o in p['options'].split(','):
                         ETree.SubElement(values, 'OPTION', attrib={'value': o})
             group_params.append(param)
-            # TODO: if it is an entity, list it in Used or WasGeneratedBy groups
-            # Prepare used block
-
+        # Prepare used block
+        for pname, p in self.content['used'].iteritems():
+            used = ETree.Element('PARAM', attrib={
+                'name': pname,
+                'ref': pname,
+                'datatype': 'char',
+                'arraysize': '*',
+                'value': '',
+                'xtype': p['content_type'],
+                'utype': 'voprov:Entity',
+            })
+            #ETree.SubElement(used, 'DESCRIPTION').text = p.get('description', '')
+            group_used.append(used)
         # Prepare results block
         for rname, r in self.content['results'].iteritems():
             result = ETree.Element('PARAM', attrib={
                 'name': rname,
+                'ref': rname,
                 'datatype': 'char',
                 'arraysize': '*',
-                'value': r['default']
+                'value': '',
                 'xtype': r['mediaType'],
-                'utype': 'ProvenanceDM:Entity',
+                'utype': 'voprov:Entity',
             })
-            ETree.SubElement(result, 'DESCRIPTION').text = r.get('description', '')
+            #ETree.SubElement(result, 'DESCRIPTION').text = r.get('description', '')
             group_results.append(result)
         # Write file
         jdl_content = ETree.tostring(jdl_tree, pretty_print=True)
@@ -216,68 +227,99 @@ class VOTFile(JDLFile):
     def read(self, jobname):
         """Read job description from VOTable file"""
         # TODO: all
+        groups = {
+            'InputParams': 'parameters',
+            'Used': 'used',
+            'Generated': 'results'
+        }
         fname = self._get_filename(jobname)
         # '{}/{}{}'.format(JDL_PATH, job.jobname, self.extension)
-        parameters = collections.OrderedDict()
-        used = collections.OrderedDict()
-        results = collections.OrderedDict()
         try:
             with open(fname, 'r') as f:
                 jdl_string = f.read()
+            print jdl_string
             jdl_tree = ETree.fromstring(jdl_string)
+            print jdl_tree
             # Get default namespace
             xmlns = '{' + jdl_tree.nsmap[None] + '}'
+            print xmlns
             # Read parameters description
-            params_block = jdl_tree.find(".//{}request[@id='create_job_parameters']".format(xmlns))
-            for p in params_block.getchildren():
-                pname = p.get('name')
-                if pname not in ['PHASE', None]:
-                    # TODO: Add all attributes (e.g. min, max for numbers)
-                    parameters[pname] = {
-                        'type': self.datatype_vo2xs[p.get('type')],
-                        'required': p.get('required'),
-                        'default': p.get('default'),
-                        'description': list(p)[0].text,
-                    }
-                    for attr in ['min', 'max', 'choices']:
-                        if p.get(attr):
-                            parameters[pname][attr] = p.get(attr)
-            # Read results description
-            results_block = jdl_tree.find(".//{}param[@name='result-id']".format(xmlns))
-            for r in results_block.getchildren():
-                if r.get('value') not in [None]:
-                    results[r.get('value')] = {
-                        'mediaType': r.get('mediaType'),
-                        'default': r.get('default'),
-                        'description': list(r)[0].text,
-                    }
+            resource_block = jdl_tree.find(".//{}RESOURCE[@ID='{}']".format(xmlns, jobname))
+            print resource_block
             job_def = {
-                'name': jobname,
-                'parameters': parameters,
-                'results': results,
+                'name': resource_block.get('name'),
+                'parameters': collections.OrderedDict(),
+                'results': collections.OrderedDict(),
+                'used': collections.OrderedDict()
             }
-            # Read job description
-            joblist_description_block = jdl_tree.find(".//{}doc[@title='description']".format(xmlns))
-            job_def['description'] = joblist_description_block.text
-            # Read job attributes
-            joblist_block = jdl_tree.find(".//{}resource[@id='joblist']".format(xmlns))
-            job_def['url'] = joblist_block.get('url')
-            job_def['contact_name'] = joblist_block.get('contact_name')
-            job_def['contact_affil'] = joblist_block.get('contact_affil')
-            job_def['contact_email'] = joblist_block.get('contact_email')
-            # Read execution duration
-            execdur_block = jdl_tree.find(".//{}param[@name='EXECUTIONDURATION']".format(xmlns))
-            job_def['executionduration'] = execdur_block.get('default')
-            # Read default quote
-            quote_block = jdl_tree.find(".//{}representation[@id='quote']".format(xmlns))
-            job_def['quote'] = quote_block.get('default')
-            # Log wadl access
-            frame, filename, line_number, function_name, lines, index = inspect.stack()[1]
-            # logger.debug('WADL read at {} ({}:{}): {}'.format(function_name, filename, line_number, fname))
+            for elt in resource_block.getchildren():
+
+                if elt.tag == '{}DESCRIPTION'.format(xmlns):
+                    job_def['description'] = elt.text
+                    print elt.text
+                if elt.tag == '{}PARAM'.format(xmlns):
+                    # TODO: set datatype of value in the dictionary?
+                    print elt.get('name'), elt.get('value')
+                    job_def[elt.get('name')] = elt.get('value', '')
+                if elt.tag == '{}GROUP'.format(xmlns):
+                    group = groups[elt.get('name')]
+                    print group
+                    if group == 'parameters':
+                        for p in elt:
+                            if p.tag == '{}PARAM'.format(xmlns):
+                                name = p.get('name')
+                                print name, p.get('datatype', 'char')
+                                item = {
+                                    'type': self.datatype_vo2xs[p.get('datatype', 'char')],  # TODO: should be changed to 'datatype'
+                                    'required': p.get('type') != 'no_query',     # type="no_query" in VOTable
+                                    'default': p.get('value'),
+                                    'unit': p.get('unit', ''),
+                                    'ucd': p.get('ucd', ''),
+                                    'utype': p.get('utype', '')
+                                }
+                                for pp in p:
+                                    if pp.tag == '{}DESCRIPTION'.format(xmlns):
+                                        item['description'] = pp.text
+                                    if pp.tag == '{}VALUES'.format(xmlns):
+                                        options = []
+                                        for ppp in pp:
+                                            if ppp.tag == '{}MIN'.format(xmlns):
+                                                item['min'] = ppp.get('value')
+                                            if ppp.tag == '{}MAX'.format(xmlns):
+                                                item['max'] = ppp.get('value')
+                                            if ppp.tag == '{}OPTION'.format(xmlns):
+                                                options.append(ppp.get('value'))
+                                        item['options'] = ','.join(options)
+                                job_def[group][name] = item
+                    if group == 'used':
+                        for p in elt:
+                            name = p.get('name')
+                            ref = p.get('ref')
+                            item = {
+                                'default': job_def['parameters'][ref]['default'],
+                                'content_type': p.get('xtype'),
+                                'description': job_def['parameters'][ref]['description']
+                            }
+                            job_def[group][name] = item
+                    if group == 'results':
+                        for p in elt:
+                            name = p.get('name')
+                            ref = p.get('ref')
+                            item = {
+                                'default': job_def['parameters'][ref]['default'],
+                                'mediaType': p.get('xtype'),  # TODO: should be changed to 'content_type'
+                                'description': job_def['parameters'][ref]['description']
+                            }
+                            job_def[group][name] = item
+            # Log votable access
+            # frame, filename, line_number, function_name, lines, index = inspect.stack()[1]
+            # logger.debug('VOTable read at {} ({}:{}): {}'.format(function_name, filename, line_number, fname))
         except IOError:
             # if file does not exist, continue and return an empty dict
-            logger.debug('WADL not found for job {}'.format(jobname))
-            raise UserWarning('WADL not found for job {}'.format(jobname))
+            logger.debug('VOTable not found for job {}'.format(jobname))
+            raise UserWarning('VOTable not found for job {}'.format(jobname))
+        except:
+            raise
             # return {}
         self.content = job_def
 
