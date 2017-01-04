@@ -226,7 +226,7 @@
                     add_item('result');
 				    i++;
 				    $('input[name=result_name_' + i + ']').val(result);
-				    $('select[name=result_type_' + i + ']').val(jdl.results[result]['mediaType']);
+				    $('select[name=result_type_' + i + ']').val(jdl.results[result]['content_type']);
 				    $('input[name=result_default_' + i + ']').val(jdl.results[result]['default']);
 				    $('input[name=result_description_' + i + ']').val(jdl.results[result]['description']);
 				};

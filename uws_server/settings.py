@@ -121,7 +121,8 @@ JOB_PARAMETERS_ATTR = [
 JOB_RESULTS_ATTR = [
     'jobid',
     'name',
-    'url'
+    'url',
+    'content_type'
 ]
 
 # Known phases

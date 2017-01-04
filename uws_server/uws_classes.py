@@ -477,7 +477,7 @@ class Job(object):
                     if os.path.isfile(rfpath):
                         # /get_result_file/<jobname>/<jobid>/<rname>/<fname>
                         url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
-                        job.results[rname] = {'url': url, 'mediaType': r['mediaType']}
+                        job.results[rname] = {'url': url, 'content_type': r['content_type']}
                         logger.info('add result ' + rname + ' ' + str(r))
                 # Set job.end_time
                 job.end_time = now.strftime(DT_FMT)
@@ -488,13 +488,13 @@ class Job(object):
                     rname = 'stdout'
                     rfname = 'stdout.log'
                     url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
-                    job.results[rname] = {'url': url, 'mediaType': 'text/plain'}
+                    job.results[rname] = {'url': url, 'content_type': 'text/plain'}
                     logger.info('add stdout.log file to results')
                     # STDERR
                     rname = 'stderr'
                     rfname = 'stderr.log'
                     url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
-                    job.results[rname] = {'url': url, 'mediaType': 'text/plain'}
+                    job.results[rname] = {'url': url, 'content_type': 'text/plain'}
                     logger.info('add stderr.log file to results')
                 else:
                     logger.warning('CANNOT add logs to results')
@@ -507,21 +507,21 @@ class Job(object):
                         rfname = 'provenance.json'
                         voprov.prov2json(pdoc, rfdir + rfname)
                         url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
-                        job.results[rname] = {'url': url, 'mediaType': 'application/json'}
+                        job.results[rname] = {'url': url, 'content_type': 'application/json'}
                         logger.info('add provenance.json file to results')
                         # PROV XML
                         rname = 'provxml'
                         rfname = 'provenance.xml'
                         voprov.prov2xml(pdoc, rfdir + rfname)
                         url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
-                        job.results[rname] = {'url': url, 'mediaType': 'text/xml'}
+                        job.results[rname] = {'url': url, 'content_type': 'text/xml'}
                         logger.info('add provenance.xml file to results')
                         # PROV SVG
                         rname = 'provsvg'
                         rfname = 'provenance.svg'
                         voprov.prov2svg(pdoc, rfdir + rfname)
                         url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
-                        job.results[rname] = {'url': url, 'mediaType': 'image/svg+xml'}
+                        job.results[rname] = {'url': url, 'content_type': 'image/svg+xml'}
                         logger.info('add provenance.svg file to results')
                     else:
                         logger.warning('CANNOT add provenance file to results')
@@ -629,5 +629,5 @@ class JobList(object):
             # Results
             html += '<strong>Results</strong><br>'
             for rname, r in job.results.iteritems():
-                html += '{} ({}): {} <br>'.format(str(rname), r['mediaType'], r['url'])
+                html += '{} ({}): {} <br>'.format(str(rname), r['content_type'], r['url'])
         return html

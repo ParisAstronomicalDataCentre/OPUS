@@ -35,7 +35,7 @@ def job2prov(job):
     #     'description': list(p)[0].text,
     # }
     # results[rname] = {
-    #     'mediaType': r.get('mediaType'),
+    #     'content_type': r.get('content_type'),
     #     'default': r.get('default'),
     #     'description': list(r)[0].text,
     # }
@@ -100,7 +100,7 @@ def job2prov(job):
             e_out.append(pdoc.entity(rqn))
             # TODO: use publisher_did? add prov attributes, add voprov attributes?
             e_out[-1].add_attributes({
-                'prov:type': rdict['mediaType'],
+                'prov:type': rdict['content_type'],
                 'prov:location': job.results[rname]['url']
             })
             e_out[-1].wasGeneratedBy(ctbin)

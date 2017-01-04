@@ -50,7 +50,7 @@ parameters[pname] = {
 }
 results[rname] = {
     'default': r.get('default'),
-    'mediaType': r.get('mediaType'),   # --> should be changed to 'content_type'
+    'content_type': r.get('content_type'),   # --> should be changed to 'content_type'
     'description': list(r)[0].text,
 }
 used[pname] = {                        # add!
@@ -178,7 +178,7 @@ class VOTFile(JDLFile):
             if p['required']:
                 param_attrib['type'] = 'no_query'
 #                'required': str(p['required']),
-#                'mediaType': 'text/plain'
+#                'content_type': 'text/plain'
             param = ETree.Element('PARAM', attrib=param_attrib)
             ETree.SubElement(param, 'DESCRIPTION').text = p.get('description', '')
             if p.get('min', False) or p.get('max', False) or p.get('options', False):
@@ -212,7 +212,7 @@ class VOTFile(JDLFile):
                 'datatype': 'char',
                 'arraysize': '*',
                 'value': '',
-                'xtype': r['mediaType'],
+                'xtype': r['content_type'],
                 'utype': 'voprov:Entity',
             })
             #ETree.SubElement(result, 'DESCRIPTION').text = r.get('description', '')
@@ -270,7 +270,7 @@ class VOTFile(JDLFile):
                                 name = p.get('name')
                                 print name, p.get('datatype', 'char')
                                 item = {
-                                    'type': self.datatype_vo2xs[p.get('datatype', 'char')],  # TODO: should be changed to 'datatype'
+                                    'datatype': self.datatype_vo2xs[p.get('datatype', 'char')],
                                     'required': p.get('type') != 'no_query',     # type="no_query" in VOTable
                                     'default': p.get('value'),
                                     'unit': p.get('unit', ''),
@@ -307,7 +307,7 @@ class VOTFile(JDLFile):
                             ref = p.get('ref')
                             item = {
                                 'default': job_def['parameters'][ref]['default'],
-                                'mediaType': p.get('xtype'),  # TODO: should be changed to 'content_type'
+                                'content_type': p.get('xtype'),
                                 'description': job_def['parameters'][ref]['description']
                             }
                             job_def[group][name] = item
@@ -353,29 +353,29 @@ class WADLFile(JDLFile):
             pelt_attrib = {
                 'style': 'query',
                 'name': pname,
-                'type': p['type'],
+                'type': p['datatype'],
                 'required': str(p['required']),
                 'default': p['default']
             }
             pelt = ETree.Element('param', attrib=pelt_attrib)
             ETree.SubElement(pelt, 'doc').text = p.get('description', '')
             jdl_params.append(pelt)
-            # line = '<option value="{}" mediaType="text/plain"><doc>{}</doc></option>' \
+            # line = '<option value="{}" content_type="text/plain"><doc>{}</doc></option>' \
             #        ''.format(pname, p['description'])
             poelt = ETree.Element('option', attrib={
                 'value': pname,
-                'mediaType': 'text/plain'
+                'content_type': 'text/plain'
             })
             ETree.SubElement(poelt, 'doc').text = p.get('description', '')
             jdl_popts.append(poelt)
         # Prepare result block
         jdl_ropts = []
         for rname, r in self.content['results'].iteritems():
-            # rline = '<option value="{}" mediaType="{}" default="{}"><doc>{}</doc></option>' \
-            #         ''.format(rname, r['mediaType'], r['default'], r.get('description', ''))
+            # rline = '<option value="{}" content_type="{}" default="{}"><doc>{}</doc></option>' \
+            #         ''.format(rname, r['content_type'], r['default'], r.get('description', ''))
             roelt = ETree.Element('option', attrib={
                 'value': rname,
-                'mediaType': r['mediaType'],
+                'content_type': r['content_type'],
                 'default': r['default']
             })
             ETree.SubElement(roelt, 'doc').text = r.get('description', '')
@@ -442,7 +442,7 @@ class WADLFile(JDLFile):
                 if pname not in ['PHASE', None]:
                     # TODO: Add all attributes (e.g. min, max for numbers)
                     parameters[pname] = {
-                        'type': p.get('type'),
+                        'datatype': p.get('type'),
                         'required': p.get('required'),
                         'default': p.get('default'),
                         'description': list(p)[0].text,
@@ -455,7 +455,7 @@ class WADLFile(JDLFile):
             for r in results_block.getchildren():
                 if r.get('value') not in [None]:
                     results[r.get('value')] = {
-                        'mediaType': r.get('mediaType'),
+                        'content_type': r.get('content_type'),
                         'default': r.get('default'),
                         'description': list(r)[0].text,
                     }

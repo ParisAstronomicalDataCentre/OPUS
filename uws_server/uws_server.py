@@ -388,7 +388,7 @@ def create_new_job_definition():
                 rdefault = request.forms.get('result_default_' + str(iresult))
                 rdesc = request.forms.get('result_description_' + str(iresult))
                 results[rname] = {
-                    'mediaType': rtype,
+                    'content_type': rtype,
                     'default': rdefault,
                     'description': rdesc,
                 }
@@ -1261,7 +1261,7 @@ def get_result_file(jobid, rname, rfname):
         # rfname = job.get_result_filename(rname)
         #response.content_type = 'text/plain; charset=UTF-8'
         #return str(job.results[result]['url'])
-        media_type = job.results[rname]['mediaType']
+        media_type = job.results[rname]['content_type']
         logger.debug('{} {} {} {} {} [{}]'.format(job.jobname, jobid, rname, rfname, media_type, user))
         response.set_header('Content-type', media_type)
         if any(x in media_type for x in ['text', 'xml', 'json']):
