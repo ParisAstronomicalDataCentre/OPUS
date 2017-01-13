@@ -50,7 +50,7 @@ parameters[pname] = {
 }
 results[rname] = {
     'default': r.get('default'),
-    'content_type': r.get('content_type'),   # --> should be changed to 'content_type'
+    'content_type': r.get('content_type'),
     'description': list(r)[0].text,
 }
 used[pname] = {                        # add!
@@ -109,7 +109,7 @@ class VOTFile(JDLFile):
     }
 
     def __init__(self, jdl_path=JDL_PATH):
-        self.extension = '_vot_v2.xml'
+        self.extension = '_vot.xml'
         self.jdl_path = jdl_path
         self.xmlns_uris = {
             'xmlns': 'http://www.ivoa.net/xml/VOTable/v1.3',
@@ -454,8 +454,11 @@ class WADLFile(JDLFile):
             results_block = jdl_tree.find(".//{}param[@name='result-id']".format(xmlns))
             for r in results_block.getchildren():
                 if r.get('value') not in [None]:
+                    ctype = r.get('content_type')
+                    if not ctype:
+                        ctype = r.get('mediaType')
                     results[r.get('value')] = {
-                        'content_type': r.get('content_type'),
+                        'content_type': ctype,
                         'default': r.get('default'),
                         'description': list(r)[0].text,
                     }
