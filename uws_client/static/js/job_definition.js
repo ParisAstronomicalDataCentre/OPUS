@@ -199,7 +199,7 @@
         var jobname = $('input[name=name]').val();
         // ajax command to get JDL from UWS server
         $.ajax({
-			url : '/get_jdl/' + jobname,  //.split("/").pop(),  // to remove new/ (not needed here)
+			url : '/get_jdl_json/' + jobname,  //.split("/").pop(),  // to remove new/ (not needed here)
 			async : true,
 			type : 'GET',
 			dataType: "json",
@@ -255,21 +255,21 @@
 		});
     }
 
-	function get_wadl() {
+	function get_jdl() {
         var jobname = $('input[name=name]').val();
-        // ajax command to get_wadl on UWS server
+        // ajax command to get_jdl on UWS server
         $.ajax({
-			url : '/get_wadl/' + jobname,  //.split("/").pop(),  // to remove new/ (not needed here)
+			url : '/get_jdl/' + jobname,  //.split("/").pop(),  // to remove new/ (not needed here)
 			async : true,
 			type : 'GET',
 			dataType: "text",
-			success : function(wadl) {
-				var blob = new Blob([wadl], {type: "text/xml;charset=utf-8"});
-                saveAs(blob, jobname + ".wadl");
+			success : function(jdl) {
+				var blob = new Blob([jdl], {type: "text/xml;charset=utf-8"});
+                saveAs(blob, jobname + ".jdl");
 			},
 			error : function(xhr, status, exception) {
 				console.log(exception);
-				$('#load_msg').text('No valid WADL found.');
+				$('#load_msg').text('No valid JDL found.');
 				$('#load_msg').show().delay(1000).fadeOut();
 			}
 		});
@@ -295,8 +295,8 @@
         $('#load_jdl').click( function() {
             load_jdl();
         });
-        $('#get_wadl').click( function() {
-            get_wadl();
+        $('#get_jdl').click( function() {
+            get_jdl();
         });
         $('#validate_job').click( function() {
             jobname = $('input[name=name]').val().split("/").pop();  // remove 'new/'

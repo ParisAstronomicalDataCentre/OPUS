@@ -198,8 +198,8 @@ def get_wadl(jobname):
     abort_404('No WADL file found for ' + jobname)
 
 
-@app.get('/get_jdl/<jobname:path>')
-def get_jdl(jobname):
+@app.get('/get_jdl_json/<jobname:path>')
+def get_jdl_json(jobname):
     """
     Get json description file for jobname
     :param jobname:
@@ -405,7 +405,7 @@ def create_new_job_definition():
             'executionduration': request.forms.get('executionduration'),
             'quote': request.forms.get('quote'),
         }
-        # Create WADL file from job_jdl
+        # Create JDL file from job_jdl
         jdl = uws_jdl.__dict__[JDL]()
         jdl.content = job_def
         jdl.save('new/' + jobname)
@@ -478,7 +478,7 @@ def validate_job_definition(jobname):
 
 @app.get('/config/cp_script/<jobname>')
 def cp_script(jobname):
-    """Use filled form to create a WADL file for the given job"""
+    """copy script to job manager for the given job"""
     # Check if client is trusted (only admin should be allowed to validate a job)
     ip = request.environ.get('REMOTE_ADDR', '')
     if not is_client_trusted(ip):
@@ -1160,7 +1160,7 @@ def post_parameter(jobname, jobid, pname):
         new_value = request.forms.get('VALUE')
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True)
-        # TODO: Check if new_value format is correct (from WADL?)
+        # TODO: Check if new_value format is correct (from JDL?)
         # Change value
         if job.phase == 'PENDING':
             job.set_parameter(pname, new_value)
