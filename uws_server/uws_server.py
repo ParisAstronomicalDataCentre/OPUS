@@ -182,10 +182,10 @@ def favicon():
 
 
 # TODO: WADL should be one of the proposed JDL
-@app.get('/get_wadl/<jobname:path>')
+@app.get('/get_jdl/<jobname:path>')
 def get_wadl(jobname):
     """
-    Get WADL file for jobname
+    Get JDL file for jobname
     :param jobname:
     :return: WADL file
     """
