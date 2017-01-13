@@ -265,7 +265,7 @@
 			dataType: "text",
 			success : function(wadl) {
 				var blob = new Blob([wadl], {type: "text/xml;charset=utf-8"});
-                saveAs(blob, jobname + ".wadl");
+                window.saveAs(blob, jobname + ".wadl");
 			},
 			error : function(xhr, status, exception) {
 				console.log(exception);
