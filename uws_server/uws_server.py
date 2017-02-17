@@ -32,7 +32,7 @@ app = Bottle()
 # https://github.com/bottlepy/bottle/issues/402
 @app.route('/<:re:.*>', method='OPTIONS')
 def options_request():
-    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.set_header('Access-Control-Allow-Origin', '*')
 
 def set_user():
     global logger
