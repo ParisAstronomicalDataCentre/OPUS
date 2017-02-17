@@ -168,7 +168,7 @@ class Job(object):
         #for pname, value in post.iteritems():
         for pname in self.jdl.content['parameters']:
             # TODO: use JDL to check if value is valid
-            ptype = self.jdl.content['parameters'][pname]['type']
+            ptype = self.jdl.content['parameters'][pname]['datatype']
             if 'anyURI' in ptype:
                 byref = True
             else:
