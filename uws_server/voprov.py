@@ -76,11 +76,11 @@ def job2prov(job):
         pqn = ns_uws_param + ':' + pname
         # Add some UWS parameters as input Entities
         #if pname.startswith('in'):
-        if any(x in pdict['type'] for x in ['file', 'xs:anyURI']):
+        if any(x in pdict['datatype'] for x in ['file', 'xs:anyURI']):
             e_in.append(pdoc.entity(pqn))
             # TODO: use publisher_did? add prov attributes, add voprov attributes?
             e_in[-1].add_attributes({
-                'prov:type': pdict['type'],
+                'prov:type': pdict['datatype'],
                 'prov:location': job.parameters[pname]['value']
             })
             ctbin.used(e_in[-1])
