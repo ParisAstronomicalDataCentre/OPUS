@@ -33,6 +33,7 @@ app = Bottle()
 @app.route('/<:re:.*>', method='OPTIONS')
 def options_request():
     #response.set_header('Access-Control-Allow-Origin', '*')
+    response.set_header('Access-Control-Allow-Headers', 'Authorization')
     pass
 
 def set_user():
