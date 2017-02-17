@@ -174,7 +174,7 @@ class SQLStorage(Storage):
             results_dict = {
                 row['name']: {
                     'url': row['url'],
-                    'content_type': row['content_type']
+                    'content_type': row['mediaType']
                 }
                 for row in results
             }

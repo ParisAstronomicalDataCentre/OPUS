@@ -101,11 +101,13 @@ class VOTFile(JDLFile):
         "xs:boolean": 'boolean',
         "xs:unsignedByte": 'unsignedByte',
         "xs:short": 'short',
+        "xs:int": 'int',
         "xs:integer": 'int',
         "xs:long": 'long',
         "xs:string": 'char',
         "xs:float": 'float',
-        "xs:double": 'double'
+        "xs:double": 'double',
+        'xs:anyURI': 'char'
     }
 
     def __init__(self, jdl_path=JDL_PATH):
@@ -137,7 +139,8 @@ class VOTFile(JDLFile):
             'utype': "voprov:ActivityDescription"
         })
         # Job attributes
-        ETree.SubElement(resource, 'DESCRIPTION').text = self.content['description'].decode()
+        if self.content['description']:
+            ETree.SubElement(resource, 'DESCRIPTION').text = self.content['description'].decode()
         job_attr = [
             '<PARAM name="label" datatype="char" arraysize="*" value="{}" utype="voprov:ActivityDescription.label"/>'.format(self.content.get('label', raw_jobname)),
             '<PARAM name="type" datatype="char" arraysize="*" value="{}" utype="voprov:ActivityDescription.type"/>'.format(self.content.get('job_type', '')),
@@ -169,9 +172,8 @@ class VOTFile(JDLFile):
             param_attrib = {
                 'ID': pname,
                 'name': pname,
-                'datatype': self.datatype_xs2vo[p['type']],
+                'datatype': self.datatype_xs2vo[p['datatype']],
                 'value': p['default'],
-                'utype': 'voprov:Entity',
             }
             if param_attrib['datatype'] == 'char':
                 param_attrib['arraysize'] = '*'
@@ -193,28 +195,32 @@ class VOTFile(JDLFile):
             group_params.append(param)
         # Prepare used block
         for pname, p in self.content['used'].iteritems():
-            used = ETree.Element('PARAM', attrib={
+            attrib={
                 'name': pname,
-                'ref': pname,
                 'datatype': 'char',
                 'arraysize': '*',
                 'value': '',
                 'xtype': p['content_type'],
                 'utype': 'voprov:Entity',
-            })
+            }
+            if pname in self.content['parameters']:
+                attrib['ref'] = pname
+            used = ETree.Element('PARAM', attrib=attrib)
             #ETree.SubElement(used, 'DESCRIPTION').text = p.get('description', '')
             group_used.append(used)
         # Prepare results block
         for rname, r in self.content['results'].iteritems():
-            result = ETree.Element('PARAM', attrib={
+            attrib={
                 'name': rname,
-                'ref': rname,
                 'datatype': 'char',
                 'arraysize': '*',
                 'value': '',
                 'xtype': r['content_type'],
                 'utype': 'voprov:Entity',
-            })
+            }
+            if rname in self.content['parameters']:
+                attrib['ref'] = rname
+            result = ETree.Element('PARAM', attrib=attrib)
             #ETree.SubElement(result, 'DESCRIPTION').text = r.get('description', '')
             group_results.append(result)
         # Write file
@@ -429,6 +435,7 @@ class WADLFile(JDLFile):
         # '{}/{}{}'.format(JDL_PATH, job.jobname, self.extension)
         parameters = collections.OrderedDict()
         results = collections.OrderedDict()
+        used = collections.OrderedDict()
         try:
             with open(fname, 'r') as f:
                 jdl_string = f.read()
@@ -450,6 +457,13 @@ class WADLFile(JDLFile):
                     for attr in ['min', 'max', 'choices']:
                         if p.get(attr):
                             parameters[pname][attr] = p.get(attr)
+                    if p.get('type') in ['xs:anyURI', 'file']:
+                        item = {
+                            'default': parameters[pname]['default'],
+                            'content_type': '',
+                            'description': parameters[pname]['description']
+                        }
+                        used[pname] = item
             # Read results description
             results_block = jdl_tree.find(".//{}param[@name='result-id']".format(xmlns))
             for r in results_block.getchildren():
@@ -466,6 +480,7 @@ class WADLFile(JDLFile):
                 'name': jobname,
                 'parameters': parameters,
                 'results': results,
+                'used': used,
             }
             # Read job description
             joblist_description_block = jdl_tree.find(".//{}doc[@title='description']".format(xmlns))
