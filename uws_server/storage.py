@@ -92,7 +92,9 @@ class SQLStorage(Storage):
             'jobid': job.jobid,
             'name': rname,
             'url': job.results[rname]['url'],
-            'content_type': job.results[rname]['content_type']
+            'mediaType': job.results[rname]['content_type']
+            # TODO: update DB!
+
         }
         self._save_query('job_results', d)
 
@@ -175,6 +177,7 @@ class SQLStorage(Storage):
                 row['name']: {
                     'url': row['url'],
                     'content_type': row['mediaType']
+                    # TODO: update DB!
                 }
                 for row in results
             }
