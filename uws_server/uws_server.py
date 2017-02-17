@@ -36,6 +36,10 @@ def options_request():
     response.set_header('Access-Control-Allow-Headers', 'Authorization')
     pass
 
+@app.hook('after_request')
+def enableCORSAfterRequestHook():
+    response.set_header('Access-Control-Allow-Origin', '*')
+
 def set_user():
     global logger
     """Set user from request header"""
