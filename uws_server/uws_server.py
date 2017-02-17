@@ -28,6 +28,11 @@ app = Bottle()
 # ----------
 # Set user
 
+# Handling the OPTIONS method
+# https://github.com/bottlepy/bottle/issues/402
+@app.route('/<:re:.*>', method='OPTIONS')
+def options_request():
+    return {}
 
 def set_user():
     global logger
