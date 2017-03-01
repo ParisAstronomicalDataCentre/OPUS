@@ -22,9 +22,13 @@ from cork import Cork
 
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 ENDPOINT = 'client'
-#UWS_SERVER_URL = 'https://voparis-uws-test.obspm.fr'  # same as client = ''
 UWS_SERVER_URL = 'http://localhost:8080'
 ALLOW_ANONYMOUS = False
+
+#--- Include host-specific settings ------------------------------------------------------------------------------------
+if os.path.exists('uws_client/settings_local.py'):
+    from settings_local import *
+#--- Include host-specific settings ------------------------------------------------------------------------------------
 
 # Set logger
 LOG_PATH = APP_PATH + '/logs'
