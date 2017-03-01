@@ -28,7 +28,7 @@ var uws_manager = (function($) {
     // var serviceUrl = $(location).attr('protocol') + '//' + $(location).attr('host');
     // "https://voparis-uws-test.obspm.fr/"; // app_url+"/uws-v1.0/" //
     var jobs_url = '/rest/';
-    var jdl_url = '/get_jdl/';
+    var jdl_url = '/get_jdl_json/';
     var form_upload_url = '/form_upload/';
     var job_list_url = '/client/job_list';
     var job_edit_url = '/client/job_edit';

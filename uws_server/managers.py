@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 # Copyright (c) 2016 by Mathieu Servillat
 # Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
@@ -31,6 +31,158 @@ class Manager(object):
     by the UWS server: start(), abort(), delete(), get_status(), get_info(),
     get_results() and cp_script().
     """
+
+    def start(self, job):
+        """Start job on cluster
+        :return: jobid_cluster, jobid on cluster
+        """
+        return 0
+
+    def abort(self, job):
+        """Abort/Cancel job on cluster"""
+        pass
+
+    def delete(self, job):
+        """Delete job on cluster"""
+        pass
+
+    def get_status(self, job):
+        """Get job status (phase) from cluster
+        :return: job status (phase)
+        """
+        return job.phase
+
+    def get_info(self, job):
+        """Get job info from cluster
+        :return: dictionary with job info
+        """
+        return {'phase': job.phase}
+
+    def get_results(self, job):
+        """Get job results from cluster"""
+        pass
+
+    def cp_script(self, jobname):
+        """Copy job script to cluster"""
+        pass
+
+
+
+class LocalManager(object):
+    """
+    Manage job execution on cluster. This class defines required functions executed
+    by the UWS server: start(), abort(), delete(), get_status(), get_info(),
+    get_results() and cp_script().
+    """
+
+    def __init__(self, jobdata_path=JOBDATA_PATH, script_path=SCRIPT_PATH):
+        # PATHs
+        self.jobdata_path = jobdata_path
+        self.scripts_path = script_path
+        self.workdir_path = '{}/../workdir'.format(jobdata_path)
+
+    def _make_batch(self, job):
+        """Make sbatch file content for given job
+
+        Returns:
+            sbatch file content as a string
+        """
+        duration = dt.timedelta(0, int(job.execution_duration))
+        # duration format is 00:01:00 for 1 min
+        duration_str = str(duration).replace(' days', '').replace(' day', '').replace(', ', '-')
+        # Create sbatch
+        sbatch = [
+            '#!/bin/bash -l',
+            '### INIT',
+            # Init job execution
+            'timestamp() {',
+            '    date +"%Y-%m-%dT%H:%M:%S"',
+            '}',
+            'echo "[`timestamp`] Initialize job"',
+            # Error handler (send signal on error, in addition to job completion by SLURM)
+            'set -e ',
+            'error_handler() {',
+            '    touch $jd/error',
+            # '    error_string=`tac /obs/vouws/uws_logs/$SLURM_JOBID.err | grep -m 1 .`',
+            # '    msg="${BASH_SOURCE[1]}: line ${BASH_LINENO[0]}: ${FUNCNAME[1]}"',
+            '    msg="Error in ${BASH_SOURCE[1]##*/} running command: $BASH_COMMAND"',
+            '    echo "$msg"', # echo in stdout log
+            # '    echo "Signal error"',
+            '    curl -k -s -o $jd/curl_error_signal.log '
+            '        -d "jobid=$SLURM_JOBID" -d "phase=ERROR" --data-urlencode "error_msg=$msg" '
+            '        {}/handler/job_event'.format(BASE_URL),
+            '    rm -rf $wd',
+            # '    echo "Remove trap"',
+            '    trap - INT TERM EXIT',
+            '    exit 1',
+            '}',
+            'trap "error_handler" INT TERM EXIT',
+            # Set $wd and $jd
+            'wd={}/{}'.format(self.workdir_path, job.jobid),
+            'jd={}/{}'.format(self.jobdata_path, job.jobid),
+            'mkdir -p $wd',
+            'cd $wd',
+            'echo "SLURM_JOBID is $SLURM_JOBID"',
+            #'echo "User is `id`"',
+            #'echo "Working dir is $wd"',
+            #'echo "JobData dir is $jd"',
+            # Move uploaded files to working directory if they exist
+            'echo "[`timestamp`] Prepare input files"',
+            'for filename in $jd/input/*; do [ -f "$filename" ] && cp $filename $wd; done',
+            # Start job
+            'curl -k -s -o $jd/curl_start_signal.log '
+            '    -d "jobid=$SLURM_JOBID" -d "phase=RUNNING" '
+            '    {}/handler/job_event'.format(BASE_URL),
+            'echo "[`timestamp`] ***** Start job *****"',
+            'touch $jd/start',
+            '### EXEC',
+            # Load variables from params file
+            '. {}/{}/parameters.sh'.format(self.jobdata_path, job.jobid),
+            # Run script in the current environment (with SLURM_JOBID defined)
+            'cp {}/{}.sh $jd'.format(self.scripts_path, job.jobname),
+            '. {}/{}.sh'.format(self.scripts_path, job.jobname),
+            'echo "[`timestamp`] List files in workdir"',
+            'ls -l',
+            '### CP RESULTS',
+            #'mkdir $jd/results',
+        ]
+        # Need JDL for results description
+        if not job.jdl.content:
+            job.jdl.read(job.jobname)
+        # Identify results to be moved to $jd/results
+        cp_results = [
+            'echo "[`timestamp`] Copy results"'
+        ]
+        for rname, r in job.jdl.content['results'].iteritems():
+            fname = job.get_result_filename(rname)
+            cp_results.append(
+                '[ -f $wd/{fname} ] '
+                '&& {{ cp $wd/{fname} $jd/results; echo "Found and copied: {rname}={fname}"; }} '
+                '|| echo "NOT FOUND: {rname}={fname}"'
+                ''.format(rname=rname, fname=fname)
+            )
+        sbatch.extend(cp_results)
+        # Clean and terminate job
+        sbatch.extend([
+            '### CLEAN',
+            'rm -rf $wd',
+            'touch $jd/done',
+            'echo "[`timestamp`] ***** Job done *****"',
+            'trap - INT TERM EXIT',
+            'curl -k -s -o $jd/curl_done_signal.log '
+            '    -d "jobid=$SLURM_JOBID" -d "phase=COMPLETED" '
+            '    {}/handler/job_event'.format(BASE_URL),
+
+            'exit 0',
+        ])
+        # On completion, SLURM executes the script /usr/local/sbin/completion_script.sh
+        # """
+        # # vouws
+        # if [[ "$UID" -eq 1834 ]]; then
+        #     curl -k --max-time 10 -d jobid="$JOBID" -d phase="$JOBSTATE" https://voparis-uws-test.obspm.fr/handler/job_event
+        # fi
+        # """
+        return '\n'.join(sbatch)
 
     def start(self, job):
         """Start job on cluster

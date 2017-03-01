@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 # Copyright (c) 2016 by Mathieu Servillat
 # Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
@@ -22,7 +22,8 @@ from cork import Cork
 
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 ENDPOINT = 'client'
-UWS_SERVER_URL = 'https://voparis-uws-test.obspm.fr'  # same as client = ''
+#UWS_SERVER_URL = 'https://voparis-uws-test.obspm.fr'  # same as client = ''
+UWS_SERVER_URL = 'http://localhost:8080'
 ALLOW_ANONYMOUS = False
 
 # Set logger

@@ -3,6 +3,7 @@ beaker
 bottle-cork
 blinker
 requests
+lxml
 webtest
 prov
 pydotplus
