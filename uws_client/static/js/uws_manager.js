@@ -337,19 +337,19 @@ var uws_manager = (function($) {
         $('#job_params').append(row);
     };
     var displayParamFormInputType = function(pname, p){
-        if (p.type == 'file') {
+        if (p.datatype == 'file') {
             $('#id_'+pname).attr('type', 'file');
         };
-        if ((p.type.indexOf('long') > -1)
-            || (p.type.indexOf('int') > -1)
-            || (p.type.indexOf('float') > -1)
-            || (p.type.indexOf('double') > -1)) {
+        if ((p.datatype.indexOf('long') > -1)
+            || (p.datatype.indexOf('int') > -1)
+            || (p.datatype.indexOf('float') > -1)
+            || (p.datatype.indexOf('double') > -1)) {
             $('#id_'+pname).attr('type', 'number');
         };
-        if (p.type.indexOf('anyURI') > -1) {
+        if (p.datatype.indexOf('anyURI') > -1) {
             $('#id_'+pname).attr('type', 'url');
         };
-        if (p.type.indexOf('bool') > -1) {
+        if (p.datatype.indexOf('bool') > -1) {
             // Change to checkbox
             $('#id_'+pname).removeClass('form-control');
             $('#id_'+pname).attr('type', 'checkbox');
@@ -404,7 +404,7 @@ var uws_manager = (function($) {
         for (var pname in jdl.parameters) {
             var p = jdl.parameters[pname];
             displayParamFormInput(pname, p);
-            if (p.type != 'file') {
+            if (p.datatype != 'file') {
                 $('#id_'+pname).wrap('<div class="input-group"></div>');
                 // Add Update buttons (possible to update params when pĥase is PENDING in UWS 1.0 - but not yet implemented)
                 $('#id_'+pname).parent().append('<span class="input-group-btn"><button id="button_'+pname+'" class="btn btn-default" type="button">Update</button></span>');
@@ -418,7 +418,7 @@ var uws_manager = (function($) {
                 };
             };
             // Change right corners for checkbox and select inside input-group
-            if (p.type.indexOf('bool') > -1) {
+            if (p.datatype.indexOf('bool') > -1) {
                 $('#id_'+pname).parent().attr('style','border-bottom-right-radius: 0px; border-top-right-radius: 0px;');
             };
             if (p.choices) {
