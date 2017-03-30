@@ -156,8 +156,8 @@ TERMINAL_PHASES = [
 ]
 
 #--- Include host-specific settings ------------------------------------------------------------------------------------
-if os.path.exists('settings_local.py'):
-    from settings_local import *
+if os.path.exists('uws_server/settings_local.py'):
+    from uws_server.settings_local import *
 #--- Include host-specific settings ------------------------------------------------------------------------------------
 
 #--- If imported from test.py, redefine settings -----------------------------------------------------------------------
