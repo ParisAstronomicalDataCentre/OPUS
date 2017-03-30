@@ -303,21 +303,39 @@ class VOTFile(JDLFile):
                         for p in elt:
                             name = p.get('name')
                             ref = p.get('ref')
-                            item = {
-                                'default': job_def['parameters'][ref]['default'],
-                                'content_type': p.get('xtype'),
-                                'description': job_def['parameters'][ref]['description']
-                            }
+                            if ref:
+                                item = {
+                                    'default': job_def.get('parameters').get(ref).get('default'),
+                                    'content_type': p.get('xtype'),
+                                    'description': job_def.get('parameters').get(ref).get('description')
+                                }
+                            else:
+                                item = {
+                                    'default': p.get('value'),
+                                    'content_type': p.get('xtype'),
+                                }
+                                for pp in p:
+                                    if pp.tag == '{}DESCRIPTION'.format(xmlns):
+                                        item['description'] = pp.text
                             job_def[group][name] = item
                     if group == 'results':
                         for p in elt:
                             name = p.get('name')
                             ref = p.get('ref')
-                            item = {
-                                'default': job_def['parameters'][ref]['default'],
-                                'content_type': p.get('xtype'),
-                                'description': job_def['parameters'][ref]['description']
-                            }
+                            if ref:
+                                item = {
+                                    'default': job_def.get('parameters').get(ref).get('default'),
+                                    'content_type': p.get('xtype'),
+                                    'description': job_def.get('parameters').get(ref).get('description')
+                                }
+                            else:
+                                item = {
+                                    'default': p.get('value'),
+                                    'content_type': p.get('xtype'),
+                                }
+                                for pp in p:
+                                    if pp.tag == '{}DESCRIPTION'.format(xmlns):
+                                        item['description'] = pp.text
                             job_def[group][name] = item
             # Log votable access
             # frame, filename, line_number, function_name, lines, index = inspect.stack()[1]
