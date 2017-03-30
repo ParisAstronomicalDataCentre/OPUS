@@ -200,7 +200,7 @@ def get_wadl(jobname):
     :param jobname:
     :return: WADL file
     """
-    fname = '{}/{}.wadl'.format(JDL_PATH, jobname)
+    fname = '{}/{}_vot.xml'.format(JDL_PATH, jobname)
     if os.path.isfile(fname):
         with open(fname) as f:
             wadl = f.readlines()
