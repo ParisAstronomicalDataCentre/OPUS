@@ -16,6 +16,12 @@ from beaker.middleware import SessionMiddleware
 from cork import Cork
 
 
+# Set logger
+if ('uws_client' not in logging.Logger.manager.loggerDict):
+    logging.config.dictConfig(LOGGING)
+logger = logging.getLogger('uws_client')
+
+
 # ----------
 #  Settings
 
@@ -27,6 +33,7 @@ ALLOW_ANONYMOUS = False
 
 #--- Include host-specific settings ------------------------------------------------------------------------------------
 if os.path.exists('uws_client/settings_local.py'):
+    logger.debug('Load local settings')
     from uws_client.settings_local import *
 #--- Include host-specific settings ------------------------------------------------------------------------------------
 
@@ -56,11 +63,6 @@ LOGGING = {
         },
     }
 }
-
-# Set logger
-if ('uws_client' not in logging.Logger.manager.loggerDict):
-    logging.config.dictConfig(LOGGING)
-logger = logging.getLogger('uws_client')
 
 # Set path to uws_client templates
 TEMPLATE_PATH.insert(0, APP_PATH + '/uws_client/views/')
