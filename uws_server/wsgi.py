@@ -23,4 +23,4 @@ import bottle
 import uws_server
 
 # Do NOT use bottle.run() with mod_wsgi
-application = uws_server.app
+application = uws_server.uws_server.app
