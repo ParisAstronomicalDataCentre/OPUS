@@ -14,6 +14,8 @@ print(sys.path)
 curdir = os.path.dirname(__file__)
 sys.path.append(curdir)
 sys.path.append(os.path.join(curdir, '..', 'uws_client'))
+sys.path.append(os.path.join(curdir, 'uws_server'))
+sys.path.append(os.path.join(curdir, 'uws_client'))
 print(sys.path)
 
 # Change working directory so relative paths (and template lookup) work again
