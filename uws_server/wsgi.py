@@ -18,7 +18,7 @@ sys.path.append(curdir)
 print(sys.path)
 
 # Change working directory so relative paths (and template lookup) work again
-#os.chdir(curdir)
+os.chdir(curdir)
 
 import bottle
 from uws_server import uws_server
