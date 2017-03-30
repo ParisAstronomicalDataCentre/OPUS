@@ -27,7 +27,7 @@ ALLOW_ANONYMOUS = False
 
 #--- Include host-specific settings ------------------------------------------------------------------------------------
 if os.path.exists('uws_client/settings_local.py'):
-    from settings_local import *
+    from uws_client.settings_local import *
 #--- Include host-specific settings ------------------------------------------------------------------------------------
 
 # Set logger
