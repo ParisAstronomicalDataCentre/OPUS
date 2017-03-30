@@ -326,7 +326,8 @@ class VOTFile(JDLFile):
             # if file does not exist, continue and return an empty dict
             logger.debug('VOTable not found for job {}'.format(jobname))
             raise UserWarning('VOTable not found for job {}'.format(jobname))
-        except:
+        except Exception as e:
+            logger.error('{}'.format(e.message))
             raise
             # return {}
         self.content = job_def
