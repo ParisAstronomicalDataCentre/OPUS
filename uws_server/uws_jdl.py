@@ -327,7 +327,7 @@ class VOTFile(JDLFile):
             logger.debug('VOTable not found for job {}'.format(jobname))
             raise UserWarning('VOTable not found for job {}'.format(jobname))
         except Exception as e:
-            logger.error('{}'.format(e.message))
+            logger.error('{}'.format(e))
             raise
             # return {}
         self.content = job_def
