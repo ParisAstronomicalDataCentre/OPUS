@@ -25,6 +25,7 @@ logger = logging.getLogger('uws_client')
 # ----------
 #  Settings
 
+logger.info('Load settings')
 
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 ENDPOINT = 'client'
@@ -33,7 +34,7 @@ ALLOW_ANONYMOUS = False
 
 #--- Include host-specific settings ------------------------------------------------------------------------------------
 if os.path.exists('uws_client/settings_local.py'):
-    logger.debug('Load local settings')
+    logger.info('Load local settings')
     from uws_client.settings_local import *
 #--- Include host-specific settings ------------------------------------------------------------------------------------
 
