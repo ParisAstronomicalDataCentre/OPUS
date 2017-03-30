@@ -218,6 +218,7 @@ def get_jdl_json(jobname):
     """
     try:
         jdl = uws_jdl.__dict__[JDL]()
+        logger.info(jobname)
         jdl.read(jobname)
         return jdl.content
     except UserWarning as e:
