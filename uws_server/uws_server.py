@@ -18,7 +18,7 @@ from beaker.middleware import SessionMiddleware
 # from cork import Cork
 
 from uws_classes import *
-from uws_client.uws_client import session_opts, app as client_app
+from uws_client import session_opts, app as client_app
 
 
 # Create a new application

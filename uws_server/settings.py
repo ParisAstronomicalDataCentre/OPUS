@@ -40,7 +40,8 @@ TRUSTED_CLIENTS = {
 GENERATE_PROV = True
 
 # Job Description Language
-JDL = 'WADLFile'
+#JDL = 'WADLFile'
+JDL = 'VOTFile'
 
 # Storage of job information
 STORAGE = 'SQLiteStorage'
