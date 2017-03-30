@@ -74,7 +74,9 @@ class JDLFile(object):
     jdl_path = '.'
 
     def _get_filename(self, jobname):
-        return '{}/{}{}'.format(self.jdl_path, jobname, self.extension)
+        fn = '{}/{}{}'.format(self.jdl_path, jobname, self.extension)
+        logger.info('JDL filename: ' + fn)
+        return fn
 
     def save(self, jobname):
         """Save job description to file"""
