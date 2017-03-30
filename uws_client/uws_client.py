@@ -33,7 +33,7 @@ UWS_SERVER_URL = 'http://localhost:8080'
 ALLOW_ANONYMOUS = False
 
 #--- Include host-specific settings ------------------------------------------------------------------------------------
-if os.path.exists('uws_client/settings_local.py'):
+if os.path.exists(APP_PATH + '/uws_client/settings_local.py'):
     logger.info('Load local settings')
     from uws_client.settings_local import *
 #--- Include host-specific settings ------------------------------------------------------------------------------------
