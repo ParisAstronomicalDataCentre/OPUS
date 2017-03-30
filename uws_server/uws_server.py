@@ -200,6 +200,7 @@ def get_wadl(jobname):
     :param jobname:
     :return: WADL file
     """
+    logger.info(jobname)
     fname = '{}/{}_vot.xml'.format(JDL_PATH, jobname)
     if os.path.isfile(fname):
         with open(fname) as f:
@@ -217,9 +218,10 @@ def get_jdl_json(jobname):
     :return: json description
     """
     try:
-        jdl = uws_jdl.__dict__[JDL]()
         logger.info(jobname)
+        jdl = uws_jdl.__dict__[JDL]()
         jdl.read(jobname)
+        logger.info(jobname)
         return jdl.content
     except UserWarning as e:
         abort_404(e.message)
