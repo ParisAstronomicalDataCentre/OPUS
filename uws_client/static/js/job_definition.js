@@ -217,7 +217,7 @@
 				    $('input[name=param_name_' + i + ']').val(param);
 				    $('select[name=param_type_' + i + ']').val(jdl.parameters[param]['type']);
 				    $('input[name=param_default_' + i + ']').val(jdl.parameters[param]['default']);
-				    $('input[name=param_required_' + i + ']').prop("checked", jdl.parameters[param]['required'].toLowerCase() == "true");
+				    $('input[name=param_required_' + i + ']').prop("checked", jdl.parameters[param]['required'].toString().toLowerCase() == "true");
 				    $('input[name=param_description_' + i + ']').val(jdl.parameters[param]['description']);
 				};
 				// Fill result_list table
