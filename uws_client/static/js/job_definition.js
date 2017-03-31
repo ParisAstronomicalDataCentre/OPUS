@@ -204,6 +204,8 @@
 			type : 'GET',
 			dataType: "json",
 			success : function(jdl) {
+				$('input[name=contact_name]').val(jdl.contact_name);
+				$('input[name=contact_email]').val(jdl.contact_email);
 				$('input[name=executionduration]').val(jdl.executionduration);
 				$('input[name=quote]').val(jdl.quote);
 				$('textarea[name=description]').val(jdl.description);

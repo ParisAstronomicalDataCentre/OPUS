@@ -419,7 +419,7 @@ class WADLFile(JDLFile):
         joblist_block.set('path', raw_jobname)
         joblist_block.set('url', self.content['url'])
         joblist_block.set('contact_name', self.content['contact_name'])
-        joblist_block.set('contact_affil', self.content['contact_affil'])
+        #joblist_block.set('contact_affil', self.content['contact_affil'])
         joblist_block.set('contact_email', self.content['contact_email'])
         # Insert job description
         job_list_description_block = jdl_tree.find(".//{}doc[@title='description']".format(xmlns))
