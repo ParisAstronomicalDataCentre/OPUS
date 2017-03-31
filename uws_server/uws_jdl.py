@@ -417,7 +417,7 @@ class WADLFile(JDLFile):
         # Insert raw_jobname as the resource path
         joblist_block = jdl_tree.find(".//{}resource[@id='joblist']".format(xmlns))
         joblist_block.set('path', raw_jobname)
-        joblist_block.set('url', self.content['url'])
+        joblist_block.set('doculink', self.content['doculink'])
         joblist_block.set('contact_name', self.content['contact_name'])
         #joblist_block.set('contact_affil', self.content['contact_affil'])
         joblist_block.set('contact_email', self.content['contact_email'])
@@ -509,7 +509,7 @@ class WADLFile(JDLFile):
             job_def['description'] = joblist_description_block.text
             # Read job attributes
             joblist_block = jdl_tree.find(".//{}resource[@id='joblist']".format(xmlns))
-            job_def['url'] = joblist_block.get('url')
+            job_def['doculink'] = joblist_block.get('doculink')
             job_def['contact_name'] = joblist_block.get('contact_name')
             job_def['contact_affil'] = joblist_block.get('contact_affil')
             job_def['contact_email'] = joblist_block.get('contact_email')
