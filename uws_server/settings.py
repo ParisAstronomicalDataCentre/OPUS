@@ -182,7 +182,7 @@ JOBDATA_PATH = APP_PATH + '/data/jobdata'
 # Path for job results and logs
 RESULTS_PATH = JOBDATA_PATH + '/results'
 # Path for JDL files, should probably be accessed through a URL as static files
-JDL_PATH = APP_PATH + '/data/job_def/jdl'
+JDL_PATH = APP_PATH + '/data/job_def'
 # Path for script files, should probably be accessed through a URL as static files
 SCRIPT_PATH = APP_PATH + '/data/job_def/scripts'
 # Path for SLURM sbatch files created by SLURMManager
