@@ -115,7 +115,7 @@ class VOTFile(JDLFile):
 
     def __init__(self, jdl_path=JDL_PATH):
         self.extension = '_vot.xml'
-        self.jdl_path = os.path.join(jdl_path, 'vot')
+        self.jdl_path = os.path.join(jdl_path, 'votable')
         self.xmlns_uris = {
             'xmlns': 'http://www.ivoa.net/xml/VOTable/v1.3',
             'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
@@ -357,7 +357,7 @@ class WADLFile(JDLFile):
 
     def __init__(self, jdl_path=JDL_PATH):
         self.extension = '.wadl'
-        self.jdl_path = os.path.join(jdl_path, 'votable')
+        self.jdl_path = os.path.join(jdl_path, 'wadl')
         self.xmlns_uris = {
             'xmlns:wadl': 'http://wadl.dev.java.net/2009/02',
             'xmlns:uws': 'http://www.ivoa.net/xml/UWS/v1.0',
