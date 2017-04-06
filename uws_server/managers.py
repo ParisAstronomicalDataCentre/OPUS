@@ -250,13 +250,16 @@ class SLURMManager(Manager):
             '#SBATCH --job-name={}'.format(job.jobname),
             '#SBATCH --error={}/{}/results/stderr.log'.format(self.jobdata_path, job.jobid),
             '#SBATCH --output={}/{}/results/stdout.log'.format(self.jobdata_path, job.jobid),
-            '#SBATCH --mail-user=' + self.mail,
+            '#SBATCH --mail-user={}'.format(self.mail),
             '#SBATCH --mail-type=ALL',
             '#SBATCH --no-requeue',
-            '#SBATCH --time=' + duration_str,
+            '#SBATCH --time={}'.format(duration_str),
         ]
         # Insert server specific sbatch commands
-        sbatch.extend(SLURM_SBATCH_ADD)
+        #sbatch.extend(SLURM_SBATCH_ADD)
+        for k, v in SLURM_SBATCH_ADD.iteritems():
+            sbline = '#SBATCH --{}={}'.format(k, v)
+            sbatch.append(sbline)
         # Script init and execution
         sbatch.extend([
             '### INIT',

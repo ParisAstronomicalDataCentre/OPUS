@@ -61,13 +61,21 @@ SLURM_USER_MAIL = 'mathieu.servillat@obspm.fr'
 SLURM_HOME_PATH = '/obs/vouws'  # '/obs/vouws'
 SLURM_JOBDATA_PATH = '/poubelle/vouws/jobdata'
 SLURM_WORKDIR_PATH = '/scratch/vouws'
-SLURM_SBATCH_ADD = [
-    "#SBATCH --mem=200mb",
-    "#SBATCH --nodes=1 --ntasks-per-node=1",
-    '#SBATCH --partition=short',  # for tycho...
-    # '#SBATCH --account=obspm',  # for quadri12...
-    # '#SBATCH --partition=def',  # for quadri12...'
-]
+# SLURM_SBATCH_ADD = [
+#     "#SBATCH --mem=200mb",
+#     "#SBATCH --nodes=1 --ntasks-per-node=1",
+#     '#SBATCH --partition=short',  # for tycho...
+#     # '#SBATCH --account=obspm',  # for quadri12...
+#     # '#SBATCH --partition=def',  # for quadri12...'
+# ]
+SLURM_SBATCH_ADD = {
+    'mem': '200mb',
+    'nodes': 1,
+    'ntasks-per-node': 1,
+    'partition': 'short',  # for tycho...
+    # 'account': 'obspm',  # for quadri12...
+    # 'partition': 'def',  # for quadri12...'
+}
 PHASE_CONVERT = {
     # Conversions for SLURM job state codes
     'RUNNING': dict(phase='EXECUTING', msg='Job currently has an allocation.'),
