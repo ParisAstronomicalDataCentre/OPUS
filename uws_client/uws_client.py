@@ -29,7 +29,8 @@ logger.info('Load settings')
 
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 ENDPOINT = 'client'
-UWS_SERVER_URL = 'http://localhost:8080'
+#UWS_SERVER_URL = 'http://localhost:8080'
+UWS_SERVER_URL = 'http://localhost'
 ALLOW_ANONYMOUS = False
 
 #--- Include host-specific settings ------------------------------------------------------------------------------------
