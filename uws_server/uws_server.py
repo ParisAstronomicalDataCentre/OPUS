@@ -201,12 +201,12 @@ def get_jdl(jobname):
     :return: WADL file
     """
     logger.info(jobname)
-    fname = '{}/{}_vot.xml'.format(JDL_PATH, jobname)
+    fname = '{}/votable/{}_vot.xml'.format(JDL_PATH, jobname)
     if os.path.isfile(fname):
         with open(fname) as f:
-            wadl = f.readlines()
+            jdl = f.readlines()
         response.content_type = 'text/xml; charset=UTF-8'
-        return wadl
+        return jdl
     abort_404('No WADL file found for ' + jobname)
 
 
