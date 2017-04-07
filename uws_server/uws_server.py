@@ -202,6 +202,7 @@ def get_jdl(jobname):
     """
     logger.info(jobname)
     fname = '{}/votable/{}_vot.xml'.format(JDL_PATH, jobname)
+    logger.info(fname)
     if os.path.isfile(fname):
         with open(fname) as f:
             jdl = f.readlines()
