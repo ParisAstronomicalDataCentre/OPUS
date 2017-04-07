@@ -122,7 +122,6 @@ class LocalManager(object):
             'jd={}/{}'.format(self.jobdata_path, job.jobid),
             'mkdir -p $wd',
             'cd $wd',
-            'echo "SLURM_JOBID is $SLURM_JOBID"',
             #'echo "User is `id`"',
             #'echo "Working dir is $wd"',
             #'echo "JobData dir is $jd"',
