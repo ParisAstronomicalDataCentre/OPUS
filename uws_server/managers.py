@@ -256,6 +256,7 @@ class SLURMManager(Manager):
         ]
         # Insert server specific sbatch commands
         #sbatch.extend(SLURM_SBATCH_ADD)
+        print(SLURM_SBATCH_ADD)
         for k, v in SLURM_SBATCH_ADD.iteritems():
             sbline = '#SBATCH --{}={}'.format(k, v)
             sbatch.append(sbline)
