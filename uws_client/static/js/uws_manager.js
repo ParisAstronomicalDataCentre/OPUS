@@ -355,7 +355,7 @@ var uws_manager = (function($) {
             $('#id_'+pname).attr('type', 'checkbox');
             $('#id_'+pname).wrap('<div class="checkbox"></div>');
             $('#id_'+pname).attr('style', 'margin-left: 10px;');
-            var val = p.default.toLowerCase();
+            var val = p.default //.toLowerCase();
             if ((val == 'true') || (val == 'yes')) {
                 $('#id_'+pname).attr('checked', 'checked');
             };
@@ -383,7 +383,7 @@ var uws_manager = (function($) {
         // Create form fields from WADL/JDL
         for (var pname in jdl.parameters) {
             var p = jdl.parameters[pname];
-            if (p.required.toLowerCase() == 'true') {
+            if (p.required == 'true') { //.toLowerCase()
                 displayParamFormInput(pname, p)
                 displayParamFormInputType(pname, p)
             };
