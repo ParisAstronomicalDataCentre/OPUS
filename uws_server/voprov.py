@@ -57,10 +57,9 @@ def job2prov(job):
     # TODO: add job description, version, url, ...
     ctbin.add_attributes({
         # 'prov:label': job.jdl.content['description'],
-        'prov:location': job.jdl.content['url'],
-        'contact_name': job.jdl.content['contact_name'],
-        'contact_affil': job.jdl.content['contact_affil'],
-        'contact_email': job.jdl.content['contact_email'],
+        'prov:location': job.jdl.content.get('url'),
+        'contact_name': job.jdl.content.get('contact_name'),
+        'contact_email': job.jdl.content.get('contact_email'),
     })
     # Agent: owner of the job
     agent = pdoc.agent('org:' + job.owner)
