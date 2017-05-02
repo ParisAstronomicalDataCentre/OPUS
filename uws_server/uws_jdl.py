@@ -178,6 +178,9 @@ class VOTFile(JDLFile):
                 'datatype': self.datatype_xs2vo[p['datatype']],
                 'value': p['default'],
             }
+            if param_attrib['datatype'] == 'file':
+                param_attrib['xtype'] = 'application/octet-stream'
+                param_attrib['datatype'] = 'char'
             if param_attrib['datatype'] == 'char':
                 param_attrib['arraysize'] = '*'
             if str(p['required']).lower() == 'false' :
@@ -278,9 +281,18 @@ class VOTFile(JDLFile):
                             if p.tag == '{}PARAM'.format(xmlns):
                                 name = p.get('name')
                                 print name, p.get('datatype', 'char')
+                                pdatatype = p.get('datatype', 'char')
+                                pxtype = p.get('xtype', None)
+                                if pxtype == 'application/octet-stream':
+                                    pdatatype = 'file'
+                                else:
+                                    pdatatype = self.datatype_vo2xs[pdatatype]
+                                prequired = 'true'
+                                if p.get('type') == 'no_query':    # type="no_query" in VOTable
+                                    prequired = 'false'
                                 item = {
-                                    'datatype': self.datatype_vo2xs[p.get('datatype', 'char')],
-                                    'required': p.get('type') != 'no_query',     # type="no_query" in VOTable
+                                    'datatype': pdatatype,
+                                    'required': prequired,
                                     'default': p.get('value'),
                                     'unit': p.get('unit', ''),
                                     'ucd': p.get('ucd', ''),
