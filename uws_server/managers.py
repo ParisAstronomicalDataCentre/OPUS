@@ -17,6 +17,7 @@ Specific functions are expected for those classes:
 """
 
 import shutil
+import signal
 import requests
 import datetime as dt
 import subprocess as sp
@@ -84,10 +85,10 @@ class LocalManager(object):
         self.workdir_path = '{}/../workdir'.format(jobdata_path)
 
     def _make_batch(self, job):
-        """Make sbatch file content for given job
+        """Make batch file content for given job
 
         Returns:
-            sbatch file content as a string
+            batch file content as a string
         """
         jd = '{}/{}'.format(self.jobdata_path, job.jobid)
         wd = '{}/{}'.format(self.workdir_path, job.jobid)
@@ -97,6 +98,7 @@ class LocalManager(object):
         # Create sbatch
         sbatch = [
             '#!/bin/bash -l',
+            # Keep stdout and stderr in files
             'exec >{jd}/results/stdout.log 2>{jd}/results/stderr.log'.format(jd=jd),
             '### INIT',
             # Init job execution
@@ -183,8 +185,8 @@ class LocalManager(object):
         return '\n'.join(sbatch)
 
     def start(self, job):
-        """Start job on cluster
-        :return: jobid_cluster, jobid on cluster
+        """Start job locally
+        :return: pid
         """
         # Create jobdata dir
         jd = '{}/{}'.format(self.jobdata_path, job.jobid)
@@ -212,7 +214,7 @@ class LocalManager(object):
                 shutil.copyfileobj(response.raw, out_file)
             del response
         # Create batch file
-        batch_file = '{}/sbatch.sh'.format(jd)
+        batch_file = '{}/batch.sh'.format(jd)
         with open(batch_file, 'w') as f:
             batch = self._make_batch(job)
             f.write(batch)
@@ -226,6 +228,7 @@ class LocalManager(object):
 
     def abort(self, job):
         """Abort/Cancel job on cluster"""
+        os.kill(job.jobid_cluster, signal.SIGTERM)
         pass
 
     def delete(self, job):
