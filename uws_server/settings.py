@@ -49,7 +49,6 @@ JDL = 'VOTFile'
 
 # Storage of job information
 STORAGE = 'SQLiteStorage'
-SQLITE_FILE = VAR_PATH + '/db/job_database.db'
 
 PGSQL_HOST = 'localhost'
 PGSQL_PORT = 5432
@@ -181,18 +180,20 @@ if 'test.py' in main_dict.get('__file__', ''):
 #--- If imported from test.py, redefine settings -----------------------------------------------------------------------
     
 #--- Set all _PATH based on APP_PATH -----------------------------------------------------------------------------------
-# If POST contains files they are uploaded on the UWS server
-UPLOAD_PATH = VAR_PATH + '/data/uploads'
-# Path for job results and logs
-JOBDATA_PATH = VAR_PATH + '/data/jobdata'
-# Path for job results and logs
-RESULTS_PATH = JOBDATA_PATH + '/results'
 # Path for JDL files, should probably be accessed through a URL as static files
 JDL_PATH = APP_PATH + '/data/job_def'
 # Path for script files, should probably be accessed through a URL as static files
 SCRIPT_PATH = APP_PATH + '/data/job_def/scripts'
+# Path to sqlite db file
+SQLITE_FILE = VAR_PATH + '/db/job_database.db'
+# If POST contains files they are uploaded on the UWS server
+UPLOAD_PATH = VAR_PATH + '/uploads'
+# Path for job results and logs
+JOBDATA_PATH = VAR_PATH + '/jobdata'
+# Path for job results and logs
+RESULTS_PATH = JOBDATA_PATH + '/results'
 # Path for SLURM sbatch files created by SLURMManager
-SBATCH_PATH = VAR_PATH + '/data/sbatch'
+SBATCH_PATH = VAR_PATH + '/sbatch'
 # Logging
 LOG_PATH = VAR_PATH + '/logs'
 #--- Set all _PATH based on APP_PATH -----------------------------------------------------------------------------------
