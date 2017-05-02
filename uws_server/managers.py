@@ -106,6 +106,8 @@ class LocalManager(object):
             '    date +"%Y-%m-%dT%H:%M:%S"',
             '}',
             'echo "[`timestamp`] Initialize job"',
+            'echo $BASH_COMMAND',
+            'echo ${BASH_SOURCE[1]##*/}',
             'JOBID=$$',
             # Error handler (send signal on error, in addition to job completion by SLURM)
             'set -e ',
@@ -228,7 +230,7 @@ class LocalManager(object):
 
     def abort(self, job):
         """Abort/Cancel job on cluster"""
-        os.kill(job.jobid_cluster, signal.SIGTERM)
+        os.kill(job.jobid_cluster, signal.SIGTERM) # SIGTERM => error sent ; SIGKILL => no error sent, just killed!
         pass
 
     def delete(self, job):
