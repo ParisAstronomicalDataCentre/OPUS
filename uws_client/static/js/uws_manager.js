@@ -380,6 +380,7 @@ var uws_manager = (function($) {
     var displayParamFormOk = function(jobName){
         // Run displayParamForm instead to check that jdl is defined
         var jdl = clients[jobName].jdl;
+        console.log(jdl);
         // Create form fields from WADL/JDL
         for (var pname in jdl.parameters) {
             var p = jdl.parameters[pname];
