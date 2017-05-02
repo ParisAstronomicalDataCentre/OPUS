@@ -8,6 +8,7 @@ Export UWS job description to a ProvDocument following the W3C PROV standard
 
 from prov.model import ProvDocument
 from prov.dot import prov_to_dot
+from pydotplus.graphviz import InvocationException
 
 # examples:
 # http://prov.readthedocs.org/en/latest/usage.html#simple-prov-document
@@ -145,7 +146,16 @@ def prov2svg(prov_doc, fname):
     :param fname: file name
     :return:
     """
-    dot = prov2dot(prov_doc)
-    svg_content = dot.create(format="svg")
+    try:
+        dot = prov2dot(prov_doc)
+        svg_content = dot.create(format="svg")
+    except InvocationException as e:
+        svg_content = '''
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.0"
+	width="38" height="32"  viewBox="0 0 39.875 33.6667">
+<path style="stroke: none; fill: #323296;" d="M 10,0 L 30.5,0 39.875,17.5 30.5,33.6667 10,33.6667 L 0,17.5 L 10,0 z"/>
+</svg>
+'''
     with open(fname, "w") as f:
         f.write(svg_content)
