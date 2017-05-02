@@ -362,7 +362,7 @@ var uws_manager = (function($) {
         };
         if (p.choices) {
             // change input to select and run selectpicker
-            console.log('change to select');
+            console.log('change to select input');
             var elt = '\
                 <select class="selectpicker" id="id_' + pname + '" name="' + pname + '">\n\
                 </select>\n';
@@ -380,11 +380,11 @@ var uws_manager = (function($) {
     var displayParamFormOk = function(jobName){
         // Run displayParamForm instead to check that jdl is defined
         var jdl = clients[jobName].jdl;
-        console.log(jdl);
         // Create form fields from WADL/JDL
         for (var pname in jdl.parameters) {
             var p = jdl.parameters[pname];
             if (p.required == 'true') { //.toLowerCase()
+                console.log(p);
                 displayParamFormInput(pname, p)
                 displayParamFormInputType(pname, p)
             };
