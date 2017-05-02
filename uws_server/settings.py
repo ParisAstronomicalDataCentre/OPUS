@@ -17,7 +17,7 @@ DEBUG = True
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 #'/home/mservillat/CTA/git_voparis/uws_server'
 
-BASE_URL = 'http://localhost:8080'
+BASE_URL = 'http://localhost'
 BASE_IP = '127.0.0.1'
 
 MERGE_CLIENT = True
@@ -26,6 +26,7 @@ LOG_FILE_SUFFIX = ''
 
 # Those servers have access to /job_event/<jobid_manager> to change the phase or report an error
 JOB_SERVERS = {
+    '::1': 'localhost',
     '127.0.0.1': 'localhost',
     '145.238.151.': 'tycho/quadri12',
 }
@@ -54,21 +55,15 @@ PGSQL_USER = 'opus'
 PGSQL_PASSWORD = 'opus'
 
 # Define a Manager and its properties
-MANAGER = 'SLURMManager'
+MANAGER = 'LocalManager'
+#MANAGER = 'SLURMManager'
 SLURM_URL = 'tycho.obspm.fr'  # 'quadri12.obspm.fr'  #
 SLURM_USER = 'vouws'
 SLURM_USER_MAIL = 'mathieu.servillat@obspm.fr'
 SLURM_HOME_PATH = '/obs/vouws'  # '/obs/vouws'
 SLURM_JOBDATA_PATH = '/poubelle/vouws/jobdata'
 SLURM_WORKDIR_PATH = '/scratch/vouws'
-# SLURM_SBATCH_ADD = [
-#     "#SBATCH --mem=200mb",
-#     "#SBATCH --nodes=1 --ntasks-per-node=1",
-#     '#SBATCH --partition=short',  # for tycho...
-#     # '#SBATCH --account=obspm',  # for quadri12...
-#     # '#SBATCH --partition=def',  # for quadri12...'
-# ]
-SLURM_SBATCH_ADD = {
+SLURM_SBATCH_DEFAULT = {
     'mem': '200mb',
     'nodes': 1,
     'ntasks-per-node': 1,

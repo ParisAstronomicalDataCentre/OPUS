@@ -16,6 +16,8 @@ Specific functions are expected for those classes:
 * cp_script
 """
 
+import shutil
+import requests
 import datetime as dt
 import subprocess as sp
 from settings import *
@@ -99,6 +101,7 @@ class LocalManager(object):
             '    date +"%Y-%m-%dT%H:%M:%S"',
             '}',
             'echo "[`timestamp`] Initialize job"',
+            'JOBID=$$',
             # Error handler (send signal on error, in addition to job completion by SLURM)
             'set -e ',
             'error_handler() {',
@@ -109,7 +112,7 @@ class LocalManager(object):
             '    echo "$msg"', # echo in stdout log
             # '    echo "Signal error"',
             '    curl -k -s -o $jd/curl_error_signal.log '
-            '        -d "jobid=$SLURM_JOBID" -d "phase=ERROR" --data-urlencode "error_msg=$msg" '
+            '        -d "jobid=$JOBID" -d "phase=ERROR" --data-urlencode "error_msg=$msg" '
             '        {}/handler/job_event'.format(BASE_URL),
             '    rm -rf $wd',
             # '    echo "Remove trap"',
@@ -130,7 +133,7 @@ class LocalManager(object):
             'for filename in $jd/input/*; do [ -f "$filename" ] && cp $filename $wd; done',
             # Start job
             'curl -k -s -o $jd/curl_start_signal.log '
-            '    -d "jobid=$SLURM_JOBID" -d "phase=RUNNING" '
+            '    -d "jobid=$JOBID" -d "phase=RUNNING" '
             '    {}/handler/job_event'.format(BASE_URL),
             'echo "[`timestamp`] ***** Start job *****"',
             'touch $jd/start',
@@ -169,25 +172,53 @@ class LocalManager(object):
             'echo "[`timestamp`] ***** Job done *****"',
             'trap - INT TERM EXIT',
             'curl -k -s -o $jd/curl_done_signal.log '
-            '    -d "jobid=$SLURM_JOBID" -d "phase=COMPLETED" '
+            '    -d "jobid=$JOBID" -d "phase=COMPLETED" '
             '    {}/handler/job_event'.format(BASE_URL),
 
             'exit 0',
         ])
-        # On completion, SLURM executes the script /usr/local/sbin/completion_script.sh
-        # """
-        # # vouws
-        # if [[ "$UID" -eq 1834 ]]; then
-        #     curl -k --max-time 10 -d jobid="$JOBID" -d phase="$JOBSTATE" https://voparis-uws-test.obspm.fr/handler/job_event
-        # fi
-        # """
         return '\n'.join(sbatch)
 
     def start(self, job):
         """Start job on cluster
         :return: jobid_cluster, jobid on cluster
         """
-        return 0
+        # Create jobdata dir
+        jd = '{}/{}'.format(self.jobdata_path, job.jobid)
+        if not os.path.isdir(jd):
+            os.makedirs('{}/{}'.format(jd, 'input'))
+            os.makedirs('{}/{}'.format(jd, 'results'))
+        # Create parameter file
+        param_file = '{}/parameters.sh'.format(jd)
+        with open(param_file, 'w') as f:
+            # parameters are a list of key=value (easier for bash sourcing)
+            params, files = job.parameters_to_bash(get_files=True)
+            f.write(params)
+        os.chmod(param_file, 0o744)
+        # Copy files to workdir_path (scp if uploaded from form, or wget if given as a URI)
+        # TODO: delete files
+        for fname in files['form']:
+            shutil.copy(
+                '{}/{}/{}'.format(UPLOAD_PATH, job.jobid, fname),
+                '{}/input/{}'.format(jd, fname))
+        for furl in files['URI']:
+            fname = furl.split('/')[-1]
+            response = requests.get(furl, stream=True)
+            with open('{}/input/{}'.format(jd, fname), 'wb') as out_file:
+                shutil.copyfileobj(response.raw, out_file)
+            del response
+        # Create batch file
+        batch_file = '{}/sbatch.sh'.format(jd)
+        with open(batch_file, 'w') as f:
+            batch = self._make_batch(job)
+            f.write(batch)
+        os.chmod(batch_file, 0o744)
+        # Start job using sp
+        cmd = [batch_file]
+        # logger.debug(' '.join(cmd))
+        #sp.check_output(cmd, stderr=sp.STDOUT)
+        pid = sp.Popen(cmd).pid
+        return pid
 
     def abort(self, job):
         """Abort/Cancel job on cluster"""
@@ -256,8 +287,7 @@ class SLURMManager(Manager):
         ]
         # Insert server specific sbatch commands
         #sbatch.extend(SLURM_SBATCH_ADD)
-        print(SLURM_SBATCH_ADD)
-        for k, v in SLURM_SBATCH_ADD.iteritems():
+        for k, v in SLURM_SBATCH_DEFAULT.iteritems():
             sbline = '#SBATCH --{}={}'.format(k, v)
             sbatch.append(sbline)
         # Script init and execution
