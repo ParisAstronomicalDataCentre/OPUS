@@ -89,12 +89,15 @@ class LocalManager(object):
         Returns:
             sbatch file content as a string
         """
+        jd = '{}/{}'.format(self.jobdata_path, job.jobid)
+        wd = '{}/{}'.format(self.workdir_path, job.jobid)
         duration = dt.timedelta(0, int(job.execution_duration))
         # duration format is 00:01:00 for 1 min
         duration_str = str(duration).replace(' days', '').replace(' day', '').replace(', ', '-')
         # Create sbatch
         sbatch = [
             '#!/bin/bash -l',
+            'exec >{jd}/results/stdout.log 2>{jd}/results/stderr.log'.format(jd=jd),
             '### INIT',
             # Init job execution
             'timestamp() {',
@@ -114,15 +117,15 @@ class LocalManager(object):
             '    curl -k -s -o $jd/curl_error_signal.log '
             '        -d "jobid=$JOBID" -d "phase=ERROR" --data-urlencode "error_msg=$msg" '
             '        {}/handler/job_event'.format(BASE_URL),
-            '    rm -rf $wd',
+            #'    rm -rf $wd',
             # '    echo "Remove trap"',
             '    trap - INT TERM EXIT',
             '    exit 1',
             '}',
             'trap "error_handler" INT TERM EXIT',
             # Set $wd and $jd
-            'wd={}/{}'.format(self.workdir_path, job.jobid),
-            'jd={}/{}'.format(self.jobdata_path, job.jobid),
+            'wd={}'.format(wd),
+            'jd={}'.format(jd),
             'mkdir -p $wd',
             'cd $wd',
             #'echo "User is `id`"',
@@ -185,6 +188,7 @@ class LocalManager(object):
         """
         # Create jobdata dir
         jd = '{}/{}'.format(self.jobdata_path, job.jobid)
+        wd = '{}/{}'.format(self.workdir_path, job.jobid)
         if not os.path.isdir(jd):
             os.makedirs('{}/{}'.format(jd, 'input'))
             os.makedirs('{}/{}'.format(jd, 'results'))
