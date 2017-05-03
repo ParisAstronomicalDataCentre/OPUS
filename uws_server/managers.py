@@ -70,6 +70,9 @@ class Manager(object):
         pass
 
 
+# -------------
+# Local Manager class
+
 
 class LocalManager(object):
     """
@@ -123,18 +126,18 @@ class LocalManager(object):
             '        {}/handler/job_event'.format(BASE_URL),
             #'    rm -rf $wd',
             # '    echo "Remove trap"',
-            '    trap - INT TERM EXIT',
+            '    trap - SIGHUP SIGINT SIGTERM',
             '    exit 1',
             '}',
-            'trap "error_handler" INT TERM EXIT',
+            'trap "error_handler" SIGHUP SIGINT SIGTERM',
             # Set $wd and $jd
             'wd={}'.format(wd),
             'jd={}'.format(jd),
             'mkdir -p $wd',
             'cd $wd',
-            #'echo "User is `id`"',
-            #'echo "Working dir is $wd"',
-            #'echo "JobData dir is $jd"',
+            # 'echo "User is `id`"',
+            # 'echo "Working dir is $wd"',
+            # 'echo "JobData dir is $jd"',
             # Move uploaded files to working directory if they exist
             'echo "[`timestamp`] Prepare input files"',
             'for filename in $jd/input/*; do [ -f "$filename" ] && cp $filename $wd; done',
@@ -153,7 +156,7 @@ class LocalManager(object):
             'echo "[`timestamp`] List files in workdir"',
             'ls -l',
             '### CP RESULTS',
-            #'mkdir $jd/results',
+            # 'mkdir $jd/results',
         ]
         # Need JDL for results description
         if not job.jdl.content:
@@ -177,11 +180,10 @@ class LocalManager(object):
             'rm -rf $wd',
             'touch $jd/done',
             'echo "[`timestamp`] ***** Job done *****"',
-            'trap - INT TERM EXIT',
+            'trap - SIGHUP SIGINT SIGTERM',
             'curl -k -s -o $jd/curl_done_signal.log '
             '    -d "jobid=$JOBID" -d "phase=COMPLETED" '
             '    {}/handler/job_event'.format(BASE_URL),
-
             'exit 0',
         ])
         return '\n'.join(sbatch)
@@ -269,6 +271,10 @@ class LocalManager(object):
         pass
 
 
+# -------------
+# SLURM Manager class
+
+
 class SLURMManager(Manager):
     """Manage interactions with SLURM queue manager (e.g. on tycho.obspm.fr)"""
 
@@ -332,10 +338,10 @@ class SLURMManager(Manager):
             '        {}/handler/job_event'.format(BASE_URL),
             '    rm -rf $wd',
             # '    echo "Remove trap"',
-            '    trap - INT TERM EXIT',
+            '    trap - SIGHUP SIGINT SIGTERM',
             '    exit 1',
             '}',
-            'trap "error_handler" INT TERM EXIT',
+            'trap "error_handler" SIGHUP SIGINT SIGTERM',
             # Set $wd and $jd
             'wd={}/{}'.format(self.workdir_path, job.jobid),
             'jd={}/{}'.format(self.jobdata_path, job.jobid),
@@ -387,7 +393,7 @@ class SLURMManager(Manager):
             'rm -rf $wd',
             'touch $jd/done',
             'echo "[`timestamp`] ***** Job done *****"',
-            'trap - INT TERM EXIT',
+            'trap - SIGHUP SIGINT SIGTERM',
             'exit 0',
         ])
         # On completion, SLURM executes the script /usr/local/sbin/completion_script.sh
