@@ -229,12 +229,21 @@ class LocalManager(object):
         return pid
 
     def abort(self, job):
-        """Abort/Cancel job on cluster"""
+        """Abort/Cancel job"""
         os.kill(job.jobid_cluster, signal.SIGTERM) # SIGTERM => error sent ; SIGKILL => no error sent, just killed!
         pass
 
     def delete(self, job):
-        """Delete job on cluster"""
+        """Delete job"""
+        # jobdata is already deleted by the server
+        try:
+            os.kill(job.jobid_cluster, signal.SIGTERM) # SIGTERM => error sent ; SIGKILL => no error sent, just killed!
+        except OSError as e:
+            logger.info(str(e))
+            if 'No such process' in str(e):
+                logger.info('No such process ({}) for job {} {}'.format(job.jobid_cluster, job.jobname, job.jobid))
+        except:
+            raise
         pass
 
     def get_status(self, job):
@@ -251,10 +260,12 @@ class LocalManager(object):
 
     def get_results(self, job):
         """Get job results from cluster"""
+        # results are already stored on the server
         pass
 
     def cp_script(self, jobname):
         """Copy job script to cluster"""
+        # scripts are already stored on the server
         pass
 
 
