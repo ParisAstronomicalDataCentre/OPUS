@@ -30,43 +30,43 @@ from settings import *
 
 class Manager(object):
     """
-    Manage job execution on cluster. This class defines required functions executed
+    Manage job execution. This class defines required functions executed
     by the UWS server: start(), abort(), delete(), get_status(), get_info(),
     get_results() and cp_script().
     """
 
     def start(self, job):
-        """Start job on cluster
-        :return: jobid_cluster, jobid on cluster
+        """Start job
+        :return: jobid_cluster, jobid on work cluster
         """
         return 0
 
     def abort(self, job):
-        """Abort/Cancel job on cluster"""
+        """Abort/Cancel job"""
         pass
 
     def delete(self, job):
-        """Delete job on cluster"""
+        """Delete job"""
         pass
 
     def get_status(self, job):
-        """Get job status (phase) from cluster
+        """Get job status (phase)
         :return: job status (phase)
         """
         return job.phase
 
     def get_info(self, job):
-        """Get job info from cluster
+        """Get job info
         :return: dictionary with job info
         """
         return {'phase': job.phase}
 
     def get_results(self, job):
-        """Get job results from cluster"""
+        """Get job results"""
         pass
 
     def cp_script(self, jobname):
-        """Copy job script to cluster"""
+        """Copy job script"""
         pass
 
 
