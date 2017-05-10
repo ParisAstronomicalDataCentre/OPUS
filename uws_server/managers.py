@@ -94,7 +94,7 @@ class Manager(object):
             'touch $jd/start',
             '### EXEC',
             # Load variables from params file
-            '. {}/{}/parameters.sh'.format(self.jobdata_path, job.jobid),
+            '. $jd/parameters.sh',
             # Run script in the current environment (with SLURM_JOBID defined)
             'cp {}/{}.sh $jd'.format(self.scripts_path, job.jobname),
             '. {}/{}.sh'.format(self.scripts_path, job.jobname),
@@ -284,6 +284,7 @@ class SLURMManager(Manager):
         Returns:
             sbatch file content as a string
         """
+        jd = '{}/{}'.format(self.jobdata_path, job.jobid)
         duration = dt.timedelta(0, int(job.execution_duration))
         # duration format is 00:01:00 for 1 min
         duration_str = str(duration).replace(' days', '').replace(' day', '').replace(', ', '-')
@@ -291,8 +292,8 @@ class SLURMManager(Manager):
         sbatch = [
             '#!/bin/bash -l',
             '#SBATCH --job-name={}'.format(job.jobname),
-            '#SBATCH --error={}/{}/results/stderr.log'.format(self.jobdata_path, job.jobid),
-            '#SBATCH --output={}/{}/results/stdout.log'.format(self.jobdata_path, job.jobid),
+            '#SBATCH --error={}/results/stderr.log'.format(jd),
+            '#SBATCH --output={}/results/stdout.log'.format(jd),
             '#SBATCH --mail-user={}'.format(self.mail),
             '#SBATCH --mail-type=ALL',
             '#SBATCH --no-requeue',
@@ -320,8 +321,9 @@ class SLURMManager(Manager):
             jobid_cluster on SLURM server
         """
         # Create jobdata dir (to upload the scripts, parameters and input files)
+        jd = '{}/{}'.format(self.jobdata_path, job.jobid)
         cmd = ['ssh', self.ssh_arg,
-               'mkdir -p {}/{}/{{input,results}}'.format(self.jobdata_path, job.jobid)]
+               'mkdir -p {}/{{input,results}}'.format(jd)]
         # logger.debug(' '.join(cmd))
         try:
             sp.check_output(cmd, stderr=sp.STDOUT)
@@ -333,7 +335,7 @@ class SLURMManager(Manager):
                 raise
         # Create parameter file
         param_file_local = '{}/{}_parameters.sh'.format(SBATCH_PATH, job.jobid)
-        param_file_distant = '{}/{}/parameters.sh'.format(self.jobdata_path, job.jobid)
+        param_file_distant = '{}/parameters.sh'.format(jd)
         with open(param_file_local, 'w') as f:
             # parameters are a list of key=value (easier for bash sourcing)
             params, files = job.parameters_to_bash(get_files=True)
@@ -349,18 +351,18 @@ class SLURMManager(Manager):
         for fname in files['form']:
             cmd = ['scp',
                    '{}/{}/{}'.format(UPLOAD_PATH, job.jobid, fname),
-                   '{}:{}/{}/input/{}'.format(self.ssh_arg, self.jobdata_path, job.jobid, fname)]
+                   '{}:{}/input/{}'.format(self.ssh_arg, jd, fname)]
             # logger.debug(' '.join(cmd))
             sp.check_output(cmd, stderr=sp.STDOUT)
         for furl in files['URI']:
             fname = furl.split('/')[-1]
             cmd = ['ssh', self.ssh_arg,
-                   'wget -q {} -O {}/{}/input/{}'.format(furl, self.jobdata_path, job.jobid, fname)]
+                   'wget -q {} -O {}/input/{}'.format(furl, jd, fname)]
             # logger.debug(' '.join(cmd))
             sp.check_output(cmd, stderr=sp.STDOUT)
         # Create sbatch file
         sbatch_file_local = '{}/{}_sbatch.sh'.format(SBATCH_PATH, job.jobid)
-        sbatch_file_distant = '{}/{}/sbatch.sh'.format(self.jobdata_path, job.jobid)
+        sbatch_file_distant = '{}/sbatch.sh'.format(jd)
         with open(sbatch_file_local, 'w') as f:
             sbatch = self._make_sbatch(job)
             f.write('\n'.join(sbatch))
@@ -444,7 +446,7 @@ class SLURMManager(Manager):
             list of results?
         """
         cmd = ['scp', '-rp',
-               '{}:{}/jobdata/{}'.format(self.ssh_arg, SLURM_HOME_PATH, job.jobid),
+               '{}:{}/{}'.format(self.ssh_arg, self.jobdata_path, job.jobid),
                JOBDATA_PATH]
         logger.debug(' '.join(cmd))
         sp.check_output(cmd, stderr=sp.STDOUT)
