@@ -35,11 +35,14 @@ var uws_manager = (function($) {
     var jobNames;
     var clients = {};
 
+
+    //----------
     // LOGGER (show info in console or other logger)
     function logger(lvl_name, msg, exception) {
         console.log(lvl_name + ' ' + msg);
     }
 
+    //----------
     // Scroll to an anchor in the page with slow animation
     function scrollToAnchor(aid){
         var elt = $("#"+ aid);
@@ -48,6 +51,7 @@ var uws_manager = (function($) {
         }
     }
 
+    //----------
     // CREATE MANAGER AND CLIENTS
     function initManager(serviceUrl, jobNames_init, basicauth){
         jobNames = jobNames_init;
@@ -76,6 +80,7 @@ var uws_manager = (function($) {
         };
     }
 
+    //----------
     // PREPARE TABLE
     var prepareTable = function() {
         var tcontent = '\
@@ -94,15 +99,21 @@ var uws_manager = (function($) {
         $('#job_list').html(tcontent);
     };
 
+    //----------
     // SELECT JOB
     var selectJob = function(jobId) {
         $('#job_list tbody').find('tr.bg-info').removeClass('bg-info');
         $('#'+jobId).addClass("bg-info");
     }
 
+
+
     //----------
     // DISPLAY functions
+    //----------
 
+
+    //----------
     // DISPLAY PHASE
     var displayPhase = function(jobId, phase) {
         var phase_class = 'btn-default';
@@ -166,6 +177,7 @@ var uws_manager = (function($) {
         };
     };
 
+    //----------
     // REFRESH PHASE
     var refreshPhase = function(jobId, phase) {
         // Display PHASE button
@@ -190,6 +202,7 @@ var uws_manager = (function($) {
         };
     };
 
+    //----------
     // DISPLAY JOB ROW
     var displayJobRow = function(job){
         var start_time = job.startTime.split("T");
@@ -277,6 +290,7 @@ var uws_manager = (function($) {
         });
     };
 
+    //----------
     // DISPLAY JOB
     var displayJob = function(job){
         // Display row
@@ -302,6 +316,7 @@ var uws_manager = (function($) {
         });
     };
 
+    //----------
     // DISPLAY PROPS
     var displayProps = function(job){
         for (var p in job) {
@@ -322,10 +337,17 @@ var uws_manager = (function($) {
         };
     };
 
-    // DISPLAY PARAMS
+    //----------
+    // DISPLAY PARAMS (as forms)
     var displayParamFormInput = function(pname, p){
+        var phide = ''
+        var pclass = 'form-group'
+        if (p.required == 'false') { //.toLowerCase()
+            phide = ' style="display:none; color:lightgrey"';
+            pclass = 'form-group optional';
+        };
         var row = '\
-            <div class="form-group">\
+            <div class="' + pclass + '"' + phide + '>\
                 <label class="col-md-2 control-label">' + pname + '</label>\
                 <div id="div_' + pname + '" class="col-md-5 controls">\
                     <input class="form-control" id="id_' + pname + '" name="' + pname + '" type="text" value="' + p.default + '"/>\
@@ -345,6 +367,12 @@ var uws_manager = (function($) {
             || (p.datatype.indexOf('float') > -1)
             || (p.datatype.indexOf('double') > -1)) {
             $('#id_'+pname).attr('type', 'number');
+            if (p.min) {
+                $('#id_'+pname).attr('min', p.min);
+            };
+            if (p.max) {
+                $('#id_'+pname).attr('max', p.max);
+            };
         };
         if (p.datatype.indexOf('anyURI') > -1) {
             $('#id_'+pname).attr('type', 'url');
@@ -360,7 +388,7 @@ var uws_manager = (function($) {
                 $('#id_'+pname).attr('checked', 'checked');
             };
         };
-        if (p.choices) {
+        if (p.options) {
             // change input to select and run selectpicker
             console.log('change to select input');
             var elt = '\
@@ -368,9 +396,9 @@ var uws_manager = (function($) {
                 </select>\n';
 
             $('#id_'+pname).replaceWith(elt);
-            var choices = p.choices.split('|');
-            for (var i in choices) {
-                $('#id_'+pname).append('<option>' + choices[i] + '</option>');
+            var options = p.options.split(',');
+            for (var i in options) {
+                $('#id_'+pname).append('<option>' + options[i] + '</option>');
                 $('select[name=' + pname + ']').attr('data-width', '100%').selectpicker();
                 $('select[name=' + pname + ']').val(p.default);
             };
@@ -383,11 +411,8 @@ var uws_manager = (function($) {
         // Create form fields from WADL/JDL
         for (var pname in jdl.parameters) {
             var p = jdl.parameters[pname];
-            if (p.required == 'true') { //.toLowerCase()
-                console.log(p);
-                displayParamFormInput(pname, p)
-                displayParamFormInputType(pname, p)
-            };
+            displayParamFormInput(pname, p)
+            displayParamFormInputType(pname, p)
         };
         // Add buttons
         var elt = '\
@@ -395,9 +420,20 @@ var uws_manager = (function($) {
                 <div class="col-md-offset-2 col-md-5">\n\
                     <button type="submit" class="btn btn-primary">Submit</button>\n\
                     <button type="reset" class="btn btn-default">Reset</button>\n\
+                    <button id="showopt" type="button" class="btn btn-default">Show optional parameters</button>\n\
                 </div>\n\
             </div>\n';
         $('#job_params').append(elt);
+        $('#showopt').click( function() {
+            var btext = $('#showopt').html();
+            if (btext.indexOf('Show') > -1) {
+                $('.optional').show();
+                $('#showopt').html("Hide optional parameters");
+            } else {
+                $('.optional').hide();
+                $('#showopt').html("Show optional parameters");
+            };
+        });
     };
     var displayParamFormFilled = function(job){
         var jdl = clients[job.jobName].jdl;
@@ -422,7 +458,7 @@ var uws_manager = (function($) {
             if (p.datatype.indexOf('bool') > -1) {
                 $('#id_'+pname).parent().attr('style','border-bottom-right-radius: 0px; border-top-right-radius: 0px;');
             };
-            if (p.choices) {
+            if (p.options) {
                 $('button[data-id=id_'+pname+']').attr('style','border-bottom-right-radius: 0px; border-top-right-radius: 0px; opacity: 1;');
             };
         };
@@ -444,6 +480,25 @@ var uws_manager = (function($) {
             $('#id_'+pname).attr('value', decodeURIComponent(pvalue));
         };
         $('.selectpicker').selectpicker('refresh');
+        // Add buttons
+        var elt = '\
+            <div id="form-buttons" class="form-group">\n\
+                <div class="col-md-offset-2 col-md-5">\n\
+                    <button id="showopt" type="button" class="btn btn-default">Show optional parameters</button>\n\
+                </div>\n\
+            </div>\n';
+        $('#job_params').append(elt);
+        $('#showopt').click( function() {
+            var btext = $('#showopt').html();
+            if (btext.indexOf('Show') > -1) {
+                $('.optional').show();
+                $('#showopt').html("Hide optional parameters");
+            } else {
+                $('.optional').hide();
+                $('#showopt').html("Show optional parameters");
+            };
+        });
+
     };
     var displayParamForm = function(jobName){
         wait_for_jdl(jobName, displayParamFormOk, [jobName]);
@@ -452,6 +507,7 @@ var uws_manager = (function($) {
         wait_for_jdl(job.jobName, displayParamFormFilled, [job]);
     };
 
+    //----------
     // DISPLAY RESULTS
     var displayResults = function(job){
         $('#result_list').html('');
@@ -549,6 +605,7 @@ var uws_manager = (function($) {
         };
     };
 
+    //----------
     // DISPLAY SINGLE JOB INFO
     var displaySingleJob = function(jobName, jobId){
         prepareTable();
@@ -617,6 +674,7 @@ var uws_manager = (function($) {
         }, 3000);
     };
 
+    //----------
     // REFRESH PROPS
     var refreshProps = function(jobId){
         var jobName = $('#'+jobId).attr('jobname');
@@ -631,6 +689,7 @@ var uws_manager = (function($) {
         logger('ERROR', 'refreshProps '+ jobId, exception);
     };
 
+    //----------
     // REFRESH RESULTS
     var refreshResults = function(jobId){
         var jobName = $('#'+jobId).attr('jobname');
@@ -645,9 +704,13 @@ var uws_manager = (function($) {
     };
 
 
+
     //----------
     // GET functions
+    //----------
 
+
+    //----------
     // GET JOB LIST
     var getJobList = function() {
         $('#div_table').hide();
@@ -680,6 +743,7 @@ var uws_manager = (function($) {
         logger('ERROR', 'getJobList', exception);
     };
 
+    //----------
     // GET JOB PHASE
     var getJobPhase = function(jobId) {
         var jobName = $('#'+jobId).attr('jobname');
@@ -716,6 +780,7 @@ var uws_manager = (function($) {
         logger('ERROR', 'getJobPhase '+ jobId, exception);
     };
 
+    //----------
     // GET JOB INFO
     var getJobInfos = function(jobId){
         var jobName = $('#'+jobId).attr('jobname');
@@ -728,6 +793,7 @@ var uws_manager = (function($) {
         logger('ERROR', 'getJobInfos '+ jobId, exception);
     };
 
+    //----------
     // GET JOB RESULTS
     var getJobResults = function(jobId){
         var jobName = $('#'+jobId).attr('jobname');
@@ -740,9 +806,14 @@ var uws_manager = (function($) {
         logger('ERROR', 'getJobResults '+ jobId, exception);
     };
 
+
+
     //----------
     // POST functions
+    //----------
 
+
+    //----------
     // CREATE JOB
     var createJob = function(jobName, jobParams) {
         clients[jobName].createJob(jobParams, createJobSuccess, createJobError);
@@ -756,6 +827,7 @@ var uws_manager = (function($) {
         logger('ERROR', 'createJob', exception);
     };
 
+    //----------
     // CREATE TEST JOB
     var createTestJob = function(jobName, jobParams) {
         clients[jobName].createJob(jobParams, createTestJobSuccess, createTestJobError);
@@ -768,6 +840,7 @@ var uws_manager = (function($) {
         logger('ERROR', 'createTestJob', exception);
     };
 
+    //----------
     // START JOB
     var startJob = function(jobId) {
         var jobName = $('#'+jobId).attr('jobname');
@@ -781,6 +854,7 @@ var uws_manager = (function($) {
         logger('ERROR', 'startJob '+jobId, exception);
     };
 
+    //----------
     // ABORT JOB
     var abortJob = function (jobId){
         var jobName = $('#'+jobId).attr('jobname');
@@ -795,6 +869,7 @@ var uws_manager = (function($) {
         logger('ERROR', 'abortJob '+ jobId, exception);
     };
 
+    //----------
     // DESTROY JOB
     var destroyJob = function (jobId){
         var jobName = $('#'+jobId).attr('jobname');
@@ -813,7 +888,8 @@ var uws_manager = (function($) {
         logger('ERROR', 'destroyJob '+jobId, exception);
     };
 
-    //
+    //----------
+
     return {
         initManager: initManager,
         prepareTable: prepareTable,
