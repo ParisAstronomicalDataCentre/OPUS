@@ -7,3 +7,4 @@ lxml
 webtest
 prov
 pydotplus
+wsgiproxy
