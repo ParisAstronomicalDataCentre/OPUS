@@ -343,7 +343,7 @@ var uws_manager = (function($) {
         var phide = ''
         var pclass = 'form-group'
         if (p.required == 'false') { //.toLowerCase()
-            phide = ' style="display:none; color:lightgrey"';
+            phide = ' style="display:none; color:grey"';
             pclass = 'form-group optional';
         };
         var row = '\
@@ -480,10 +480,12 @@ var uws_manager = (function($) {
             $('#id_'+pname).attr('value', decodeURIComponent(pvalue));
         };
         $('.selectpicker').selectpicker('refresh');
-        // Add buttons
+                // Add buttons
         var elt = '\
             <div id="form-buttons" class="form-group">\n\
                 <div class="col-md-offset-2 col-md-5">\n\
+                    <button type="submit" class="btn btn-primary">Submit</button>\n\
+                    <button type="reset" class="btn btn-default">Reset</button>\n\
                     <button id="showopt" type="button" class="btn btn-default">Show optional parameters</button>\n\
                 </div>\n\
             </div>\n';
