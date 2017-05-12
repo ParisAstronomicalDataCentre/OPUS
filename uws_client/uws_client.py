@@ -10,6 +10,7 @@ import os
 import uuid
 import base64
 import requests
+from requests.auth import HTTPBasicAuth
 import logging
 from bottle import Bottle, request, response, abort, redirect, run, static_file, parse_auth, TEMPLATE_PATH, view, jinja2_view
 from beaker.middleware import SessionMiddleware
@@ -30,7 +31,7 @@ logger.info('Load settings')
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 ENDPOINT = 'client'
 #UWS_SERVER_URL = 'http://localhost:8080'
-UWS_SERVER_URL = 'http://localhost'
+UWS_SERVER_URL = 'http://localhost/proxy'
 ALLOW_ANONYMOUS = False
 
 #--- Include host-specific settings ------------------------------------------------------------------------------------
@@ -148,6 +149,8 @@ def login():
     session = request.environ['beaker.session']
     # PID is a UUID based on APP_PATH and username, so specific to user and client app
     pid = uuid.uuid5(uuid.NAMESPACE_X500, APP_PATH + username)
+    session['username'] = username
+    session['pid'] = pid
     session['auth'] = base64.b64encode(username + ':' + str(pid))
     session.save()
     # Login
@@ -385,6 +388,30 @@ def client_cp_script(jobname):
     else:
         msg = 'notfound'
     redirect('/client/job_definition?jobname={}&msg={}'.format(jobname, msg), 303)
+
+
+# ----------
+# Proxy (to avoid cross domain calls
+
+@app.get('/proxy/<url:path>')
+def proxy_get(url):
+    """Proxy for GET request to UWS server"""
+    if not ALLOW_ANONYMOUS:
+        aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
+    session = request.environ['beaker.session']
+    resp = requests.get('https://voparis-uws-test.obspm.fr/' + url, auth=(session['username'], session['pid']))
+    return resp
+
+@app.post('/proxy/<url:path>')
+def proxy_post(url):
+    """Proxy for POST request to UWS server"""
+    return redirect('https://voparis-uws-test.obspm.fr/' + url, code=307)
+    pass
+
+@app.delete('/proxy/<url:path>')
+def proxy_delete(url):
+    """Proxy for DELETE request to UWS server"""
+    pass
 
 
 # ----------
