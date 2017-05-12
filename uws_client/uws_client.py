@@ -38,6 +38,7 @@ APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 ENDPOINT = 'client'
 #UWS_SERVER_URL = 'http://localhost:8080'
 UWS_SERVER_URL = 'http://localhost/proxy'
+#UWS_SERVER_URL = 'https://voparis-uws-test.obspm.fr'
 ALLOW_ANONYMOUS = False
 
 #--- Include host-specific settings ------------------------------------------------------------------------------------
@@ -407,8 +408,8 @@ class MyProxy(HostProxy):
         logger.info(method + ' ' + uri)
         return self.http(uri, method, environ['wsgi.input'], headers)
 
-proxy_app = MyProxy('https://voparis-uws-test.obspm.fr/')
-app.mount('/proxy', proxy_app)
+#proxy_app = MyProxy('https://voparis-uws-test.obspm.fr/')
+#app.mount('/proxy', proxy_app)
 
 
 # ----------
