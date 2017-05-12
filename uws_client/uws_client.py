@@ -38,7 +38,6 @@ APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 ENDPOINT = 'client'
 #UWS_SERVER_URL = 'http://localhost:8080'
 UWS_SERVER_URL = 'http://localhost/proxy'
-UWS_SERVER_URL = 'https://voparis-uws-test.obspm.fr/'
 ALLOW_ANONYMOUS = False
 
 #--- Include host-specific settings ------------------------------------------------------------------------------------
@@ -399,12 +398,11 @@ def client_cp_script(jobname):
 
 
 # ----------
-# Proxy (to avoid cross domain calls?
+# Proxy (to avoid cross domain calls
 
 
 class MyProxy(HostProxy):
     def process_request(self, uri, method, headers, environ):
-        logger.info(uri)
         uri = uri.replace('/proxy', '')
         logger.info(method + ' ' + uri)
         return self.http(uri, method, environ['wsgi.input'], headers)
