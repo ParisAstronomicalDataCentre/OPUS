@@ -15,6 +15,12 @@ import logging
 from bottle import Bottle, request, response, abort, redirect, run, static_file, parse_auth, TEMPLATE_PATH, view, jinja2_view
 from beaker.middleware import SessionMiddleware
 from cork import Cork
+#from wsgiproxy.app import WSGIProxyApp
+from wsgiproxy import HostProxy
+try:
+    import urlparse
+except ImportError:  # pragma: nocover
+    import urllib.parse as urlparse  # NOQA
 
 
 # Set logger
@@ -32,6 +38,7 @@ APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 ENDPOINT = 'client'
 #UWS_SERVER_URL = 'http://localhost:8080'
 UWS_SERVER_URL = 'http://localhost/proxy'
+UWS_SERVER_URL = 'https://voparis-uws-test.obspm.fr/'
 ALLOW_ANONYMOUS = False
 
 #--- Include host-specific settings ------------------------------------------------------------------------------------
@@ -76,6 +83,7 @@ TEMPLATE_PATH.insert(0, APP_PATH + '/uws_client/views/')
 
 
 app = Bottle()
+
 
 # Session option (create session after code)
 session_opts = {
@@ -391,27 +399,18 @@ def client_cp_script(jobname):
 
 
 # ----------
-# Proxy (to avoid cross domain calls
+# Proxy (to avoid cross domain calls?
 
-@app.get('/proxy/<url:path>')
-def proxy_get(url):
-    """Proxy for GET request to UWS server"""
-    if not ALLOW_ANONYMOUS:
-        aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
-    session = request.environ['beaker.session']
-    resp = requests.get('https://voparis-uws-test.obspm.fr/' + url, auth=(session['username'], session['pid']))
-    return resp
 
-@app.post('/proxy/<url:path>')
-def proxy_post(url):
-    """Proxy for POST request to UWS server"""
-    return redirect('https://voparis-uws-test.obspm.fr/' + url, code=307)
-    pass
+class MyProxy(HostProxy):
+    def process_request(self, uri, method, headers, environ):
+        logger.info(uri)
+        uri = uri.replace('/proxy', '')
+        logger.info(method + ' ' + uri)
+        return self.http(uri, method, environ['wsgi.input'], headers)
 
-@app.delete('/proxy/<url:path>')
-def proxy_delete(url):
-    """Proxy for DELETE request to UWS server"""
-    pass
+proxy_app = MyProxy('https://voparis-uws-test.obspm.fr/')
+app.mount('/proxy', proxy_app)
 
 
 # ----------
