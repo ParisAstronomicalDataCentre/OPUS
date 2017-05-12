@@ -32,9 +32,9 @@ app = Bottle()
 # https://github.com/bottlepy/bottle/issues/402
 @app.route('/<:re:.*>', method='OPTIONS')
 def options_request():
-    #response.set_header('Access-Control-Allow-Origin', '*')
-    #response.set_header('Access-Control-Allow-Headers', 'Authorization')
-    pass
+    response.set_header('Access-Control-Allow-Origin', '*')
+    response.set_header('Access-Control-Allow-Headers', 'Authorization')
+    #pass
 
 #@app.hook('after_request')
 #def enableCORSAfterRequestHook():
