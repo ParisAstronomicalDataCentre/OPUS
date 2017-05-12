@@ -34,3 +34,14 @@ CREATE TABLE IF NOT EXISTS job_results (
     content_type   varchar(64),
     PRIMARY KEY (jobid, name)
 );
+
+CREATE TABLE IF NOT EXISTS entity (
+    id             varchar(36) not null,
+    name           varchar(64),
+    url            varchar(255),
+    path           varchar(255),
+    format         varchar(64),
+    content_type   varchar(64),
+    hash           varchar(64),
+    PRIMARY KEY (id)
+);
