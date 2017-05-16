@@ -75,7 +75,7 @@ class JDLFile(object):
 
     def _get_filename(self, jobname):
         fn = '{}/{}{}'.format(self.jdl_path, jobname, self.extension)
-        logger.info('JDL filename: ' + fn)
+        #logger.info('JDL filename: ' + fn)
         return fn
 
     def save(self, jobname):

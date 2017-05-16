@@ -379,7 +379,7 @@ class Job(object):
         # Send signal (e.g. if WAIT command expecting signal)
         change_status_signal = signal('job_status')
         result = change_status_signal.send('change_status', sig_jobid=self.jobid, sig_phase=self.phase)
-        logger.info('Signal sent for status change ({} --> {}). Results: \n{}'.format(previous_phase, self.phase, str(result)))
+        #logger.info('Signal sent for status change ({} --> {}). Results: \n{}'.format(previous_phase, self.phase, str(result)))
 
     def abort(self):
         """Abort job
@@ -536,6 +536,8 @@ class Job(object):
                     job.error += '. ' + error_msg
                 else:
                     job.error = error_msg
+                # kill the process
+                job.manager.abort(job)
 
             # Switch
             cases = {
@@ -557,7 +559,7 @@ class Job(object):
             # Send signal (e.g. if WAIT command expecting signal)
             change_status_signal = signal('job_status')
             result = change_status_signal.send('change_status', sig_jobid=self.jobid, sig_phase=self.phase)
-            logger.info('Signal sent for status change ({} --> {}). Results: \n{}'.format(previous_phase, self.phase, str(result)))
+            #logger.info('Signal sent for status change ({} --> {}). Results: \n{}'.format(previous_phase, self.phase, str(result)))
         else:
             raise UserWarning('Job {} cannot be updated to {} while in phase {}'
                               ''.format(self.jobid, new_phase, self.phase))

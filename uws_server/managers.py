@@ -50,57 +50,67 @@ class Manager(object):
         # Create sbatch
         batch = [
             '### INIT',
-            # Init job execution
+            # Useful functions
             'timestamp() {',
             '    date +"%Y-%m-%dT%H:%M:%S"',
             '}',
+            'job_event() {',
+            '    if [ -z "$2" ]',
+            '    then',
+            '        curl -k -s -o $jd/curl_$1_signal.log'
+            ' -d "jobid=$JOBID" -d "phase=$1" {}/handler/job_event'.format(BASE_URL),
+            '    else',
+            '        echo "$2"',
+            '        curl -k -s -o $jd/curl_$1_signal.log '
+            ' -d "jobid=$JOBID" -d "phase=$1" --data-urlencode "error_msg=$2" {}/handler/job_event'.format(BASE_URL),
+            '    fi',
+            '}',
+            # Init JOBID
             'echo "[`timestamp`] Initialize job"',
             'JOBID={}'.format(jobid_var),
             'echo "JOBID is $JOBID"',
-            # Error handler (send signal on error)
-            'set -e ',
-            'error_handler() {',
-            '    touch $jd/error',
-            # '    error_string=`tac /obs/vouws/uws_logs/$SLURM_JOBID.err | grep -m 1 .`',
-            # '    msg="${BASH_SOURCE[1]}: line ${BASH_LINENO[0]}: ${FUNCNAME[1]}"',
-            '    msg="Error in ${BASH_SOURCE[1]##*/} running command: $BASH_COMMAND"',
-            '    echo "$msg"', # echo in stdout log
-            # '    echo "Signal error"',
-            '    curl -k -s -o $jd/curl_error_signal.log '
-            '        -d "jobid=$JOBID" -d "phase=ERROR" --data-urlencode "error_msg=$msg" '
-            '        {}/handler/job_event'.format(BASE_URL),
-            #'    rm -rf $wd',
-            # '    echo "Remove trap"',
-            '    trap - SIGHUP SIGINT SIGTERM',
-            '    exit 1',
-            '}',
-            'trap "error_handler" SIGHUP SIGINT SIGTERM',
             # Set $wd and $jd
             'wd={}'.format(wd),
             'jd={}'.format(jd),
+            'cp {}/{}.sh $jd'.format(self.scripts_path, job.jobname),
             'mkdir -p $wd',
             'cd $wd',
             # 'echo "User is `id`"',
             # 'echo "Working dir is $wd"',
             # 'echo "JobData dir is $jd"',
+            # Error/Suspend/Term handler (send signals to server with curl)
+            'set -e ',
+            'error_handler() {',
+            '    touch $jd/error',
+            '    msg="Error in job ${BASH_SOURCE[1]##*/} running command: $BASH_COMMAND"',
+            '    job_event "ERROR" "$msg"',
+            '    trap - SIGHUP SIGINT SIGQUIT SIGTERM ERR',
+            '    exit 1',
+            '}',
+            'term_handler() {',
+            '    touch $jd/error',
+            '    msg="Early termination of job ${BASH_SOURCE[1]##*/} running command: $BASH_COMMAND"',
+            '    job_event "ERROR" "$msg"',
+            #'    rm -rf $wd',
+            '    trap - SIGHUP SIGINT SIGQUIT SIGTERM ERR',
+            '    exit 1',
+            '}',
+            'trap "error_handler" ERR',
+            'trap "term_handler" SIGHUP SIGINT SIGQUIT SIGTERM',
             # Move uploaded files to working directory if they exist
             'echo "[`timestamp`] Prepare input files"',
             'for filename in $jd/input/*; do [ -f "$filename" ] && cp $filename $wd; done',
             # Start job
-            'curl -k -s -o $jd/curl_start_signal.log '
-            '    -d "jobid=$JOBID" -d "phase=RUNNING" '
-            '    {}/handler/job_event'.format(BASE_URL),
+            'job_event "EXECUTING"',
             'echo "[`timestamp`] ***** Start job *****"',
             'touch $jd/start',
             '### EXEC',
             # Load variables from params file
             '. $jd/parameters.sh',
-            # Run script in the current environment (with SLURM_JOBID defined)
-            'cp {}/{}.sh $jd'.format(self.scripts_path, job.jobname),
-            '. {}/{}.sh'.format(self.scripts_path, job.jobname),
+            # Run script in the current environment
+            '. $jd/{}.sh'.format(job.jobname),
             'echo "[`timestamp`] List files in workdir"',
             'ls -l',
-            '### CP RESULTS',
             # 'mkdir $jd/results',
         ]
         # Need JDL for results description
@@ -108,7 +118,8 @@ class Manager(object):
             job.jdl.read(job.jobname)
         # Identify results to be moved to $jd/results
         cp_results = [
-            'echo "[`timestamp`] Copy results"'
+            '### CP RESULTS',
+            'echo "[`timestamp`] Copy results"',
         ]
         for rname, r in job.jdl.content['results'].iteritems():
             fname = job.get_result_filename(rname)
@@ -125,10 +136,8 @@ class Manager(object):
             'rm -rf $wd',
             'touch $jd/done',
             'echo "[`timestamp`] ***** Job done *****"',
-            'trap - SIGHUP SIGINT SIGTERM',
-            'curl -k -s -o $jd/curl_done_signal.log '
-            '    -d "jobid=$JOBID" -d "phase=COMPLETED" '
-            '    {}/handler/job_event'.format(BASE_URL),
+            'trap - SIGHUP SIGINT SIGQUIT SIGTERM ERR',
+            'job_event "COMPLETED"',
             'exit 0',
         ])
         return batch
@@ -238,18 +247,19 @@ class LocalManager(Manager):
 
     def abort(self, job):
         """Abort/Cancel job"""
-        os.kill(job.jobid_cluster, signal.SIGTERM) # SIGTERM => error sent ; SIGKILL => no error sent, just killed!
+        os.kill(job.jobid_cluster, signal.SIGKILL) # SIGTERM => error sent ; SIGKILL => no error sent, just killed!
         pass
 
     def delete(self, job):
         """Delete job"""
         # jobdata is already deleted by the server
         try:
-            os.kill(job.jobid_cluster, signal.SIGTERM) # SIGTERM => error sent ; SIGKILL => no error sent, just killed!
+            os.kill(job.jobid_cluster, signal.SIGKILL) # SIGTERM => error sent ; SIGKILL => no error sent, just killed!
         except OSError as e:
-            logger.info(str(e))
             if 'No such process' in str(e):
                 logger.info('No such process ({}) for job {} {}'.format(job.jobid_cluster, job.jobname, job.jobid))
+            else:
+                logger.info(str(e))
         except:
             raise
         pass
