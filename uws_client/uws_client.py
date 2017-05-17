@@ -37,7 +37,8 @@ logger.info('Load settings')
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 ENDPOINT = 'client'
 #UWS_SERVER_URL = 'http://localhost:8080'
-UWS_SERVER_URL = 'http://localhost/proxy'
+UWS_SERVER_URL = 'http://localhost'
+#UWS_SERVER_URL = 'http://localhost/proxy'
 #UWS_SERVER_URL = 'https://voparis-uws-test.obspm.fr'
 ALLOW_ANONYMOUS = False
 
@@ -405,12 +406,14 @@ def client_cp_script(jobname):
 class MyProxy(HostProxy):
     def process_request(self, uri, method, headers, environ):
         uri = uri.replace('/proxy', '')
+        logger.info(environ)
         logger.info(method + ' ' + uri)
         return self.http(uri, method, environ['wsgi.input'], headers)
 
-#proxy_app = MyProxy('https://voparis-uws-test.obspm.fr/')
-#app.mount('/proxy', proxy_app)
+proxy_app = MyProxy('https://voparis-uws-test.obspm.fr/', strip_script_name=False)
+app.mount('/proxy', proxy_app)
 
+# TODO: Need to set 'HTTP_AUTHORIZATION': 'Basic YWRtaW46NzQyY2M5N2ItMjgwYi01MTZhLWJkNDUtYjY4NGM3ZmZiNDY1' from proxy, not from javascript
 
 # ----------
 # run server
