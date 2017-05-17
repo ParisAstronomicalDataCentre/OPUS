@@ -23,7 +23,7 @@ var uws_manager = (function($) {
 
     var refreshPhaseTimeout = {}; // stores setInterval functions for phase refresh
     var refreshPhaseTimeoutDelay = {}; //
-    var timeoutDelays = [2000,3000,4000,5000,10000]; // delays in ms
+    var timeoutDelays = [2000,3000,4000,6000,11000]; // delays in ms
     var selectedJobId;
     // var serviceUrl = $(location).attr('protocol') + '//' + $(location).attr('host');
     // "https://voparis-uws-test.obspm.fr/"; // app_url+"/uws-v1.0/" //
@@ -193,11 +193,11 @@ var uws_manager = (function($) {
                 $('[id^=button_]').attr('disabled','disabled');
             };
         };
+        // Display results as panels in div results
+        if ($("#result_list").length) {
+            refreshResults(jobId);
+        };
         if (phase == 'COMPLETED') {
-            // Display results as panels in div results
-            if ($("#result_list").length) {
-                refreshResults(jobId);
-            };
             logger('INFO', 'Job completed '+jobId);
         };
     };
@@ -480,12 +480,10 @@ var uws_manager = (function($) {
             $('#id_'+pname).attr('value', decodeURIComponent(pvalue));
         };
         $('.selectpicker').selectpicker('refresh');
-                // Add buttons
+        // Add buttons
         var elt = '\
             <div id="form-buttons" class="form-group">\n\
                 <div class="col-md-offset-2 col-md-5">\n\
-                    <button type="submit" class="btn btn-primary">Submit</button>\n\
-                    <button type="reset" class="btn btn-default">Reset</button>\n\
                     <button id="showopt" type="button" class="btn btn-default">Show optional parameters</button>\n\
                 </div>\n\
             </div>\n';
