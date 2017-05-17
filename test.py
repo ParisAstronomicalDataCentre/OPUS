@@ -13,7 +13,7 @@ from webtest import TestApp
 
 # Redefine LOG_FILE, SQLITE_FILE, MANAGER
 STORAGE = 'SQLiteStorage'
-SQLITE_FILE = 'data/db/job_database_test.db'
+SQLITE_FILE = '/var/www/opus/db/job_database_test.db'
 LOG_FILE_SUFFIX = '_test'
 MANAGER = 'Manager'
 
@@ -55,10 +55,10 @@ class TestGet(unittest.TestCase):
         self.assertEqual(response.status_int, 200)
         self.assertEqual(response.headers['content-type'], 'text/xml; charset=UTF-8')
         url = '/rest/' + jobname + '/' + jobid + '/bad_attribute'
-        response = test_app.get(url, status=404)
+        response = test_app.get(url, status=405)
         print url
         print ' --> ' + response.status
-        self.assertEqual(response.status_int, 404)
+        self.assertEqual(response.status_int, 405)
         url = '/rest/' + jobname + '/' + jobid + '/phase'
         response = test_app.get(url)
         print url

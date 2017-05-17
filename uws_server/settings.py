@@ -165,20 +165,6 @@ if os.path.exists(APP_PATH + '/uws_server/settings_local.py'):
     from settings_local import *
 #--- Include host-specific settings ------------------------------------------------------------------------------------
 
-#--- If imported from test.py, redefine settings -----------------------------------------------------------------------
-main_dict = sys.modules['__main__'].__dict__
-if 'test.py' in main_dict.get('__file__', ''):
-    print '\nPerforming tests'
-    if 'LOG_FILE_SUFFIX' in main_dict:
-        LOG_FILE_SUFFIX = main_dict['LOG_FILE_SUFFIX']
-    if 'STORAGE' in main_dict:
-        STORAGE = main_dict['STORAGE']
-    if 'SQLITE_FILE' in main_dict:
-        SQLITE_FILE = main_dict['SQLITE_FILE']
-    if 'MANAGER' in main_dict:
-        MANAGER = main_dict['MANAGER']
-#--- If imported from test.py, redefine settings -----------------------------------------------------------------------
-    
 #--- Set all _PATH based on APP_PATH or VAR_PATH -----------------------------------------------------------------------
 # Path for JDL files, should probably be accessed through a URL as static files
 JDL_PATH = APP_PATH + '/data/job_def'
@@ -197,6 +183,20 @@ SBATCH_PATH = VAR_PATH + '/sbatch'
 # Logging
 LOG_PATH = VAR_PATH + '/logs'
 #--- Set all _PATH based on APP_PATH -----------------------------------------------------------------------------------
+
+#--- If imported from test.py, redefine settings -----------------------------------------------------------------------
+main_dict = sys.modules['__main__'].__dict__
+if 'test.py' in main_dict.get('__file__', ''):
+    print '\nPerforming tests'
+    if 'LOG_FILE_SUFFIX' in main_dict:
+        LOG_FILE_SUFFIX = main_dict['LOG_FILE_SUFFIX']
+    if 'STORAGE' in main_dict:
+        STORAGE = main_dict['STORAGE']
+    if 'SQLITE_FILE' in main_dict:
+        SQLITE_FILE = main_dict['SQLITE_FILE']
+    if 'MANAGER' in main_dict:
+        MANAGER = main_dict['MANAGER']
+#--- If imported from test.py, redefine settings -----------------------------------------------------------------------
 
 # Set logger
 LOGGING = {

@@ -249,15 +249,15 @@ class VOTFile(JDLFile):
         try:
             with open(fname, 'r') as f:
                 jdl_string = f.read()
-            print jdl_string
+            #print jdl_string
             jdl_tree = ETree.fromstring(jdl_string)
-            print jdl_tree
+            #print jdl_tree
             # Get default namespace
             xmlns = '{' + jdl_tree.nsmap[None] + '}'
-            print xmlns
+            #print xmlns
             # Read parameters description
             resource_block = jdl_tree.find(".//{}RESOURCE[@ID='{}']".format(xmlns, jobname))
-            print resource_block
+            #print resource_block
             job_def = {
                 'name': resource_block.get('name'),
                 'parameters': collections.OrderedDict(),
@@ -268,19 +268,19 @@ class VOTFile(JDLFile):
 
                 if elt.tag == '{}DESCRIPTION'.format(xmlns):
                     job_def['description'] = elt.text
-                    print elt.text
+                    #print elt.text
                 if elt.tag == '{}PARAM'.format(xmlns):
                     # TODO: set datatype of value in the dictionary?
-                    print elt.get('name'), elt.get('value')
+                    #print elt.get('name'), elt.get('value')
                     job_def[elt.get('name')] = elt.get('value', '')
                 if elt.tag == '{}GROUP'.format(xmlns):
                     group = groups[elt.get('name')]
-                    print group
+                    #print group
                     if group == 'parameters':
                         for p in elt:
                             if p.tag == '{}PARAM'.format(xmlns):
                                 name = p.get('name')
-                                print name, p.get('datatype', 'char')
+                                #print name, p.get('datatype', 'char')
                                 pdatatype = p.get('datatype', 'char')
                                 pxtype = p.get('xtype', None)
                                 if pxtype == 'application/octet-stream':

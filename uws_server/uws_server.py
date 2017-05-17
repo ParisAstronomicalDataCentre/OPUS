@@ -27,6 +27,8 @@ app = Bottle()
 
 # ----------
 # Set user
+# ----------
+
 
 # Handling the OPTIONS method
 # https://github.com/bottlepy/bottle/issues/402
@@ -120,6 +122,7 @@ def is_localhost():
 
 # ----------
 # Abort functions
+# ----------
 
 
 def abort_403(msg=''):
@@ -185,6 +188,7 @@ def abort_500_except(msg=None):
 
 # ----------
 # Helper functions
+# ----------
 
 
 @app.route('/favicon.ico')
@@ -192,7 +196,6 @@ def favicon():
     return static_file('favicon.ico', root=APP_PATH)
 
 
-# TODO: WADL should be one of the proposed JDL
 @app.get('/get_jdl/<jobname:path>')
 def get_jdl(jobname):
     """
@@ -286,6 +289,7 @@ def get_prov(jobname, jobid):
 
 # ----------
 # Database testing
+# ----------
 
 
 @app.route('/db/init')
@@ -362,6 +366,7 @@ def show_db():
 
 # ----------
 # Config
+# ----------
 
 
 @app.post('/config/job_definition')
@@ -518,6 +523,7 @@ def cp_script(jobname):
 
 # ----------
 # Server maintenance
+# ----------
 
 
 @app.route('/handler/maintenance/<jobname>')
@@ -554,7 +560,7 @@ def maintenance(jobname):
                 if new_phase != phase:
                     logger.warning('Status has changed for {} {}: {} --> {}'
                                    ''.format(jobname, job.jobid, phase, new_phase))
-            # TODO: If job is SUSPENDED, try to restart the job
+            # TODO: If job is SUSPENDED, try to restart the job -> done by manager?
             # TODO: If destruction time is passed, delete or archive job
             destruction_time = dt.datetime.strptime(job.destruction_time, DT_FMT)
             if destruction_time < now:
@@ -571,6 +577,7 @@ def maintenance(jobname):
 
 # ----------
 # Interface with job queue manager
+# ----------
 
 
 @app.post('/handler/job_event')
@@ -640,6 +647,7 @@ def job_event():
 
 # ----------
 # /<jobname>
+# ----------
 
 
 @app.route('/rest/<jobname>')
@@ -704,6 +712,7 @@ def create_job(jobname):
 
 # ----------
 # /<jobname>/<jobid>
+# ----------
 
 
 @app.route('/rest/<jobname>/<jobid>')
@@ -822,6 +831,7 @@ def post_job(jobname, jobid):
 
 # ----------
 # /<jobname>/<jobid>/phase
+# ----------
 
 
 @app.route('/rest/<jobname>/<jobid>/phase')
@@ -899,6 +909,7 @@ def post_phase(jobname, jobid):
 
 # ----------
 # /<jobname>/<jobid>/executionduration
+# ----------
 
 
 @app.route('/rest/<jobname>/<jobid>/executionduration')
@@ -968,6 +979,7 @@ def post_executionduration(jobname, jobid):
 
 # ----------
 # /<jobname>/<jobid>/destruction
+# ----------
 
 
 @app.route('/rest/<jobname>/<jobid>/destruction')
@@ -1039,6 +1051,7 @@ def post_destruction(jobname, jobid):
 
 # ----------
 # /<jobname>/<jobid>/error
+# ----------
 
 
 @app.route('/rest/<jobname>/<jobid>/error')
@@ -1069,6 +1082,7 @@ def get_error(jobname, jobid):
 
 # ----------
 # /<jobname>/<jobid>/quote
+# ----------
 
 
 @app.route('/rest/<jobname>/<jobid>/quote')
@@ -1098,6 +1112,7 @@ def get_quote(jobname, jobid):
 
 # ----------
 # /<jobname>/<jobid>/parameters
+# ----------
 
 
 @app.route('/rest/<jobname>/<jobid>/parameters')
@@ -1196,6 +1211,7 @@ def post_parameter(jobname, jobid, pname):
 
 # ----------
 # /<jobname>/<jobid>/results
+# ----------
 
 
 @app.route('/rest/<jobname>/<jobid>/results')
@@ -1294,6 +1310,7 @@ def get_result_file(jobid, rname, rfname):
 
 # ----------
 # /<jobname>/<jobid>/owner
+# ----------
 
 
 @app.route('/rest/<jobname>/<jobid>/owner')
@@ -1323,9 +1340,8 @@ def get_owner(jobname, jobid):
 
 # ----------
 # run server
+# ----------
 
-# Create session
-# app = SessionMiddleware(app, session_opts)
 
 # Merge UWS Client app
 if MERGE_CLIENT:

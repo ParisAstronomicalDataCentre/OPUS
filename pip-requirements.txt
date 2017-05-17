@@ -8,3 +8,4 @@ webtest
 prov
 pydotplus
 wsgiproxy2
+psutils

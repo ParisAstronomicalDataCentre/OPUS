@@ -87,6 +87,7 @@ class Manager(object):
             '    touch $jd/error',
             '    msg="Error in job ${BASH_SOURCE[1]##*/} running command: $BASH_COMMAND"',
             '    job_event "ERROR" "$msg"',
+            '    rm -rf $wd',
             '    trap - SIGHUP SIGINT SIGQUIT SIGTERM ERR',
             '    exit 1',
             '}',
@@ -94,7 +95,7 @@ class Manager(object):
             '    touch $jd/error',
             '    msg="Early termination of job ${BASH_SOURCE[1]##*/} running command: $BASH_COMMAND"',
             '    job_event "ERROR" "$msg"',
-            #'    rm -rf $wd',
+            '    rm -rf $wd',
             '    trap - SIGHUP SIGINT SIGQUIT SIGTERM ERR',
             '    exit 1',
             '}',
@@ -114,7 +115,6 @@ class Manager(object):
             '. $jd/{}.sh'.format(job.jobname),
             'echo "[`timestamp`] List files in workdir"',
             'ls -l',
-            # 'mkdir $jd/results',
         ]
         # Need JDL for results description
         if not job.jdl.content:
@@ -245,7 +245,7 @@ class LocalManager(Manager):
         """
         # Make directories if needed
         jd = '{}/{}'.format(self.jobdata_path, job.jobid)
-        wd = '{}/{}'.format(self.workdir_path, job.jobid)
+        # wd = '{}/{}'.format(self.workdir_path, job.jobid)
         if not os.path.isdir(jd):
             os.makedirs('{}/{}'.format(jd, 'input'))
             os.makedirs('{}/{}'.format(jd, 'results'))
@@ -405,7 +405,7 @@ class SLURMManager(Manager):
                '{}:{}'.format(self.ssh_arg, param_file_distant)]
         # logger.debug(' '.join(cmd))
         sp.check_output(cmd, stderr=sp.STDOUT)
-        # Copy inout files to workdir_path (scp if uploaded from form, or wget if given as a URI)
+        # Copy input files to workdir_path (scp if uploaded from form, or wget if given as a URI)
         # TODO: delete files
         for fname in files['form']:
             cmd = ['scp',
