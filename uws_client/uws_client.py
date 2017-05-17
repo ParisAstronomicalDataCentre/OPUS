@@ -23,16 +23,8 @@ except ImportError:  # pragma: nocover
     import urllib.parse as urlparse  # NOQA
 
 
-# Set logger
-if ('uws_client' not in logging.Logger.manager.loggerDict):
-    logging.config.dictConfig(LOGGING)
-logger = logging.getLogger('uws_client')
-
-
 # ----------
 #  Settings
-
-logger.info('Load settings')
 
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 ENDPOINT = 'client'
@@ -44,7 +36,6 @@ ALLOW_ANONYMOUS = False
 
 #--- Include host-specific settings ------------------------------------------------------------------------------------
 if os.path.exists(APP_PATH + '/uws_client/settings_local.py'):
-    logger.info('Load local settings')
     from settings_local import *
 #--- Include host-specific settings ------------------------------------------------------------------------------------
 
@@ -77,6 +68,11 @@ LOGGING = {
 
 # Set path to uws_client templates
 TEMPLATE_PATH.insert(0, APP_PATH + '/uws_client/views/')
+
+# Set logger
+if ('uws_client' not in logging.Logger.manager.loggerDict):
+    logging.config.dictConfig(LOGGING)
+logger = logging.getLogger('uws_client')
 
 
 # ----------
@@ -414,6 +410,7 @@ proxy_app = MyProxy('https://voparis-uws-test.obspm.fr/', strip_script_name=Fals
 app.mount('/proxy', proxy_app)
 
 # TODO: Need to set 'HTTP_AUTHORIZATION': 'Basic YWRtaW46NzQyY2M5N2ItMjgwYi01MTZhLWJkNDUtYjY4NGM3ZmZiNDY1' from proxy, not from javascript
+
 
 # ----------
 # run server
