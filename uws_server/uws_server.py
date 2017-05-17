@@ -575,7 +575,7 @@ def maintenance(jobname):
 
 @app.post('/handler/job_event')
 def job_event():
-    """New events for job with given jobid_cluster
+    """New events for job with given pid
 
     This hook expects POST commands that must come from a referenced job server
     POST should include: jobid=, phase=, error_msg=
@@ -595,9 +595,9 @@ def job_event():
         logger = logger_init
         logger.info('from {} with POST={}'.format(ip, str(request.POST.dict)))
         if 'jobid' in request.POST:
-            jobid_cluster = request.POST['jobid']
-            # Get job properties from DB based on jobid_cluster
-            job = Job('', jobid_cluster, user, get_attributes=True, from_jobid_cluster=True, check_user=False)
+            pid = request.POST['jobid']
+            # Get job properties from DB based on pid
+            job = Job('', pid, user, get_attributes=True, from_pid=True, check_user=False)
             # Update job
             if 'phase' in request.POST:
                 cur_phase = job.phase
@@ -690,8 +690,8 @@ def create_job(jobname):
         # If PHASE=RUN, start job
         if request.forms.get('PHASE') == 'RUN':
             job.start()
-            logger.info('{} {} started with jobid_cluster={} [{}]'
-                        ''.format(jobname, jobid, str(job.jobid_cluster), user))
+            logger.info('{} {} started with pid={} [{}]'
+                        ''.format(jobname, jobid, str(job.pid), user))
     except UserWarning as e:
         abort_500(e.message)
     except CalledProcessError as e:
@@ -871,8 +871,8 @@ def post_phase(jobname, jobid):
                     raise UserWarning('Job has to be in PENDING phase')
                 # Start job
                 job.start()
-                logger.info('{} {} STARTED with jobid_cluster={} [{}]'
-                            ''.format(jobname, jobid, str(job.jobid_cluster), user))
+                logger.info('{} {} STARTED with pid={} [{}]'
+                            ''.format(jobname, jobid, str(job.pid), user))
             elif new_phase == 'ABORT':
                 # Get job properties from DB
                 job = Job(jobname, jobid, user, get_attributes=True)

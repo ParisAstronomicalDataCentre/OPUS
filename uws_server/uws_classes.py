@@ -55,21 +55,21 @@ class Job(object):
 
     def __init__(self, jobname, jobid, user,
                  get_attributes=False, get_parameters=False, get_results=False,
-                 from_post=None, from_jobid_cluster=False,
+                 from_post=None, from_pid=False,
                  check_user=True):
         """Initialize from storage or from POST
 
         from_post should contain the request object if not None
         """
         # Job description
-        if from_jobid_cluster:
+        if from_pid:
             self.jobname = jobname
             self.jobid = None
-            self.jobid_cluster = jobid
+            self.pid = jobid
         else:
             self.jobname = jobname
             self.jobid = jobid
-            self.jobid_cluster = None
+            self.pid = None
         self.user = user
         # Prepare jdl attribute, e.g. WADL, see settings.py
         self.jdl = uws_jdl.__dict__[JDL]()
@@ -84,7 +84,7 @@ class Job(object):
                               get_attributes=get_attributes,
                               get_parameters=get_parameters,
                               get_results=get_results,
-                              from_jobid_cluster=from_jobid_cluster)
+                              from_pid=from_pid)
             if check_user:
                 # Check if user has rights to manipulate the job
                 if user.name != 'admin':
@@ -369,16 +369,16 @@ class Job(object):
         """
         # Test if status is PENDING as expected
         if self.phase == 'PENDING':
-            jobid_cluster = self.manager.start(self)
+            pid = self.manager.start(self)
         else:
             raise UserWarning('Job {} is not in the PENDING state'.format(self.jobid))
         try:
-            # Test if jobid_cluster is an integer
-            jobid_cluster = int(jobid_cluster)
+            # Test if pid is an integer
+            pid = int(pid)
         except ValueError:
-            raise RuntimeError('Bad jobid_cluster returned for job {}:\njobid_cluster:\n{}'
-                               ''.format(self.jobid, jobid_cluster))
-        self.jobid_cluster = jobid_cluster
+            raise RuntimeError('Bad pid returned for job {}:\npid:\n{}'
+                               ''.format(self.jobid, pid))
+        self.pid = pid
         # No need to change times: job not started yet
         # now = dt.datetime.now()
         # duration = dt.timedelta(0, self.execution_duration)

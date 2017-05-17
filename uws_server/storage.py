@@ -45,7 +45,7 @@ class Storage(object):
         pass
 
     def read(self, job, get_attributes=True, get_parameters=True, get_results=True,
-             from_jobid_cluster=False):
+             from_pid=False):
         """Read job information from storage"""
         pass
 
@@ -92,7 +92,7 @@ class SQLStorage(Storage):
             'jobid': job.jobid,
             'name': rname,
             'url': job.results[rname]['url'],
-            'mediaType': job.results[rname]['content_type']
+            'content_type': job.results[rname]['content_type']
             # TODO: update DB!
 
         }
@@ -120,15 +120,15 @@ class SQLStorage(Storage):
                 self._save_result(job, rname)
 
     # noinspection PyTypeChecker
-    def read(self, job, get_attributes=True, get_parameters=False, get_results=False, from_jobid_cluster=False):
+    def read(self, job, get_attributes=True, get_parameters=False, get_results=False, from_pid=False):
         """Read job from storage"""
         # TODO: add owner and owner_pid to all SELECT (except if... admin?)
-        if from_jobid_cluster:
-            # Query db for jobname and jobid using jobid_cluster
-            query = "SELECT jobname, jobid FROM jobs WHERE jobid_cluster='{}';".format(job.jobid_cluster)
+        if from_pid:
+            # Query db for jobname and jobid using pid
+            query = "SELECT jobname, jobid FROM jobs WHERE pid='{}';".format(job.pid)
             row = self.cursor.execute(query).fetchone()
             if not row:
-                raise NotFoundWarning('Job with jobid_cluster={} NOT FOUND'.format(job.jobid_cluster))
+                raise NotFoundWarning('Job with pid={} NOT FOUND'.format(job.pid))
             job.jobname = row['jobname']
             job.jobid = row['jobid']
         if get_attributes:
@@ -153,7 +153,7 @@ class SQLStorage(Storage):
             job.owner = row['owner']
             job.owner_pid = row['owner_pid']
             job.run_id = row['run_id']
-            job.jobid_cluster = row['jobid_cluster']
+            job.pid = row['pid']
         if get_parameters:
             # Query db for job parameters
             query = "SELECT * FROM job_parameters WHERE jobid='{}';".format(job.jobid)
@@ -176,7 +176,7 @@ class SQLStorage(Storage):
             results_dict = {
                 row['name']: {
                     'url': row['url'],
-                    'content_type': row['mediaType']
+                    'content_type': row['content_type']
                     # TODO: update DB!
                 }
                 for row in results

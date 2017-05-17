@@ -147,7 +147,7 @@ class Manager(object):
 
     def start(self, job):
         """Start job
-        :return: jobid_cluster, jobid on work cluster
+        :return: pid, jobid on work cluster
         """
         # Make directories if needed
         # Create parameter file
@@ -377,7 +377,7 @@ class SLURMManager(Manager):
         """Start job on SLURM server
 
         Returns:
-            jobid_cluster on SLURM server
+            pid on SLURM server
         """
         # Create jobdata dir (to upload the scripts, parameters and input files)
         jd = '{}/{}'.format(self.jobdata_path, job.jobid)
@@ -436,7 +436,7 @@ class SLURMManager(Manager):
                'sbatch {}'.format(sbatch_file_distant)]
         # logger.debug(' '.join(cmd))
         jobid_cluster = sp.check_output(cmd, stderr=sp.STDOUT)
-        # Get jobid_cluster from output (e.g. "Submitted batch job 9421")
+        # Get pid from output (e.g. "Submitted batch job 9421")
         return jobid_cluster.split(' ')[-1]
 
     def abort(self, job):

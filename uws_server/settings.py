@@ -116,7 +116,7 @@ JOB_ATTRIBUTES = [
     'owner',
     'owner_pid',
     'run_id',
-    'jobid_cluster',
+    'pid',
 ]
 JOB_PARAMETERS_ATTR = [
     'jobid',
