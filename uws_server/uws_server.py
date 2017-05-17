@@ -614,11 +614,11 @@ def job_event():
                     if 'error_msg' in request.POST:
                         msg = request.POST['error_msg']
                     job.change_status('ERROR', msg)
-                    logger.info('{} {} ERROR reported (from {})'.format(job.jobname, job.jobid, ip))
+                    logger.info('ERROR reported for job {} {} (from {})'.format(job.jobname, job.jobid, ip))
                 elif new_phase != cur_phase:
                     job.change_status(new_phase, msg)
-                    logger.info('{} {} phase {} --> {} (from {})'
-                                ''.format(job.jobname, job.jobid, cur_phase, new_phase, ip))
+                    logger.info('Phase {} --> {} for job {} {} (from {})'
+                                ''.format(cur_phase, new_phase, job.jobname, job.jobid, ip))
                 else:
                     raise UserWarning('Phase is already ' + new_phase)
             else:

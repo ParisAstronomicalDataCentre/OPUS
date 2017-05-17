@@ -130,8 +130,11 @@ class Job(object):
             self.parameters = {}
             self.results = {}
 
+
     # ----------
-    # Methods to read job description from JDL file
+    # Method to read job description from JDL file
+    # ----------
+
 
     def get_result_filename(self, rname):
         """Get the filename corresponding to the result name"""
@@ -153,8 +156,11 @@ class Job(object):
         logger.debug('Result filename for {} is {}'.format(rname, fname))
         return fname
 
+
     # ----------
-    # Methods to get job attributes from storage or POST
+    # Method to get job attributes from storage or POST
+    # ----------
+
 
     def set_from_post(self, post, files):
         """Set attributes and parameters from POST"""
@@ -194,8 +200,11 @@ class Job(object):
         # Save to storage
         self.storage.save(self, save_attributes=True, save_parameters=True)
 
+
     # ----------
-    # Methods to set a job attribute or parameter
+    # Method to set a job attribute or parameter
+    # ----------
+
 
     def set_attribute(self, attr, value):
         """Set job attribute and save to storage"""
@@ -212,8 +221,11 @@ class Job(object):
         #self.save_description()
         self.storage.save(self, save_attributes=False, save_parameters=pname)
 
+
     # ----------
     # Methods to export a job description
+    # ----------
+
 
     def parameters_to_bash(self, separator='\n', get_files=False):
         """Make parameter file content for given job
@@ -344,8 +356,11 @@ class Job(object):
         self._results_to_xml_fill(xml_results)
         return ETree.tostring(xml_job)
 
+
     # ----------
     # Actions on a job
+    # ----------
+
 
     def start(self):
         """Start job
@@ -363,9 +378,7 @@ class Job(object):
         except ValueError:
             raise RuntimeError('Bad jobid_cluster returned for job {}:\njobid_cluster:\n{}'
                                ''.format(self.jobid, jobid_cluster))
-        # Change phase to QUEUED
-        previous_phase = self.phase
-        self.phase = 'QUEUED'
+        self.jobid_cluster = jobid_cluster
         # No need to change times: job not started yet
         # now = dt.datetime.now()
         # duration = dt.timedelta(0, self.execution_duration)
@@ -373,13 +386,8 @@ class Job(object):
         # self.start_time = now.strftime(DT_FMT)
         # self.end_time = None  # (now + duration).strftime(DT_FMT)
         # self.destruction_time = (now + destruction).strftime(DT_FMT)
-        self.jobid_cluster = jobid_cluster
-        # Save changes to storage
-        self.storage.save(self)
-        # Send signal (e.g. if WAIT command expecting signal)
-        change_status_signal = signal('job_status')
-        result = change_status_signal.send('change_status', sig_jobid=self.jobid, sig_phase=self.phase)
-        #logger.info('Signal sent for status change ({} --> {}). Results: \n{}'.format(previous_phase, self.phase, str(result)))
+        # Change phase to QUEUED
+        self.change_status('QUEUED')
 
     def abort(self):
         """Abort job
@@ -398,12 +406,7 @@ class Job(object):
         else:
             raise UserWarning('Job {} cannot be aborted while in phase {}'.format(self.jobid, self.phase))
         # Change phase to ABORTED
-        now = dt.datetime.now()
-        self.end_time = now.strftime(DT_FMT)
-        self.phase = 'ABORTED'
-        self.error = 'Job aborted by user ' + self.user.name
-        # Save job description
-        self.storage.save(self)
+        self.change_status('ABORTED', 'Job aborted by user ' + self.user.name)
 
     def delete(self):
         """Delete job
@@ -440,6 +443,59 @@ class Job(object):
                 self.change_status(new_phase)
         return self.phase
 
+    def add_result(self, rname, rfname, content_type):
+        url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, self.jobid, rname, rfname)
+        self.results[rname] = {'url': url, 'content_type': content_type}
+        logger.info('add {} file to results'.format(rfname))
+
+    def add_results(self):
+        # Get JDL to know expected job results
+        if not self.jdl.content:
+            self.jdl.read(self.jobname)
+        # Check results and all links to db (maybe not all results listed in JDL have been created)
+        for rname, r in self.jdl.content['results'].iteritems():
+            rfname = self.get_result_filename(rname)
+            rfpath = '{}/{}/results/{}'.format(JOBDATA_PATH, self.jobid, rfname)
+            if os.path.isfile(rfpath):
+                self.add_result(rname, rfname, r['content_type'])
+            else:
+                logger.info('No result for {}'.format(rname))
+
+    def add_logs(self):
+        # Link job logs stdout and stderr (added as a result)
+        rfdir = '{}/{}/results/'.format(JOBDATA_PATH, self.jobid)
+        for rname in ['stdout', 'stderr']:
+            rfname = rname + '.log'
+            if os.path.isfile(rfdir + rfname):
+                self.add_result(rname, rfname, 'text/plain')
+            else:
+                logger.warning('File {} missing'.format(rfname))
+
+    def add_provenance(self):
+        # Create PROV files (added as a result)
+        if GENERATE_PROV:
+            rfdir = '{}/{}/results/'.format(JOBDATA_PATH, self.jobid)
+            ptypes = ['json', 'xml', 'svg']
+            content_types = {
+                'json': 'application/json',
+                'xml': 'text/xml',
+                'svg': 'image/svg+xml'}
+            try:
+                pdoc = voprov.job2prov(self)
+                voprov.prov2json(pdoc, rfdir + 'provenance.json')
+                voprov.prov2xml(pdoc, rfdir + 'provenance.xml')
+                voprov.prov2svg(pdoc, rfdir + 'provenance.svg')
+            except Exception as e:
+                logger.warning('ERROR in provenance files creation: ' + e.message)
+            for ptype in ptypes:
+                # PROV JSON
+                rname = 'prov' + ptype
+                rfname = 'provenance.' + ptype
+                if os.path.isfile(rfdir + rfname):
+                    self.add_result(rname, rfname, content_types[ptype])
+                else:
+                    logger.warning('File {} missing'.format(rfname))
+
     def change_status(self, new_phase, error=''):
         """Update job object, e.g. from a job_event or from get_status if phase has changed
 
@@ -447,8 +503,7 @@ class Job(object):
         - QUEUED / HELD / SUSPENDED
         - EXECUTING
         """
-        # TODO: DEBUG: PENDING and COMPLETED to be removed, as no signals are expected for those phases
-        if self.phase in ['PENDING', 'QUEUED', 'EXECUTING', 'HELD', 'SUSPENDED', 'COMPLETED', 'ERROR']:
+        if self.phase in ['PENDING', 'QUEUED', 'EXECUTING', 'HELD', 'SUSPENDED', 'ERROR']:
             # Change phase
             now = dt.datetime.now()
             # destruction = dt.timedelta(DESTRUCTION_INTERVAL)
@@ -466,66 +521,24 @@ class Job(object):
                 # job.end_time = end_time.strftime(DT_FMT)
 
             def phase_completed(job, error_msg):
-                if not job.jdl.content:
-                    job.jdl.read(job.jobname)
-                # Copy back results from cluster
-                job.manager.get_results(job)
-                # Check results and all links to db (maybe not all results listed in JDL have been created)
-                for rname, r in job.jdl.content['results'].iteritems():
-                    rfname = job.get_result_filename(rname)
-                    rfpath = '{}/{}/results/{}'.format(JOBDATA_PATH, job.jobid, rfname)
-                    if os.path.isfile(rfpath):
-                        # /get_result_file/<jobname>/<jobid>/<rname>/<fname>
-                        url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
-                        job.results[rname] = {'url': url, 'content_type': r['content_type']}
-                        logger.info('add result ' + rname + ' ' + str(r))
                 # Set job.end_time
                 job.end_time = now.strftime(DT_FMT)
-                # Link job logs stdout and stderr (added as a result)
-                rfdir = '{}/{}/results/'.format(JOBDATA_PATH, job.jobid)
-                if os.path.isdir(rfdir):
-                    # STDOUT
-                    rname = 'stdout'
-                    rfname = 'stdout.log'
-                    url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
-                    job.results[rname] = {'url': url, 'content_type': 'text/plain'}
-                    logger.info('add stdout.log file to results')
-                    # STDERR
-                    rname = 'stderr'
-                    rfname = 'stderr.log'
-                    url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
-                    job.results[rname] = {'url': url, 'content_type': 'text/plain'}
-                    logger.info('add stderr.log file to results')
-                else:
-                    logger.warning('CANNOT add logs to results')
-                # Create PROV files (added as a result)
-                if GENERATE_PROV:
-                    if os.path.isdir(rfdir):
-                        pdoc = voprov.job2prov(job)
-                        # PROV JSON
-                        rname = 'provjson'
-                        rfname = 'provenance.json'
-                        voprov.prov2json(pdoc, rfdir + rfname)
-                        url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
-                        job.results[rname] = {'url': url, 'content_type': 'application/json'}
-                        logger.info('add provenance.json file to results')
-                        # PROV XML
-                        rname = 'provxml'
-                        rfname = 'provenance.xml'
-                        voprov.prov2xml(pdoc, rfdir + rfname)
-                        url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
-                        job.results[rname] = {'url': url, 'content_type': 'text/xml'}
-                        logger.info('add provenance.xml file to results')
-                        # PROV SVG
-                        rname = 'provsvg'
-                        rfname = 'provenance.svg'
-                        voprov.prov2svg(pdoc, rfdir + rfname)
-                        url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, job.jobid, rname, rfname)
-                        job.results[rname] = {'url': url, 'content_type': 'image/svg+xml'}
-                        logger.info('add provenance.svg file to results')
-                    else:
-                        logger.warning('CANNOT add provenance file to results')
+                # Copy back jobdata from cluster
+                job.manager.get_results(job)
+                # Add results, logs, provenance
+                self.add_results()
+                self.add_logs()
+                self.add_provenance()
 
+            def phase_aborted(job, error_msg):
+                # Set job.end_time
+                job.end_time = now.strftime(DT_FMT)
+                # Copy back jobdata from cluster
+                job.manager.get_results(job)
+                # Add results, logs, provenance
+                self.add_results()
+                self.add_logs()
+                # self.add_provenance()
 
             def phase_error(job, error_msg):
                 # Set job.end_time if not already in ERROR phase
@@ -536,15 +549,21 @@ class Job(object):
                     job.error += '. ' + error_msg
                 else:
                     job.error = error_msg
-                # kill the process
-                job.manager.abort(job)
+                # Copy back jobdata from cluster
+                job.manager.get_results(job)
+                # Add results, logs, provenance (if they exist...)
+                self.add_results()
+                self.add_logs()
+                # self.add_provenance()
 
-            # Switch
+            # Switch for new_phase
             cases = {
+                'QUEUED': nul,
                 'HELD': nul,
                 'SUSPENDED': nul,
                 'EXECUTING': phase_executing,
                 'COMPLETED': phase_completed,
+                'ABORTED': phase_aborted,
                 'ERROR': phase_error
             }
             if new_phase not in cases:

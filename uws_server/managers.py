@@ -16,13 +16,16 @@ Specific functions are expected for those classes:
 * cp_script
 """
 
-import shutil
-import signal
-import requests
 import datetime as dt
 import subprocess as sp
 from settings import *
 
+if MANAGER == 'LocalManager':
+    import shutil
+    import signal
+    import requests
+    import threading
+    import psutil
 
 # -------------
 # Manager class
@@ -192,12 +195,49 @@ class LocalManager(Manager):
     Note that get_status(), get_info(), get_results() and cp_script() functions
     are not needed as the job runs on the UWS server directly
     """
+    poll_interval = 4  # poll processes regularly to avoid zombies
 
     def __init__(self, jobdata_path=JOBDATA_PATH, script_path=SCRIPT_PATH):
         # PATHs
         self.jobdata_path = jobdata_path
         self.scripts_path = script_path
         self.workdir_path = '{}/../workdir'.format(jobdata_path)
+
+    def _send_signal(self, pid, phase, error_msg=''):
+        data = {'jobid': pid, 'phase': phase}
+        if error_msg:
+            data['error_msg'] = error_msg
+        url = '{}/handler/job_event'.format(BASE_URL)
+        response = requests.post(url, data)
+        logger.info('job event sent {}'.format(response.content))
+        if response.status_code != 200:
+            logger.error(response.content)
+        del response
+
+    def _poll_process(self, popen):
+        rcode = popen.poll()
+        pid = popen.pid
+        if not rcode:
+            p = psutil.Process(pid)
+            if p.status() == psutil.STATUS_STOPPED:
+                logger.info('process {} stopped'.format(pid))
+                # Try to restart process
+                try:
+                    os.kill(pid, signal.SIGCONT)
+                    if p.status() == psutil.STATUS_STOPPED:
+                        self._send_signal(pid, 'SUSPENDED')
+                except:
+                    self._send_signal(pid, 'SUSPENDED')
+            else:
+                logger.info('process {} running'.format(pid))
+                threading.Timer(self.poll_interval, self._poll_process, [popen]).start()
+        elif rcode == -9:
+            logger.info('process {} killed'.format(pid))
+            self._send_signal(pid, 'ERROR', error_msg='Process killed')
+        elif rcode <= -1:
+            logger.info('process {} terminated with errors'.format(pid))
+        else:
+            logger.info('process {} terminated'.format(pid))
 
     def start(self, job):
         """Start job locally
@@ -242,13 +282,23 @@ class LocalManager(Manager):
         # Execute batch using sp
         cmd = [batch_file]
         # logger.debug(' '.join(cmd))
-        pid = sp.Popen(cmd).pid
-        return pid
+        popen = sp.Popen(cmd)
+        # poll popen regularly
+        self._poll_process(popen)
+        # Return pid
+        return popen.pid
 
     def abort(self, job):
         """Abort/Cancel job"""
-        os.kill(job.jobid_cluster, signal.SIGKILL) # SIGTERM => error sent ; SIGKILL => no error sent, just killed!
-        pass
+        try:
+            os.kill(job.jobid_cluster, signal.SIGKILL) # SIGTERM => error sent ; SIGKILL => no error sent, just killed!
+        except OSError as e:
+            if 'No such process' in str(e):
+                logger.info('No such process ({}) for job {} {}'.format(job.jobid_cluster, job.jobname, job.jobid))
+            else:
+                logger.info(str(e))
+        except:
+            raise
 
     def delete(self, job):
         """Delete job"""
@@ -262,7 +312,6 @@ class LocalManager(Manager):
                 logger.info(str(e))
         except:
             raise
-        pass
 
 
 # -------------
