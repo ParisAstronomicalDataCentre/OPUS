@@ -50,41 +50,52 @@ class Manager(object):
         """
         jd = '{}/{}'.format(self.jobdata_path, job.jobid)
         wd = '{}/{}'.format(self.workdir_path, job.jobid)
+        # Need JDL for results description
+        if not job.jdl.content:
+            job.jdl.read(job.jobname)
         # Create sbatch
         batch = [
             '### INIT',
-            # Useful functions
+            'JOBID={}'.format(jobid_var),
+            'echo "JOBID is $JOBID"',
             'timestamp() {',
             '    date +"%Y-%m-%dT%H:%M:%S"',
             '}',
+            'echo "[`timestamp`] Initialize job"',
+            # Useful functions
             'job_event() {',
             '    if [ -z "$2" ]',
             '    then',
             '        curl -k -s -o $jd/curl_$1_signal.log'
             ' -d "jobid=$JOBID" -d "phase=$1" {}/handler/job_event'.format(BASE_URL),
             '    else',
-            '        echo "$2"',
-            '        curl -k -s -o $jd/curl_$1_signal.log '
+            '        echo "$1 $2"',
+            '        curl -k -s -o $jd/curl_$1_signal.log'
             ' -d "jobid=$JOBID" -d "phase=$1" --data-urlencode "error_msg=$2" {}/handler/job_event'.format(BASE_URL),
             '    fi',
             '}',
-            # Init JOBID
-            'echo "[`timestamp`] Initialize job"',
-            'JOBID={}'.format(jobid_var),
-            'echo "JOBID is $JOBID"',
-            # Set $wd and $jd
-            'wd={}'.format(wd),
-            'jd={}'.format(jd),
-            'cp {}/{}.sh $jd'.format(self.scripts_path, job.jobname),
-            'mkdir -p $wd',
-            'cd $wd',
-            # 'echo "User is `id`"',
-            # 'echo "Working dir is $wd"',
-            # 'echo "JobData dir is $jd"',
+            'copy_results() {',
+        ]
+        # Function to copy results from wd to jd
+        cp_results = [
+            '    echo "[`timestamp`] Copy results"',
+        ]
+        for rname, r in job.jdl.content['results'].iteritems():
+            fname = job.get_result_filename(rname)
+            cp_results.append(
+                '    [ -f $wd/{fname} ]'
+                ' && {{ cp $wd/{fname} $jd/results; echo "Found and copied: {rname}={fname}"; }}'
+                ' || echo "NOT FOUND: {rname}={fname}"'
+                ''.format(rname=rname, fname=fname)
+            )
+        batch.extend(cp_results)
+        batch.extend([
+            '}',
             # Error/Suspend/Term handler (send signals to server with curl)
             'set -e ',
             'error_handler() {',
             '    touch $jd/error',
+            '    copy_results',
             '    msg="Error in job ${BASH_SOURCE[1]##*/} running command: $BASH_COMMAND"',
             '    job_event "ERROR" "$msg"',
             '    rm -rf $wd',
@@ -93,6 +104,7 @@ class Manager(object):
             '}',
             'term_handler() {',
             '    touch $jd/error',
+            '    copy_results',
             '    msg="Early termination of job ${BASH_SOURCE[1]##*/} running command: $BASH_COMMAND"',
             '    job_event "ERROR" "$msg"',
             '    rm -rf $wd',
@@ -101,40 +113,31 @@ class Manager(object):
             '}',
             'trap "error_handler" ERR',
             'trap "term_handler" SIGHUP SIGINT SIGQUIT SIGTERM',
+            # Set $wd and $jd
+            '### PREPARE DIRECTORIES',
+            'wd={}'.format(wd),
+            'jd={}'.format(jd),
+            'cp {}/{}.sh $jd'.format(self.scripts_path, job.jobname),
+            'mkdir -p $wd',
+            'cd $wd',
+            # 'echo "User is `id`"',
+            # 'echo "Working dir is $wd"',
+            # 'echo "JobData dir is $jd"',
             # Move uploaded files to working directory if they exist
             'echo "[`timestamp`] Prepare input files"',
             'for filename in $jd/input/*; do [ -f "$filename" ] && cp $filename $wd; done',
-            # Start job
+            '### EXECUTION',
             'job_event "EXECUTING"',
             'echo "[`timestamp`] ***** Start job *****"',
             'touch $jd/start',
-            '### EXEC',
             # Load variables from params file
             '. $jd/parameters.sh',
             # Run script in the current environment
             '. $jd/{}.sh'.format(job.jobname),
+            '### COPY RESULTS',
             'echo "[`timestamp`] List files in workdir"',
             'ls -l',
-        ]
-        # Need JDL for results description
-        if not job.jdl.content:
-            job.jdl.read(job.jobname)
-        # Identify results to be moved to $jd/results
-        cp_results = [
-            '### CP RESULTS',
-            'echo "[`timestamp`] Copy results"',
-        ]
-        for rname, r in job.jdl.content['results'].iteritems():
-            fname = job.get_result_filename(rname)
-            cp_results.append(
-                '[ -f $wd/{fname} ] '
-                '&& {{ cp $wd/{fname} $jd/results; echo "Found and copied: {rname}={fname}"; }} '
-                '|| echo "NOT FOUND: {rname}={fname}"'
-                ''.format(rname=rname, fname=fname)
-            )
-        batch.extend(cp_results)
-        # Clean and terminate job
-        batch.extend([
+            'copy_results',
             '### CLEAN',
             'rm -rf $wd',
             'touch $jd/done',
@@ -195,7 +198,8 @@ class LocalManager(Manager):
     Note that get_status(), get_info(), get_results() and cp_script() functions
     are not needed as the job runs on the UWS server directly
     """
-    poll_interval = 4  # poll processes regularly to avoid zombies
+    poll_interval = 2  # poll processes regularly to avoid zombies
+    suspended_processes = []
 
     def __init__(self, jobdata_path=JOBDATA_PATH, script_path=SCRIPT_PATH):
         # PATHs
@@ -219,23 +223,43 @@ class LocalManager(Manager):
         pid = popen.pid
         if not rcode:
             p = psutil.Process(pid)
-            if p.status() == psutil.STATUS_STOPPED:
+            # TODO: Handle sleeping, idle, suspended processes?...
+            # Handle stopped processes
+            if p.status() in [psutil.STATUS_STOPPED, psutil.STATUS_TRACING_STOP]:
                 logger.info('process {} stopped'.format(pid))
-                # Try to restart process
                 try:
+                    # Try to restart the process
                     os.kill(pid, signal.SIGCONT)
-                    if p.status() == psutil.STATUS_STOPPED:
-                        self._send_signal(pid, 'SUSPENDED')
-                except:
+                except OSError as e:
+                    if 'No such process' in str(e):
+                        logger.warning('No such process ({})'.format(pid))
+                    else:
+                        logger.warning(str(e))
+                if p.status() == psutil.STATUS_STOPPED:
+                    # If this did not work, change status to SUSPENDED for now
                     self._send_signal(pid, 'SUSPENDED')
-            else:
-                logger.info('process {} running'.format(pid))
+                    self.suspended_processes.append(pid)
+                else:
+                    # If this worked, continue execution
+                    if pid in self.suspended_processes:
+                        self._send_signal(pid, 'EXECUTING')
+                        self.suspended_processes.remove(pid)
+                    logger.info('process {} continued'.format(pid))
+                # Rerun _poll_process after some time
                 threading.Timer(self.poll_interval, self._poll_process, [popen]).start()
+            else:
+                # Let the process run
+                logger.info('process {} running'.format(pid))
+                # Rerun _poll_process after some time
+                threading.Timer(self.poll_interval, self._poll_process, [popen]).start()
+        # Handle killed processes
         elif rcode == -9:
-            logger.info('process {} killed'.format(pid))
-            self._send_signal(pid, 'ERROR', error_msg='Process killed')
+            logger.info('process {} killed during execution'.format(pid))
+            self._send_signal(pid, 'ERROR', error_msg='Process killed during execution')
+        # Handle processes terminated with errors
         elif rcode <= -1:
             logger.info('process {} terminated with errors'.format(pid))
+        # Otherwise process has terminated
         else:
             logger.info('process {} terminated'.format(pid))
 
@@ -291,10 +315,10 @@ class LocalManager(Manager):
     def abort(self, job):
         """Abort/Cancel job"""
         try:
-            os.kill(job.jobid_cluster, signal.SIGKILL) # SIGTERM => error sent ; SIGKILL => no error sent, just killed!
+            os.kill(job.pid, signal.SIGKILL) # SIGTERM => error sent ; SIGKILL => no error sent, just killed!
         except OSError as e:
             if 'No such process' in str(e):
-                logger.info('No such process ({}) for job {} {}'.format(job.jobid_cluster, job.jobname, job.jobid))
+                logger.info('No such process ({}) for job {} {}'.format(job.pid, job.jobname, job.jobid))
             else:
                 logger.info(str(e))
         except:
@@ -304,10 +328,10 @@ class LocalManager(Manager):
         """Delete job"""
         # jobdata is already deleted by the server
         try:
-            os.kill(job.jobid_cluster, signal.SIGKILL) # SIGTERM => error sent ; SIGKILL => no error sent, just killed!
+            os.kill(job.pid, signal.SIGKILL) # SIGTERM => error sent ; SIGKILL => no error sent, just killed!
         except OSError as e:
             if 'No such process' in str(e):
-                logger.info('No such process ({}) for job {} {}'.format(job.jobid_cluster, job.jobname, job.jobid))
+                logger.info('No such process ({}) for job {} {}'.format(job.pid, job.jobname, job.jobid))
             else:
                 logger.info(str(e))
         except:
