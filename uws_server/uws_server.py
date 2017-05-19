@@ -392,7 +392,7 @@ def create_new_job_definition():
                 preq = request.forms.get('param_required_' + str(iparam))
                 pdesc = request.forms.get('param_description_' + str(iparam))
                 params[pname] = {
-                    'type': ptype,
+                    'datatype': ptype,
                     'default': pdefault,
                     'required': (preq == 'on'),
                     'description': pdesc,
