@@ -10,6 +10,7 @@ import hashlib
 from storage import *
 from settings import *
 
+# TODO: move to storage.py to complete the Storage classes
 
 class EntityStore(object):
 
