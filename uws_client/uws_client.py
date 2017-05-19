@@ -324,7 +324,7 @@ def job_definition():
         'new': 'New job definition has been saved as {}'.format(jobname),
         'validated': 'Job definition for new/{jn} has been validated and renamed {jn}'.format(jn=jobname),
         'script_copied': 'Job script {}.sh has been copied to work cluster'.format(jobname),
-        'notfound': 'Job definition for new/{jn} was not found on the server. Cannot validate.'.format(jn=jobname),
+        'notfound': 'Job definition for {jn} was not found on the server. Cannot validate.'.format(jn=jobname),
     }
     if msg in msg_text:
         return {'session': session, 'is_admin': is_admin, 'jobname': jobname, 'message': msg_text[msg]}
