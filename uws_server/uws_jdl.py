@@ -223,7 +223,7 @@ class VOTFile(JDLFile):
                     'name': rname,
                     'datatype': 'char',
                     'arraysize': '*',
-                    'value': '',
+                    'value': r['default'],
                     'xtype': r['content_type'],
                     'utype': 'voprov:Entity',
                 }
