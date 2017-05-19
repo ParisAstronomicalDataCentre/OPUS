@@ -48,7 +48,7 @@ GENERATE_PROV = True
 JDL = 'VOTFile'
 
 # Storage of job information
-STORAGE = 'SQLiteStorage'
+STORAGE = 'SQLite'
 
 PGSQL_HOST = 'localhost'
 PGSQL_PORT = 5432
@@ -57,8 +57,9 @@ PGSQL_USER = 'opus'
 PGSQL_PASSWORD = 'opus'
 
 # Define a Manager and its properties
-MANAGER = 'LocalManager'
-#MANAGER = 'SLURMManager'
+MANAGER = 'Local'
+
+#MANAGER = 'SLURM'
 SLURM_URL = 'tycho.obspm.fr'  # 'quadri12.obspm.fr'  #
 SLURM_USER = 'vouws'
 SLURM_USER_MAIL = 'mathieu.servillat@obspm.fr'

@@ -34,7 +34,7 @@ class NotFoundWarning(Warning):
 # Storage classes
 
 
-class Storage(object):
+class JobStorage(object):
     """
     Manage job information storage. This class defines required functions executed
     by the UWS server save(), read(), delete()
@@ -58,7 +58,7 @@ class Storage(object):
         pass
 
 
-class SQLStorage(Storage):
+class SQLStorage(object):
     """Manage job information storage using SQL database
 
     This class defines required functions executed by the UWS server:
@@ -95,6 +95,14 @@ class SQLStorage(Storage):
             'content_type': job.results[rname]['content_type']
         }
         self._save_query('job_results', d)
+
+
+class SQLJobStorage(SQLStorage, JobStorage):
+    """Manage job information storage using SQL database
+
+    This class defines required functions executed by the UWS server:
+    save(), read(), delete()
+    """
 
     def save(self, job, save_attributes=True, save_parameters=False, save_results=False):
         """Save job information to storage (attributes, parameters and results)"""
@@ -212,7 +220,7 @@ class SQLStorage(Storage):
         return jobs
 
 
-class SQLiteStorage(SQLStorage):
+class SQLiteStorage(object):
     """Manage job information storage using SQLite"""
 
     def __init__(self, db_file=SQLITE_FILE):
@@ -235,7 +243,11 @@ class SQLiteStorage(SQLStorage):
         self.conn.close()
 
 
-class PostgreSQLStorage(SQLStorage):
+class SQLiteJobStorage(SQLiteStorage, SQLJobStorage):
+    pass
+
+
+class PostgreSQLStorage(object):
     """Manage job information storage using PostgreSQL"""
 
     def __init__(self, host=PGSQL_HOST, port=PGSQL_PORT, database=PGSQL_DATABASE,
@@ -250,3 +262,7 @@ class PostgreSQLStorage(SQLStorage):
     def __del__(self):
         self.cursor.close()
         self.conn.close()
+
+
+class PostgreSQLJobStorage(PostgreSQLStorage, SQLJobStorage):
+    pass

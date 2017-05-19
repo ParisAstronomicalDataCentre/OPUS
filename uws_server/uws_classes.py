@@ -51,7 +51,7 @@ class User(object):
 
 
 class Job(object):
-    """Job with UWS attributes and methods to create, set and shows job information"""
+    """Job with UWS attributes and methods to create, set and show job information"""
 
     def __init__(self, jobname, jobid, user,
                  get_attributes=False, get_parameters=False, get_results=False,
@@ -74,9 +74,9 @@ class Job(object):
         # Prepare jdl attribute, e.g. WADL, see settings.py
         self.jdl = uws_jdl.__dict__[JDL]()
         # Link to the storage, e.g. SQLiteStorage, see settings.py
-        self.storage = storage.__dict__[STORAGE]()
+        self.storage = storage.__dict__[STORAGE + 'JobStorage']()
         # Link to the job manager, e.g. SLURMManager, see settings.py
-        self.manager = managers.__dict__[MANAGER]()
+        self.manager = managers.__dict__[MANAGER + 'Manager']()
         # Fill job attributes
         if get_attributes or get_parameters or get_results:
             # Get from storage

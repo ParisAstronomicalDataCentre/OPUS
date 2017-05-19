@@ -308,7 +308,7 @@ def init_db():
         filename = 'data/db_def/job_database.sqlite'
         with open(filename) as f:
             sql = f.read()
-        db = storage.__dict__[STORAGE]()
+        db = storage.__dict__[STORAGE + 'JobStorage']()
         db.cursor.executescript(sql)
         db.conn.commit()
         logger.info('Database initialized using ' + filename)
@@ -333,7 +333,7 @@ def test_db():
         filename = 'data/db_def/job_database_test.sqlite'
         with open(filename) as f:
             sql = f.read()
-        db = storage.__dict__[STORAGE]()
+        db = storage.__dict__[STORAGE + 'JobStorage']()
         db.cursor.executescript(sql)
         db.conn.commit()
         logger.info('Database initialized using ' + filename)
