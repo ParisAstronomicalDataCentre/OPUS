@@ -288,8 +288,8 @@
 	    editor = CodeMirror.fromTextArea( $('textarea[name=script]')[0], {mode: "text/x-sh", lineNumbers: true } );
         $('div.CodeMirror').addClass('panel panel-default');
         // Prepare empty form
-        add_item('param');
-        add_item('result');
+        // add_item('param');
+        // add_item('result');
         // Get jobname from DOM (if set), and fill input form
         var jobname = $('#jobname').attr('value');
         if (jobname) {
