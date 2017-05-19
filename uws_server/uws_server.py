@@ -452,8 +452,8 @@ def validate_job_definition(jobname):
     try:
         # Copy script and jdl from new
         jdl = uws_jdl.__dict__[JDL]()
-        jdl_src = '{}/new/{}{}'.format(JDL_PATH, jobname, jdl.extension)
-        jdl_dst = '{}/{}{}'.format(JDL_PATH, jobname, jdl.extension)
+        jdl_src = '{}/new/{}{}'.format(jdl.jdl_path, jobname, jdl.extension)
+        jdl_dst = '{}/{}{}'.format(jdl.jdl_path, jobname, jdl.extension)
         script_src = '{}/new/{}.sh'.format(SCRIPT_PATH, jobname)
         script_dst = '{}/{}.sh'.format(SCRIPT_PATH, jobname)
         # Save, then copy from new/
@@ -461,7 +461,7 @@ def validate_job_definition(jobname):
             if os.path.isfile(jdl_dst):
                 # Save file with time stamp
                 mt = dt.datetime.fromtimestamp(os.path.getmtime(jdl_dst)).isoformat()
-                jdl_dst_save = '{}/saved/{}_{}{}'.format(JDL_PATH, jobname, mt, jdl.extension)
+                jdl_dst_save = '{}/saved/{}_{}{}'.format(jdl.jdl_path, jobname, mt, jdl.extension)
                 os.rename(jdl_dst, jdl_dst_save)
                 logger.info('Previous job JDL saved: ' + jdl_dst_save)
             shutil.copy(jdl_src, jdl_dst)
@@ -480,7 +480,7 @@ def validate_job_definition(jobname):
             shutil.copy(script_src, script_dst)
             logger.info('Job script copied: ' + script_dst)
             # Copy script to job manager
-            manager = managers.__dict__[MANAGER]()
+            manager = managers.__dict__[MANAGER + 'Manager']()
             manager.cp_script(jobname)
             logger.info('Job script copied to work cluster: ' + jobname)
         else:
