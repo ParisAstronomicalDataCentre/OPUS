@@ -20,7 +20,7 @@ import datetime as dt
 import subprocess as sp
 from settings import *
 
-if MANAGER == 'LocalManager':
+if MANAGER == 'Local':
     import shutil
     import signal
     import requests

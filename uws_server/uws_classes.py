@@ -364,12 +364,6 @@ class Job(object):
 
     def add_result_entry(self, rname, rfname, content_type):
         # TODO: Use an Entity Store
-        # get hash from the file
-        with open(rfname, 'rb') as f:
-            hash = hashlib.sha1(f.read())
-        # Check if entity exists, get its ID
-        # If not, create an id and store the entity
-
         url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, self.jobid, rname, rfname)
         self.results[rname] = {'url': url, 'content_type': content_type}
         logger.info('add {} file to results'.format(rfname))
@@ -608,7 +602,7 @@ class JobList(object):
         self.jobname = jobname
         self.user = user
         # Link to the storage, e.g. SQLiteStorage, see settings.py
-        self.storage = storage.__dict__[STORAGE]()
+        self.storage = storage.__dict__[STORAGE + 'JobStorage']()
         self.jobs = self.storage.get_list(self, phase=phase, check_user=check_user)
 
     def to_xml(self):
