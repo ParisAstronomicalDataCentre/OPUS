@@ -171,64 +171,67 @@ class VOTFile(JDLFile):
             'utype': "voprov:WasGeneratedBy",
         })
         # Prepare InputParams group
-        for pname, p in self.content['parameters'].iteritems():
-            param_attrib = {
-                'ID': pname,
-                'name': pname,
-                'datatype': self.datatype_xs2vo[p['datatype']],
-                'value': p['default'],
-            }
-            if param_attrib['datatype'] == 'file':
-                param_attrib['xtype'] = 'application/octet-stream'
-                param_attrib['datatype'] = 'char'
-            if param_attrib['datatype'] == 'char':
-                param_attrib['arraysize'] = '*'
-            if str(p['required']).lower() == 'false' :
-                param_attrib['type'] = 'no_query'
-#                'required': str(p['required']),
-#                'content_type': 'text/plain'
-            param = ETree.Element('PARAM', attrib=param_attrib)
-            ETree.SubElement(param, 'DESCRIPTION').text = p.get('description', '')
-            if p.get('min', False) or p.get('max', False) or p.get('options', False):
-                values = ETree.SubElement(param, 'VALUES')
-                if p.get('min', False):
-                    ETree.SubElement(values, 'MIN', attrib={'value': p['min']})
-                if p.get('max', False):
-                    ETree.SubElement(values, 'MAX', attrib={'value': p['max']})
-                if p.get('options', False):
-                    for o in p['options'].split(','):
-                        ETree.SubElement(values, 'OPTION', attrib={'value': o})
-            group_params.append(param)
+        if 'parameters' in self.content:
+            for pname, p in self.content['parameters'].iteritems():
+                param_attrib = {
+                    'ID': pname,
+                    'name': pname,
+                    'datatype': self.datatype_xs2vo[p['datatype']],
+                    'value': p['default'],
+                }
+                if param_attrib['datatype'] == 'file':
+                    param_attrib['xtype'] = 'application/octet-stream'
+                    param_attrib['datatype'] = 'char'
+                if param_attrib['datatype'] == 'char':
+                    param_attrib['arraysize'] = '*'
+                if str(p['required']).lower() == 'false' :
+                    param_attrib['type'] = 'no_query'
+    #                'required': str(p['required']),
+    #                'content_type': 'text/plain'
+                param = ETree.Element('PARAM', attrib=param_attrib)
+                ETree.SubElement(param, 'DESCRIPTION').text = p.get('description', '')
+                if p.get('min', False) or p.get('max', False) or p.get('options', False):
+                    values = ETree.SubElement(param, 'VALUES')
+                    if p.get('min', False):
+                        ETree.SubElement(values, 'MIN', attrib={'value': p['min']})
+                    if p.get('max', False):
+                        ETree.SubElement(values, 'MAX', attrib={'value': p['max']})
+                    if p.get('options', False):
+                        for o in p['options'].split(','):
+                            ETree.SubElement(values, 'OPTION', attrib={'value': o})
+                group_params.append(param)
         # Prepare used block
-        for pname, p in self.content['used'].iteritems():
-            attrib={
-                'name': pname,
-                'datatype': 'char',
-                'arraysize': '*',
-                'value': '',
-                'xtype': p['content_type'],
-                'utype': 'voprov:Entity',
-            }
-            if pname in self.content['parameters']:
-                attrib['ref'] = pname
-            used = ETree.Element('PARAM', attrib=attrib)
-            #ETree.SubElement(used, 'DESCRIPTION').text = p.get('description', '')
-            group_used.append(used)
+        if 'used' in self.content:
+            for pname, p in self.content['used'].iteritems():
+                attrib={
+                    'name': pname,
+                    'datatype': 'char',
+                    'arraysize': '*',
+                    'value': '',
+                    'xtype': p['content_type'],
+                    'utype': 'voprov:Entity',
+                }
+                if pname in self.content['parameters']:
+                    attrib['ref'] = pname
+                used = ETree.Element('PARAM', attrib=attrib)
+                #ETree.SubElement(used, 'DESCRIPTION').text = p.get('description', '')
+                group_used.append(used)
         # Prepare results block
-        for rname, r in self.content['results'].iteritems():
-            attrib={
-                'name': rname,
-                'datatype': 'char',
-                'arraysize': '*',
-                'value': '',
-                'xtype': r['content_type'],
-                'utype': 'voprov:Entity',
-            }
-            if rname in self.content['parameters']:
-                attrib['ref'] = rname
-            result = ETree.Element('PARAM', attrib=attrib)
-            #ETree.SubElement(result, 'DESCRIPTION').text = r.get('description', '')
-            group_results.append(result)
+        if 'results' in self.content:
+            for rname, r in self.content['results'].iteritems():
+                attrib={
+                    'name': rname,
+                    'datatype': 'char',
+                    'arraysize': '*',
+                    'value': '',
+                    'xtype': r['content_type'],
+                    'utype': 'voprov:Entity',
+                }
+                if rname in self.content['parameters']:
+                    attrib['ref'] = rname
+                result = ETree.Element('PARAM', attrib=attrib)
+                #ETree.SubElement(result, 'DESCRIPTION').text = r.get('description', '')
+                group_results.append(result)
         # Write file
         jdl_content = ETree.tostring(jdl_tree, pretty_print=True)
         jdl_fname = self._get_filename(jobname)
@@ -238,14 +241,15 @@ class VOTFile(JDLFile):
 
     def read(self, jobname):
         """Read job description from VOTable file"""
-        # TODO: all
+        raw_jobname = jobname
+        raw_jobname = raw_jobname.split('/')[-1]  # remove new/ prefix
+        fname = self._get_filename(jobname)
+        # '{}/{}{}'.format(JDL_PATH, job.jobname, self.extension)
         groups = {
             'InputParams': 'parameters',
             'Used': 'used',
             'Generated': 'results'
         }
-        fname = self._get_filename(jobname)
-        # '{}/{}{}'.format(JDL_PATH, job.jobname, self.extension)
         try:
             with open(fname, 'r') as f:
                 jdl_string = f.read()
@@ -256,7 +260,7 @@ class VOTFile(JDLFile):
             xmlns = '{' + jdl_tree.nsmap[None] + '}'
             #print xmlns
             # Read parameters description
-            resource_block = jdl_tree.find(".//{}RESOURCE[@ID='{}']".format(xmlns, jobname))
+            resource_block = jdl_tree.find(".//{}RESOURCE[@ID='{}']".format(xmlns, raw_jobname))
             #print resource_block
             job_def = {
                 'name': resource_block.get('name'),
@@ -362,7 +366,6 @@ class VOTFile(JDLFile):
             raise
             # return {}
         self.content = job_def
-
 
 
 class WADLFile(JDLFile):
