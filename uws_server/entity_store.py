@@ -7,7 +7,9 @@ Defines class to store and keep track of entities
 """
 
 import hashlib
+from storage import *
 from settings import *
+
 
 class EntityStore(object):
 
@@ -18,6 +20,10 @@ class EntityStore(object):
         self.path = path
 
     def get_hash(self, fname):
+        """Generate SHA1 hassh for given file
+        :param fname:
+        :return: hax hash
+        """
         sha1 = hashlib.sha1()
         with open(fname, 'rb') as f:
             while True:
@@ -27,3 +33,26 @@ class EntityStore(object):
                 sha1.update(data)
         return sha1.hexdigest()
 
+    def get_properties(self, id):
+        """get entity properties using its id
+        """
+        pass
+
+    def exists(self):
+        """Check if entity exists in the Store, returns entity id
+        """
+        pass
+
+    def add(self):
+        """Add entity to the Store
+        """
+        pass
+
+    def delete(self):
+        """Delete entity from the Store
+        """
+        pass
+
+
+class SQLiteEntityStore(SQLiteStorage, EntityStore):
+    pass
