@@ -178,6 +178,8 @@ UPLOAD_PATH = VAR_PATH + '/uploads'
 JOBDATA_PATH = VAR_PATH + '/jobdata'
 # Path for job results and logs
 RESULTS_PATH = JOBDATA_PATH + '/results'
+# EntityStore path
+ENTITY_STORE_PATH = VAR_PATH + '/store'
 # Path for SLURM sbatch files created by SLURMManager
 SBATCH_PATH = VAR_PATH + '/sbatch'
 # Logging

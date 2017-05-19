@@ -358,6 +358,72 @@ class Job(object):
 
 
     # ----------
+    # Metadata management
+    # ----------
+
+
+    def add_result_entry(self, rname, rfname, content_type):
+        # TODO: Use an Entity Store
+        # get hash from the file
+        with open(rfname, 'rb') as f:
+            hash = hashlib.sha1(f.read())
+        # Check if entity exists, get its ID
+        # If not, create an id and store the entity
+
+        url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, self.jobid, rname, rfname)
+        self.results[rname] = {'url': url, 'content_type': content_type}
+        logger.info('add {} file to results'.format(rfname))
+
+    def add_results(self):
+        # Get JDL to know expected job results
+        if not self.jdl.content:
+            self.jdl.read(self.jobname)
+        # Check results and all links to db (maybe not all results listed in JDL have been created)
+        for rname, r in self.jdl.content['results'].iteritems():
+            rfname = self.get_result_filename(rname)
+            rfpath = '{}/{}/results/{}'.format(JOBDATA_PATH, self.jobid, rfname)
+            if os.path.isfile(rfpath):
+                self.add_result_entry(rname, rfname, r['content_type'])
+            else:
+                logger.info('No result for {}'.format(rname))
+
+    def add_logs(self):
+        # Link job logs stdout and stderr (added as a result)
+        rfdir = '{}/{}/results/'.format(JOBDATA_PATH, self.jobid)
+        for rname in ['stdout', 'stderr']:
+            rfname = rname + '.log'
+            if os.path.isfile(rfdir + rfname):
+                self.add_result_entry(rname, rfname, 'text/plain')
+            else:
+                logger.warning('File {} missing'.format(rfname))
+
+    def add_provenance(self):
+        # Create PROV files (added as a result)
+        if GENERATE_PROV:
+            rfdir = '{}/{}/results/'.format(JOBDATA_PATH, self.jobid)
+            ptypes = ['json', 'xml', 'svg']
+            content_types = {
+                'json': 'application/json',
+                'xml': 'text/xml',
+                'svg': 'image/svg+xml'}
+            try:
+                pdoc = voprov.job2prov(self)
+                voprov.prov2json(pdoc, rfdir + 'provenance.json')
+                voprov.prov2xml(pdoc, rfdir + 'provenance.xml')
+                voprov.prov2svg(pdoc, rfdir + 'provenance.svg')
+            except Exception as e:
+                logger.warning('ERROR in provenance files creation: ' + e.message)
+            for ptype in ptypes:
+                # PROV JSON
+                rname = 'prov' + ptype
+                rfname = 'provenance.' + ptype
+                if os.path.isfile(rfdir + rfname):
+                    self.add_result_entry(rname, rfname, content_types[ptype])
+                else:
+                    logger.warning('File {} missing'.format(rfname))
+
+
+    # ----------
     # Actions on a job
     # ----------
 
@@ -443,59 +509,6 @@ class Job(object):
                 self.change_status(new_phase)
         return self.phase
 
-    def add_result(self, rname, rfname, content_type):
-        url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, self.jobid, rname, rfname)
-        self.results[rname] = {'url': url, 'content_type': content_type}
-        logger.info('add {} file to results'.format(rfname))
-
-    def add_results(self):
-        # Get JDL to know expected job results
-        if not self.jdl.content:
-            self.jdl.read(self.jobname)
-        # Check results and all links to db (maybe not all results listed in JDL have been created)
-        for rname, r in self.jdl.content['results'].iteritems():
-            rfname = self.get_result_filename(rname)
-            rfpath = '{}/{}/results/{}'.format(JOBDATA_PATH, self.jobid, rfname)
-            if os.path.isfile(rfpath):
-                self.add_result(rname, rfname, r['content_type'])
-            else:
-                logger.info('No result for {}'.format(rname))
-
-    def add_logs(self):
-        # Link job logs stdout and stderr (added as a result)
-        rfdir = '{}/{}/results/'.format(JOBDATA_PATH, self.jobid)
-        for rname in ['stdout', 'stderr']:
-            rfname = rname + '.log'
-            if os.path.isfile(rfdir + rfname):
-                self.add_result(rname, rfname, 'text/plain')
-            else:
-                logger.warning('File {} missing'.format(rfname))
-
-    def add_provenance(self):
-        # Create PROV files (added as a result)
-        if GENERATE_PROV:
-            rfdir = '{}/{}/results/'.format(JOBDATA_PATH, self.jobid)
-            ptypes = ['json', 'xml', 'svg']
-            content_types = {
-                'json': 'application/json',
-                'xml': 'text/xml',
-                'svg': 'image/svg+xml'}
-            try:
-                pdoc = voprov.job2prov(self)
-                voprov.prov2json(pdoc, rfdir + 'provenance.json')
-                voprov.prov2xml(pdoc, rfdir + 'provenance.xml')
-                voprov.prov2svg(pdoc, rfdir + 'provenance.svg')
-            except Exception as e:
-                logger.warning('ERROR in provenance files creation: ' + e.message)
-            for ptype in ptypes:
-                # PROV JSON
-                rname = 'prov' + ptype
-                rfname = 'provenance.' + ptype
-                if os.path.isfile(rfdir + rfname):
-                    self.add_result(rname, rfname, content_types[ptype])
-                else:
-                    logger.warning('File {} missing'.format(rfname))
-
     def change_status(self, new_phase, error=''):
         """Update job object, e.g. from a job_event or from get_status if phase has changed
 
@@ -524,7 +537,7 @@ class Job(object):
                 # Set job.end_time
                 job.end_time = now.strftime(DT_FMT)
                 # Copy back jobdata from cluster
-                job.manager.get_results(job)
+                job.manager.get_jobdata(job)
                 # Add results, logs, provenance
                 self.add_results()
                 self.add_logs()
@@ -534,7 +547,7 @@ class Job(object):
                 # Set job.end_time
                 job.end_time = now.strftime(DT_FMT)
                 # Copy back jobdata from cluster
-                job.manager.get_results(job)
+                job.manager.get_jobdata(job)
                 # Add results, logs, provenance
                 self.add_results()
                 self.add_logs()
@@ -550,7 +563,7 @@ class Job(object):
                 else:
                     job.error = error_msg
                 # Copy back jobdata from cluster
-                job.manager.get_results(job)
+                job.manager.get_jobdata(job)
                 # Add results, logs, provenance (if they exist...)
                 self.add_results()
                 self.add_logs()

@@ -12,7 +12,7 @@ Specific functions are expected for those classes:
 * delete
 * get_status
 * get_info
-* get_results
+* get_jobdata
 * cp_script
 """
 
@@ -35,7 +35,7 @@ class Manager(object):
     """
     Manage job execution. This class defines required functions executed
     by the UWS server: start(), abort(), delete(), get_status(), get_info(),
-    get_results() and cp_script().
+    get_jobdata() and cp_script().
     """
 
     jobdata_path = '.'
@@ -136,7 +136,7 @@ class Manager(object):
             '. $jd/{}.sh'.format(job.jobname),
             '### COPY RESULTS',
             'echo "[`timestamp`] List files in workdir"',
-            'ls -l',
+            'ls -oht',
             'copy_results',
             '### CLEAN',
             'rm -rf $wd',
@@ -179,7 +179,7 @@ class Manager(object):
         """
         return {'phase': job.phase}
 
-    def get_results(self, job):
+    def get_jobdata(self, job):
         """Get job results"""
         pass
 
@@ -195,7 +195,7 @@ class Manager(object):
 class LocalManager(Manager):
     """
     Manage job execution locally.
-    Note that get_status(), get_info(), get_results() and cp_script() functions
+    Note that get_status(), get_info(), get_jobdata() and cp_script() functions
     are not needed as the job runs on the UWS server directly
     """
     poll_interval = 2  # poll processes regularly to avoid zombies
@@ -522,7 +522,7 @@ class SLURMManager(Manager):
         info_dict = info.split('|')
         return info_dict
 
-    def get_results(self, job):
+    def get_jobdata(self, job):
         """Get job results from SLURM server
 
         Returns:

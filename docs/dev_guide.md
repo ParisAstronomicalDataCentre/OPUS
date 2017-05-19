@@ -17,7 +17,7 @@ class Manager(object):
     """
     Manage job execution on cluster. This class defines required functions executed
     by the UWS server: start(), abort(), delete(), get_status(), get_info(),
-    get_results() and cp_script().
+    get_jobdata() and cp_script().
     """
 
     def start(self, job):
@@ -46,7 +46,7 @@ class Manager(object):
         """
         return {'phase': job.phase}
 
-    def get_results(self, job):
+    def get_jobdata(self, job):
         """Get job results from cluster"""
         pass
 
@@ -66,7 +66,7 @@ class Storage(object):
         """Save job information to storage (attributes, parameters and results)"""
         pass
 
-    def read(self, job, get_attributes=True, get_parameters=True, get_results=True,
+    def read(self, job, get_attributes=True, get_parameters=True, get_jobdata=True,
              from_jobid_cluster=False):
         """Read job information from storage"""
         pass
