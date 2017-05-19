@@ -246,13 +246,15 @@
                         editor.setValue(script);
                     },
                     error : function(xhr, status, exception) {
+                        editor.setValue('');
                         console.log(exception);
                     }
                 });
 			},
 			error : function(xhr, status, exception) {
-				console.log(exception);
-				$('#load_msg').text('No valid JDL found.');
+                console.log(exception);
+                editor.setValue('');
+                $('#load_msg').text('No valid JDL found.');
 				$('#load_msg').show().delay(1000).fadeOut();
 			}
 		});
