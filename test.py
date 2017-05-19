@@ -12,10 +12,10 @@ from webtest import TestApp
 
 
 # Redefine LOG_FILE, SQLITE_FILE, MANAGER
-STORAGE = 'SQLiteStorage'
-SQLITE_FILE = '/var/www/opus/db/job_database_test.db'
+STORAGE = 'SQLite'
+SQLITE_FILE_NAME = 'job_database_test.db'
 LOG_FILE_SUFFIX = '_test'
-MANAGER = 'Manager'
+MANAGER = ''
 
 from uws_server import uws_server
 
