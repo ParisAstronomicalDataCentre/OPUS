@@ -200,7 +200,7 @@ class LocalManager(Manager):
     are not needed as the job runs on the UWS server directly
     """
     poll_interval = 2  # poll processes regularly to avoid zombies
-    suspended_processes = []
+    suspended_processes = []  # suspended processes, restart signals will be sent regularly
 
     def __init__(self, jobdata_path=JOBDATA_PATH, script_path=SCRIPT_PATH):
         # PATHs
@@ -222,14 +222,19 @@ class LocalManager(Manager):
     def _poll_process(self, popen):
         rcode = popen.poll()
         pid = popen.pid
+        # Actions depending on rcode value
         if not rcode:
-            p = psutil.Process(pid)
+            try:
+                p = psutil.Process(pid)
+            except psutil.NoSuchProcess as e:
+                logger.info('process {} terminated'.format(pid))
+                return
             # TODO: Handle sleeping, idle, suspended processes?...
             # Handle stopped processes
             if p.status() in [psutil.STATUS_STOPPED, psutil.STATUS_TRACING_STOP]:
                 logger.info('process {} stopped'.format(pid))
                 try:
-                    # Try to restart the process
+                    # Try to restart the process by sending SIGCONT
                     os.kill(pid, signal.SIGCONT)
                 except OSError as e:
                     if 'No such process' in str(e):
