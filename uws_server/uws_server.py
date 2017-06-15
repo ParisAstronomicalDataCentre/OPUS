@@ -737,7 +737,6 @@ def get_job(jobname, jobid):
             client_phase = request.query.get('PHASE', job.phase)
             wait_time = int(request.query.get('WAIT', False))
             if (client_phase == job.phase) and (wait_time > 0):
-                # TODO: use blinker to send/receive signals
                 change_status_signal = signal('job_status')
                 change_status_event = threading.Event()
 
