@@ -10,50 +10,80 @@ import hashlib
 from storage import *
 from settings import *
 
-# TODO: move to storage.py to complete the Storage classes
 
 class EntityStore(object):
-
-    BUF_SIZE = 65536  # lets read stuff in 64kb chunks!
 
     def __init__(self, path=ENTITY_STORE_PATH):
         # PATHs
         self.path = path
 
-    def get_hash(self, fname):
+    def get_file_hash(self, fname):
         """Generate SHA1 hassh for given file
         :param fname:
         :return: hax hash
         """
+        BUF_SIZE = 65536  # lets read stuff in 64kb chunks!
         sha1 = hashlib.sha1()
         with open(fname, 'rb') as f:
             while True:
-                data = f.read(self.BUF_SIZE)
+                data = f.read(BUF_SIZE)
                 if not data:
                     break
                 sha1.update(data)
         return sha1.hexdigest()
 
-    def get_properties(self, id):
+    def get_entity_properties(self, id):
         """get entity properties using its id
+        :return: dict with propeties
         """
-        pass
+        return {}
 
-    def exists(self):
+    def entity_exists(self):
         """Check if entity exists in the Store, returns entity id
+        :return: entity id
         """
-        pass
+        return 0
 
-    def add(self):
+    def entity_add(self):
         """Add entity to the Store
+        :return: entity id
         """
-        pass
+        return 0
 
-    def delete(self):
+    def entity_delete(self):
         """Delete entity from the Store
         """
         pass
 
 
-class SQLiteEntityStore(SQLiteStorage, EntityStore):
-    pass
+class SQLEntityStore(EntityStore):
+
+    def get_entity_properties(self, id):
+        """get entity properties using its id
+        :return: dict with properties
+        """
+        return {}
+
+    def entity_exists(self, id=None, name=None, hash=None):
+        """Check if entity exists in the Store, returns entity id
+        :return: entity id
+        """
+        if id:
+            pass
+        if name:
+            pass
+        if hash:
+            pass
+        return 0
+
+    def entity_add(self):
+        """Add entity to the Store
+        :return: entity id
+        """
+        return 0
+
+    def entity_delete(self):
+        """Delete entity from the Store
+        """
+        pass
+
