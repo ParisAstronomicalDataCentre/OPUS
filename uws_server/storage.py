@@ -18,6 +18,7 @@ the number of database access (in the case of a relational database)
 """
 
 import datetime as dt
+from entity_store import *
 from settings import *
 
 
@@ -76,6 +77,14 @@ class SQLStorage(object):
         self.cursor.execute(query)
         self.conn.commit()
 
+
+class SQLJobStorage(SQLStorage, JobStorage):
+    """Manage job information storage using SQL database
+
+    This class defines required functions executed by the UWS server:
+    save(), read(), delete()
+    """
+
     def _save_parameter(self, job, pname):
         # Save job parameter to db
         d = {
@@ -96,17 +105,8 @@ class SQLStorage(object):
         }
         self._save_query('job_results', d)
 
-
-class SQLJobStorage(SQLStorage, JobStorage):
-    """Manage job information storage using SQL database
-
-    This class defines required functions executed by the UWS server:
-    save(), read(), delete()
-    """
-
     def save(self, job, save_attributes=True, save_parameters=False, save_results=False):
         """Save job information to storage (attributes, parameters and results)"""
-
         if save_attributes:
             # Save job description to db
             d = {col: str(job.__dict__[col]) for col in JOB_ATTRIBUTES}
