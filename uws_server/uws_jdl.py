@@ -484,7 +484,6 @@ class WADLFile(JDLFile):
             for p in params_block.getchildren():
                 pname = p.get('name')
                 if pname not in ['PHASE', None]:
-                    # TODO: Add all attributes (e.g. min, max for numbers)
                     parameters[pname] = {
                         'datatype': p.get('type'),
                         'required': p.get('required'),
