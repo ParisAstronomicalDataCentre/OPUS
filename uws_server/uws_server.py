@@ -506,7 +506,7 @@ def cp_script(jobname):
         # Copy script to job manager
         script_dst = '{}/{}.sh'.format(SCRIPT_PATH, jobname)
         if os.path.isfile(script_dst):
-            manager = managers.__dict__[MANAGER]()
+            manager = managers.__dict__[MANAGER + 'Manager']()
             manager.cp_script(jobname)
             logger.info('Job script copied to work cluster: ' + jobname)
         else:

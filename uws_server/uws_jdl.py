@@ -189,7 +189,9 @@ class VOTFile(JDLFile):
     #                'required': str(p['required']),
     #                'content_type': 'text/plain'
                 param = ETree.Element('PARAM', attrib=param_attrib)
-                ETree.SubElement(param, 'DESCRIPTION').text = p.get('description', '')
+                pdesc = p.get('description', '')  # .encode(encoding='utf-8', errors='ignore')
+                logger.debug(pdesc)
+                ETree.SubElement(param, 'DESCRIPTION').text = pdesc
                 if p.get('min', False) or p.get('max', False) or p.get('options', False):
                     values = ETree.SubElement(param, 'VALUES')
                     if p.get('min', False):
