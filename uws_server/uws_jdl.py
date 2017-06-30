@@ -86,7 +86,7 @@ class JDLFile(object):
         """Read job description from file"""
         pass
 
-    def valid_xml_char_ordinal(c):
+    def valid_xml_char_ordinal(self, c):
         codepoint = ord(c)
         # conditions ordered by presumed frequency
         return (
