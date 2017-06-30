@@ -86,6 +86,15 @@ class JDLFile(object):
         """Read job description from file"""
         pass
 
+    def valid_xml_char_ordinal(c):
+        codepoint = ord(c)
+        # conditions ordered by presumed frequency
+        return (
+            0x20 <= codepoint <= 0xD7FF or
+            codepoint in (0x9, 0xA, 0xD) or
+            0xE000 <= codepoint <= 0xFFFD or
+            0x10000 <= codepoint <= 0x10FFFF
+            )
 
 class VOTFile(JDLFile):
 
@@ -189,10 +198,11 @@ class VOTFile(JDLFile):
     #                'required': str(p['required']),
     #                'content_type': 'text/plain'
                 param = ETree.Element('PARAM', attrib=param_attrib)
-                pdesc = p.get('description', '').decode('utf-8','ignore').encode("utf-8")
+                pdesc = p.get('description', '')
                   # .encode(encoding='utf-8', errors='ignore')
+                pdesc_clean = ''.join(c for c in pdesc if self.valid_xml_char_ordinal(c))
                 logger.debug(pdesc)
-                ETree.SubElement(param, 'DESCRIPTION').text = pdesc
+                ETree.SubElement(param, 'DESCRIPTION').text = pdesc_clean
                 if p.get('min', False) or p.get('max', False) or p.get('options', False):
                     values = ETree.SubElement(param, 'VALUES')
                     if p.get('min', False):
