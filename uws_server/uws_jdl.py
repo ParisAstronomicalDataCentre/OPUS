@@ -200,10 +200,10 @@ class VOTFile(JDLFile):
                 param = ETree.Element('PARAM', attrib=param_attrib)
                 pdesc = p.get('description', '')
                   # .encode(encoding='utf-8', errors='ignore')
-                pdesc_clean = ''.join(c for c in pdesc if self.valid_xml_char_ordinal(c))
-                logger.debug(pdesc)
-                logger.debug(pdesc_clean)
-                ETree.SubElement(param, 'DESCRIPTION').text = pdesc_clean
+                #pdesc_clean = ''.join(c for c in pdesc if self.valid_xml_char_ordinal(c))
+                #logger.debug(pdesc)
+                #logger.debug(pdesc_clean)
+                ETree.SubElement(param, 'DESCRIPTION').text = pdesc
                 if p.get('min', False) or p.get('max', False) or p.get('options', False):
                     values = ETree.SubElement(param, 'VALUES')
                     if p.get('min', False):
