@@ -379,63 +379,10 @@ def create_new_job_definition():
     if not is_client_trusted(ip):
         abort_403()
     try:
-        # Read form
-        keys = request.forms.keys()
         jobname = request.forms.get('name').split('/')[-1]
-        params = collections.OrderedDict()
-        iparam = 1
-        while 'param_name_' + str(iparam) in keys:
-            pname = request.forms.get('param_name_' + str(iparam))
-            if pname:
-                ptype = request.forms.get('param_datatype_' + str(iparam))
-                pdefault = request.forms.get('param_default_' + str(iparam))
-                preq = request.forms.get('param_required_' + str(iparam))
-                pdesc = request.forms.get('param_description_' + str(iparam))
-                params[pname] = {
-                    'datatype': ptype,
-                    'default': pdefault,
-                    'required': (preq == 'on'),
-                    'description': pdesc,
-                }
-                poptions = request.forms.get('param_options_' + str(iparam))
-                if poptions:
-                    params[pname]['options'] = poptions
-                patts = request.forms.get('param_attributes_' + str(iparam))
-                if patts:
-                    for patt in patts.split(' '):
-                        if '=' in patt:
-                            pattk, pattv = patt.split('=')
-                            params[pname][pattk] = pattv
-            iparam += 1
-        results = collections.OrderedDict()
-        iresult = 1
-        while 'result_name_' + str(iresult) in keys:
-            rname = request.forms.get('result_name_' + str(iresult))
-            if rname:
-                rtype = request.forms.get('result_type_' + str(iresult))
-                rdefault = request.forms.get('result_default_' + str(iresult))
-                rdesc = request.forms.get('result_description_' + str(iresult))
-                results[rname] = {
-                    'content_type': rtype,
-                    'default': rdefault,
-                    'description': rdesc,
-                }
-            iresult += 1
-        # Create job_jdl structure
-        job_def = {
-            'parameters': params,
-            'results': results,
-            'description': request.forms.get('description'),
-            'url': request.forms.get('url'),
-            'contact_name': request.forms.get('contact_name'),
-            'contact_affil': request.forms.get('contact_affil'),
-            'contact_email': request.forms.get('contact_email'),
-            'executionduration': request.forms.get('executionduration'),
-            'quote': request.forms.get('quote'),
-        }
         # Create JDL file from job_jdl
         jdl = uws_jdl.__dict__[JDL]()
-        jdl.content = job_def
+        jdl.set_from_post(request.forms)
         jdl.save('new/' + jobname)
         # Save bash script file in new/
         script = request.forms.get('script')

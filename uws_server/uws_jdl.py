@@ -96,6 +96,73 @@ class JDLFile(object):
             0x10000 <= codepoint <= 0x10FFFF
             )
 
+    def set_from_post(self, post):
+        # Read form
+        keys = post.keys()
+        jobname = post.get('name').split('/')[-1]
+        # Create parameters dict
+        params = collections.OrderedDict()
+        iparam = 1
+        while 'param_name_' + str(iparam) in keys:
+            pname = post.get('param_name_' + str(iparam))
+            if pname:
+                ptype = post.get('param_datatype_' + str(iparam))
+                pdefault = post.get('param_default_' + str(iparam))
+                preq = post.get('param_required_' + str(iparam))
+                pdesc = post.get('param_description_' + str(iparam))
+                params[pname] = {
+                    'datatype': ptype,
+                    'default': pdefault,
+                    'required': (preq == 'on'),
+                    'description': pdesc,
+                }
+                poptions = post.get('param_options_' + str(iparam))
+                if poptions:
+                    params[pname]['options'] = poptions
+                patts = post.get('param_attributes_' + str(iparam))
+                if patts:
+                    for patt in patts.split(' '):
+                        if '=' in patt:
+                            pattk, pattv = patt.split('=')
+                            params[pname][pattk] = pattv
+            iparam += 1
+        # Create results dict
+        results = collections.OrderedDict()
+        iresult = 1
+        while 'result_name_' + str(iresult) in keys:
+            rname = post.get('result_name_' + str(iresult))
+            if rname:
+                rtype = post.get('result_type_' + str(iresult))
+                rdefault = post.get('result_default_' + str(iresult))
+                rdesc = post.get('result_description_' + str(iresult))
+                results[rname] = {
+                    'content_type': rtype,
+                    'default': rdefault,
+                    'description': rdesc,
+                }
+            iresult += 1
+        # Create job.content structure
+        self.content = {
+            'name': jobname,
+            'label': post.get('label', jobname),
+            'description': post.get('description'),
+            'version': post.get('version'),
+            'group': post.get('group'),
+            'job_type': post.get('job_type'),
+            'job_subtype': post.get('job_subtype'),
+            'doculink': post.get('doculink'),
+            'url': post.get('url'),
+            'contact_name': post.get('contact_name'),
+            'contact_affil': post.get('contact_affil'),
+            'contact_email': post.get('contact_email'),
+            'parameters': params,
+            'results': results,
+            # 'used': used,
+            'executionduration': post.get('executionduration'),
+            'quote': post.get('quote'),
+        }
+
+
 class VOTFile(JDLFile):
 
     datatype_vo2xs = {
@@ -119,7 +186,7 @@ class VOTFile(JDLFile):
         "xs:float": 'float',
         "xs:double": 'double',
         'xs:anyURI': 'char',
-        'file': 'char'
+        'file': 'file'
     }
 
     def __init__(self, jdl_path=JDL_PATH):
@@ -134,8 +201,7 @@ class VOTFile(JDLFile):
 
     def save(self, jobname):
         """Save job description to VOTable file"""
-        raw_jobname = jobname
-        raw_jobname = raw_jobname.split('/')[-1]  # remove new/ prefix
+        raw_jobname = jobname.split('/')[-1]  # remove new/ prefix
         # VOTable root
         xmlns = self.xmlns_uris['xmlns']
         xsi = self.xmlns_uris['xmlns:xsi']
@@ -255,8 +321,7 @@ class VOTFile(JDLFile):
 
     def read(self, jobname):
         """Read job description from VOTable file"""
-        raw_jobname = jobname
-        raw_jobname = raw_jobname.split('/')[-1]  # remove new/ prefix
+        raw_jobname = jobname.split('/')[-1]  # remove new/ prefix
         fname = self._get_filename(jobname)
         # '{}/{}{}'.format(JDL_PATH, job.jobname, self.extension)
         groups = {
