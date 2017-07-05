@@ -301,6 +301,7 @@ class LocalManager(Manager):
         # Create batch file
         batch = [
             '#!/bin/bash -l',
+            '### INIT LocalManager',
             # Redirect stdout and stderr to files
             'exec >{jd}/results/stdout.log 2>{jd}/results/stderr.log'.format(jd=jd),
         ]
@@ -380,6 +381,7 @@ class SLURMManager(Manager):
         # Create sbatch
         sbatch = [
             '#!/bin/bash -l',
+            '### INIT SLURMManager',
             '#SBATCH --job-name={}'.format(job.jobname),
             '#SBATCH --error={}/results/stderr.log'.format(jd),
             '#SBATCH --output={}/results/stdout.log'.format(jd),
