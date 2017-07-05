@@ -387,7 +387,7 @@ def create_new_job_definition():
         while 'param_name_' + str(iparam) in keys:
             pname = request.forms.get('param_name_' + str(iparam))
             if pname:
-                ptype = request.forms.get('param_type_' + str(iparam))
+                ptype = request.forms.get('param_datatype_' + str(iparam))
                 pdefault = request.forms.get('param_default_' + str(iparam))
                 preq = request.forms.get('param_required_' + str(iparam))
                 pdesc = request.forms.get('param_description_' + str(iparam))
@@ -397,6 +397,15 @@ def create_new_job_definition():
                     'required': (preq == 'on'),
                     'description': pdesc,
                 }
+                poptions = request.forms.get('param_options_' + str(iparam))
+                if poptions:
+                    params[pname]['options'] = poptions
+                patts = request.forms.get('param_attributes_' + str(iparam))
+                if patts:
+                    for patt in patts.split(' '):
+                        if '=' in patt:
+                            pattk, pattv = patt.split('=')
+                            params[pname][pattk] = pattv
             iparam += 1
         results = collections.OrderedDict()
         iresult = 1
