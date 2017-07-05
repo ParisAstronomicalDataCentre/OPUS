@@ -266,9 +266,11 @@
                     success : function(script) {
                         // $('textarea[name=script]').val(script);
                         editor.setValue(script);
+                        editor.refresh();
                     },
                     error : function(xhr, status, exception) {
                         editor.setValue('');
+                        editor.refresh();
                         console.log(exception);
                     }
                 });
@@ -276,6 +278,7 @@
 			error : function(xhr, status, exception) {
                 console.log(exception);
                 editor.setValue('');
+                editor.refresh();
                 $('#load_msg').text('No valid JDL found.');
 				$('#load_msg').show().delay(1000).fadeOut();
 			}
