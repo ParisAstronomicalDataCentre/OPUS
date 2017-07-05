@@ -48,14 +48,14 @@ parameters[pname] = {
     'options': p.get('default'),       # add
     'description': list(p)[0].text,
 }
-results[rname] = {
-    'default': r.get('default'),
-    'content_type': r.get('content_type'),
-    'description': list(r)[0].text,
-}
 used[pname] = {                        # add!
     'default': r.get('default'),
     'content_type': p.get('type'),     # xtype in VOTable (?)
+    'description': list(r)[0].text,
+}
+results[rname] = {
+    'default': r.get('default'),
+    'content_type': r.get('content_type'),
     'description': list(r)[0].text,
 }
 '''
@@ -72,6 +72,7 @@ class JDLFile(object):
     content = {}
     extension = ''
     jdl_path = '.'
+    script_path = '.'
 
     def _get_filename(self, jobname):
         fn = '{}/{}{}'.format(self.jdl_path, jobname, self.extension)
@@ -95,6 +96,12 @@ class JDLFile(object):
             0xE000 <= codepoint <= 0xFFFD or
             0x10000 <= codepoint <= 0x10FFFF
             )
+
+    def save_script(self, jobname, script):
+        script_fname = '{}/{}.sh'.format(self.script_path, jobname)
+        with open(script_fname, 'w') as f:
+            f.write(script.replace('\r', ''))
+            logger.info('Job script saved: ' + script_fname)
 
     def set_from_post(self, post):
         # Read form
@@ -126,6 +133,21 @@ class JDLFile(object):
                             pattk, pattv = patt.split('=')
                             params[pname][pattk] = pattv
             iparam += 1
+        # Create used dict
+        used = collections.OrderedDict()
+        iused = 1
+        while 'used_name_' + str(iused) in keys:
+            rname = post.get('used_name_' + str(iused))
+            if rname:
+                rtype = post.get('used_type_' + str(iused))
+                rdefault = post.get('used_default_' + str(iused))
+                rdesc = post.get('used_description_' + str(iused))
+                used[rname] = {
+                    'content_type': rtype,
+                    'default': rdefault,
+                    'description': rdesc,
+                }
+            iused += 1
         # Create results dict
         results = collections.OrderedDict()
         iresult = 1
@@ -157,9 +179,10 @@ class JDLFile(object):
             'contact_email': post.get('contact_email'),
             'parameters': params,
             'results': results,
-            # 'used': used,
+            'used': used,
             'executionduration': post.get('executionduration'),
             'quote': post.get('quote'),
+            'script': post.get('script'),
         }
 
 
@@ -189,9 +212,10 @@ class VOTFile(JDLFile):
         'file': 'file'
     }
 
-    def __init__(self, jdl_path=JDL_PATH):
+    def __init__(self, jdl_path=JDL_PATH, script_path=SCRIPT_PATH):
         self.extension = '_vot.xml'
         self.jdl_path = os.path.join(jdl_path, 'votable')
+        self.script_path = script_path
         self.xmlns_uris = {
             'xmlns': 'http://www.ivoa.net/xml/VOTable/v1.3',
             'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
@@ -220,11 +244,11 @@ class VOTFile(JDLFile):
         if self.content['description']:
             ETree.SubElement(resource, 'DESCRIPTION').text = self.content['description'].decode()
         job_attr = [
+            '<LINK content-role="doc" href="{}"/>'.format(self.content.get('doculink', '')),
             '<PARAM name="label" datatype="char" arraysize="*" value="{}" utype="voprov:ActivityDescription.label"/>'.format(self.content.get('label', raw_jobname)),
             '<PARAM name="type" datatype="char" arraysize="*" value="{}" utype="voprov:ActivityDescription.type"/>'.format(self.content.get('job_type', '')),
             '<PARAM name="subtype" datatype="char" arraysize="*" value="{}" utype="voprov:ActivityDescription.subtype"/>'.format(self.content.get('job_subtype', '')),
             '<PARAM name="version" datatype="float" value="{}" utype="voprov:ActivityDescription.version"/>'.format(self.content.get('version', '')),
-            '<PARAM name="doculink" datatype="char" arraysize="*" value="{}" utype="voprov:ActivityDescription.doculink"/>'.format(self.content.get('doculink', '')),
             '<PARAM name="contact_name" datatype="char" arraysize="*" value="{}" utype="voprov:Agent.name"/>'.format(self.content.get('contact_name', '')),
             '<PARAM name="contact_email" datatype="char" arraysize="*" value="{}" utype="voprov:Agent.email"/>'.format(self.content.get('contact_email', '')),
             '<PARAM name="executionduration" datatype="int" value="{}" utype="uws:Job.executionduration"/>'.format(self.content.get('executionduration', '1')),
@@ -352,6 +376,8 @@ class VOTFile(JDLFile):
                 if elt.tag == '{}DESCRIPTION'.format(xmlns):
                     job_def['description'] = elt.text
                     #print elt.text
+                if elt.tag == '{}LINK'.format(xmlns):
+                    job_def['doculink'] = elt.get('href')
                 if elt.tag == '{}PARAM'.format(xmlns):
                     # TODO: set datatype of value in the dictionary?
                     #print elt.get('name'), elt.get('value')
@@ -449,9 +475,10 @@ class VOTFile(JDLFile):
 
 class WADLFile(JDLFile):
 
-    def __init__(self, jdl_path=JDL_PATH):
+    def __init__(self, jdl_path=JDL_PATH, script_path=SCRIPT_PATH):
         self.extension = '.wadl'
         self.jdl_path = os.path.join(jdl_path, 'wadl')
+        self.script_path = script_path
         self.xmlns_uris = {
             'xmlns:wadl': 'http://wadl.dev.java.net/2009/02',
             'xmlns:uws': 'http://www.ivoa.net/xml/UWS/v1.0',
@@ -594,8 +621,8 @@ class WADLFile(JDLFile):
             job_def = {
                 'name': jobname,
                 'parameters': parameters,
-                'results': results,
                 'used': used,
+                'results': results,
             }
             # Read job description
             joblist_description_block = jdl_tree.find(".//{}doc[@title='description']".format(xmlns))

@@ -51,6 +51,16 @@ var uws_manager = (function($) {
         }
     }
 
+    Array.prototype.contains = function(obj) {
+        var i = this.length;
+        while (i--) {
+            if (this[i] === obj) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     //----------
     // CREATE MANAGER AND CLIENTS
     function initManager(serviceUrl, jobNames_init, basicauth){
@@ -409,6 +419,13 @@ var uws_manager = (function($) {
         // Run displayParamForm instead to check that jdl is defined
         var jdl = clients[jobName].jdl;
         // Create form fields from WADL/JDL
+        for (var pname in jdl.used) {
+            if (jdl.parameters.contains(pname)) {
+                var p = jdl.used[pname];
+                displayParamFormInput(pname, p)
+                displayParamFormInputType(pname, p)
+            }
+        };
         for (var pname in jdl.parameters) {
             var p = jdl.parameters[pname];
             displayParamFormInput(pname, p)

@@ -383,13 +383,10 @@ def create_new_job_definition():
         # Create JDL file from job_jdl
         jdl = uws_jdl.__dict__[JDL]()
         jdl.set_from_post(request.forms)
+        # Save as a new job description
         jdl.save('new/' + jobname)
         # Save bash script file in new/
-        script = request.forms.get('script')
-        script_fname = '{}/new/{}.sh'.format(SCRIPT_PATH, jobname)
-        with open(script_fname, 'w') as f:
-            f.write(script.replace('\r', ''))
-            logger.info('Job script save: ' + script_fname)
+        jdl.save_script('new/' + jobname, request.forms.get('script'))
     except:
         abort_500_except()
     # Response
@@ -410,8 +407,8 @@ def validate_job_definition(jobname):
         jdl = uws_jdl.__dict__[JDL]()
         jdl_src = '{}/new/{}{}'.format(jdl.jdl_path, jobname, jdl.extension)
         jdl_dst = '{}/{}{}'.format(jdl.jdl_path, jobname, jdl.extension)
-        script_src = '{}/new/{}.sh'.format(SCRIPT_PATH, jobname)
-        script_dst = '{}/{}.sh'.format(SCRIPT_PATH, jobname)
+        script_src = '{}/new/{}.sh'.format(jdl.script_path, jobname)
+        script_dst = '{}/{}.sh'.format(jdl.script_path, jobname)
         # Save, then copy from new/
         if os.path.isfile(jdl_src):
             if os.path.isfile(jdl_dst):

@@ -30,6 +30,17 @@
             'image/fits',
             'video/mp4',
         ],
+        'used': [
+            'text/plain',
+            'text/xml',
+            'text/x-votable+xml',
+            'application/json',
+            'application/pdf',
+            'image/jpeg',
+            'image/png',
+            'image/fits',
+            'video/mp4',
+        ],
     };
 
     // ----------
@@ -78,6 +89,41 @@
                             <div style="height: 1px;"></div>\
                             <div class="input-group input-group-sm col-md-12">\
                                 <input class="param_attributes form-control" name="param_attributes_' + ii + '" type="text" placeholder="Attributes: unit=..., ucd=..., ..." style="border-radius: 4px;" />\
+                            </div>\
+                            <div style="height: 10px;"></div>\
+                        </td>\
+                    </tr>';
+                break;
+            // Used
+	        case 'used':
+                var options = '<option>' + type_options[type].join('</option><option>') + '</option>';
+                var row = '\
+                    <tr id="used_' + ii + '">\
+                        <td>\
+                            <div class="input-group input-group-sm col-md-12">\
+                                <input class="used_name form-control" style="font-weight: bold;" name="used_name_' + ii + '" type="text" placeholder="Name" />\
+                                <span class="input-group-addon">=</span>\
+                                <input class="used_default form-control" name="used_default_' + ii + '" type="text" placeholder="Default value" />\
+                                <span class="input-group-btn">\
+                                    <select name="used_type_' + ii + '" class="used_type select-small selectpicker">\
+                                        ' + options + '\
+                                    </select>\
+                                </span>\
+                                <span class="input-group-btn">\
+                                    <button id="moveup_used_' + ii + '" class="moveup_used btn btn-default" type="button" >\
+                                        <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>\
+                                    </button>\
+                                    <button id="movedown_used_' + ii + '" class="movedown_used btn btn-default" type="button" >\
+                                        <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span>\
+                                    </button>\
+                                    <button id="remove_used_' + ii + '" class="remove_used btn btn-default" type="button" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" >\
+                                        <span class="glyphicon glyphicon-remove"></span>\
+                                    </button>\
+                                </span>\
+                            </div>\
+                            <div style="height: 1px;"></div>\
+                            <div class="input-group input-group-sm col-md-12">\
+                                <input class="used_description form-control" name="used_description_' + ii + '" type="text" placeholder="Description" style="border-radius: 4px;" />\
                             </div>\
                             <div style="height: 10px;"></div>\
                         </td>\
@@ -216,6 +262,9 @@
 			dataType: "json",
 			success : function(jdl) {
 			    console.log(jdl);
+                $('#load_msg').attr('class', 'text-info');
+                $('#load_msg').text('JDL loaded.');
+                $('#load_msg').show().delay(1000).fadeOut();
 				$('input[name=doculink]').val(jdl.doculink);
 				$('input[name=contact_name]').val(jdl.contact_name);
 				$('input[name=contact_email]').val(jdl.contact_email);
@@ -244,6 +293,18 @@
 				    $('input[name=param_options_' + i + ']').val(jdl.parameters[param]['options']);
 				    $('input[name=param_attributes_' + i + ']').val(attributes);
 				};
+				// Fill used_list table
+				remove_all_items('used');
+				var i = 0;
+				for (var used in jdl.used) {
+                    add_item('used');
+				    i++;
+				    $('input[name=used_name_' + i + ']').val(used);
+				    $('select[name=used_type_' + i + ']').val(jdl.used[used]['content_type']);
+				    $('input[name=used_default_' + i + ']').val(jdl.used[used]['default']);
+				    $('input[name=used_description_' + i + ']').val(jdl.used[used]['description']);
+				};
+                $('.selectpicker').selectpicker('refresh');
 				// Fill result_list table
 				remove_all_items('result');
 				var i = 0;
@@ -279,6 +340,7 @@
                 console.log(exception);
                 editor.setValue('');
                 editor.refresh();
+                $('#load_msg').attr('class', 'text-danger');
                 $('#load_msg').text('No valid JDL found.');
 				$('#load_msg').show().delay(1000).fadeOut();
 			}
@@ -347,6 +409,12 @@
         });
         $('#remove_all_parameters').click( function() {
             remove_all_items('param');
+        });
+        $('#add_used').click( function() {
+            add_item('used');
+        });
+        $('#remove_all_used').click( function() {
+            remove_all_items('used');
         });
         $('#add_result').click( function() {
             add_item('result');

@@ -184,6 +184,13 @@ class Job(object):
             else:
                 value = self.jdl.content['parameters'][pname]['default']
             self.parameters[pname] = {'value': value, 'byref': byref}
+        for pname in self.jdl.content['used']:
+            if pname not in self.parameters:
+                if pname in post:
+                    value = post[pname]
+                else:
+                    value = self.jdl.content['parameters'][pname]['default']
+                self.parameters[pname] = {'value': value, 'byref': False}
         # Upload files for multipart/form-data
         for fname, f in files.iteritems():
             upload_dir = '{}/{}'.format(UPLOAD_PATH, self.jobid)
@@ -232,12 +239,13 @@ class Job(object):
 
         Returns:
             All parameters as a list of bash variables
+            Dictionnary of files uploaded (from the 'form' or given as an 'URI')
         """
         if not self.jdl.content:
             self.jdl.read(self.jobname)
         params = ['# Required parameters']
         files = {'URI': [], 'form': []}
-        # Required parameters
+        # Job parameters
         for pname, pdict in self.parameters.iteritems():
             pvalue = pdict['value']
             if get_files:
@@ -251,15 +259,24 @@ class Job(object):
                     pvalue = pvalue.split('/')[-1]
                     files['form'].append(pvalue)
             params.append(pname + '=\"' + pvalue + '\"')
+        # Used
+        params.append('# Used')
+        for pname, pdict in self.jdl.content['used'].iteritems():
+            if not pname in self.parameters:
+                pvalue = pdict['default']
+                if get_files:
+                    if any(s in pvalue for s in ['http://', 'https://']):
+                        files['URI'].append(pvalue)
+                        pvalue = pvalue.split('/')[-1]
+                    # Test if file was uploaded from the form, and given the "file://" prefix (see self.set_from_post())
+                    if 'file://' in pvalue:
+                        pvalue = pvalue.split('/')[-1]
+                        files['form'].append(pvalue)
+                params.append(pname + '=\"' + pvalue + '\"')
         # Results
         params.append('# Results')
         for rname, rdict in self.jdl.content['results'].iteritems():
-            if rname in self.parameters:
-                rvalue = self.parameters[rname]['value']
-                if 'file://' in rvalue:
-                    if get_files:
-                        rvalue = rvalue.split('/')[-1]
-            else:
+            if not rname in self.parameters:
                 rvalue = rdict['default']
                 params.append(rname + '=\"' + rvalue + '\"')
         # Other parameters
