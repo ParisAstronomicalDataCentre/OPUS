@@ -264,7 +264,7 @@
 			    console.log(jdl);
                 $('#load_msg').attr('class', 'text-info');
                 $('#load_msg').text('JDL loaded.');
-                $('#load_msg').show().delay(1000).fadeOut();
+                $('#load_msg').show().delay(2000).fadeOut();
 				$('input[name=doculink]').val(jdl.doculink);
 				$('input[name=contact_name]').val(jdl.contact_name);
 				$('input[name=contact_email]').val(jdl.contact_email);
@@ -333,6 +333,9 @@
                         editor.setValue('');
                         editor.refresh();
                         console.log(exception);
+                        $('#load_msg').attr('class', 'text-danger');
+                        $('#load_msg').text('No valid script found.');
+                        $('#load_msg').show().delay(2000).fadeOut();
                     }
                 });
 			},
@@ -342,7 +345,7 @@
                 editor.refresh();
                 $('#load_msg').attr('class', 'text-danger');
                 $('#load_msg').text('No valid JDL found.');
-				$('#load_msg').show().delay(1000).fadeOut();
+				$('#load_msg').show().delay(2000).fadeOut();
 			}
 		});
     }
@@ -362,7 +365,7 @@
 			error : function(xhr, status, exception) {
 				console.log(exception);
 				$('#load_msg').text('No valid JDL found.');
-				$('#load_msg').show().delay(1000).fadeOut();
+				$('#load_msg').show().delay(2000).fadeOut();
 			}
 		});
 	}
