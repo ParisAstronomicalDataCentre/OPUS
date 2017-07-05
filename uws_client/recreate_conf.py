@@ -1,10 +1,15 @@
 #!/usr/bin/env python
 
+import os
 from datetime import datetime
 from cork import Cork
 
 
 def populate_conf_directory():
+
+    if not os.path.isdir('cork_conf'):
+        os.mkdir('cork_conf')
+
     cork = Cork('cork_conf', initialize=True)
 
     cork._store.roles['admin'] = 100
