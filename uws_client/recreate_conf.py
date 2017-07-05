@@ -42,7 +42,7 @@ def populate_conf_directory():
 
     cork._store.save_users()
 
-    print('Warning: cork_conf need to be writable by the web server (e.g. www user)')
+    print('Warning: cork_conf need to be writable by the web server, e.g. by running:\nsudo chown -R www cork_conf')
     print('Done')
 
 
