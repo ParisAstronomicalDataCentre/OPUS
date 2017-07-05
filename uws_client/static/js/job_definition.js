@@ -44,17 +44,6 @@
                     <tr id="param_' + ii + '">\
                         <td>\
                             <div class="input-group input-group-sm col-md-12">\
-                                <span class="input-group-btn">\
-                                    <button id="remove_param_' + ii + '" class="remove_param btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;" >\
-                                        <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>\
-                                    </button>\
-                                    <button id="moveup_param_' + ii + '" class="moveup_param btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;" >\
-                                        <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>\
-                                    </button>\
-                                    <button id="movedown_param_' + ii + '" class="movedown_param btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;" >\
-                                        <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span>\
-                                    </button>\
-                                </span>\
                                 <input class="param_name form-control" style="font-weight: bold;" name="param_name_' + ii + '" type="text" placeholder="Name" />\
                                 <span class="input-group-addon">=</span>\
                                 <input class="param_default form-control" name="param_default_' + ii + '" type="text" placeholder="Default value" />\
@@ -62,16 +51,35 @@
                                     <input class="param_required" name="param_required_' + ii + '" type="checkbox" title="Required parameter?" checked/>\
                                 </span>\
                                 <span class="input-group-btn">\
-                                    <select class="param_type select-small selectpicker" name="param_type_' + ii + '">\
+                                    <select class="param_datatype select-small selectpicker" name="param_datatype_' + ii + '">\
                                         ' + options + '\
                                     </select>\
+                                </span>\
+                                <span class="input-group-btn">\
+                                    <button id="moveup_param_' + ii + '" class="moveup_param btn btn-default" type="button" >\
+                                        <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>\
+                                    </button>\
+                                    <button id="movedown_param_' + ii + '" class="movedown_param btn btn-default" type="button" >\
+                                        <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span>\
+                                    </button>\
+                                    <button id="remove_param_' + ii + '" class="remove_param btn btn-default" type="button" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" >\
+                                        <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>\
+                                    </button>\
                                 </span>\
                             </div>\
                             <div style="height: 1px;"></div>\
                             <div class="input-group input-group-sm col-md-12">\
                                 <input class="param_description form-control" name="param_description_' + ii + '" type="text" placeholder="Description" style="border-radius: 4px;" />\
                             </div>\
-                            <div style="height: 8px;"></div>\
+                            <div style="height: 1px;"></div>\
+                            <div class="input-group input-group-sm col-md-12">\
+                                <input class="param_options form-control" name="param_options_' + ii + '" type="text" placeholder="List of choices" style="border-radius: 4px;" />\
+                            </div>\
+                            <div style="height: 1px;"></div>\
+                            <div class="input-group input-group-sm col-md-12">\
+                                <input class="param_attributes form-control" name="param_attributes_' + ii + '" type="text" placeholder="Attributes: unit=..., ucd=..., ..." style="border-radius: 4px;" />\
+                            </div>\
+                            <div style="height: 10px;"></div>\
                         </td>\
                     </tr>';
                 break;
@@ -82,17 +90,6 @@
                     <tr id="result_' + ii + '">\
                         <td>\
                             <div class="input-group input-group-sm col-md-12">\
-                                <span class="input-group-btn">\
-                                    <button id="remove_result_' + ii + '" class="remove_result btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;">\
-                                        <span class="glyphicon glyphicon-remove"></span>\
-                                    </button>\
-                                    <button id="moveup_result_' + ii + '" class="moveup_result btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;" >\
-                                        <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>\
-                                    </button>\
-                                    <button id="movedown_result_' + ii + '" class="movedown_result btn btn-default" type="button" style="border-bottom-left-radius: 4px; border-top-left-radius: 4px;" >\
-                                        <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span>\
-                                    </button>\
-                                </span>\
                                 <input class="result_name form-control" style="font-weight: bold;" name="result_name_' + ii + '" type="text" placeholder="Name" />\
                                 <span class="input-group-addon">=</span>\
                                 <input class="result_default form-control" name="result_default_' + ii + '" type="text" placeholder="Default value" />\
@@ -101,12 +98,23 @@
                                         ' + options + '\
                                     </select>\
                                 </span>\
+                                <span class="input-group-btn">\
+                                    <button id="moveup_result_' + ii + '" class="moveup_result btn btn-default" type="button" >\
+                                        <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>\
+                                    </button>\
+                                    <button id="movedown_result_' + ii + '" class="movedown_result btn btn-default" type="button" >\
+                                        <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span>\
+                                    </button>\
+                                    <button id="remove_result_' + ii + '" class="remove_result btn btn-default" type="button" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" >\
+                                        <span class="glyphicon glyphicon-remove"></span>\
+                                    </button>\
+                                </span>\
                             </div>\
                             <div style="height: 1px;"></div>\
                             <div class="input-group input-group-sm col-md-12">\
                                 <input class="result_description form-control" name="result_description_' + ii + '" type="text" placeholder="Description" style="border-radius: 4px;" />\
                             </div>\
-                            <div style="height: 8px;"></div>\
+                            <div style="height: 10px;"></div>\
                         </td>\
                     </tr>';
                 break;
@@ -121,7 +129,8 @@
         var row = item_row(type, ii)
         list_table.append($(row));
         // Initialize selectpicker
-        $(".selectpicker").attr('data-width', '140px').selectpicker();
+        $(".selectpicker").attr('data-width', '120px').selectpicker();
+        $(".dropdown-toggle").attr('style', 'border-radius: 0px;')
         // Add click events for remove/moveup/movedown
         $('#remove_' + type + '_' + ii).click( function() {
             var ids = this.id.split('_');
@@ -154,11 +163,13 @@
                 $(this).find('.remove_' + type).attr('id', 'remove_' + type + '_' + i);
                 $(this).find('.moveup_' + type).attr('id', 'moveup_' + type + '_' + i);
                 $(this).find('.movedown_' + type).attr('id', 'movedown_' + type + '_' + i);
-                $(this).find('.' + type + '_name').attr('name', type + '_name_' + i);
-                $(this).find('.' + type + '_default').attr('name', type + '_default_' + i);
-                $(this).find('.' + type + '_required').attr('name', type + '_required_' + i);
-                $(this).find('.' + type + '_type').attr('name', type + '_type_' + i);
-                $(this).find('.' + type + '_description').attr('name', type + '_description_' + i);
+                $(this).find('.' + type + '_name_').attr('name', type + '_name_' + i);
+                $(this).find('.' + type + '_default_').attr('name', type + '_default_' + i);
+                $(this).find('.' + type + '_required_').attr('name', type + '_required_' + i);
+                $(this).find('.' + type + '_datatype_').attr('name', type + '_datatype_' + i);
+                $(this).find('.' + type + '_description_').attr('name', type + '_description_' + i);
+                $(this).find('.' + type + '_options_').attr('name', type + '_options_' + i);
+                $(this).find('.' + type + '_attributes_').attr('name', type + '_attributes_' + i);
                 $(this).attr('id', type + '_' + i);
             }
         });
@@ -204,6 +215,7 @@
 			type : 'GET',
 			dataType: "json",
 			success : function(jdl) {
+			    console.log(jdl);
 				$('input[name=doculink]').val(jdl.doculink);
 				$('input[name=contact_name]').val(jdl.contact_name);
 				$('input[name=contact_email]').val(jdl.contact_email);
@@ -216,11 +228,21 @@
 				for (var param in jdl.parameters) {
 				    add_item('param');
 				    i++;
+				    var attributes = "";
+				    var att = ['unit', 'ucd', 'utype', 'min', 'max'];
+				    for (var j in att) {
+				        var attv = jdl.parameters[param][att[j]]
+				        if (attv) {
+				            attributes = attributes.concat(att[j] + '=' + new String(attv) + " ");
+				        }
+				    }
 				    $('input[name=param_name_' + i + ']').val(param);
-				    $('select[name=param_type_' + i + ']').val(jdl.parameters[param]['type']);
+				    $('select[name=param_datatype_' + i + ']').val(jdl.parameters[param]['datatype']);
 				    $('input[name=param_default_' + i + ']').val(jdl.parameters[param]['default']);
 				    $('input[name=param_required_' + i + ']').prop("checked", jdl.parameters[param]['required'].toString().toLowerCase() == "true");
 				    $('input[name=param_description_' + i + ']').val(jdl.parameters[param]['description']);
+				    $('input[name=param_options_' + i + ']').val(jdl.parameters[param]['options']);
+				    $('input[name=param_attributes_' + i + ']').val(attributes);
 				};
 				// Fill result_list table
 				remove_all_items('result');
