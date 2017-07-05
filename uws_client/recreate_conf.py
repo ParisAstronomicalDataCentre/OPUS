@@ -8,16 +8,19 @@ from cork import Cork
 def populate_conf_directory():
 
     if not os.path.isdir('cork_conf'):
+        print('Creating cork_conf directory...')
         os.mkdir('cork_conf')
 
     cork = Cork('cork_conf', initialize=True)
 
+    print('Add roles...')
     cork._store.roles['admin'] = 100
     cork._store.roles['user'] = 50
     cork._store.save_roles()
 
     tstamp = str(datetime.utcnow())
 
+    print('Add user: admin...')
     username = 'admin'
     password = 'cta'
     cork._store.users[username] = {
@@ -27,6 +30,7 @@ def populate_conf_directory():
         'creation_date': tstamp
     }
 
+    print('Add user: user...')
     username = 'user'
     password = 'cta'
     cork._store.users[username] = {
@@ -37,6 +41,9 @@ def populate_conf_directory():
     }
 
     cork._store.save_users()
+
+    print('Warning: cork_conf need to be writable by the web server (e.g. www user)')
+    print('Done')
 
 
 if __name__ == '__main__':
