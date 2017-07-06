@@ -152,7 +152,7 @@ class SQLJobStorage(SQLStorage, JobStorage):
             job.quote = row['quote']
             job.execution_duration = row['execution_duration']
             job.error = row['error']
-            # self.creation_time = creation_time.strftime(DT_FMT)
+            job.creation_time = row['creation_time']  # creation_time.strftime(DT_FMT)
             job.start_time = row['start_time']  # start_time.strftime(DT_FMT)
             job.end_time = row['end_time']  # end_time.strftime(DT_FMT)
             job.destruction_time = row['destruction_time']  # destruction_time.strftime(DT_FMT)

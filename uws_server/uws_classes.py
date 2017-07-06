@@ -79,12 +79,6 @@ class Job(object):
         self.manager = managers.__dict__[MANAGER + 'Manager']()
         # Fill job attributes
         if get_attributes or get_parameters or get_results:
-            # Get from storage
-            self.storage.read(self,
-                              get_attributes=get_attributes,
-                              get_parameters=get_parameters,
-                              get_results=get_results,
-                              from_pid=from_pid)
             if check_user:
                 # Check if user has rights to manipulate the job
                 if user.name != 'admin':
@@ -93,6 +87,12 @@ class Job(object):
                             raise JobAccessDenied('User {} is the owner of the job but has a wrong PID'.format(user.name))
                     else:
                         raise JobAccessDenied('User {} is not the owner of the job'.format(user.name))
+            # Get from storage
+            self.storage.read(self,
+                              get_attributes=get_attributes,
+                              get_parameters=get_parameters,
+                              get_results=get_results,
+                              from_pid=from_pid)
         elif from_post:
             # Create a new PENDING job and save to storage
             now = dt.datetime.now()
@@ -142,7 +142,7 @@ class Job(object):
             self.jdl.read(self.jobname)
         if not self.parameters:
             # need to read all parameters
-            self.storage.read(self, get_attributes=False, get_parameters=True, get_results=False)
+            self.storage.read(self, get_attributes=True, get_parameters=True, get_results=True)
         if rname in self.parameters:
             # The result filename is a defined parameter of the job
             fname = self.parameters[rname]['value']
@@ -188,6 +188,7 @@ class Job(object):
             if pname not in self.parameters:
                 if pname in post:
                     value = post[pname]
+                    # TODO: use url in jdl.used if set (replace $ID with value)
                 else:
                     value = self.jdl.content['parameters'][pname]['default']
                 self.parameters[pname] = {'value': value, 'byref': False}
@@ -200,6 +201,7 @@ class Job(object):
             logger.info('Parameter {} is a file and was downloaded ({})'.format(fname, f.filename))
             # Parameter value is set to the file name on server
             value = 'file://' + f.filename
+            # value = f.filename
             self.parameters[fname] = {
                 'value': value,
                 'byref': True
@@ -381,7 +383,7 @@ class Job(object):
 
     def add_result_entry(self, rname, rfname, content_type):
         # TODO: Use an Entity Store
-        url = '{}/get_result_file/{}/{}/{}'.format(BASE_URL, self.jobid, rname, rfname)
+        url = '{}/get_result_file/{}/{}'.format(BASE_URL, self.jobid, rname)  # , rfname)
         self.results[rname] = {'url': url, 'content_type': content_type}
         logger.info('add {} file to results'.format(rfname))
 
@@ -530,6 +532,7 @@ class Job(object):
         if self.phase in ['PENDING', 'QUEUED', 'EXECUTING', 'HELD', 'SUSPENDED', 'ERROR']:
             # Change phase
             now = dt.datetime.now()
+            logger.info('now={}'.format(now))
             # destruction = dt.timedelta(DESTRUCTION_INTERVAL)
 
             def nul(*args):
@@ -547,12 +550,13 @@ class Job(object):
             def phase_completed(job, error_msg):
                 # Set job.end_time
                 job.end_time = now.strftime(DT_FMT)
+                logger.info('end_time={}'.format(job.end_time))
                 # Copy back jobdata from cluster
                 job.manager.get_jobdata(job)
                 # Add results, logs, provenance
-                self.add_results()
-                self.add_logs()
-                self.add_provenance()
+                job.add_results()
+                job.add_logs()
+                job.add_provenance()
 
             def phase_aborted(job, error_msg):
                 # Set job.end_time
@@ -560,9 +564,9 @@ class Job(object):
                 # Copy back jobdata from cluster
                 job.manager.get_jobdata(job)
                 # Add results, logs, provenance
-                self.add_results()
-                self.add_logs()
-                # self.add_provenance()
+                job.add_results()
+                job.add_logs()
+                # job.add_provenance()
 
             def phase_error(job, error_msg):
                 # Set job.end_time if not already in ERROR phase
@@ -576,9 +580,9 @@ class Job(object):
                 # Copy back jobdata from cluster
                 job.manager.get_jobdata(job)
                 # Add results, logs, provenance (if they exist...)
-                self.add_results()
-                self.add_logs()
-                # self.add_provenance()
+                job.add_results()
+                job.add_logs()
+                # job.add_provenance()
 
             # Switch for new_phase
             cases = {
@@ -594,10 +598,15 @@ class Job(object):
                 raise UserWarning('Phase change not allowed: {} --> {}'.format(self.phase, new_phase))
             # Run case
             cases[new_phase](self, error)
+            # Set end_time
+            if new_phase in ['COMPLETED', 'ABORTED', 'ERROR']:
+                if self.phase != 'ERROR':
+                    self.end_time = now.strftime(DT_FMT)
             # Update phase
             previous_phase = self.phase
             self.phase = new_phase
             # Save job description
+            logger.info('end_time={}'.format(self.end_time))
             self.storage.save(self, save_results=True)
             # Send signal (e.g. if WAIT command expecting signal)
             change_status_signal = signal('job_status')

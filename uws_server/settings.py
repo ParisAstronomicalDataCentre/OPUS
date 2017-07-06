@@ -110,6 +110,7 @@ JOB_ATTRIBUTES = [
     'jobid',
     'jobname',
     'phase',
+    'creation_time',
     'start_time',
     'end_time',
     'destruction_time',

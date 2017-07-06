@@ -59,7 +59,7 @@
                                 <span class="input-group-addon">=</span>\
                                 <input class="param_default form-control" name="param_default_' + ii + '" type="text" placeholder="Default value" />\
                                 <span class="input-group-addon">\
-                                    <input class="param_required" name="param_required_' + ii + '" type="checkbox" title="Required parameter?" checked/>\
+                                    Req.? <input class="param_required" name="param_required_' + ii + '" type="checkbox" title="Required parameter?" checked/>\
                                 </span>\
                                 <span class="input-group-btn">\
                                     <select class="param_datatype select-small selectpicker" name="param_datatype_' + ii + '">\
@@ -80,15 +80,18 @@
                             </div>\
                             <div style="height: 1px;"></div>\
                             <div class="input-group input-group-sm col-md-12">\
-                                <input class="param_description form-control" name="param_description_' + ii + '" type="text" placeholder="Description" style="border-radius: 4px;" />\
+                                <span class="input-group-addon" style="width:70px" title="Description">Desc.</span>\
+                                <input class="param_description form-control" name="param_description_' + ii + '" type="text" placeholder="Description" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" />\
                             </div>\
                             <div style="height: 1px;"></div>\
                             <div class="input-group input-group-sm col-md-12">\
-                                <input class="param_options form-control" name="param_options_' + ii + '" type="text" placeholder="List of choices" style="border-radius: 4px;" />\
+                                <span class="input-group-addon" style="width:70px" title="Options">Options</span>\
+                                <input class="param_options form-control" name="param_options_' + ii + '" type="text" placeholder="List of possible choices (comma-separated values)" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" />\
                             </div>\
                             <div style="height: 1px;"></div>\
                             <div class="input-group input-group-sm col-md-12">\
-                                <input class="param_attributes form-control" name="param_attributes_' + ii + '" type="text" placeholder="Attributes: unit=..., ucd=..., ..." style="border-radius: 4px;" />\
+                                <span class="input-group-addon" style="width:70px" title="Attributes">Attr.</span>\
+                                <input class="param_attributes form-control" name="param_attributes_' + ii + '" type="text" placeholder="unit=... ucd=... utype=... min=... max=..." style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" />\
                             </div>\
                             <div style="height: 10px;"></div>\
                         </td>\
@@ -123,7 +126,17 @@
                             </div>\
                             <div style="height: 1px;"></div>\
                             <div class="input-group input-group-sm col-md-12">\
-                                <input class="used_description form-control" name="used_description_' + ii + '" type="text" placeholder="Description" style="border-radius: 4px;" />\
+                                <span class="input-group-addon" style="width:70px" title="Description">Desc.</span>\
+                                <input class="used_description form-control" name="used_description_' + ii + '" type="text" placeholder="Description" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" />\
+                            </div>\
+                            <div style="height: 1px;"></div>\
+                            <div class="input-group input-group-sm col-md-12">\
+                                <span class="input-group-addon" style="width:70px" title="The input is a File or an ID, possibly with a URL to resolve the ID and download the file (use $ID in the URL template).">\
+                                    File <input class="used_isfile" name="used_isfile_' + ii + '" type="radio" value="File" checked/>\
+                                    or ID  <input class="used_isfile" name="used_isfile_' + ii + '" type="radio" value="ID"/>\
+                                    and URL\
+                                </span>\
+                                <input class="used_url form-control" name="used_url_' + ii + '" type="text" placeholder="http://url_to_the_input_file?id=$ID" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" />\
                             </div>\
                             <div style="height: 10px;"></div>\
                         </td>\
@@ -158,7 +171,8 @@
                             </div>\
                             <div style="height: 1px;"></div>\
                             <div class="input-group input-group-sm col-md-12">\
-                                <input class="result_description form-control" name="result_description_' + ii + '" type="text" placeholder="Description" style="border-radius: 4px;" />\
+                                <span class="input-group-addon" style="width:70px" title="Description">Desc.</span>\
+                                <input class="result_description form-control" name="result_description_' + ii + '" type="text" placeholder="Description" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" />\
                             </div>\
                             <div style="height: 10px;"></div>\
                         </td>\
@@ -303,6 +317,10 @@
 				    $('select[name=used_type_' + i + ']').val(jdl.used[used]['content_type']);
 				    $('input[name=used_default_' + i + ']').val(jdl.used[used]['default']);
 				    $('input[name=used_description_' + i + ']').val(jdl.used[used]['description']);
+				    if (jdl.used[used]['url'].indexOf('file://') == -1) {
+    				    $('input[name=used_isfile_' + i + '][value=ID]').prop("checked", true);
+                        $('input[name=used_url_' + i + ']').val(jdl.used[used]['url']);
+				    }
 				};
                 $('.selectpicker').selectpicker('refresh');
 				// Fill result_list table

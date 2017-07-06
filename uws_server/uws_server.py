@@ -1222,9 +1222,9 @@ def get_result(jobname, jobid, rname):
         abort_500_except()
 
 
-@app.route('/get_result_file/<jobid>/<rname>/<rfname>')
-def get_result_file(jobid, rname, rfname):
-    """Get result file <rname>/<rfname> for job <jobid>
+@app.route('/get_result_file/<jobid>/<rname>')  # /<rfname>')
+def get_result_file(jobid, rname):  # , rfname):
+    """Get result file <rname> for job <jobid>
 
     Returns:
         200 OK: file (on success)
@@ -1235,23 +1235,33 @@ def get_result_file(jobid, rname, rfname):
     try:
         user = set_user()
         # Get job properties from DB
-        job = Job('', jobid, user, get_results=True, check_user=False)
+        job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True, check_user=False)
         # Check if result exists
         if rname not in job.results:
             raise storage.NotFoundWarning('Result "{}" NOT FOUND for job "{}"'.format(rname, jobid))
         # Return result
-        # rfname = job.get_result_filename(rname)
+        result_details = {
+            'stdout': 'stdout.log',
+            'stderr': 'stderr.log',
+            'provjson': 'provenance.json',
+            'provxml': 'provenance.xml',
+            'provsvg': 'provenance.svg',
+        }
+        if rname in result_details:
+            rfname = result_details[rname]
+        else:
+            rfname = job.get_result_filename(rname)
         #response.content_type = 'text/plain; charset=UTF-8'
         #return str(job.results[result]['url'])
-        media_type = job.results[rname]['content_type']
-        logger.debug('{} {} {} {} {} [{}]'.format(job.jobname, jobid, rname, rfname, media_type, user))
-        response.set_header('Content-type', media_type)
-        if any(x in media_type for x in ['text', 'xml', 'json']):
+        content_type = job.results[rname]['content_type']
+        logger.debug('{} {} {} {} {} [{}]'.format(job.jobname, jobid, rname, rfname, content_type, user))
+        response.set_header('Content-type', content_type)
+        if any(x in content_type for x in ['text', 'xml', 'json', 'image']):
             return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid),
-                               mimetype=media_type)
+                               mimetype=content_type)
         else:
             return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid),
-                               mimetype=media_type, download=rfname)
+                               mimetype=content_type, download=rfname)
     except JobAccessDenied as e:
         abort_403(e.message)
     except storage.NotFoundWarning as e:

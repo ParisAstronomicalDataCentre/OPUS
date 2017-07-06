@@ -51,15 +51,15 @@ var uws_manager = (function($) {
         }
     }
 
-    Array.prototype.contains = function(obj) {
-        var i = this.length;
-        while (i--) {
-            if (this[i] === obj) {
-                return true;
-            }
-        }
-        return false;
-    }
+//    Array.prototype.contains = function(obj) {
+//        var i = this.length;
+//        while (i--) {
+//            if (this[i] === obj) {
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
 
     //----------
     // CREATE MANAGER AND CLIENTS
@@ -81,6 +81,7 @@ var uws_manager = (function($) {
     function wait_for_jdl(jobName, next_function, args){
         if ((typeof clients[jobName] !== "undefined") && (typeof clients[jobName].jdl !== "undefined")) {
             console.log('JDL set for ' + jobName);
+            console.log(clients[jobName].jdl);
             next_function.apply(this, args);
         } else {
             console.log('Wait for JDL for ' + jobName);
@@ -416,11 +417,11 @@ var uws_manager = (function($) {
         };
     };
     var displayParamFormOk = function(jobName){
-        // Run displayParamForm instead to check that jdl is defined
+        // Run displayParamForm before to check that jdl is defined
         var jdl = clients[jobName].jdl;
         // Create form fields from WADL/JDL
         for (var pname in jdl.used) {
-            if (jdl.parameters.contains(pname)) {
+            if ($.inArray(pname, Object.keys(jdl.parameters)) == -1) {
                 var p = jdl.used[pname];
                 displayParamFormInput(pname, p)
                 displayParamFormInputType(pname, p)
@@ -452,9 +453,35 @@ var uws_manager = (function($) {
             };
         });
     };
-    var displayParamFormFilled = function(job){
+    var displayParamFormOkFilled = function(job){
         var jdl = clients[job.jobName].jdl;
-        // Create form fields from WADL/JDL
+        // Create form fields from JDL
+        for (var pname in jdl.used) {
+            if ($.inArray(pname, Object.keys(jdl.parameters)) == -1) {
+                var p = jdl.used[pname];
+                displayParamFormInput(pname, p);
+                if (p.datatype != 'file') {
+                    $('#id_'+pname).wrap('<div class="input-group"></div>');
+                    // Add Update buttons (possible to update params when pĥase is PENDING in UWS 1.0 - but not yet implemented)
+                    $('#id_'+pname).parent().append('<span class="input-group-btn"><button id="button_'+pname+'" class="btn btn-default" type="button">Update</button></span>');
+                    // Change input type
+                    displayParamFormInputType(pname, p);
+                } else {
+                    $('#id_'+pname).attr('disabled','disabled');
+                    if (!(pname in job['parameters'])) {
+                        $('#id_'+pname).wrap('<div class="input-group"></div>');
+                        $('#id_'+pname).parent().append('<span class="input-group-addon" style="line-height: 1.4;"><small>default used</small></span>');
+                    };
+                };
+                // Change right corners for checkbox and select inside input-group
+                if (p.datatype.indexOf('bool') > -1) {
+                    $('#id_'+pname).parent().attr('style','border-bottom-right-radius: 0px; border-top-right-radius: 0px;');
+                };
+                if (p.options) {
+                    $('button[data-id=id_'+pname+']').attr('style','border-bottom-right-radius: 0px; border-top-right-radius: 0px; opacity: 1;');
+                };
+            }
+        };
         for (var pname in jdl.parameters) {
             var p = jdl.parameters[pname];
             displayParamFormInput(pname, p);
@@ -488,7 +515,7 @@ var uws_manager = (function($) {
             $('#job_params select').attr('disabled','disabled');
             $('#job_params button').attr('disabled','disabled');
         };
-        // Fill value
+        // Fill value from job
         for (var pname in job['parameters']) {
             var pvalue = job['parameters'][pname];
             // Add in param_list table (if present in DOM)
@@ -521,12 +548,14 @@ var uws_manager = (function($) {
         wait_for_jdl(jobName, displayParamFormOk, [jobName]);
     };
     var displayParams = function(job){
-        wait_for_jdl(job.jobName, displayParamFormFilled, [job]);
+        wait_for_jdl(job.jobName, displayParamFormOkFilled, [job]);
     };
 
     //----------
     // DISPLAY RESULTS
-    var displayResults = function(job){
+    var displayResultsOk = function(job){
+        console.log(job);
+        var jdl = clients[job.jobName].jdl;
         $('#result_list').html('');
         $('#details_list').html('');
         var r_i = 0;
@@ -535,7 +564,6 @@ var uws_manager = (function($) {
             var r_id = 'result_'+r
             var r_url = job['results'][r];
             var r_name = r_url.split('/').pop();
-            var r_type = r_name.split('.').pop();
             var r_panel = '\
                 <div id="'+r_id+'" class="panel panel-default" value="'+r_url+'">\
                       <div class="panel-heading clearfix">\
@@ -546,21 +574,34 @@ var uws_manager = (function($) {
                       </div>\
                 </div>';
             // Some results are shown in the details box if present
+            var r_type = 'text/plain';
             switch (r) {
                 case 'stdout':
+                    $('#details_list').append(r_panel);
+                    break;
                 case 'stderr':
+                    $('#details_list').append(r_panel);
+                    break;
                 case 'provjson':
+                    r_type = 'application/json'
+                    $('#details_list').append(r_panel);
+                    break;
                 case 'provxml':
+                    r_type = 'text/xml'
+                    $('#details_list').append(r_panel);
+                    break;
                 case 'provsvg':
+                    r_type = 'image/svg+xml'
                     $('#details_list').append(r_panel);
                     break;
                 default:
+                    r_type = jdl.results[r]['content_type']; //r_name.split('.').pop();
                     $('#result_list').append(r_panel);
             }
             // Show preview according to result type (file extension)
             switch (r_type) {
                 // FITS files can be SAMPed
-                case 'fits':
+                case 'image/fits':
                     $('#'+r_id+' div.panel-heading span.pull-left').attr('style', "padding-top: 4px;");
                     $('#'+r_id+' div.panel-heading').append('\
                         <button type="button" class="samp btn btn-default btn-sm pull-right">SAMP</button>\
@@ -578,8 +619,8 @@ var uws_manager = (function($) {
                     //');
                     break;
                 // Show images
-                case 'jpg':
-                case 'png':
+                case 'image/jpeg':
+                case 'image/png':
                     // Show image preview
                     $('#'+r_id).append('\
                         <div class="panel-body">\
@@ -588,9 +629,7 @@ var uws_manager = (function($) {
                     ');
                     break;
                 // Show text in textarea
-                case 'txt':
-                case 'cfg':
-                case 'log':
+                case 'text/plain':
                     // show textarea with log
                     $('#'+r_id).append('\
                         <div class="panel-body">\
@@ -608,7 +647,7 @@ var uws_manager = (function($) {
                     });
                     break;
                 // Show SVG
-                case 'svg':
+                case 'image/svg+xml':
                     $('#'+r_id).append('\
                         <div class="panel-body">\
                         </div>\
@@ -621,6 +660,10 @@ var uws_manager = (function($) {
             };
         };
     };
+    var displayResults = function(job){
+        wait_for_jdl(job.jobName, displayResultsOk, [job]);
+    };
+
 
     //----------
     // DISPLAY SINGLE JOB INFO

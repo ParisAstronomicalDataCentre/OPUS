@@ -137,15 +137,20 @@ class JDLFile(object):
         used = collections.OrderedDict()
         iused = 1
         while 'used_name_' + str(iused) in keys:
-            rname = post.get('used_name_' + str(iused))
-            if rname:
-                rtype = post.get('used_type_' + str(iused))
-                rdefault = post.get('used_default_' + str(iused))
-                rdesc = post.get('used_description_' + str(iused))
-                used[rname] = {
-                    'content_type': rtype,
-                    'default': rdefault,
-                    'description': rdesc,
+            pname = post.get('used_name_' + str(iused))
+            if pname:
+                ptype = post.get('used_type_' + str(iused))
+                pdefault = post.get('used_default_' + str(iused))
+                pdesc = post.get('used_description_' + str(iused))
+                pisfile = post.get('used_isfile_' + str(iused))
+                purl = post.get('used_url_' + str(iused))
+                if pisfile == 'File':
+                    purl = 'file://$ID'.format(pname)
+                used[pname] = {
+                    'content_type': ptype,
+                    'default': pdefault,
+                    'description': pdesc,
+                    'url': purl,
                 }
             iused += 1
         # Create results dict
@@ -276,7 +281,7 @@ class VOTFile(JDLFile):
                     'ID': pname,
                     'name': pname,
                     'datatype': self.datatype_xs2vo[p['datatype']],
-                    'value': p['default'],
+                    'value': p.get('default'),
                 }
                 if param_attrib['datatype'] == 'file':
                     param_attrib['xtype'] = 'application/octet-stream'
@@ -311,14 +316,19 @@ class VOTFile(JDLFile):
                     'name': pname,
                     'datatype': 'char',
                     'arraysize': '*',
-                    'value': '',
-                    'xtype': p['content_type'],
+                    'value': p.get('default'),
+                    'xtype': p.get('content_type'),
                     'utype': 'voprov:Entity',
                 }
                 if pname in self.content['parameters']:
                     attrib['ref'] = pname
                 used = ETree.Element('PARAM', attrib=attrib)
-                #ETree.SubElement(used, 'DESCRIPTION').text = p.get('description', '')
+                url_attrib = {
+                    'content-role': 'location',
+                    'href': p.get('url'),
+                }
+                ETree.SubElement(used, 'LINK', attrib=url_attrib)
+                ETree.SubElement(used, 'DESCRIPTION').text = p.get('description', '')
                 group_used.append(used)
         # Prepare results block
         if 'results' in self.content:
@@ -334,7 +344,7 @@ class VOTFile(JDLFile):
                 if rname in self.content['parameters']:
                     attrib['ref'] = rname
                 result = ETree.Element('PARAM', attrib=attrib)
-                #ETree.SubElement(result, 'DESCRIPTION').text = r.get('description', '')
+                ETree.SubElement(result, 'DESCRIPTION').text = r.get('description', '')
                 group_results.append(result)
         # Write file
         jdl_content = ETree.tostring(jdl_tree, pretty_print=True)
@@ -427,18 +437,29 @@ class VOTFile(JDLFile):
                             ref = p.get('ref')
                             if ref:
                                 item = {
+                                    'datatype': job_def.get('parameters').get(ref).get('datatype', 'xs:string'),
                                     'default': job_def.get('parameters').get(ref).get('default'),
                                     'content_type': p.get('xtype'),
-                                    'description': job_def.get('parameters').get(ref).get('description')
+                                    'description': job_def.get('parameters').get(ref).get('description'),
+                                    'url': '',
                                 }
                             else:
                                 item = {
+                                    'datatype': 'xs:string',  # may be changed below
                                     'default': p.get('value'),
                                     'content_type': p.get('xtype'),
+                                    'description': '',  # filled below
+                                    'url': '',
                                 }
-                                for pp in p:
-                                    if pp.tag == '{}DESCRIPTION'.format(xmlns):
+                            for pp in p:
+                                if pp.tag == '{}DESCRIPTION'.format(xmlns):
+                                    if not ref:
                                         item['description'] = pp.text
+                                if pp.tag == '{}LINK'.format(xmlns):
+                                    purl = pp.get('href')
+                                    item['url'] = purl
+                                    if 'file://' in purl:
+                                        item['datatype'] = 'file'
                             job_def[group][name] = item
                     if group == 'results':
                         for p in elt:
@@ -454,6 +475,7 @@ class VOTFile(JDLFile):
                                 item = {
                                     'default': p.get('value'),
                                     'content_type': p.get('xtype'),
+                                    'description': '',  # filled below
                                 }
                                 for pp in p:
                                     if pp.tag == '{}DESCRIPTION'.format(xmlns):
