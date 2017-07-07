@@ -1,0 +1,19 @@
+{% extends "skeleton.html" %}
+{% block content %}
+    <div class="container bs-docs-container">
+        <div id="div_profile" style="display:none">
+            <div id="description" class="panel panel-default">
+                <div class="panel-heading clearfix">
+                    <span class="pull-left" style="padding-top: 4px;">
+                        <span class="panel-title">Job Description</span>
+                    </span>
+                    <button id="to_job_list" type="button" class="btn btn-default btn-sm pull-right">Back to job list</button>
+                </div>
+                <div id="div_table" class="table-responsive">
+                    <table id="list" class="table table-bordered table-condensed">
+                    </table>
+                </div>
+            </div> <!-- panel -->
+        </div> <!-- div_job -->
+    </div> <!-- container -->
+{% endblock %}

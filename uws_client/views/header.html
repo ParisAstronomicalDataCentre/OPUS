@@ -30,15 +30,24 @@
                         </li>
                     </ul>
                     <ul class="nav navbar-nav navbar-right">
-                        <li>
 {% if 'username' in session %}
-                            <a href="/accounts/logout"><span class="glyphicon glyphicon-remove"></span>
-                                Sign out <strong>{{ session.username }}</strong></a>
-{% else %}
-                            <a href="/accounts/login"><span class="glyphicon glyphicon-user"></span>
-                                Sign in</a>
-{% endif %}
+                        <li class="dropdown">
+                              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                                  <span class="glyphicon glyphicon-user"></span>
+                                  Signed in as <strong>{{ session.username }}</strong><span class="caret"></span>
+                              </a>
+                              <ul class="dropdown-menu">
+                                    <li><a href="/accounts/profile">User profile</a></li>
+                                    <li><a href="/accounts/logout">Sign out user</a></li>
+                              </ul>
                         </li>
+{% else %}
+                        <li>
+                            <a href="/accounts/login"><span class="glyphicon glyphicon-user"></span>
+                                Sign in
+                            </a>
+                        </li>
+{% endif %}
                     </ul>
                 </div> <!-- navbar-collapse -->
             </div> <!-- navbar -->

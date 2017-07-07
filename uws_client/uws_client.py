@@ -129,20 +129,24 @@ def login_form():
         return {'session': session, 'next': next_page, 'message': msg_text[msg]}
     return {'session': session, 'next': next_page}
 
+@app.route('/accounts/profile')
+@jinja2_view('home.html')
+def profile():
+    session = request.environ['beaker.session']
+    #logger.info(session.username)
+    #aaa.logout(success_redirect='/')
+    return dict(session=session, message='TBD')
 
 @app.route('/sorry_page')
 def sorry_page():
     """Serve sorry page"""
     return '<p>Sorry, you are not authorized to perform this action</p>'
 
-
 def postd():
     return request.forms
 
-
 def post_get(name, default=''):
     return request.POST.get(name, default).strip()
-
 
 @app.post('/accounts/login')
 def login():
@@ -184,6 +188,7 @@ def admin():
 @app.post('/accounts/create_user')
 def create_user():
     try:
+        aaa.require(role='admin', fail_redirect='/?msg=restricted')
         aaa.create_user(postd().username, postd().role, postd().password)
         return dict(ok=True, msg='')
     except Exception, e:
@@ -193,6 +198,7 @@ def create_user():
 @app.post('/accounts/delete_user')
 def delete_user():
     try:
+        aaa.require(role='admin', fail_redirect='/?msg=restricted')
         aaa.delete_user(post_get('username'))
         return dict(ok=True, msg='')
     except Exception, e:
@@ -203,6 +209,7 @@ def delete_user():
 @app.post('/accounts/create_role')
 def create_role():
     try:
+        aaa.require(role='admin', fail_redirect='/?msg=restricted')
         aaa.create_role(post_get('role'), post_get('level'))
         return dict(ok=True, msg='')
     except Exception, e:
@@ -212,6 +219,7 @@ def create_role():
 @app.post('/accounts/delete_role')
 def delete_role():
     try:
+        aaa.require(role='admin', fail_redirect='/?msg=restricted')
         aaa.delete_role(post_get('role'))
         return dict(ok=True, msg='')
     except Exception, e:
