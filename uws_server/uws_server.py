@@ -18,7 +18,6 @@ from beaker.middleware import SessionMiddleware
 # from cork import Cork
 
 from uws_classes import *
-from uws_client.uws_client import session_opts, app as client_app
 
 
 # Create a new application
@@ -189,6 +188,11 @@ def abort_500_except(msg=None):
 # ----------
 # Helper functions
 # ----------
+
+
+@app.route('/')
+def home():
+    return 'OPUS'
 
 
 @app.route('/favicon.ico')
@@ -1307,6 +1311,7 @@ def get_owner(jobname, jobid):
 
 # Merge UWS Client app
 if MERGE_CLIENT:
+    from uws_client.uws_client import session_opts, app as client_app
     app.merge(client_app)
     app = SessionMiddleware(app, session_opts)
 

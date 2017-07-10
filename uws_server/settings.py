@@ -23,7 +23,7 @@ VAR_PATH = '/var/www/opus'
 BASE_URL = 'http://localhost'
 BASE_IP = '127.0.0.1'
 
-MERGE_CLIENT = True
+MERGE_CLIENT = False
 
 LOG_FILE_SUFFIX = ''
 

@@ -7,6 +7,7 @@
 	"use strict";
 
     var editor;  // to use codemirror
+    var server_url;
 
     var type_options = {
         'param': [
@@ -270,7 +271,7 @@
         var jobname = $('input[name=name]').val();
         // ajax command to get JDL from UWS server
         $.ajax({
-			url : '/get_jdl_json/' + jobname,  //.split("/").pop(),  // to remove new/ (not needed here)
+			url : server_url + '/get_jdl_json/' + jobname,  //.split("/").pop(),  // to remove new/ (not needed here)
 			async : true,
 			type : 'GET',
 			dataType: "json",
@@ -372,7 +373,7 @@
         var jobname = $('input[name=name]').val();
         // ajax command to get_jdl on UWS server
         $.ajax({
-			url : '/get_jdl/' + jobname,  //.split("/").pop(),  // to remove new/ (not needed here)
+			url : server_url + '/get_jdl/' + jobname,  //.split("/").pop(),  // to remove new/ (not needed here)
 			async : true,
 			type : 'GET',
 			dataType: "text",
@@ -388,10 +389,32 @@
 		});
 	}
 
+    function get_jobnames() {
+        // Get jobnames from server
+        $.ajax({
+            url : server_url + '/get_jobnames',
+            async : false,
+            cache : false,
+            type : 'GET',
+            dataType: "json",
+            success : function(json) {
+                console.log(json['jobnames']);
+                $('input[name=name]').autocomplete({
+                    source: json['jobnames']
+                });
+            },
+            error : function(xhr, status, exception) {
+                console.log(exception);
+            }
+        });
+    }
+
     // ----------
     // ready()
 
 	$(document).ready( function() {
+        server_url = $('#server_url').attr('value');
+        get_jobnames();
 	    // Script editor with CodeMirror
 	    editor = CodeMirror.fromTextArea( $('textarea[name=script]')[0], {mode: "text/x-sh", lineNumbers: true } );
         $('div.CodeMirror').addClass('panel panel-default');
