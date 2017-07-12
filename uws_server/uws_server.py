@@ -1311,7 +1311,7 @@ def get_owner(jobname, jobid):
 
 # Merge UWS Client app
 if MERGE_CLIENT:
-    from uws_client.uws_client import session_opts, app as client_app
+    from uws_client.uws_client_bottle import session_opts, app as client_app
     app.merge(client_app)
     app = SessionMiddleware(app, session_opts)
 

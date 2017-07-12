@@ -13,9 +13,14 @@ import requests
 from requests.auth import HTTPBasicAuth
 import logging
 import logging.config
-from bottle import Bottle, request, response, abort, redirect, run, static_file, parse_auth, TEMPLATE_PATH, view, jinja2_view
-from beaker.middleware import SessionMiddleware
-from cork import Cork
+from flask import Flask, request, abort, redirect, url_for, session, render_template, flash
+from flask_sqlalchemy import SQLAlchemy
+from flask_security import Security, SQLAlchemyUserDatastore, UserMixin, RoleMixin, login_required
+from flask_login import user_logged_in, user_logged_out, current_user
+from werkzeug.wsgi import DispatcherMiddleware
+#from bottle import Bottle, request, response, abort, redirect, run, static_file, parse_auth, TEMPLATE_PATH, view, jinja2_view
+#from beaker.middleware import SessionMiddleware
+#from cork import Cork
 #from wsgiproxy.app import WSGIProxyApp
 from wsgiproxy import HostProxy
 try:
@@ -24,11 +29,8 @@ except ImportError:  # pragma: nocover
     import urllib.parse as urlparse  # NOQA
 
 
-# ----------
-#  Settings
-
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
-ENDPOINT = '/client'
+APPLICATION_ROOT = '/client'
 #UWS_SERVER_URL = 'http://localhost:8080'
 UWS_SERVER_URL = 'http://localhost'
 #UWS_SERVER_URL = 'http://localhost/proxy'
@@ -39,6 +41,7 @@ ALLOW_ANONYMOUS = False
 if os.path.exists(APP_PATH + '/uws_client/settings_local.py'):
     from settings_local import *
 #--- Include host-specific settings ------------------------------------------------------------------------------------
+
 
 # Set logger
 LOG_PATH = '/var/www/opus/logs'
@@ -52,282 +55,212 @@ LOGGING = {
         },
     },
     'handlers': {
-        'file_client': {
+        'file_client_flask': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': LOG_PATH + '/client' + LOG_FILE_SUFFIX + '.log',
+            'filename': LOG_PATH + '/client_flask' + LOG_FILE_SUFFIX + '.log',
             'formatter': 'default'
         },
     },
     'loggers': {
         'uws_client': {
-            'handlers': ['file_client'],
+            'handlers': ['file_client_flask'],
             'level': 'DEBUG',
         },
     }
 }
 
 # Set path to uws_client templates
-TEMPLATE_PATH.insert(0, APP_PATH + '/uws_client/views/')
+#TEMPLATE_PATH.insert(0, APP_PATH + '/uws_client/templates/')
 
 # Set logger
-#if ('uws_client' not in logging.Logger.manager.loggerDict):
 logging.config.dictConfig(LOGGING)
 logger = logging.getLogger('uws_client')
+logger.info('Load flask client')
 
+app = Flask(__name__) # create the application instance :)
+app.secret_key = b'\ttrLu\xdd\xde\x9f\xd2}\xc1\x0e\xb6\xe6}\x95\xc6\xb1\x8f\xa09\xf5\x1aG'
+
+app.config.from_object(__name__) # load config from this file , flaskr.py
+
+# Load default config and override config from an environment variable
+app.config.update(dict(
+    APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)),
+    APPLICATION_ROOT = '/client',
+    #UWS_SERVER_URL = 'http://localhost:8080',
+    UWS_SERVER_URL = 'http://localhost',
+    #UWS_SERVER_URL = 'http://localhost/proxy',
+    #UWS_SERVER_URL = 'https://voparis-uws-test.obspm.fr',
+    ALLOW_ANONYMOUS = False,
+    DEBUG = True,
+    SQLALCHEMY_DATABASE_URI = 'sqlite:////var/www/opus/db/flask_login.db',
+    SQLALCHEMY_TRACK_MODIFICATIONS = False,
+    SECURITY_PASSWORD_SALT = 'test',
+    SECURITY_URL_PREFIX = '/accounts',
+    SECURITY_FLASH_MESSAGES = True,
+    SECURITY_POST_LOGIN_VIEW = '/client',
+    SECURITY_POST_LOGOUT_VIEW = '/client',
+    SECURITY_USER_IDENTITY_ATTRIBUTES = ['email'],
+    #SECURITY_REGISTERABLE = True,
+    #SECURITY_CHANGEABLE = True,
+))
 
 # ----------
-# Create application
+#  User DB
 
+db = SQLAlchemy(app)
 
-app = Bottle()
+# Define models
+roles_users = db.Table('roles_users',
+        db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
+        db.Column('role_id', db.Integer(), db.ForeignKey('role.id')))
 
+class Role(db.Model, RoleMixin):
+    id = db.Column(db.Integer(), primary_key=True)
+    name = db.Column(db.String(80), unique=True)
+    description = db.Column(db.String(255))
 
-# Session option (create session after code)
-session_opts = {
-    'session.cookie_expires': True,
-    'session.encrypt_key': 'please use a random key and keep it secret!',
-    'session.httponly': True,
-    'session.timeout': 3600 * 24,  # 1 day
-    'session.type': 'cookie',
-    'session.validate_key': True,
-}
+class User(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(255), unique=True)
+    password = db.Column(db.String(255))
+    pid = db.Column(db.String(255))
+    active = db.Column(db.Boolean())
+    confirmed_at = db.Column(db.DateTime())
+    roles = db.relationship('Role', secondary=roles_users,
+                            backref=db.backref('users', lazy='dynamic'))
 
-# Start authentication system
-aaa = Cork(APP_PATH + '/uws_client/cork_conf')
+# Setup Flask-Security
+user_datastore = SQLAlchemyUserDatastore(db, User, Role)
+security = Security(app, user_datastore)
 
+@app.before_first_request
+def load_in_session():
+    session['server_url'] = app.config['UWS_SERVER_URL']
 
-# ----------
-# Helper functions
-
-
-@app.route('/static/<path:path>')
-def static(path):
-    """Access to static files (css, js, ...)"""
-    return static_file(path, root='{}/uws_client/static'.format(APP_PATH))
-
-
-@app.route('/favicon.ico')
-def favicon():
-    return static_file('favicon.ico', root=APP_PATH)
-
+# Create a user to test with
+@app.before_first_request
+def create_admin_user():
+    try:
+        db.create_all()
+        user_datastore.create_role(name='user')
+        user_datastore.create_role(name='admin')
+        pid = uuid.uuid5(uuid.NAMESPACE_X500, APP_PATH + 'admin')
+        user_datastore.create_user(
+            email='admin',
+            password='cta',
+            pid=str(pid),
+            active=True,
+            roles=['admin'],
+        )
+        db.session.commit()
+    except:
+        db.session.rollback()
+        logger.warning('Database already exists')
 
 # ----------
 # Manage user accounts
 
 
-@app.route(ENDPOINT + '/accounts/login')
-@jinja2_view('login_form.html')
-def login_form():
-    """Serve login form"""
-    session = request.environ['beaker.session']
-    next_page = request.query.get('next', ENDPOINT + '/')
-    msg = request.query.get('msg', '')
-    msg_text = {
-        'failed': 'Authentication failed',
-    }
-    if msg in msg_text:
-        return {'session': session, 'next': next_page, 'message': msg_text[msg]}
-    return {'session': session, 'next': next_page}
+# @app.route('/accounts/login', methods=['GET', 'POST'])
+# @anonymous_user_required
+# def login_user():
+#     # Login user
+#     if request.method == 'POST':
+#
+#         session['username'] = request.form['username']
+#         flash('You were logged in', 'alert-info')
+#         return redirect(url_for('home'))
+#     # Serve login form
+#     next_page = request.args.get('next', APPLICATION_ROOT)
+#     context = dict(
+#         next=next_page,
+#     )
+#     return render_template('login_form.html', **context)
 
-@app.route(ENDPOINT + '/accounts/profile')
-@jinja2_view('home.html')
+
+# @app.route('/accounts/logout')
+# def logout():
+#     session.pop('username', None)
+#     flash('You were logged out', 'alert-info')
+#     return redirect(url_for('home'))
+
+
+@user_logged_in.connect_via(app)
+def on_user_logged_in(sender, user):
+    flash('You were logged in', 'info')
+    session['auth'] = base64.b64encode(current_user.email + ':' + str(current_user.pid))
+
+
+@user_logged_out.connect_via(app)
+def on_user_logged_out(sender, user):
+    flash('You were logged out', 'info')
+
+
+@app.route('/accounts/profile')
+@login_required
 def profile():
-    session = request.environ['beaker.session']
-    #logger.info(session.username)
-    #aaa.logout(success_redirect='/')
-    return dict(session=session, message='TBD')
-
-@app.route(ENDPOINT + '/sorry_page')
-def sorry_page():
-    """Serve sorry page"""
-    return '<p>Sorry, you are not authorized to perform this action</p>'
-
-def postd():
-    return request.forms
-
-def post_get(name, default=''):
-    return request.POST.get(name, default).strip()
-
-@app.post(ENDPOINT + '/accounts/login')
-def login():
-    """Authenticate users"""
-    username = post_get('username')
-    password = post_get('password')
-    next_page = post_get('next')
-    # Create Basic Auth for requests to UWS Server, Save to session
-    session = request.environ['beaker.session']
-    # PID is a UUID based on APP_PATH and username, so specific to user and client app
-    pid = uuid.uuid5(uuid.NAMESPACE_X500, APP_PATH + username)
-    session['username'] = username
-    session['pid'] = pid
-    session['auth'] = base64.b64encode(username + ':' + str(pid))
-    session.save()
-    # Login
-    logger.info(username)
-    aaa.login(username, password, success_redirect=next_page, fail_redirect=ENDPOINT + '/accounts/login?msg=failed')
-
-@app.route(ENDPOINT + '/accounts/logout')
-def logout():
-    #session = request.environ['beaker.session']
-    #logger.info(session.username)
-    aaa.logout(success_redirect=ENDPOINT + '/')
-
-
-@app.route(ENDPOINT + '/accounts/admin')
-@view('admin_page')
-def admin():
-    """Only admin users can see this"""
-    aaa.require(role='admin', fail_redirect=ENDPOINT + '/?msg=restricted')
-    return dict(
-        current_user=aaa.current_user,
-        users=aaa.list_users(),
-        roles=aaa.list_roles()
-    )
-
-
-@app.post(ENDPOINT + '/accounts/create_user')
-def create_user():
-    try:
-        aaa.require(role='admin', fail_redirect=ENDPOINT + '/?msg=restricted')
-        aaa.create_user(postd().username, postd().role, postd().password)
-        return dict(ok=True, msg='')
-    except Exception, e:
-        return dict(ok=False, msg=e.message)
-
-
-@app.post(ENDPOINT + '/accounts/delete_user')
-def delete_user():
-    try:
-        aaa.require(role='admin', fail_redirect=ENDPOINT + '/?msg=restricted')
-        aaa.delete_user(post_get('username'))
-        return dict(ok=True, msg='')
-    except Exception, e:
-        print repr(e)
-        return dict(ok=False, msg=e.message)
-
-
-@app.post(ENDPOINT + '/accounts/create_role')
-def create_role():
-    try:
-        aaa.require(role='admin', fail_redirect=ENDPOINT + '/?msg=restricted')
-        aaa.create_role(post_get('role'), post_get('level'))
-        return dict(ok=True, msg='')
-    except Exception, e:
-        return dict(ok=False, msg=e.message)
-
-
-@app.post(ENDPOINT + '/accounts/delete_role')
-def delete_role():
-    try:
-        aaa.require(role='admin', fail_redirect=ENDPOINT + '/?msg=restricted')
-        aaa.delete_role(post_get('role'))
-        return dict(ok=True, msg='')
-    except Exception, e:
-        return dict(ok=False, msg=e.message)
-
-
-@app.route(ENDPOINT + '/accounts/change_password')
-@view('password_change_form')
-def change_password():
-    """Show password change form"""
-    aaa.require(role='admin', fail_redirect=ENDPOINT + '/?msg=restricted')
-    return dict()
-
-
-@app.post(ENDPOINT + '/accounts/change_password')
-def change_password():
-    """Change password"""
-    #aaa.reset_password(post_get('reset_code'), post_get('password'))
-    user = aaa.user(post_get('username'))
-    if post_get('password'):
-        user.update(pwd=post_get('password'))
-    if post_get('role'):
-        user.update(role=post_get('role'))
-    if post_get('email'):
-        user.update(email_addr=post_get('email'))
-    return 'Thanks. <a href="' + ENDPOINT + '/accounts/admin">Go to admin page</a>'
+    return render_template('profile.html')
 
 
 # ----------
 # Web Pages
 
 
-@app.route(ENDPOINT + '/')
-@jinja2_view('home.html')
+@app.route('/')
 def home():
     """Home page"""
-    session = request.environ['beaker.session']
-    session['server_url'] = UWS_SERVER_URL
-    session.save()
-    msg = request.query.get('msg', '')
-    msg_text = {
-        'restricted': 'Access is restricted to administrators',
-    }
-    if msg in msg_text:
-        return {'session': session, 'message': msg_text[msg]}
-    return {'session': session}
-    # response.content_type = 'text/html; charset=UTF-8'
-    # return "UWS v1.0 server implementation<br>(c) Observatoire de Paris 2015"
+    logger.info(session)
+    return render_template('home.html')
 
 
-@app.route(ENDPOINT + '/job_list')
-@jinja2_view('job_list.html')
-def job_list():
+@app.route('/job_list/', defaults={'jobname': ''})
+@app.route('/job_list/<jobname>')
+@login_required
+def job_list(jobname):
     """Job list page"""
-    logger.info('')
-    if not ALLOW_ANONYMOUS:
-        aaa.require(fail_redirect=ENDPOINT + '/accounts/login?next=' + str(request.urlparts.path))
-    session = request.environ['beaker.session']
-    session['server_url'] = UWS_SERVER_URL
-    session.save()
-    jobname = request.query.get('jobname', '')
-    return {'session': session, 'jobname': jobname}
+    logger.info(jobname)
+    return render_template('job_list.html', jobname=jobname)
 
 
-@app.route(ENDPOINT + '/job_edit/<jobname>/<jobid>')
-@jinja2_view('job_edit.html')
+@app.route('/job_edit/<jobname>/<jobid>')
+@login_required
 def job_edit(jobname, jobid):
     """Job edit page"""
     logger.info(jobname + ' ' + jobid)
-    if not ALLOW_ANONYMOUS:
-        aaa.require(fail_redirect=ENDPOINT + '/accounts/login?next=' + str(request.urlparts.path))
-    session = request.environ['beaker.session']
-    session['server_url'] = UWS_SERVER_URL
-    session.save()
-    return {'session': session, 'jobname': jobname, 'jobid': jobid}
+    return render_template('job_edit.html', jobname=jobname, jobid=jobid)
 
 
-@app.route(ENDPOINT + '/job_form/<jobname>')
-@jinja2_view('job_form.html')
+@app.route('/job_form/<jobname>')
+@login_required
 def job_form(jobname):
     """Job edit page"""
     logger.info(jobname)
-    if not ALLOW_ANONYMOUS:
-        aaa.require(fail_redirect=ENDPOINT + '/accounts/login?next=' + str(request.urlparts.path))
-    session = request.environ['beaker.session']
-    session['server_url'] = UWS_SERVER_URL
-    session.save()
-    return {'session': session, 'jobname': jobname}
+    return render_template('job_form.html', jobname=jobname)
 
 
-@app.get(ENDPOINT + '/job_definition')
-@jinja2_view('job_definition.html')
-def job_definition():
+@app.route('/job_definition', methods=['GET', 'POST'], defaults={'jobname': ''})
+@app.route('/job_definition/<path:jobname>', methods=['GET', 'POST'])
+def job_definition(jobname):
     """Show form for new job definition"""
-    logger.info('')
+    logger.info(jobname)
     # No need to authenticate, users can propose new jobs that will be validated
-    # aaa.require(fail_redirect='/accounts/login?next=' + str(request.urlparts.path))
+    if request.method == 'POST':
+        jobname = request.form.get('name').split('/')[-1]
+        logger.info('Create new/{}'.format(jobname))
+        r = requests.post('{}/config/job_definition'.format(app.config['UWS_SERVER_URL']), data=request.form)
+        if r.status_code == 200:
+            flash('New job definition has been saved as new/{}'.format(jobname), 'info')
+        else:
+            flash('Job definition for {jn} was not found on the server. Cannot validate.'.format(jn=jobname))
+        return redirect(url_for('job_definition', jobname='/new/{}'.format(jobname)), 303)
+    # Show form
     # Set is_admin (will show validate button)
     is_admin = False
-    if not aaa.user_is_anonymous:
-        if aaa.current_user.role == 'admin':
+    if current_user.is_authenticated:
+        if 'admin' in current_user.roles:
             is_admin = True
-    session = request.environ['beaker.session']
-    session['server_url'] = UWS_SERVER_URL
-    session.save()
-    jobname = request.query.get('jobname', '')
-    msg = request.query.get('msg', '')
+    msg = request.args.get('msg', '')
     msg_text = {
         'restricted': 'Access is restricted to administrators',
         'new': 'New job definition has been saved as {}'.format(jobname),
@@ -335,35 +268,12 @@ def job_definition():
         'script_copied': 'Job script {}.sh has been copied to work cluster'.format(jobname),
         'notfound': 'Job definition for {jn} was not found on the server. Cannot validate.'.format(jn=jobname),
     }
-    if msg in msg_text:
-        return {'session': session, 'is_admin': is_admin, 'jobname': jobname, 'message': msg_text[msg]}
-    return {'session': session, 'is_admin': is_admin, 'jobname': jobname}
+    return render_template('job_definition.html', jobname=jobname, is_admin=is_admin)
 
 
-@app.post(ENDPOINT + '/job_definition')
-def client_create_new_job_definition():
-    """
-    Use filled form to create a JDL file on server for the given job
-    :return:
-    """
-    jobname = request.forms.get('name').split('/')[-1]
-    logger.info(jobname)
-    # Authenticate user
-    next_url = str(request.urlparts.path)
-    aaa.require(fail_redirect=ENDPOINT + '/accounts/login?next=' + next_url)
-    # Send POST request to server
-    data = request.POST.dict
-    r = requests.post('{}/config/job_definition'.format(UWS_SERVER_URL), data=data)
-    # Redirect to job_definition with message
-    if r.status_code == 200:
-        msg = 'new'
-    else:
-        msg = 'notfound'
-    redirect(ENDPOINT + '/job_definition?jobname=new/{}&msg={}'.format(jobname, msg), 303)
-
-
-@app.get(ENDPOINT + '/validate_job/<jobname>')
-def client_validate_job(jobname):
+@app.route('/validate_job/<jobname>')
+@login_required
+def validate_job(jobname):
     """
     Validate job on server
     :param jobname:
@@ -371,20 +281,20 @@ def client_validate_job(jobname):
     """
     logger.info(jobname)
     # Authenticate user
-    next_url = str(request.urlparts.path)
-    aaa.require(fail_redirect=ENDPOINT + '/accounts/login?next=' + next_url)
+    #next_url = str(request.urlparts.path)
+    #aaa.require(fail_redirect=ENDPOINT + '/accounts/login?next=' + next_url)
     # Send request to UWS Server
     r = requests.get('{}/config/validate_job/{}'.format(UWS_SERVER_URL, jobname))
     # redirect to job_definition with message
     if r.status_code == 200:
-        msg = 'validated'
+        flash('Job definition for new/{jn} has been validated and renamed {jn}'.format(jn=jobname))
     else:
-        msg = 'notfound'
-    redirect(ENDPOINT + '/job_definition?jobname={}&msg={}'.format(jobname, msg), 303)
+        flash('Job definition for {jn} was not found on the server. Cannot validate.'.format(jn=jobname))
+    return redirect(url_for('job_definition', jobname=jobname), 303)
 
 
-@app.get(ENDPOINT + '/cp_script/<jobname>')
-def client_cp_script(jobname):
+@app.route('/cp_script/<jobname>')
+def cp_script(jobname):
     """
     Validate job on server
     :param jobname:
@@ -392,31 +302,33 @@ def client_cp_script(jobname):
     """
     logger.info(jobname)
     # Authenticate user
-    next_url = str(request.urlparts.path)
-    aaa.require(fail_redirect=ENDPOINT + '/accounts/login?next=' + next_url)
+    #next_url = str(request.urlparts.path)
+    #aaa.require(fail_redirect=ENDPOINT + '/accounts/login?next=' + next_url)
     # Send request to UWS Server
     r = requests.get('{}/config/cp_script/{}'.format(UWS_SERVER_URL, jobname))
     # redirect to job_definition with message
     if r.status_code == 200:
-        msg = 'script_copied'
+        flash('Job script {}.sh has been copied to work cluster'.format(jobname))
     else:
-        msg = 'notfound'
-    redirect(ENDPOINT + '/job_definition?jobname={}&msg={}'.format(jobname, msg), 303)
+        flash('Job definition for {jn} was not found on the server. Cannot validate.'.format(jn=jobname))
+    return redirect(url_for('job_definition', jobname=jobname), 303)
 
 
 # ----------
-# Proxy (to avoid cross domain calls
+# Proxy (to avoid cross domain calls)
 
 
 class MyProxy(HostProxy):
     def process_request(self, uri, method, headers, environ):
-        uri = uri.replace('/proxy', '')
+        uri = uri.replace(app.config['APPLICATION_ROOT'] + '/proxy', '')
         logger.info(environ)
         logger.info(method + ' ' + uri)
         return self.http(uri, method, environ['wsgi.input'], headers)
 
-proxy_app = MyProxy('https://voparis-uws-test.obspm.fr/', strip_script_name=False)
-app.mount(ENDPOINT + '/proxy', proxy_app)
+proxy_app = MyProxy('https://voparis-uws-test.obspm.fr/', strip_script_name=False, client='requests')
+app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {
+    '/proxy': proxy_app
+})
 
 # TODO: Need to set 'HTTP_AUTHORIZATION': 'Basic YWRtaW46NzQyY2M5N2ItMjgwYi01MTZhLWJkNDUtYjY4NGM3ZmZiNDY1' from proxy, not from javascript
 
@@ -426,8 +338,10 @@ app.mount(ENDPOINT + '/proxy', proxy_app)
 
 
 # Create session
-client_app = SessionMiddleware(app, session_opts)
+#client_app = SessionMiddleware(app, session_opts)
+client_app = app
 
 if __name__ == '__main__':
     # Run local web server
-    run(client_app, host='localhost', port=8080, debug=False, reloader=True)
+    #run(client_app, host='localhost', port=8080, debug=False, reloader=True)
+    pass
