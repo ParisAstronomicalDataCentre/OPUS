@@ -7,6 +7,7 @@
     "use strict";
 
     var server_url;
+    var endpoint;
     var jobname;
     var jobid;
 
@@ -15,6 +16,7 @@
         $('#form-buttons').remove();
         // Get jobname/jobid
         server_url = $('#server_url').attr('value');
+        endpoint = $('#endpoint').attr('value');
         jobname = $('#jobname').attr('value');
         jobid = $('#jobid').attr('value');
         var auth = $('#auth').attr('value');
@@ -23,11 +25,6 @@
             uws_manager.initManager(server_url, [jobname], auth);
             uws_manager.displaySingleJob(jobname, jobid);
         };
-        // Add events
-        $('#to_job_list').click( function() {
-            window.location.href =  "/client/job_list?jobname=" + jobname;
-        });
-        
     });
 
 })(jQuery);

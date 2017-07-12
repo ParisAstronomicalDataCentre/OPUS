@@ -469,6 +469,7 @@
         // Load JDL on return keydown for job name
         $('input[name=name]').keydown(function (event) {
             if (event.keyCode == 13) {
+                $('.ui-autocomplete').hide();
                 event.preventDefault();
                 load_jdl();
             }

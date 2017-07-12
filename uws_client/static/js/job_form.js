@@ -24,11 +24,6 @@
             formData.append('PHASE', 'RUN');
             uws_manager.createJob(jobname, formData);
         });
-
-        $('#to_job_list').click( function() {
-            window.location.href =  "/client/job_list?jobname=" + jobname;
-        });
-
     });
         
 })(jQuery);
