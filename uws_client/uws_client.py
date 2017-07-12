@@ -31,15 +31,15 @@ except ImportError:  # pragma: nocover
 
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 APPLICATION_ROOT = '/client'
-#UWS_SERVER_URL = 'http://localhost:8080'
-UWS_SERVER_URL = 'http://localhost'
-#UWS_SERVER_URL = 'http://localhost/proxy'
+ENDPOINT = '/client'
+#UWS_SERVER_URL = 'http://localhost'
+UWS_SERVER_URL = 'http://localhost/proxy'
 #UWS_SERVER_URL = 'https://voparis-uws-test.obspm.fr'
 ALLOW_ANONYMOUS = False
 
 #--- Include host-specific settings ------------------------------------------------------------------------------------
-if os.path.exists(APP_PATH + '/uws_client/settings_local.py'):
-    from settings_local import *
+#if os.path.exists(APP_PATH + '/uws_client/settings_local.py'):
+#    from settings_local import *
 #--- Include host-specific settings ------------------------------------------------------------------------------------
 
 
@@ -67,11 +67,15 @@ LOGGING = {
             'handlers': ['file_client_flask'],
             'level': 'DEBUG',
         },
+        'wsgiproxy': {
+            'handlers': ['file_client_flask'],
+            'level': 'DEBUG',
+        },
     }
 }
 
 # Set path to uws_client templates
-#TEMPLATE_PATH.insert(0, APP_PATH + '/uws_client/templates/')
+#TEMPLATE_PATH.insert(0, app.config['APP_PATH'] + '/uws_client/templates/')
 
 # Set logger
 logging.config.dictConfig(LOGGING)
@@ -85,13 +89,13 @@ app.config.from_object(__name__) # load config from this file , flaskr.py
 
 # Load default config and override config from an environment variable
 app.config.update(dict(
-    APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)),
-    APPLICATION_ROOT = '/client',
+    #APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)),
+    #APPLICATION_ROOT = '/client',
     #UWS_SERVER_URL = 'http://localhost:8080',
-    UWS_SERVER_URL = 'http://localhost',
+    #UWS_SERVER_URL = 'http://localhost',
     #UWS_SERVER_URL = 'http://localhost/proxy',
     #UWS_SERVER_URL = 'https://voparis-uws-test.obspm.fr',
-    ALLOW_ANONYMOUS = False,
+    #ALLOW_ANONYMOUS = False,
     DEBUG = True,
     SQLALCHEMY_DATABASE_URI = 'sqlite:////var/www/opus/db/flask_login.db',
     SQLALCHEMY_TRACK_MODIFICATIONS = False,
@@ -145,7 +149,7 @@ def create_admin_user():
         db.create_all()
         user_datastore.create_role(name='user')
         user_datastore.create_role(name='admin')
-        pid = uuid.uuid5(uuid.NAMESPACE_X500, APP_PATH + 'admin')
+        pid = uuid.uuid5(uuid.NAMESPACE_X500, app.config['APP_PATH'] + 'admin')
         user_datastore.create_user(
             email='admin',
             password='cta',
@@ -188,12 +192,14 @@ def create_admin_user():
 
 @user_logged_in.connect_via(app)
 def on_user_logged_in(sender, user):
+    logger.info('')
     flash('You were logged in', 'info')
     session['auth'] = base64.b64encode(current_user.email + ':' + str(current_user.pid))
 
 
 @user_logged_out.connect_via(app)
 def on_user_logged_out(sender, user):
+    logger.info('')
     flash('You were logged out', 'info')
 
 
@@ -321,11 +327,13 @@ def cp_script(jobname):
 class MyProxy(HostProxy):
     def process_request(self, uri, method, headers, environ):
         uri = uri.replace(app.config['APPLICATION_ROOT'] + '/proxy', '')
-        logger.info(environ)
+        logger.info(headers)
         logger.info(method + ' ' + uri)
+        #environ['HTTP_AUTHORIZATION'] = session['auth']
         return self.http(uri, method, environ['wsgi.input'], headers)
 
-proxy_app = MyProxy('https://voparis-uws-test.obspm.fr/', strip_script_name=False, client='requests')
+proxy_app = MyProxy('https://voparis-uws-test.obspm.fr/', strip_script_name=False)
+
 app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {
     '/proxy': proxy_app
 })
