@@ -33,8 +33,8 @@ APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 APPLICATION_ROOT = '/client'
 ENDPOINT = '/client'
 #UWS_SERVER_URL = 'http://localhost'
-UWS_SERVER_URL = 'http://localhost/client/proxy'
-#UWS_SERVER_URL = 'https://voparis-uws-test.obspm.fr'
+UWS_SERVER_URL_JS = 'http://localhost/client/proxy'
+UWS_SERVER_URL = 'https://voparis-uws-test.obspm.fr'
 ALLOW_ANONYMOUS = False
 CHUNK_SIZE = 1024
 
@@ -120,10 +120,12 @@ roles_users = db.Table('roles_users',
         db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
         db.Column('role_id', db.Integer(), db.ForeignKey('role.id')))
 
+
 class Role(db.Model, RoleMixin):
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), unique=True)
     description = db.Column(db.String(255))
+
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -135,13 +137,17 @@ class User(db.Model, UserMixin):
     roles = db.relationship('Role', secondary=roles_users,
                             backref=db.backref('users', lazy='dynamic'))
 
+
 # Setup Flask-Security
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 security = Security(app, user_datastore)
 
+
 @app.before_first_request
 def load_in_session():
-    session['server_url'] = app.config['UWS_SERVER_URL']
+    logger.warning('Set server_url in session')
+    session['server_url'] = app.config['UWS_SERVER_URL_JS']
+
 
 # Create a user to test with
 @app.before_first_request
@@ -159,9 +165,11 @@ def create_admin_user():
             roles=['admin'],
         )
         db.session.commit()
+        logger.warning('Database created')
     except:
         db.session.rollback()
         logger.warning('Database already exists')
+
 
 # ----------
 # Manage user accounts
@@ -331,21 +339,19 @@ def proxy(uri):
         r = requests.post('{}/{}'.format(server_url, uri), stream=True, data=request.form)
     else:
         r = requests.get('{}/{}'.format(server_url, uri), stream=True)
-    logger.info("Got %s response from %s",r.status_code, uri)
-    headers = dict(r.headers)
+    logger.info("Got {} response from {} ({})".format(r.status_code, uri, request.method))
     def generate():
         for chunk in r.iter_content(CHUNK_SIZE):
             yield chunk
-    return Response(stream_with_context(r.iter_content()), content_type = r.headers['content-type'])
-    #Response(generate(), headers = headers, )
+    return Response(stream_with_context(generate()), content_type = r.headers['content-type'])
 
 
 class MyProxy(HostProxy):
     def process_request(self, uri, method, headers, environ):
         uri = uri.replace(app.config['APPLICATION_ROOT'] + '/proxy', '')
         #headers['Authorization'] = app.
-        logger.info(headers)
-        logger.info(method + ' ' + uri)
+        logger.debug(headers)
+        logger.debug(method + ' ' + uri)
         return self.http(uri, method, environ['wsgi.input'], headers)
 
 proxy_app = MyProxy('https://voparis-uws-test.obspm.fr/', strip_script_name=False)

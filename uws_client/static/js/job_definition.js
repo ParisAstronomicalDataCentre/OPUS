@@ -276,7 +276,6 @@
 			type : 'GET',
 			dataType: "json",
 			success : function(jdl) {
-			    console.log(jdl);
                 $('#load_msg').attr('class', 'text-info');
                 $('#load_msg').text('JDL loaded.');
                 $('#load_msg').show().delay(2000).fadeOut();
@@ -338,7 +337,7 @@
                 $('.selectpicker').selectpicker('refresh');
                 // ajax command to get_script from UWS server
                 $.ajax({
-                    url : '/get_script/' + jobname, //.split("/").pop(),
+                    url : server_url + '/get_script/' + jobname, //.split("/").pop(),
                     async : true,
                     cache : false,
                     type : 'GET',
@@ -398,7 +397,7 @@
             type : 'GET',
             dataType: "json",
             success : function(json) {
-                console.log(json['jobnames']);
+                //console.log(json['jobnames']);
                 $('input[name=name]').autocomplete({
                     source: json['jobnames']
                 });
