@@ -13,7 +13,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 import logging
 import logging.config
-from flask import Flask, request, abort, redirect, url_for, session, render_template, flash
+from flask import Flask, request, abort, redirect, url_for, session, render_template, flash, Response, stream_with_context
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import Security, SQLAlchemyUserDatastore, UserMixin, RoleMixin, login_required
 from flask_login import user_logged_in, user_logged_out, current_user
@@ -33,9 +33,10 @@ APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 APPLICATION_ROOT = '/client'
 ENDPOINT = '/client'
 #UWS_SERVER_URL = 'http://localhost'
-UWS_SERVER_URL = 'http://localhost/proxy'
+UWS_SERVER_URL = 'http://localhost/client/proxy'
 #UWS_SERVER_URL = 'https://voparis-uws-test.obspm.fr'
 ALLOW_ANONYMOUS = False
+CHUNK_SIZE = 1024
 
 #--- Include host-specific settings ------------------------------------------------------------------------------------
 #if os.path.exists(APP_PATH + '/uws_client/settings_local.py'):
@@ -323,20 +324,33 @@ def cp_script(jobname):
 # ----------
 # Proxy (to avoid cross domain calls)
 
+@app.route('/proxy/<path:uri>', methods=['GET', 'POST'])
+def proxy(uri):
+    server_url = 'https://voparis-uws-test.obspm.fr/'
+    if request.method == 'POST':
+        r = requests.post('{}/{}'.format(server_url, uri), stream=True, data=request.form)
+    else:
+        r = requests.get('{}/{}'.format(server_url, uri), stream=True)
+    logger.info("Got %s response from %s",r.status_code, uri)
+    headers = dict(r.headers)
+    def generate():
+        for chunk in r.iter_content(CHUNK_SIZE):
+            yield chunk
+    return Response(stream_with_context(r.iter_content()), content_type = r.headers['content-type'])
+    #Response(generate(), headers = headers, )
+
 
 class MyProxy(HostProxy):
     def process_request(self, uri, method, headers, environ):
         uri = uri.replace(app.config['APPLICATION_ROOT'] + '/proxy', '')
+        #headers['Authorization'] = app.
         logger.info(headers)
         logger.info(method + ' ' + uri)
-        #environ['HTTP_AUTHORIZATION'] = session['auth']
         return self.http(uri, method, environ['wsgi.input'], headers)
 
 proxy_app = MyProxy('https://voparis-uws-test.obspm.fr/', strip_script_name=False)
 
-app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {
-    '/proxy': proxy_app
-})
+# app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {'/proxy': proxy_app})
 
 # TODO: Need to set 'HTTP_AUTHORIZATION': 'Basic YWRtaW46NzQyY2M5N2ItMjgwYi01MTZhLWJkNDUtYjY4NGM3ZmZiNDY1' from proxy, not from javascript
 

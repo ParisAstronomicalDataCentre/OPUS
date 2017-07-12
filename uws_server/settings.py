@@ -40,6 +40,7 @@ TRUSTED_CLIENTS = {
     '145.238.193.69': 'voparis-uws-test.obspm.fr',
     '145.238.168.3': 'savagnin_ucopia',
     '145.238.180.240': 'savagnin_cable',
+    '93.15.50.214': 'savagnin_home',
 }
 
 GENERATE_PROV = True
