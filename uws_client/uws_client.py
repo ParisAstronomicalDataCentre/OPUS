@@ -13,7 +13,6 @@ import requests
 from requests.auth import HTTPBasicAuth
 import logging
 import logging.config
-#from flask import Flask, request, abort, redirect, url_for, session
 from bottle import Bottle, request, response, abort, redirect, run, static_file, parse_auth, TEMPLATE_PATH, view, jinja2_view
 from beaker.middleware import SessionMiddleware
 from cork import Cork
@@ -53,29 +52,28 @@ LOGGING = {
         },
     },
     'handlers': {
-        'file_client_flask': {
+        'file_client': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': LOG_PATH + '/client_flask' + LOG_FILE_SUFFIX + '.log',
+            'filename': LOG_PATH + '/client' + LOG_FILE_SUFFIX + '.log',
             'formatter': 'default'
         },
     },
     'loggers': {
         'uws_client': {
-            'handlers': ['file_client_flask'],
+            'handlers': ['file_client'],
             'level': 'DEBUG',
         },
     }
 }
 
 # Set path to uws_client templates
-TEMPLATE_PATH.insert(0, APP_PATH + '/uws_client/templates/')
+TEMPLATE_PATH.insert(0, APP_PATH + '/uws_client/views/')
 
 # Set logger
 #if ('uws_client' not in logging.Logger.manager.loggerDict):
 logging.config.dictConfig(LOGGING)
 logger = logging.getLogger('uws_client')
-logger.info('Load flask client')
 
 
 # ----------
@@ -118,12 +116,12 @@ def favicon():
 # Manage user accounts
 
 
-@app.route('/accounts/login')
+@app.route(ENDPOINT + '/accounts/login')
 @jinja2_view('login_form.html')
 def login_form():
     """Serve login form"""
     session = request.environ['beaker.session']
-    next_page = request.query.get('next', ENDPOINT)
+    next_page = request.query.get('next', ENDPOINT + '/')
     msg = request.query.get('msg', '')
     msg_text = {
         'failed': 'Authentication failed',
@@ -132,7 +130,7 @@ def login_form():
         return {'session': session, 'next': next_page, 'message': msg_text[msg]}
     return {'session': session, 'next': next_page}
 
-@app.route('/accounts/profile')
+@app.route(ENDPOINT + '/accounts/profile')
 @jinja2_view('home.html')
 def profile():
     session = request.environ['beaker.session']
@@ -140,7 +138,7 @@ def profile():
     #aaa.logout(success_redirect='/')
     return dict(session=session, message='TBD')
 
-@app.route('/sorry_page')
+@app.route(ENDPOINT + '/sorry_page')
 def sorry_page():
     """Serve sorry page"""
     return '<p>Sorry, you are not authorized to perform this action</p>'
@@ -151,7 +149,7 @@ def postd():
 def post_get(name, default=''):
     return request.POST.get(name, default).strip()
 
-@app.post('/accounts/login')
+@app.post(ENDPOINT + '/accounts/login')
 def login():
     """Authenticate users"""
     username = post_get('username')
@@ -169,14 +167,14 @@ def login():
     logger.info(username)
     aaa.login(username, password, success_redirect=next_page, fail_redirect=ENDPOINT + '/accounts/login?msg=failed')
 
-@app.route('/accounts/logout')
+@app.route(ENDPOINT + '/accounts/logout')
 def logout():
     #session = request.environ['beaker.session']
     #logger.info(session.username)
     aaa.logout(success_redirect=ENDPOINT + '/')
 
 
-@app.route('/accounts/admin')
+@app.route(ENDPOINT + '/accounts/admin')
 @view('admin_page')
 def admin():
     """Only admin users can see this"""
@@ -188,7 +186,7 @@ def admin():
     )
 
 
-@app.post('/accounts/create_user')
+@app.post(ENDPOINT + '/accounts/create_user')
 def create_user():
     try:
         aaa.require(role='admin', fail_redirect=ENDPOINT + '/?msg=restricted')
@@ -198,7 +196,7 @@ def create_user():
         return dict(ok=False, msg=e.message)
 
 
-@app.post('/accounts/delete_user')
+@app.post(ENDPOINT + '/accounts/delete_user')
 def delete_user():
     try:
         aaa.require(role='admin', fail_redirect=ENDPOINT + '/?msg=restricted')
@@ -209,7 +207,7 @@ def delete_user():
         return dict(ok=False, msg=e.message)
 
 
-@app.post('/accounts/create_role')
+@app.post(ENDPOINT + '/accounts/create_role')
 def create_role():
     try:
         aaa.require(role='admin', fail_redirect=ENDPOINT + '/?msg=restricted')
@@ -219,7 +217,7 @@ def create_role():
         return dict(ok=False, msg=e.message)
 
 
-@app.post('/accounts/delete_role')
+@app.post(ENDPOINT + '/accounts/delete_role')
 def delete_role():
     try:
         aaa.require(role='admin', fail_redirect=ENDPOINT + '/?msg=restricted')
@@ -229,7 +227,7 @@ def delete_role():
         return dict(ok=False, msg=e.message)
 
 
-@app.route('/accounts/change_password')
+@app.route(ENDPOINT + '/accounts/change_password')
 @view('password_change_form')
 def change_password():
     """Show password change form"""
@@ -237,7 +235,7 @@ def change_password():
     return dict()
 
 
-@app.post('/accounts/change_password')
+@app.post(ENDPOINT + '/accounts/change_password')
 def change_password():
     """Change password"""
     #aaa.reset_password(post_get('reset_code'), post_get('password'))
@@ -255,7 +253,7 @@ def change_password():
 # Web Pages
 
 
-@app.route('/')
+@app.route(ENDPOINT + '/')
 @jinja2_view('home.html')
 def home():
     """Home page"""
@@ -273,7 +271,7 @@ def home():
     # return "UWS v1.0 server implementation<br>(c) Observatoire de Paris 2015"
 
 
-@app.route('/job_list')
+@app.route(ENDPOINT + '/job_list')
 @jinja2_view('job_list.html')
 def job_list():
     """Job list page"""
@@ -287,7 +285,7 @@ def job_list():
     return {'session': session, 'jobname': jobname}
 
 
-@app.route('/job_edit/<jobname>/<jobid>')
+@app.route(ENDPOINT + '/job_edit/<jobname>/<jobid>')
 @jinja2_view('job_edit.html')
 def job_edit(jobname, jobid):
     """Job edit page"""
@@ -300,7 +298,7 @@ def job_edit(jobname, jobid):
     return {'session': session, 'jobname': jobname, 'jobid': jobid}
 
 
-@app.route('/job_form/<jobname>')
+@app.route(ENDPOINT + '/job_form/<jobname>')
 @jinja2_view('job_form.html')
 def job_form(jobname):
     """Job edit page"""
@@ -313,7 +311,7 @@ def job_form(jobname):
     return {'session': session, 'jobname': jobname}
 
 
-@app.get('/job_definition')
+@app.get(ENDPOINT + '/job_definition')
 @jinja2_view('job_definition.html')
 def job_definition():
     """Show form for new job definition"""
@@ -342,7 +340,7 @@ def job_definition():
     return {'session': session, 'is_admin': is_admin, 'jobname': jobname}
 
 
-@app.post('/job_definition')
+@app.post(ENDPOINT + '/job_definition')
 def client_create_new_job_definition():
     """
     Use filled form to create a JDL file on server for the given job
@@ -364,7 +362,7 @@ def client_create_new_job_definition():
     redirect(ENDPOINT + '/job_definition?jobname=new/{}&msg={}'.format(jobname, msg), 303)
 
 
-@app.get('/validate_job/<jobname>')
+@app.get(ENDPOINT + '/validate_job/<jobname>')
 def client_validate_job(jobname):
     """
     Validate job on server
@@ -385,7 +383,7 @@ def client_validate_job(jobname):
     redirect(ENDPOINT + '/job_definition?jobname={}&msg={}'.format(jobname, msg), 303)
 
 
-@app.get('/cp_script/<jobname>')
+@app.get(ENDPOINT + '/cp_script/<jobname>')
 def client_cp_script(jobname):
     """
     Validate job on server
