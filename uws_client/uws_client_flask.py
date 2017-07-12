@@ -17,6 +17,7 @@ from flask import Flask, request, abort, redirect, url_for, session, render_temp
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import Security, SQLAlchemyUserDatastore, UserMixin, RoleMixin, login_required
 from flask_login import user_logged_in, user_logged_out, current_user
+from werkzeug.wsgi import DispatcherMiddleware
 #from bottle import Bottle, request, response, abort, redirect, run, static_file, parse_auth, TEMPLATE_PATH, view, jinja2_view
 #from beaker.middleware import SessionMiddleware
 #from cork import Cork
@@ -319,14 +320,15 @@ def cp_script(jobname):
 
 class MyProxy(HostProxy):
     def process_request(self, uri, method, headers, environ):
-        uri = uri.replace('/proxy', '')
+        uri = uri.replace(app.config['APPLICATION_ROOT'] + '/proxy', '')
         logger.info(environ)
         logger.info(method + ' ' + uri)
         return self.http(uri, method, environ['wsgi.input'], headers)
 
 proxy_app = MyProxy('https://voparis-uws-test.obspm.fr/', strip_script_name=False, client='requests')
-#app.mount(ENDPOINT + '/proxy', proxy_app)
-#app.register_blueprint(proxy_app, url_prefix='/proxy')
+app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {
+    '/proxy': proxy_app
+})
 
 # TODO: Need to set 'HTTP_AUTHORIZATION': 'Basic YWRtaW46NzQyY2M5N2ItMjgwYi01MTZhLWJkNDUtYjY4NGM3ZmZiNDY1' from proxy, not from javascript
 
