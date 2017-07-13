@@ -22,7 +22,7 @@
         var auth = $('#auth').attr('value');
         // Display job
         if (jobname && jobid) {
-            uws_client.initManager(server_url, [jobname], auth);
+            uws_client.initClient(server_url, [jobname], auth);
             uws_client.displaySingleJob(jobname, jobid);
         };
     });

@@ -1,5 +1,5 @@
 /*!
- * UWS Manager
+ * UWS Client
  * Copyright (c) 2016 by Mathieu Servillat
  * Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
  */
@@ -63,7 +63,7 @@ var uws_client = (function($) {
 
     //----------
     // CREATE MANAGER AND CLIENTS
-    function initManager(serviceUrl, jobNames_init, basicauth){
+    function initClient(serviceUrl, jobNames_init, basicauth){
         jobNames = jobNames_init;
         for (var i in jobNames) {
             // Init client
@@ -75,7 +75,7 @@ var uws_client = (function($) {
             });
             logger('INFO', 'uwsClient at '+clients[jobNames[i]].serviceUrl);
         }
-        logger('INFO', 'initManager '+serviceUrl);
+        logger('INFO', 'initClient '+serviceUrl);
     };
 
     function wait_for_jdl(jobName, next_function, args){
@@ -951,7 +951,7 @@ var uws_client = (function($) {
     //----------
 
     return {
-        initManager: initManager,
+        initClient: initClient,
         prepareTable: prepareTable,
         getJobList: getJobList,
         selectJob: selectJob,

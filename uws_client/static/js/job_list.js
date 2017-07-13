@@ -31,8 +31,8 @@
     function load_job_list() {
         var jobname = $('select[name=jobname]').val();
         var auth = $('#auth').attr('value');
-        // init UWS Manager
-        uws_client.initManager(server_url, [jobname], auth);
+        // init UWS Client
+        uws_client.initClient(server_url, [jobname], auth);
         uws_client.getJobList();
         if ( $( "#job_id" ).length ) {
             uws_client.selectJob($( "#jobid" ).attr('value'));
