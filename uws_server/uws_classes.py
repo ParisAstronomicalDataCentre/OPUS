@@ -79,6 +79,12 @@ class Job(object):
         self.manager = managers.__dict__[MANAGER + 'Manager']()
         # Fill job attributes
         if get_attributes or get_parameters or get_results:
+            # Get from storage
+            self.storage.read(self,
+                              get_attributes=get_attributes,
+                              get_parameters=get_parameters,
+                              get_results=get_results,
+                              from_pid=from_pid)
             if check_user:
                 # Check if user has rights to manipulate the job
                 if user.name != 'admin':
@@ -87,12 +93,6 @@ class Job(object):
                             raise JobAccessDenied('User {} is the owner of the job but has a wrong PID'.format(user.name))
                     else:
                         raise JobAccessDenied('User {} is not the owner of the job'.format(user.name))
-            # Get from storage
-            self.storage.read(self,
-                              get_attributes=get_attributes,
-                              get_parameters=get_parameters,
-                              get_results=get_results,
-                              from_pid=from_pid)
         elif from_post:
             # Create a new PENDING job and save to storage
             now = dt.datetime.now()
