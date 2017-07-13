@@ -346,8 +346,8 @@ def test_db():
     redirect('/db/show', 303)
 
 
-@app.route('/db/show')
-def show_db():
+@app.route('/db/show/<jobname>')
+def show_db(jobname):
     """Show database in HTML
 
     Returns:
@@ -361,7 +361,7 @@ def show_db():
     html = ''
     try:
         logger.info('Show Database for ' + user.name)
-        joblist = JobList('ctbin', user)
+        joblist = JobList(jobname, user)
         return joblist.to_html()
     except:
         abort_500_except()
