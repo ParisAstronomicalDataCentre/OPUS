@@ -365,6 +365,7 @@ class Job(object):
         add_sub_elt(xml_job, 'uws:executionDuration', self.execution_duration)
         add_sub_elt(xml_job, 'uws:quote', self.quote)
         add_sub_elt(xml_job, 'uws:error', self.error)
+        add_sub_elt(xml_job, 'uws:creationTime', self.creation_time)
         add_sub_elt(xml_job, 'uws:startTime', self.start_time)
         add_sub_elt(xml_job, 'uws:endTime', self.end_time)
         add_sub_elt(xml_job, 'uws:destruction', self.destruction_time)
