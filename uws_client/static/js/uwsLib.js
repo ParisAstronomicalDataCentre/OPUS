@@ -6,6 +6,17 @@
 var uwsLib = (function() {
 	"use strict";
 
+	var readParameters = function(xml){
+		var parameters = new Object();
+		var parametersElement = $(xml).find("uws\\:parameters, parameters");
+		$(parametersElement).find("uws\\:parameter, parameter").each(function(){
+			var elementName = $(this).attr('id');
+			var elementValue = $(this).text();
+			parameters[elementName] = elementValue ;
+		});
+		return parameters;
+	};
+
 	var readResults = function(xml){
 		var results = new Object();
 		var resultsElement = $(xml).find("uws\\:results, results");
@@ -31,13 +42,7 @@ var uwsLib = (function() {
 		job.error = $(jobXmlElement).find("uws\\:error, error").text();
 		job.ownerId = $(jobXmlElement).find("uws\\:ownerId, ownerId").text();
 		job.runId = $(jobXmlElement).find("uws\\:runId, runId").text();
-		job.parameters = new Object();
-		var parametersElement = $(jobXmlElement).find("uws\\:parameters, parameters");
-		$(parametersElement).find("uws\\:parameter, parameter").each(function(){
-			var elementName = $(this).attr('id');
-			var elementValue = $(this).text();
-			job.parameters[elementName] = elementValue ;
-		});
+		job.parameters = readParameters(xml);
 		job.results = readResults(xml);
 		return job;
 	};
@@ -53,8 +58,7 @@ var uwsLib = (function() {
 		});
 		return jobs;
 	};
-	
-	
+
 	function uwsClient(serviceUrl){
 		this.serviceUrl = serviceUrl;
 		this.jobName = serviceUrl.split('/').pop();
@@ -148,7 +152,7 @@ var uwsLib = (function() {
 		
 	};
 	
-	uwsClient.prototype.getJobInfos = function(id,successCallback, errorCallback) {
+	uwsClient.prototype.getJobInfos = function(id, successCallback, errorCallback) {
 		var jobName = this.jobName;
 		$.ajax({
 			url : this.serviceUrl + "/" + id,
@@ -163,7 +167,7 @@ var uwsLib = (function() {
 			},
 		});
 	};
-	uwsClient.prototype.getJobResults = function(id,successCallback, errorCallback) {
+	uwsClient.prototype.getJobResults = function(id, successCallback, errorCallback) {
 		$.ajax({
 			url : this.serviceUrl + "/" + id + "/results",
 			type: 'GET',
@@ -178,7 +182,7 @@ var uwsLib = (function() {
 		});
 	};
 	
-	uwsClient.prototype.getJobPhase = function(id,successCallback, errorCallback) {
+	uwsClient.prototype.getJobPhase = function(id, successCallback, errorCallback) {
 		$.ajax({
 			url : this.serviceUrl + "/" + id + "/phase",
 			type: 'GET',
@@ -191,7 +195,23 @@ var uwsLib = (function() {
 		});
 	};
 
-	uwsClient.prototype.getJobInfosSync = function(id){
+	uwsClient.prototype.getJobList = function(successCallback, errorCallback) {
+		var jobName = this.jobName;
+		$.ajax({
+			url : this.serviceUrl,
+			type : 'GET',
+			dataType: "xml",
+			success : function(xml) {
+				var jobList = getJobListFromXml(xml, jobName);
+				successCallback(jobList);
+			},
+			error : function(xhr, status, exception) {
+				errorCallback(exception);
+			},
+		});
+	}
+
+	uwsClient.prototype.getJobInfosSync = function(id) {
 		return $.ajax({
 			url : this.serviceUrl + "/" + id,
 			async : false,
@@ -199,8 +219,8 @@ var uwsLib = (function() {
 			dataType: "xml",
 		}).responseXML;
 	}
-	
-	uwsClient.prototype.getJobListSync = function(){
+
+	uwsClient.prototype.getJobListSync = function() {
 		return $.ajax({
 			url : this.serviceUrl,
 			async : false,
@@ -208,20 +228,74 @@ var uwsLib = (function() {
 			dataType: "xml",
 		}).responseXML;
 	}
-	
-	uwsClient.prototype.getJobListInfos = function (successCallback, errorCallback) {
+
+	uwsClient.prototype.getJobListInfosSync = function(successCallback, errorCallback) {
 		var jobList = []
 		var jobSummaryList = getJobListFromXml(this.getJobListSync(), this.jobName);
+		console.log(jobSummaryList);
 		for (var i in jobSummaryList){
 			var id = jobSummaryList[i].jobId;
 			var job = getJobFromXml(this.getJobInfosSync(id), this.jobName);
 			jobList.push(job);
 //			jobList.push(getJobFromXml(this.getJobInfosSync(jobSummaryList[i].jobId)));
 		}
+		console.log(jobList);
 		successCallback(jobList);
 	}
-	
-	
+
+	uwsClient.prototype.getJobListInfos = function(successCallback, errorCallback) {
+		var jobName = this.jobName;
+		var serviceUrl = this.serviceUrl;
+		$.ajax({
+			url : serviceUrl,
+			type : 'GET',
+			dataType: "xml",
+			success : function(xml) {
+				var jobList = getJobListFromXml(xml, jobName);
+                if ((jobList.length == 0)) {
+                    successCallback(jobList);
+                } else {
+    				addJobListInfos(serviceUrl, jobName, jobList, successCallback, errorCallback);
+    			};
+			},
+			error : function(xhr, status, exception) {
+				errorCallback(exception);
+			},
+		});
+	}
+
+	function addJobListInfos(serviceUrl, jobName, jobSummaryList, successCallback, errorCallback) {
+        var jobList = [];
+        var currentIndex = 0;
+        addJobInfos(serviceUrl, jobName, jobList, jobSummaryList, currentIndex, successCallback, errorCallback);
+	}
+
+    function addJobInfos(serviceUrl, jobName, jobList, jobSummaryList, currentIndex, successCallback, errorCallback) {
+        var id = jobSummaryList[currentIndex].jobId;
+        $.ajax({
+            url: serviceUrl + "/" + id,
+			type : 'GET',
+			dataType: "xml",
+            success: function(xml) {
+                var job = getJobFromXml(xml, jobName);
+                jobList.push(job);
+            },
+			error : function(xhr, status, exception) {
+				errorCallback(exception);
+			},
+            complete: function() {
+                currentIndex++;
+                if (currentIndex == jobSummaryList.length) {
+                    successCallback(jobList);
+                }
+                else
+                {
+                    addJobInfos(serviceUrl, jobName, jobList, jobSummaryList, currentIndex, successCallback, errorCallback);
+                }
+            }
+        });
+    }
+
 	return {
 		uwsClient: uwsClient,
 //		getJobs : getJobs,

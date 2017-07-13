@@ -21,19 +21,18 @@
 var uws_client = (function($) {
     "use strict";
 
+    // var serviceUrl = $(location).attr('protocol') + '//' + $(location).attr('host');
+    // "https://voparis-uws-test.obspm.fr/"; // app_url+"/uws-v1.0/" //
+    var server_jobs_url = '/rest/';
+    var server_jdl_url = '/get_jdl_json/';
+    var client_job_list_url = '/client/job_list';
+    var client_job_edit_url = '/client/job_edit';
+    var jobNames;
+    var clients = {};
     var refreshPhaseTimeout = {}; // stores setInterval functions for phase refresh
     var refreshPhaseTimeoutDelay = {}; //
     var timeoutDelays = [2000,3000,4000,6000,11000]; // delays in ms
     var selectedJobId;
-    // var serviceUrl = $(location).attr('protocol') + '//' + $(location).attr('host');
-    // "https://voparis-uws-test.obspm.fr/"; // app_url+"/uws-v1.0/" //
-    var jobs_url = '/rest/';
-    var jdl_url = '/get_jdl_json/';
-    var form_upload_url = '/form_upload/';
-    var job_list_url = '/client/job_list';
-    var job_edit_url = '/client/job_edit';
-    var jobNames;
-    var clients = {};
 
 
     //----------
@@ -63,17 +62,17 @@ var uws_client = (function($) {
 
     //----------
     // CREATE MANAGER AND CLIENTS
-    function initClient(serviceUrl, jobNames_init, basicauth){
+    function initClient(serviceUrl, jobNames_init){
         jobNames = jobNames_init;
         for (var i in jobNames) {
             // Init client
-            var url = serviceUrl + jobs_url + jobNames[i];
-            clients[jobNames[i]] = new uwsLib.uwsClient(url, basicauth);
+            var url = serviceUrl + server_jobs_url + jobNames[i];
+            clients[jobNames[i]] = new uwsLib.uwsClient(url);
             // Get JDL for job
-            $.getJSON(serviceUrl + jdl_url + jobNames[i], function(jdl) {
+            $.getJSON(serviceUrl + server_jdl_url + jobNames[i], function(jdl) {
                 clients[jobNames[i]].jdl = jdl;
             });
-            logger('INFO', 'uwsClient at '+clients[jobNames[i]].serviceUrl);
+            logger('INFO', 'uwsClient at ' + clients[jobNames[i]].serviceUrl);
         }
         logger('INFO', 'initClient '+serviceUrl);
     };
@@ -281,7 +280,7 @@ var uws_client = (function($) {
         // Start job button
         $('#'+job.jobId+' td button.start').click( function() {
             var jobId = $(this).parents("tr").attr('id');
-             startJob(jobId);
+            startJob(jobId);
         });
         // Abort job button
         $('#'+job.jobId+' td button.abort').click( function() {
@@ -311,19 +310,19 @@ var uws_client = (function($) {
             var jobId = $(this).parents("tr").attr('id');
             var jobName = $(this).parents("tr").attr('jobname');
             selectJob(jobId);
-            window.location.href = job_edit_url + "/" + jobName + "/" + jobId + '#properties';
+            window.location.href = client_job_edit_url + "/" + jobName + "/" + jobId + '#properties';
         });
         $('#'+job.jobId+' td button.parameters').click( function() {
             var jobId = $(this).parents("tr").attr('id');
             var jobName = $(this).parents("tr").attr('jobname');
             selectJob(jobId);
-            window.location.href = job_edit_url + "/" + jobName + "/" + jobId + '#parameters';
+            window.location.href = client_job_edit_url + "/" + jobName + "/" + jobId + '#parameters';
         });
          $('#'+job.jobId+' td button.results').click( function() {
             var jobId = $(this).parents("tr").attr('id');
             var jobName = $(this).parents("tr").attr('jobname');
             selectJob(jobId);
-            window.location.href = job_edit_url + "/" + jobName + "/" + jobId + '#results';
+            window.location.href = client_job_edit_url + "/" + jobName + "/" + jobId + '#results';
         });
     };
 
@@ -699,7 +698,7 @@ var uws_client = (function($) {
             $("#div_job").hide();
             $("#div_info").html('<strong>Job deleted</strong>: '+jobId+', going back to job list').addClass('alert alert-success');
             setTimeout(function(){
-                window.location.href = job_list_url + "?jobname=" + jobName + "&msg=deleted&jobid=" + jobId;
+                window.location.href = client_job_list_url + "?jobname=" + jobName + "&msg=deleted&jobid=" + jobId;
             }, 3000);
         });
         // Change click event for Details buttons
@@ -730,7 +729,7 @@ var uws_client = (function($) {
         $("#div_info").html('<strong>Job does not exist</strong>: '+jobId+', going back to job list').addClass('alert alert-warning');
         logger('WARNING', 'displaySingleJob '+ jobId, exception);
         setTimeout(function(){
-            window.location.href = job_list_url + "?msg=missing&jobid=" + jobId;
+            window.location.href = client_job_list_url + "?msg=missing&jobid=" + jobId;
         }, 3000);
     };
 
@@ -778,8 +777,8 @@ var uws_client = (function($) {
         prepareTable();
         for (var i in jobNames) {
             var jobName = jobNames[i];
-            logger('INFO', 'Get job list for '+jobName);
-            clients[jobName].getJobListInfos(getJobListSuccess,getJobListError);
+            logger('INFO', 'Get job list for ' + jobName);
+            clients[jobName].getJobListInfos(getJobListSuccess, getJobListError);
         }
     };
     var getJobListSuccess = function(jobs) {
@@ -881,7 +880,7 @@ var uws_client = (function($) {
     var createJobSuccess = function(job) {
         logger('INFO', 'Job created with id='+job.jobId+' jobname='+job.jobName);
         // redirect to URL + job_id
-        window.location.href = job_edit_url + "/" + job.jobName + "/" + job.jobId;
+        window.location.href = client_job_edit_url + "/" + job.jobName + "/" + job.jobId;
     };
     var createJobError = function(exception){
         logger('ERROR', 'createJob', exception);

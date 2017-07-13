@@ -12,15 +12,23 @@
         // Get jobnames from server
         $.ajax({
             url : server_url + '/get_jobnames',
-            async : false,
             cache : false,
             type : 'GET',
             dataType: "json",
             success : function(json) {
+                console.log(json['jobnames']);
+                // Fill select
                 for (var jn in json['jobnames']) {
                     $('.selectpicker').append('<option>' + json['jobnames'][jn] + '</option>')
                 };
-            $('.selectpicker').selectpicker('refresh');
+                $('.selectpicker').selectpicker('refresh');
+                // Check if jobname is set in DOM
+                var jobname = $('#jobname').attr('value');
+                if (jobname) {
+                    $('select[name=jobname]').val(jobname);
+                    $('.selectpicker').selectpicker('refresh');
+                    load_job_list();
+                };
             },
             error : function(xhr, status, exception) {
                 console.log(exception);
@@ -30,9 +38,8 @@
 
     function load_job_list() {
         var jobname = $('select[name=jobname]').val();
-        var auth = $('#auth').attr('value');
         // init UWS Client
-        uws_client.initClient(server_url, [jobname], auth);
+        uws_client.initClient(server_url, [jobname]);
         uws_client.getJobList();
         if ( $( "#job_id" ).length ) {
             uws_client.selectJob($( "#jobid" ).attr('value'));
@@ -47,13 +54,6 @@
         get_jobnames();
         $('.selectpicker').selectpicker('deselectAll');
         $('button.actions').attr('disabled', 'disabled');
-        // check if jobname is set in DOM
-        var jobname = $('#jobname').attr('value');
-        if (jobname) {
-            $('select[name=jobname]').val(jobname);
-            $('.selectpicker').selectpicker('refresh');
-            load_job_list();
-        };
         // Add events
         $('.selectpicker').on('change', function(){
             load_job_list();

@@ -13,8 +13,7 @@
         
         server_url = $('#server_url').attr('value');
         jobname = $('#jobname').attr('value');
-        var auth = $('#auth').attr('value');
-        uws_client.initClient(server_url, [jobname], auth);
+        uws_client.initClient(server_url, [jobname]);
         uws_client.displayParamForm(jobname);
 
         // catch the form's submit event to validate form

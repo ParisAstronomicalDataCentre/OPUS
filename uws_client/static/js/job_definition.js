@@ -373,7 +373,6 @@
         // ajax command to get_jdl on UWS server
         $.ajax({
 			url : server_url + '/get_jdl/' + jobname,  //.split("/").pop(),  // to remove new/ (not needed here)
-			async : true,
 			type : 'GET',
 			dataType: "text",
 			success : function(jdl) {
@@ -392,7 +391,6 @@
         // Get jobnames from server
         $.ajax({
             url : server_url + '/get_jobnames',
-            async : true,
             cache : false,
             type : 'GET',
             dataType: "json",
