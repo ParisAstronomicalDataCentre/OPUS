@@ -318,7 +318,7 @@ def init_db():
         logger.info('Database initialized using ' + filename)
     except:
         abort_500_except()
-    redirect('/db/show', 303)
+    redirect('/db/show/dummy', 303)
 
 
 @app.route('/db/test')
@@ -343,7 +343,7 @@ def test_db():
         logger.info('Database initialized using ' + filename)
     except:
         abort_500_except()
-    redirect('/db/show', 303)
+    redirect('/db/show/dummy', 303)
 
 
 @app.route('/db/show/<jobname>')
