@@ -55,14 +55,9 @@ var uwsLib = (function() {
 	};
 	
 	
-	function uwsClient(serviceUrl, basicauth){
+	function uwsClient(serviceUrl){
 		this.serviceUrl = serviceUrl;
 		this.jobName = serviceUrl.split('/').pop();
-		if(basicauth.length == 0){
-            //basicauth = btoa("anonymous:anonymous");
-            console.log('!!basicauth...')
-        };
-		this.basicauth = basicauth;
 	};
 	
 	uwsClient.prototype.getJobListInfos
@@ -74,9 +69,6 @@ var uwsLib = (function() {
 			async : true,
 			type : 'GET',
 			dataType: "xml",
-			headers: {
-    			"Authorization": "Basic " + this.basicauth
-  			},
 			success : function(xml) {
 				var jobs = getJobListFromXml(xml, jobName);
 				SuccessCallback(jobs);
@@ -94,9 +86,6 @@ var uwsLib = (function() {
 			async : true,
 			type : 'POST',
 			data : jobParameters,
-			headers: {
-    			"Authorization": "Basic " + this.basicauth
-  			},
 			success : function(xml) {
 				var job = getJobFromXml(xml, jobName);
 				SuccessCallback(job);
@@ -116,9 +105,6 @@ var uwsLib = (function() {
 			type: 'POST',
 			dataType: "xml",
 			data: "ACTION=DELETE",
-			headers: {
-    			"Authorization": "Basic " + this.basicauth
-  			},
 			success : function(xml) {
 				var jobs = getJobListFromXml(xml, jobName);
 				successCallback(id, jobs);
@@ -136,9 +122,6 @@ var uwsLib = (function() {
 			type: 'POST',
 			dataType: "xml",
 			data: "PHASE=ABORT",
-			headers: {
-    			"Authorization": "Basic " + this.basicauth
-  			},
 			success : function(xml) {
 				successCallback(id);
 			},
@@ -155,9 +138,6 @@ var uwsLib = (function() {
 			type: 'POST',
 			dataType: "xml",
 			data: "PHASE=RUN",
-			headers: {
-    			"Authorization": "Basic " + this.basicauth
-  			},
 			success : function(xml) {
 				successCallback(id);
 			},
@@ -174,9 +154,6 @@ var uwsLib = (function() {
 			url : this.serviceUrl + "/" + id,
 			type: 'GET',
 			dataType: "xml",
-			headers: {
-    			"Authorization": "Basic " + this.basicauth
-  			},
 			success : function(xml) {
 				var job = getJobFromXml(xml, jobName);
 				successCallback(job);
@@ -191,9 +168,6 @@ var uwsLib = (function() {
 			url : this.serviceUrl + "/" + id + "/results",
 			type: 'GET',
 			dataType: "xml",
-			headers: {
-    			"Authorization": "Basic " + this.basicauth
-  			},
 			success : function(xml) {
 				var results = readResults(xml);
 				successCallback(id, results);
@@ -208,9 +182,6 @@ var uwsLib = (function() {
 		$.ajax({
 			url : this.serviceUrl + "/" + id + "/phase",
 			type: 'GET',
-			headers: {
-    			"Authorization": "Basic " + this.basicauth
-  			},
 			success : function(xhr) {
 				successCallback(id, xhr);
 			},
@@ -226,9 +197,6 @@ var uwsLib = (function() {
 			async : false,
 			type: 'GET',
 			dataType: "xml",
-			headers: {
-    			"Authorization": "Basic " + this.basicauth
-  			},
 		}).responseXML;
 	}
 	
@@ -238,9 +206,6 @@ var uwsLib = (function() {
 			async : false,
 			type : 'GET',
 			dataType: "xml",
-			headers: {
-    			"Authorization": "Basic " + this.basicauth
-  			},
 		}).responseXML;
 	}
 	
