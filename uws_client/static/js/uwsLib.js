@@ -34,6 +34,7 @@ var uwsLib = (function() {
 		job.jobName = jobName;
 		job.jobId = $(jobXmlElement).find("uws\\:jobId, jobId").text();
 		job.phase = $(jobXmlElement).find("uws\\:phase, phase").text();
+		job.creationTime = $(jobXmlElement).find("uws\\:creationTime, creationTime").text();
 		job.startTime = $(jobXmlElement).find("uws\\:startTime, startTime").text();
 		job.endTime = $(jobXmlElement).find("uws\\:endTime, endTime").text();
 		job.destruction = $(jobXmlElement).find("uws\\:destruction, destruction").text();
