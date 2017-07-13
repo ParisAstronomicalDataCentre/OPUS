@@ -18,7 +18,7 @@
 // Some results (stdout, stderr, provxml, provsvg) are shown as bootstrap panels in a div block with id=details_list
 // <div id='details_list' class='text-center'></div>
 
-var uws_manager = (function($) {
+var uws_client = (function($) {
     "use strict";
 
     var refreshPhaseTimeout = {}; // stores setInterval functions for phase refresh

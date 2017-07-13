@@ -14,15 +14,15 @@
         server_url = $('#server_url').attr('value');
         jobname = $('#jobname').attr('value');
         var auth = $('#auth').attr('value');
-        uws_manager.initManager(server_url, [jobname], auth);
-        uws_manager.displayParamForm(jobname);
+        uws_client.initManager(server_url, [jobname], auth);
+        uws_client.displayParamForm(jobname);
 
         // catch the form's submit event to validate form
         $('#job_params').submit(function(event) {
             event.preventDefault();
             var formData = new FormData($('#job_params')[0]);
             formData.append('PHASE', 'RUN');
-            uws_manager.createJob(jobname, formData);
+            uws_client.createJob(jobname, formData);
         });
     });
         

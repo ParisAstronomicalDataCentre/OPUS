@@ -392,12 +392,12 @@
         // Get jobnames from server
         $.ajax({
             url : server_url + '/get_jobnames',
-            async : false,
+            async : true,
             cache : false,
             type : 'GET',
             dataType: "json",
             success : function(json) {
-                //console.log(json['jobnames']);
+                console.log(json['jobnames']);
                 $('input[name=name]').autocomplete({
                     source: json['jobnames']
                 });

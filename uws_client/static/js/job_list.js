@@ -32,10 +32,10 @@
         var jobname = $('select[name=jobname]').val();
         var auth = $('#auth').attr('value');
         // init UWS Manager
-        uws_manager.initManager(server_url, [jobname], auth);
-        uws_manager.getJobList();
+        uws_client.initManager(server_url, [jobname], auth);
+        uws_client.getJobList();
         if ( $( "#job_id" ).length ) {
-            uws_manager.selectJob($( "#jobid" ).attr('value'));
+            uws_client.selectJob($( "#jobid" ).attr('value'));
         }
         $('button.actions').removeAttr('disabled');
     };
@@ -59,14 +59,14 @@
             load_job_list();
         });
         $('#refresh_list').click( function() {
-            uws_manager.getJobList();
+            uws_client.getJobList();
         });
         $('#create_test_job').click( function() {
             var jobname = $('select[name=jobname]').val();
             var formData = new FormData();
             formData.append('inobs', 'http://voplus.obspm.fr/cta/events.fits');
             //formData.append('PHASE', 'RUN');
-            uws_manager.createTestJob(jobname, formData);
+            uws_client.createTestJob(jobname, formData);
         });
         $('#create_new_job').click( function() {
             var jobname = $('select[name=jobname]').val();
