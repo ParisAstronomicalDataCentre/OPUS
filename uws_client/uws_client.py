@@ -20,15 +20,34 @@ from flask_login import user_logged_in, user_logged_out, current_user
 # from werkzeug.wsgi import DispatcherMiddleware
 # from wsgiproxy import HostProxy
 
-APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+# Configuration
+
+DEBUG=False
+TESTING=False
+#SERVER_NAME=  # (e.g.: 'myapp.dev:5000')
 APPLICATION_ROOT = '/client'
 ENDPOINT = '/client'
-#UWS_SERVER_URL = 'http://localhost'
+# UWS_SERVER_URL = 'http://localhost'
 UWS_SERVER_URL = 'https://voparis-uws-test.obspm.fr'
-UWS_SERVER_URL_JS = '/client/proxy'
-ALLOW_ANONYMOUS = False
+UWS_SERVER_URL_JS = '/client/proxy'  # called by javascript, set to local url to avoid cross-calls
 UWS_AUTH = 'Basic'
-CHUNK_SIZE = 1024
+ALLOW_ANONYMOUS = False
+# CHUNK_SIZE = 1024
+LOG_PATH = '/var/www/opus/logs'
+LOG_FILE_SUFFIX = ''
+
+SQLALCHEMY_DATABASE_URI = 'sqlite:////var/www/opus/db/flask_login.db',
+SQLALCHEMY_TRACK_MODIFICATIONS = False,
+SECURITY_PASSWORD_SALT = 'test',
+SECURITY_URL_PREFIX = '/accounts',
+SECURITY_FLASH_MESSAGES = True,
+SECURITY_POST_LOGIN_VIEW = '/client',
+SECURITY_POST_LOGOUT_VIEW = '/client',
+SECURITY_USER_IDENTITY_ATTRIBUTES = ['email'],
+#SECURITY_REGISTERABLE = True,
+#SECURITY_CHANGEABLE = True,
+
+APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
 #--- Include host-specific settings ------------------------------------------------------------------------------------
 if os.path.exists(APP_PATH + '/uws_client/settings_local.py'):
@@ -36,8 +55,6 @@ if os.path.exists(APP_PATH + '/uws_client/settings_local.py'):
 #--- Include host-specific settings ------------------------------------------------------------------------------------
 
 # Set logger
-LOG_PATH = '/var/www/opus/logs'
-LOG_FILE_SUFFIX = ''
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -77,28 +94,10 @@ logger.info('Load flask client')
 app = Flask(__name__) # create the application instance :)
 app.secret_key = b'\ttrLu\xdd\xde\x9f\xd2}\xc1\x0e\xb6\xe6}\x95\xc6\xb1\x8f\xa09\xf5\x1aG'
 
-app.config.from_object(__name__) # load config from this file , flaskr.py
+app.config.from_object(__name__) # load config from this file
 
 # Load default config and override config from an environment variable
 app.config.update(dict(
-    #APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)),
-    #APPLICATION_ROOT = '/client',
-    #UWS_SERVER_URL = 'http://localhost:8080',
-    #UWS_SERVER_URL = 'http://localhost',
-    #UWS_SERVER_URL = 'http://localhost/proxy',
-    #UWS_SERVER_URL = 'https://voparis-uws-test.obspm.fr',
-    #ALLOW_ANONYMOUS = False,
-    DEBUG = True,
-    SQLALCHEMY_DATABASE_URI = 'sqlite:////var/www/opus/db/flask_login.db',
-    SQLALCHEMY_TRACK_MODIFICATIONS = False,
-    SECURITY_PASSWORD_SALT = 'test',
-    SECURITY_URL_PREFIX = '/accounts',
-    SECURITY_FLASH_MESSAGES = True,
-    SECURITY_POST_LOGIN_VIEW = '/client',
-    SECURITY_POST_LOGOUT_VIEW = '/client',
-    SECURITY_USER_IDENTITY_ATTRIBUTES = ['email'],
-    #SECURITY_REGISTERABLE = True,
-    #SECURITY_CHANGEABLE = True,
 ))
 
 # ----------
@@ -106,7 +105,7 @@ app.config.update(dict(
 
 db = SQLAlchemy(app)
 
-# Define models
+# Define models for User and Role
 roles_users = db.Table('roles_users',
         db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
         db.Column('role_id', db.Integer(), db.ForeignKey('role.id')))
@@ -121,12 +120,12 @@ class Role(db.Model, RoleMixin):
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(255), unique=True)
+    username = db.Column(String(255))
     password = db.Column(db.String(255))
     pid = db.Column(db.String(255))
     active = db.Column(db.Boolean())
     confirmed_at = db.Column(db.DateTime())
-    roles = db.relationship('Role', secondary=roles_users,
-                            backref=db.backref('users', lazy='dynamic'))
+    roles = db.relationship('Role', secondary=roles_users, backref=db.backref('users', lazy='dynamic'))
 
 
 # Setup Flask-Security
@@ -293,7 +292,7 @@ def cp_script(jobname):
 
 @app.route('/proxy/<path:uri>', methods=['GET', 'POST'])
 def proxy(uri):
-    r = uws_server_request('/' + uri, method=request.method, data=request.form, headers=request.headers)
+    r = uws_server_request('/' + uri, method=request.method, params=request.args, data=request.form, headers=request.headers)
     # logger.debug(r.headers.__dict__)
     # def generate():
     #     for chunk in r.iter_content(CHUNK_SIZE):

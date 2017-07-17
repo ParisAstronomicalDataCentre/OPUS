@@ -192,7 +192,8 @@ def abort_500_except(msg=None):
 
 @app.route('/')
 def home():
-    return 'OPUS'
+    redirect('/client')
+    # return 'OPUS'
 
 
 @app.route('/favicon.ico')
