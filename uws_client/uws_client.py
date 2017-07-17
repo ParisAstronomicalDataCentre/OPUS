@@ -97,8 +97,7 @@ app.secret_key = b'\ttrLu\xdd\xde\x9f\xd2}\xc1\x0e\xb6\xe6}\x95\xc6\xb1\x8f\xa09
 app.config.from_object(__name__) # load config from this file
 
 # Load default config and override config from an environment variable
-app.config.update(dict(
-))
+# app.config.update(dict())
 
 # ----------
 #  User DB
