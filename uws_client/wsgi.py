@@ -15,7 +15,7 @@ sys.path.append(curdir)
 # Change working directory so relative paths (and template lookup) work again
 os.chdir(curdir)
 
-from uws_client_bottle import uws_client_bottle
+from uws_client import uws_client
 
 # Do NOT use bottle.run() with mod_wsgi
-application = uws_client_bottle.app
+application = uws_client.app
