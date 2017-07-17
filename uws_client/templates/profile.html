@@ -1,0 +1,28 @@
+{% extends "skeleton.html" %}
+{% block content %}
+    <div class="container bs-docs-container">
+	    <div class="col-md-6 col-md-offset-3">
+            <div id="description" class="panel panel-default">
+                <div class="panel-heading clearfix">
+                    <span class="pull-left" style="padding-top: 4px;">
+                        <span class="panel-title">User profile</span>
+                    </span>
+                </div>
+                <div id="div_table" class="table-responsive">
+                    <table id="list" class="table table-bordered">
+                        <tbody>
+                            <tr>
+                                <td><strong>Email/Username</strong></td>
+                                <td>{{ current_user.email }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>PID</strong></td>
+                                <td>{{ current_user.pid }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div> <!-- panel -->
+        </div> <!-- col -->
+    </div> <!-- container -->
+{% endblock %}

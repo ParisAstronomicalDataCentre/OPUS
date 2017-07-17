@@ -1,0 +1,29 @@
+{% extends "skeleton.html" %}
+{% block js %}
+    <script type="text/javascript" src="/static/js/uwsLib.js" defer></script>
+    <script type="text/javascript" src="/static/js/uws_client.js" defer></script>
+    <script type="text/javascript" src="/static/js/job_form.js" defer></script>
+{% endblock %}
+{% block variables %}
+    <div id="server_url" style="display:none" value="{{ session.server_url }}"></div>
+	<div id="jobname" style="display:none" value="{{ jobname }}"></div>
+{% endblock %}
+{% block content %}
+	<div class="container bs-docs-container">    
+        <div id="new_job_panel" class="panel panel-default">
+            <div class="panel-heading clearfix">
+                <span class="pull-left" style="padding-top: 4px;">
+                    <span class="panel-title">Create new {{ jobname }} job</span>
+                </span>
+                <a id="to_job_list" type="button" class="btn btn-default btn-sm pull-right" href="{{ url_for('job_list', jobname=jobname) }}">Back to job list</a>
+            </div>
+            <div id="parameters_panel" class="panel-body">
+                <p></p>
+                <!-- show form -->
+                <form id="job_params" class="form-horizontal" role="form" action="" method="get">
+                </form>
+            </div> <!-- panel-body -->
+        </div> <!-- panel -->
+	</div> <!-- container -->
+{% endblock %}
+        

@@ -1,0 +1,40 @@
+{% extends "skeleton.html" %}
+{% block js %}
+    <script type="text/javascript" src="/static/js/jquery.tablesorter.js" defer></script> 
+    <script type="text/javascript" src="/static/js/uwsLib.js" defer></script>
+    <script type="text/javascript" src="/static/js/uws_client.js" defer></script>
+    <script type="text/javascript" src="/static/js/job_list.js" defer></script>
+{% endblock %}
+{% block variables %}
+    <div id="server_url" style="display:none" value="{{ session.server_url }}"></div>
+    <div id="jobname" style="display:none" value="{{ jobname }}"></div>
+{% endblock %}
+{% block content %}
+	<div class="container bs-docs-container">
+        <div id="job_list_panel" class="panel panel-default">
+            <div class="panel-heading clearfix">
+                <div class="btn-group pull-right">
+                    <button id="refresh_list" type="button" class="actions btn btn-default">Refresh Job List</button>
+                    <button id="create_test_job" type="button" class="actions btn btn-default">Create Test Job</button>
+                    <button id="create_new_job" type="button" class="actions btn btn-default">Create New Job</button>
+                </div>
+                <span>
+                    <select name="jobname" class="selectpicker" title="Please Select...">
+                        <option data-hidden="true"></option>
+                        <!-- will be added by js function -->
+                    </select>
+                </span>
+                <span class="panel-title pull-left" style="padding-top: 6px; padding-right: 6px;">Job List for </span>
+            </div>
+            <div id="div_loading" style="display:none;">
+                <p></p>
+                <img src="/static/images/loading.png" alt="loading" style="display: block;margin-left: auto; margin-right: auto" />
+            </div>
+            <div id="div_table" class="table-responsive">
+                <table id="job_list" class="table table-bordered table-condensed tablesorter">
+                </table>
+            </div>
+        </div> <!-- panel -->
+	</div> <!-- container -->
+{% endblock %}
+        

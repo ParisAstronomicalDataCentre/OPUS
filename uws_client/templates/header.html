@@ -1,0 +1,55 @@
+    <div class="bs-docs-header">
+        <div class="container">
+            <div class="navbar navbar-default">
+                <div class="navbar-header">
+                    <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse" type="button">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="{{ url_for('home') }}">OPUS</a>
+                </div> <!-- navbar-header -->
+                <div class="navbar-collapse collapse">
+                    <ul class="nav navbar-nav">
+                        <!--<li {{print(" class=\"active\"") if (page_title == "help")}}>-->
+                            <!--<a href="/help"><span class="glyphicon glyphicon-search"></span>-->
+                            <!--Help</a>-->
+                        <!--</li>-->
+                        <!--<li{{' class="active"' if page_title == 'job_list'}}>-->
+                            <!--<a href="/job_list"><span class="glyphicon glyphicon-cog"></span>-->
+                            <!--Available jobs</a>-->
+                        <!--</li>-->
+                        <li{{' class="active"' if page_title == 'new_job_def'}}>
+                            <a href="{{ url_for('job_definition') }}"><span class="glyphicon glyphicon-edit"></span>
+                                Job Definition</a>
+                        </li>
+                        <li{{' class="active"' if page_title == 'job_list'}}>
+                            <a href="{{ url_for('job_list') }}"><span class="glyphicon glyphicon-list"></span>
+                                Job Manager</a>
+                        </li>
+                    </ul>
+                    <ul class="nav navbar-nav navbar-right">
+{% if current_user.is_authenticated %}
+                        <li class="dropdown">
+                              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                                  <span class="glyphicon glyphicon-user"></span>
+                                  Signed in as <strong>{{ current_user.email }}</strong><span class="caret"></span>
+                              </a>
+                              <ul class="dropdown-menu">
+                                    <li><a href="{{ url_for('profile') }}">User profile</a></li>
+                                    <li><a href="{{ url_for_security('logout') }}">Sign out user</a></li>
+                              </ul>
+                        </li>
+{% else %}
+                        <li>
+                            <a href="{{ url_for_security('login') }}"><span class="glyphicon glyphicon-user"></span>
+                                Sign in
+                            </a>
+                        </li>
+{% endif %}
+                    </ul>
+                </div> <!-- navbar-collapse -->
+            </div> <!-- navbar -->
+        </div> <!-- container -->
+    </div> <!-- header -->

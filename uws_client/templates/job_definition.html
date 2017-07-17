@@ -1,0 +1,221 @@
+{% extends "skeleton.html" %}
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/static/css/codemirror.css" />
+{% endblock %}
+{% block js %}
+    <script type="text/javascript" src="/static/js/codemirror.js" defer></script>
+    <script type="text/javascript" src="/static/js/codemirror_shell.js" defer></script>
+    <script type="text/javascript" src="/static/js/FileSaver.min.js" defer></script>
+    <script type="text/javascript" src="/static/js/job_definition.js" defer></script>
+{% endblock %}
+{% block variables %}
+    <div id="server_url" style="display:none" value="{{ session.server_url }}"></div>
+    <div id="jobname" style="display:none" value="{{ jobname }}"></div>
+{% endblock %}
+{% block content %}
+    <div class="container bs-docs-container">
+        <div id="new_job_form" class="panel panel-default">
+            <div class="panel-heading clearfix">
+{% if is_admin  %}
+                <div class="btn-group pull-right">
+                    <button id="validate_job" type="button" class="actions btn btn-default">
+                        Validate Job
+                    </button>
+                    <button id="cp_script" type="button" class="actions btn btn-default">
+                        Copy script
+                    </button>
+                </div>
+                <span class="panel-title pull-left" style="padding-top: 6px; padding-right: 6px;">Job Definition</span>
+{% else %}
+                <span class="panel-title">Job Definition</span>
+{% endif %}
+            </div>
+            <div class="panel-body">
+                <form action="{{ url_for('job_definition') }}" method="post" class="form-horizontal">
+                    <div class="row">
+                        <div class="col-md-12 form-group">
+                            <label class="col-md-2 control-label">Name</label>
+                            <div class="col-md-7 controls">
+                                <div class="input-group">
+                                    <input class="form-control" name="name" type="text" value="" />
+                                    <span class="input-group-btn">
+                                        <button id="load_jdl" class="btn btn-default" type="button">Load JDL</button>
+                                        <button id="get_jdl" class="btn btn-default" type="button">Get JDL</button>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-md-3 help-block">Job name. <span id="load_msg" class="text-danger" style="display: none;">Message!</span></div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 form-group">
+                            <label class="col-md-2 control-label">Description</label>
+                            <div class="col-md-7 controls">
+                                <textarea class="form-control" name="description" rows="6"></textarea>
+                            </div>
+                            <div class="col-md-3 help-block">Job description.</div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 form-group">
+                            <label class="col-md-2 control-label">URL</label>
+                            <div class="col-md-7 controls">
+                                <input class="form-control" name="doculink" type="text" value="http://" />
+                            </div>
+                            <div class="col-md-3 help-block">
+                                URL to a more complete description of the job.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 form-group">
+                            <label class="col-md-2 control-label">Contact name</label>
+                            <div class="col-md-7 controls">
+                                <input class="form-control" name="contact_name" type="text" value="" />
+                            </div>
+                            <div class="col-md-3 help-block">
+                                Name of the person/organization responsible for this job.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 form-group">
+                            <label class="col-md-2 control-label">Contact email</label>
+                            <div class="col-md-7 controls">
+                                <input class="form-control" name="contact_email" type="text" value="" />
+                            </div>
+                            <div class="col-md-3 help-block">
+                                Email of the contact person/organization.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 form-group">
+                            <label class="col-md-2 control-label">Input</label>
+                            <div class="col-md-7 controls">
+                                <div style="height: 2px;"></div>
+                                <table id="used_list" width="100%">
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                                <table id="used_buttons" width="100%">
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="100%">
+                                                <button id="add_used" type="button" class="btn btn-sm btn-default">Add input</button>
+                                                <button id="remove_all_used" type="button" class="btn btn-sm btn-default">Remove all input</button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-3 help-block">
+                                List of input entities (e.g. files) used with their name and content type.<br>
+                                The input is a File or an ID, possibly with a URL to resolve the ID and download the file (use $ID in the URL template).
+                                If no URL is specified, the script itself should be able to resolve the ID and get the file.<br>
+                                Note that an input can refer to a parameter (if it has the same name),
+                                e.g. the name of an input file used in the script.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 form-group">
+                            <label class="col-md-2 control-label">Results</label>
+                            <div class="col-md-7 controls">
+                                <div style="height: 2px;"></div>
+                                <table id="result_list" width="100%">
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                                <table id="result_buttons" width="100%">
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="100%">
+                                                <button id="add_result" type="button" class="btn btn-sm btn-default">Add result</button>
+                                                <button id="remove_all_results" type="button" class="btn btn-sm btn-default">Remove all results</button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-3 help-block">
+                                List of possible results with their name and content type. A default name can be provided.<br>
+                                Note that a result can refer to a parameter (if it has the same name),
+                                e.g. the name of an output file generated by the script.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 form-group">
+                            <label class="col-md-2 control-label">Parameters</label>
+                            <div class="col-md-7 controls">
+                                <div style="height: 2px;"></div>
+                                <table id="param_list" width="100%">
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                                <table id="param_buttons" width="100%">
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="100%">
+                                                <button id="add_parameter" type="button" class="btn btn-sm btn-default">Add parameter</button>
+                                                <button id="remove_all_parameters" type="button" class="btn btn-sm btn-default">Remove all parameters</button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-3 help-block">
+                                List of parameters, with name, default value, type and description.<br>
+                                Specify if the parameter is required by checking the box (if not, the parameters won't be shown by the client and the default value will always be used).<br>
+                                A list of options can be specified (comma-separated values).<br>
+                                Additional attributes can be defined (unit, ucd, utype, min, max).
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 form-group">
+                            <label class="col-md-2 control-label">Execution duration</label>
+                            <div class="col-md-7 controls">
+                                <input class="form-control" name="executionduration" type="number" value="60" step="1" min="0" />
+                            </div>
+                            <div class="col-md-3 help-block">
+                                Duration in seconds that will be allocated to the job.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 form-group">
+                            <label class="col-md-2 control-label">Default quote</label>
+                            <div class="col-md-7 controls">
+                                <input class="form-control" name="quote" type="number" value="10" step="1" min="0" />
+                            </div>
+                            <div class="col-md-3 help-block">
+                                Default quote in seconds corresponding to the expected duration of the job.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 form-group">
+                            <label class="col-md-2 control-label">Bash script</label>
+                            <div class="col-md-7 controls">
+                                <textarea class="form-control" name="script" rows="10" style="font-family: monospace"></textarea>
+                            </div>
+                            <div class="col-md-3 help-block">
+                                Job as a bash script. Parameters are available as bash variables, e.g. ${parameter_name}.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 form-group">
+                            <label class="col-md-2 control-label">&nbsp;</label>
+                            <div class="col-md-7 controls">
+                                <input value="Create JDL and script" type="submit" class="btn btn-primary" />
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div> <!-- panel -->
+	</div> <!-- container -->
+{% endblock %}

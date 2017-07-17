@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <!-- mobile viewport optimisation -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Description -->
+    <meta name="description" content="UWS Server"/>
+    <meta name="author" content="Mathieu Servillat"/>
+    <title>UWS Server</title>
+    <!-- CSS -->
+{% include "inc_css_common.html" %}{% block css %}{% endblock %}
+    <!-- JavaScript common -->
+{% include "inc_js_common.html" %}
+    <!-- JavaScript local -->{% block js %}{% endblock %}
+</head>
+<body>
+    <!-- Variables defined in div elements for JavaScript -->
+    <div id="variables">
+    <div id="auth" style="display:none" value="{{ session.auth }}"></div>
+    <div id="endpoint" style="display:none" value="{{ config.ENDPOINT }}"></div>{% block variables %}{% endblock %}
+    </div>
+    <!-- Page header (banner and nav panel) -->
+{% block header %}{% include "header.html" %}{% endblock %}
+    <!-- Message -->
+{% block message %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="container">
+        <div class="col-md-8 col-md-offset-2">
+        {% for category, message in messages %}
+            {% if category != "message" %}
+            <div class="alert alert-{{ category }} text-center"> {{ message }} </div>
+            {% else %}
+            <div class="alert alert-info text-center"> {{ message }} </div>
+            {% endif %}
+        {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    {% endwith %}
+{% endblock %}
+    <!-- Content -->
+{% block content %}{% endblock %}
+    <!-- Footer (credits) -->
+{% block footer %}{% include "footer.html" %}{% endblock %}
+</body>
+</html>
