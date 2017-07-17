@@ -36,6 +36,17 @@ ALLOW_ANONYMOUS = False
 LOG_PATH = '/var/www/opus/logs'
 LOG_FILE_SUFFIX = ''
 
+SQLALCHEMY_DATABASE_URI = 'sqlite:////var/www/opus/db/flask_login.db',
+SQLALCHEMY_TRACK_MODIFICATIONS = False,
+SECURITY_PASSWORD_SALT = 'test',
+SECURITY_URL_PREFIX = '/accounts',
+SECURITY_FLASH_MESSAGES = True,
+SECURITY_POST_LOGIN_VIEW = '/client',
+SECURITY_POST_LOGOUT_VIEW = '/client',
+SECURITY_USER_IDENTITY_ATTRIBUTES = ['email'],
+#SECURITY_REGISTERABLE = True,
+#SECURITY_CHANGEABLE = True,
+
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
 #--- Include host-specific settings ------------------------------------------------------------------------------------
@@ -86,18 +97,7 @@ app.secret_key = b'\ttrLu\xdd\xde\x9f\xd2}\xc1\x0e\xb6\xe6}\x95\xc6\xb1\x8f\xa09
 app.config.from_object(__name__) # load config from this file
 
 # Load default config and override config from an environment variable
-app.config.update(dict(
-        SQLALCHEMY_DATABASE_URI = 'sqlite:////var/www/opus/db/flask_login.db',
-        SQLALCHEMY_TRACK_MODIFICATIONS = False,
-        SECURITY_PASSWORD_SALT = 'test',
-        SECURITY_URL_PREFIX = '/accounts',
-        SECURITY_FLASH_MESSAGES = True,
-        SECURITY_POST_LOGIN_VIEW = '/client',
-        SECURITY_POST_LOGOUT_VIEW = '/client',
-        SECURITY_USER_IDENTITY_ATTRIBUTES = ['email'],
-        #SECURITY_REGISTERABLE = True,
-        #SECURITY_CHANGEABLE = True,
-))
+#app.config.update(dict())
 
 # ----------
 #  User DB
@@ -165,9 +165,9 @@ def create_db():
         )
         db.session.commit()
         logger.warning('Database created')
-    except:
+    except Exception as e:
         db.session.rollback()
-        logger.warning('Database already exists')
+        logger.warning(e.message)
 
 
 # ----------
