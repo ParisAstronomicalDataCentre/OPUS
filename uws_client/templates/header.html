@@ -40,7 +40,8 @@
 {% if current_user.has_role('admin') %}
                                 <li><a href="{{ url_for('preferences') }}">Preferences</a></li>
 {% endif %}
-                                <li><a href="{{ url_for('profile') }}">Profile</a></li>
+                                <li><a href="{{ url_for('profile') }}">Show profile</a></li>
+                                <li><a href="{{ url_for_security('change_password') }}">Change password</a></li>
                                 <li><a href="{{ url_for_security('logout') }}">Sign out</a></li>
                             </ul>
                         </li>
