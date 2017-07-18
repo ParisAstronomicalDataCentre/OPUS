@@ -46,8 +46,8 @@ if os.path.exists(APP_PATH + '/uws_client/settings_local.py'):
     from settings_local import *
 #--- Include host-specific settings ------------------------------------------------------------------------------------
 
-LOG_PATH = VAR_PATH + '/logs'
-CONFIG_FILE = VAR_PATH + '/uws_client_config.yaml'
+LOG_PATH = VAR_PATH + '/logs'  # the logs dir has to be writable from the app
+CONFIG_FILE = VAR_PATH + '/config/uws_client_config.yaml'  # the config dir has to be writable from the app
 SQLALCHEMY_DATABASE_URI = 'sqlite:///{}/db/flask_login.db'.format(VAR_PATH)  # SQLALCHEMY_DATABASE_URI_LOCAL,
 SQLALCHEMY_TRACK_MODIFICATIONS = True
 SECURITY_PASSWORD_SALT = 'test'
