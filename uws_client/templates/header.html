@@ -32,14 +32,17 @@
                     <ul class="nav navbar-nav navbar-right">
 {% if current_user.is_authenticated %}
                         <li class="dropdown">
-                              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
                                   <span class="glyphicon glyphicon-user"></span>
                                   Signed in as <strong>{{ current_user.email }}</strong><span class="caret"></span>
-                              </a>
-                              <ul class="dropdown-menu">
-                                    <li><a href="{{ url_for('profile') }}">User profile</a></li>
-                                    <li><a href="{{ url_for_security('logout') }}">Sign out user</a></li>
-                              </ul>
+                            </a>
+                            <ul class="dropdown-menu">
+{% if current_user.has_role('admin') %}
+                                <li><a href="{{ url_for('preferences') }}">Preferences</a></li>
+{% endif %}
+                                <li><a href="{{ url_for('profile') }}">Profile</a></li>
+                                <li><a href="{{ url_for_security('logout') }}">Sign out</a></li>
+                            </ul>
                         </li>
 {% else %}
                         <li>
