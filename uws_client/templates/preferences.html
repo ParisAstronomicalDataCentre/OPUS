@@ -1,0 +1,23 @@
+{% extends "skeleton.html" %}
+{% block content %}
+	<div class="container bs-docs-container">
+	    <div class="col-md-6 col-md-offset-3">
+            <form class="form-horizontal" action="{{ url_for('preferences') }}" method="POST" name="preferences_form">
+                {% for key, value in config.EDITABLE_CONFIG.items() %}
+                <div class="form-group">
+                    <label class="col-md-4 control-label">{{ key }}</label>
+                    <div id="div_' + pname + '" class="col-md-8 controls">
+                        <input class="form-control" name="{{ key }}" type="text" value="{{ config[key] }}"/>
+                    </div>
+                </div>
+                {% endfor %}
+                <div id="form-buttons" class="form-group">
+                    <div class="col-md-offset-4 col-md-8">
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                        <button type="reset" class="btn btn-default">Reset</button>
+                    </div>
+                </div>
+            </form>
+	    </div> <!-- col -->
+	</div> <!-- container -->
+{% endblock %}
