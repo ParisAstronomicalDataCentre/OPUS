@@ -186,9 +186,9 @@ if 'test.py' in main_dict.get('__file__', ''):
 
 #--- Set all _PATH based on APP_PATH or VAR_PATH -----------------------------------------------------------------------
 # Path for JDL files, should probably be accessed through a URL as static files
-JDL_PATH = VAR_PATH + '/job_def'
+JDL_PATH = VAR_PATH + '/jdl'
 # Path for script files, should probably be accessed through a URL as static files
-SCRIPT_PATH = VAR_PATH + '/job_def/scripts'
+SCRIPT_PATH = VAR_PATH + '/jdl/scripts'
 # Path to sqlite db file
 SQLITE_FILE = VAR_PATH + '/db/' + SQLITE_FILE_NAME
 # If POST contains files they are uploaded on the UWS server
@@ -200,7 +200,7 @@ RESULTS_PATH = JOBDATA_PATH + '/results'
 # EntityStore path
 ENTITY_STORE_PATH = VAR_PATH + '/store'
 # Path for SLURM sbatch files created by SLURMManager
-SBATCH_PATH = VAR_PATH + '/sbatch'
+TEMP_PATH = VAR_PATH + '/temp'
 # Logging
 LOG_PATH = VAR_PATH + '/logs'
 #--- Set all _PATH based on APP_PATH -----------------------------------------------------------------------------------

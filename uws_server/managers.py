@@ -425,7 +425,7 @@ class SLURMManager(Manager):
             else:
                 raise
         # Create parameter file
-        param_file_local = '{}/{}_parameters.sh'.format(SBATCH_PATH, job.jobid)
+        param_file_local = '{}/{}_parameters.sh'.format(TEMP_PATH, job.jobid)
         param_file_distant = '{}/parameters.sh'.format(jd)
         with open(param_file_local, 'w') as f:
             # parameters are a list of key=value (easier for bash sourcing)
@@ -452,7 +452,7 @@ class SLURMManager(Manager):
             # logger.debug(' '.join(cmd))
             sp.check_output(cmd, stderr=sp.STDOUT)
         # Create sbatch file
-        sbatch_file_local = '{}/{}_sbatch.sh'.format(SBATCH_PATH, job.jobid)
+        sbatch_file_local = '{}/{}_sbatch.sh'.format(TEMP_PATH, job.jobid)
         sbatch_file_distant = '{}/sbatch.sh'.format(jd)
         with open(sbatch_file_local, 'w') as f:
             sbatch = self._make_sbatch(job)
