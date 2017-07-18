@@ -7,13 +7,14 @@ UWS client implementation using bottle.py and javascript
 """
 
 import os
+import yaml
 import uuid
 import base64
 import requests
 from requests.auth import HTTPBasicAuth
 import logging
 import logging.config
-from flask import Flask, request, abort, redirect, url_for, session, g, render_template, flash, Response, stream_with_context
+from flask import Flask, request, abort, redirect, url_for, session, g, current_app, render_template, flash, Response, stream_with_context
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import Security, SQLAlchemyUserDatastore, UserMixin, RoleMixin, login_required, roles_required
 from flask_login import user_logged_in, user_logged_out, current_user
@@ -22,28 +23,41 @@ from flask_login import user_logged_in, user_logged_out, current_user
 
 # Configuration
 
+# App configuration
 #DEBUG=False
 #TESTING=False
 #SERVER_NAME=  # (e.g.: 'myapp.dev:5000')
 APPLICATION_ROOT = '/client'
-ENDPOINT = '/client'
-# UWS_SERVER_URL = 'http://localhost'
-UWS_SERVER_URL = 'https://voparis-uws-test.obspm.fr'
-UWS_SERVER_URL_JS = '/client/proxy'  # called by javascript, set to local url to avoid cross-calls
-UWS_AUTH = 'Basic'
-ALLOW_ANONYMOUS = False
-# CHUNK_SIZE = 1024
-LOG_PATH = '/var/www/opus/logs'
-LOG_FILE_SUFFIX = ''
-
-SQLALCHEMY_DATABASE_URI_LOCAL = 'sqlite:////var/www/opus/db/flask_login.db'
-
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+VAR_PATH = '/var/www/opus'
+LOG_FILE_SUFFIX = ''
 
 #--- Include host-specific settings ------------------------------------------------------------------------------------
 if os.path.exists(APP_PATH + '/uws_client/settings_local.py'):
     from settings_local import *
 #--- Include host-specific settings ------------------------------------------------------------------------------------
+
+# Default editable configuration
+EDITABLE_CONFIG = dict(
+    # UWS_SERVER_URL = 'http://localhost',
+    UWS_SERVER_URL = 'https://voparis-uws-test.obspm.fr',
+    UWS_SERVER_URL_JS = '/client/proxy',  # called by javascript, set to local url to avoid cross-calls
+    UWS_AUTH = 'Basic',
+    ALLOW_ANONYMOUS = False,
+)
+
+LOG_PATH = VAR_PATH + '/logs'
+CONFIG_FILE = VAR_PATH + '/uws_client_config.yaml'
+SQLALCHEMY_DATABASE_URI = 'sqlite:///{}/db/flask_login.db'.format(VAR_PATH)  # SQLALCHEMY_DATABASE_URI_LOCAL,
+SQLALCHEMY_TRACK_MODIFICATIONS = True
+SECURITY_PASSWORD_SALT = 'test'
+SECURITY_URL_PREFIX = '/accounts'
+SECURITY_FLASH_MESSAGES = True
+SECURITY_POST_LOGIN_VIEW = APPLICATION_ROOT
+SECURITY_POST_LOGOUT_VIEW = APPLICATION_ROOT
+SECURITY_USER_IDENTITY_ATTRIBUTES = ['email']
+#SECURITY_REGISTERABLE = True
+#SECURITY_CHANGEABLE = True
 
 # Set logger
 LOGGING = {
@@ -80,26 +94,18 @@ LOGGING = {
 # Set logger
 logging.config.dictConfig(LOGGING)
 logger = logging.getLogger('uws_client')
-logger.info('Load flask client')
+logger.debug('Load flask client')
 
-app = Flask(__name__) # create the application instance :)
+
+# ----------
+# create the application instance :)
+
+
+app = Flask(__name__, instance_relative_config=True, instance_path=VAR_PATH)
 app.secret_key = b'\ttrLu\xdd\xde\x9f\xd2}\xc1\x0e\xb6\xe6}\x95\xc6\xb1\x8f\xa09\xf5\x1aG'
+app.config.update(EDITABLE_CONFIG)  # Default editable config
+app.config.from_object(__name__)  # load config from this file
 
-app.config.from_object(__name__) # load config from this file
-
-# Load default config and override config from an environment variable
-app.config.update(dict(
-    SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI_LOCAL,
-    SQLALCHEMY_TRACK_MODIFICATIONS = False,
-    SECURITY_PASSWORD_SALT = 'test',
-    SECURITY_URL_PREFIX = '/accounts',
-    SECURITY_FLASH_MESSAGES = True,
-    SECURITY_POST_LOGIN_VIEW = '/client',
-    SECURITY_POST_LOGOUT_VIEW = '/client',
-    SECURITY_USER_IDENTITY_ATTRIBUTES = ['email'],
-    #SECURITY_REGISTERABLE = True,
-    #SECURITY_CHANGEABLE = True,
-))
 
 # ----------
 #  User DB
@@ -133,14 +139,35 @@ class User(db.Model, UserMixin):
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 security = Security(app, user_datastore)
 
+# ----------
+# Load/store g.config (different from app.config, g.config can be set by the admin user through the Preferences page)
 
-# @app.before_first_request
-# def load_in_session():
-#     logger.warning('Set server_url in session')
-#     session['server_url'] = app.config['UWS_SERVER_URL_JS']
+@app.before_first_request
+def load_config():
+    logger.debug('Load editable config')
+    if os.path.isfile(CONFIG_FILE):
+        with open(CONFIG_FILE, 'r') as cf:
+            econf = yaml.load(cf)
+            app.config.update(econf)
+    else:
+        save_config()
+
+def save_config():
+    logger.debug('Save editable config')
+    with open(CONFIG_FILE, 'w') as cf:
+        econf = {k: app.config[k] for k in EDITABLE_CONFIG.keys() if k in app.config}
+        yaml.dump(econf, cf, default_flow_style=False)
+
+def update_config(key, value):
+    if key in EDITABLE_CONFIG:
+        app.config[key] = value
+        save_config()
 
 
-# Create a user to test with
+# ----------
+# Create default database
+
+
 @app.before_first_request
 def create_db():
     try:
@@ -179,7 +206,7 @@ def create_db():
 @user_logged_in.connect_via(app)
 def on_user_logged_in(sender, user):
     logger.info(user.email)
-    session['server_url'] = app.config['UWS_SERVER_URL_JS']
+    #session['server_url'] = app.config['UWS_SERVER_URL_JS']
     session['auth'] = base64.b64encode(current_user.email + ':' + str(current_user.pid))
     flash('"{}" is now logged in'.format(user.email), 'info')
 
@@ -190,10 +217,54 @@ def on_user_logged_out(sender, user):
     flash('"{}" is now logged out'.format(user.email), 'info')
 
 
-@app.route('/accounts/profile')
+@app.route('/accounts/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
-    return render_template('profile.html')
+    logger.debug(current_user.__dict__)
+    order = ['email', 'pid']
+    profile = {
+        'email': {
+            'value': current_user.email,
+            'label': 'Username/email',
+            'description': '',
+            'disabled': True
+        },
+        'pid': {
+            'value': current_user.pid,
+            'label': 'PID',
+            'description': 'Persistent ID of the user on the UWS server',
+        }
+
+    }
+    if request.method == 'POST':
+        pid = request.form.get('pid')
+        if pid:
+            if pid != current_user.pid:
+                current_user.pid = pid
+                user_datastore.put(current_user)
+                user_datastore.commit()
+                logger.debug(current_user.__dict__)
+                flash('PID of user {} has been updated'.format(current_user.email))
+        else:
+            flash('No PID found in form')
+        return redirect(url_for('profile'), 303)
+    return render_template('profile.html', order=order, profile=profile)
+
+
+@app.route('/preferences', methods=['GET', 'POST'])
+@login_required
+@roles_required('admin')
+def preferences():
+    if request.method == 'POST':
+        logger.debug('Modify editable config')
+        for key, value in request.form.iteritems():
+            if key in EDITABLE_CONFIG:
+                app.config[key] = str(value)
+        logger.debug({k: app.config[k] for k in EDITABLE_CONFIG.keys() if k in app.config})
+        save_config()
+        flash('Preferences successfully updated', 'info')
+        return redirect(url_for('preferences'), 303)
+    return render_template('preferences.html')
 
 
 # ----------
@@ -203,7 +274,10 @@ def profile():
 @app.route('/')
 def home():
     """Home page"""
-    logger.info(session.__dict__)
+    # logger.debug('app.config = {}'.format(app.config))
+    logger.debug({k: app.config[k] for k in EDITABLE_CONFIG.keys() if k in app.config})
+    logger.debug('g = {}'.format(g.__dict__))
+    logger.info('session = {}'.format(session.__dict__))
     return render_template('home.html')
 
 
@@ -306,16 +380,16 @@ def proxy(uri):
 
 
 def uws_server_request(uri, method='GET', params=None, data=None, headers={}):
-    # logger.debug(headers.__dict__)
+    logger.debug(app.config['UWS_SERVER_URL'])
     # Add auth information (Basic, Token...)
     auth = None
-    if UWS_AUTH == 'Basic':
+    if app.config['UWS_AUTH'] == 'Basic':
         auth = HTTPBasicAuth(current_user.email, current_user.pid)
     # Send request
     if method == 'POST':
-        r = requests.post('{}{}'.format(UWS_SERVER_URL, uri), data=data, auth=auth)
+        r = requests.post('{}{}'.format(app.config['UWS_SERVER_URL'], uri), data=data, auth=auth)
     else:
-        r = requests.get('{}{}'.format(UWS_SERVER_URL, uri), params=params, auth=auth)
+        r = requests.get('{}{}'.format(app.config['UWS_SERVER_URL'], uri), params=params, auth=auth)
     # Return response
     logger.info("{} {} ({})".format(request.method, uri, r.status_code))
     return r
