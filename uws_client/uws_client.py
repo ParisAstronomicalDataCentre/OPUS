@@ -272,6 +272,11 @@ def preferences():
 # Web Pages
 
 
+@app.context_processor
+def add_url_to_context():
+    return dict(url=request.url)
+
+
 @app.route('/')
 def home():
     """Home page"""
@@ -282,6 +287,7 @@ def home():
     return render_template('home.html')
 
 
+@app.route('/job_list', defaults={'jobname': ''})
 @app.route('/job_list/', defaults={'jobname': ''})
 @app.route('/job_list/<jobname>')
 @login_required
@@ -308,6 +314,7 @@ def job_form(jobname):
 
 
 @app.route('/job_definition', methods=['GET', 'POST'], defaults={'jobname': ''})
+@app.route('/job_definition/', methods=['GET', 'POST'], defaults={'jobname': ''})
 @app.route('/job_definition/<path:jobname>', methods=['GET'])
 def job_definition(jobname):
     """Show form for new job definition"""

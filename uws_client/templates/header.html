@@ -20,13 +20,13 @@
                             <!--<a href="/job_list"><span class="glyphicon glyphicon-cog"></span>-->
                             <!--Available jobs</a>-->
                         <!--</li>-->
-                        <li{{' class="active"' if page_title == 'new_job_def'}}>
+                        <li{{ ' class=active' if 'job_definition' in url }}>
                             <a href="{{ url_for('job_definition') }}"><span class="glyphicon glyphicon-edit"></span>
                                 Job Definition</a>
                         </li>
-                        <li{{' class="active"' if page_title == 'job_list'}}>
+                        <li{{ ' class=active' if 'job_list' in url }}>
                             <a href="{{ url_for('job_list') }}"><span class="glyphicon glyphicon-list"></span>
-                                Job Manager</a>
+                                Job List</a>
                         </li>
                     </ul>
                     <ul class="nav navbar-nav navbar-right">
