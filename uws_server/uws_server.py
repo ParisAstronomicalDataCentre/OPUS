@@ -41,6 +41,17 @@ def options_request():
 #def enableCORSAfterRequestHook():
 #    response.set_header('Access-Control-Allow-Origin', '*')
 
+#@hook('after_request')
+#def enable_cors():
+#    response.headers['Access-Control-Allow-Origin'] = '*'
+
+
+@app.hook('before_request')
+def strip_path():
+    request.environ['PATH_INFO'] = request.environ['PATH_INFO'].rstrip('/')
+
+
+#@app.hook('before_request')
 def set_user():
     global logger
     """Set user from request header"""
@@ -96,7 +107,7 @@ def is_job_server(ip):
 
 
 def is_client_trusted(ip):
-    """Test if request comes from a job server"""
+    """Test if request comes from a trusted client"""
     # IP or part of an IP has to be in the TRUSTED_CLIENTS list
     # TODO: ip here is the ip of the web browser (request sent from javascript...) should trust the client URL maybe?
     # TODO: or access those pages from web server, not web browser
@@ -309,6 +320,9 @@ def init_db():
     # user = set_user()
     #if not is_localhost():
     #    abort_403()
+    ip = request.environ.get('REMOTE_ADDR', '')
+    if not is_client_trusted(ip):
+        abort_403()
     try:
         filename = APP_PATH + '/uws_server/job_database.sqlite'
         with open(filename) as f:
@@ -334,6 +348,9 @@ def test_db():
     # user = set_user()
     #if not is_localhost():
     #    abort_403()
+    ip = request.environ.get('REMOTE_ADDR', '')
+    if not is_client_trusted(ip):
+        abort_403()
     try:
         filename = APP_PATH + '/uws_server/job_database_test.sqlite'
         with open(filename) as f:
@@ -359,6 +376,9 @@ def show_db(jobname):
     user = set_user()
     #if not is_localhost():
     #    abort_403()
+    ip = request.environ.get('REMOTE_ADDR', '')
+    if not is_client_trusted(ip):
+        abort_403()
     html = ''
     try:
         logger.info('Show Database for ' + user.name)
