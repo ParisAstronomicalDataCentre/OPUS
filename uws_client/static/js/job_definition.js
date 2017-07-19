@@ -224,13 +224,16 @@
                 $(this).find('.remove_' + type).attr('id', 'remove_' + type + '_' + i);
                 $(this).find('.moveup_' + type).attr('id', 'moveup_' + type + '_' + i);
                 $(this).find('.movedown_' + type).attr('id', 'movedown_' + type + '_' + i);
-                $(this).find('.' + type + '_name_').attr('name', type + '_name_' + i);
-                $(this).find('.' + type + '_default_').attr('name', type + '_default_' + i);
-                $(this).find('.' + type + '_required_').attr('name', type + '_required_' + i);
-                $(this).find('.' + type + '_datatype_').attr('name', type + '_datatype_' + i);
-                $(this).find('.' + type + '_description_').attr('name', type + '_description_' + i);
-                $(this).find('.' + type + '_options_').attr('name', type + '_options_' + i);
-                $(this).find('.' + type + '_attributes_').attr('name', type + '_attributes_' + i);
+                $(this).find('.' + type + '_name').attr('name', type + '_name_' + i);
+                $(this).find('.' + type + '_type').attr('name', type + '_type_' + i);
+                $(this).find('.' + type + '_default').attr('name', type + '_default_' + i);
+                $(this).find('.' + type + '_required').attr('name', type + '_required_' + i);
+                $(this).find('.' + type + '_datatype').attr('name', type + '_datatype_' + i);
+                $(this).find('.' + type + '_description').attr('name', type + '_description_' + i);
+                $(this).find('.' + type + '_options').attr('name', type + '_options_' + i);
+                $(this).find('.' + type + '_attributes').attr('name', type + '_attributes_' + i);
+                $(this).find('.' + type + '_isfile').attr('name', type + '_isfile_' + i);
+                $(this).find('.' + type + '_url').attr('name', type + '_url_' + i);
                 $(this).attr('id', type + '_' + i);
             }
         });
