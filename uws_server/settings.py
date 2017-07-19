@@ -270,6 +270,7 @@ LOGGING = {
     }
 }
 
+
 class CustomAdapter(logging.LoggerAdapter):
     """
     This adapter expects the passed in dict-like object to have a
