@@ -64,3 +64,7 @@ select.select-small:first-child + .bootstrap-select > .btn {
     border-radius: 4px;
     padding-bottom: 25px;
 }
+
+body {
+    padding-top: 4px;
+}
