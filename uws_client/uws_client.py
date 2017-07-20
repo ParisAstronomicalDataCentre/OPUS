@@ -36,15 +36,19 @@ APPLICATION_ROOT = '/client'
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 VAR_PATH = '/var/www/opus'
 LOG_FILE_SUFFIX = ''
+# UWS_SERVER_URL = 'http://localhost'
+UWS_SERVER_URL = 'https://voparis-uws-test.obspm.fr'
+UWS_SERVER_URL_JS = '/client/proxy'  # called by javascript, set to local url to avoid cross-calls
+UWS_AUTH = 'Basic'
+ALLOW_ANONYMOUS = False
 
 # Default editable configuration
-EDITABLE_CONFIG = dict(
-    # UWS_SERVER_URL = 'http://localhost',
-    UWS_SERVER_URL = 'https://voparis-uws-test.obspm.fr',
-    UWS_SERVER_URL_JS = '/client/proxy',  # called by javascript, set to local url to avoid cross-calls
-    UWS_AUTH = 'Basic',
-    ALLOW_ANONYMOUS = False,
-)
+EDITABLE_CONFIG = [
+    'UWS_SERVER_URL',
+    'UWS_SERVER_URL_JS',
+    'UWS_AUTH',
+    'ALLOW_ANONYMOUS'
+]
 
 #--- Include host-specific settings ------------------------------------------------------------------------------------
 if os.path.exists(APP_PATH + '/uws_client/settings_local.py'):
@@ -110,7 +114,7 @@ logger.debug('Load flask client')
 
 app = Flask(__name__, instance_relative_config=True, instance_path=VAR_PATH)
 app.secret_key = b'\ttrLu\xdd\xde\x9f\xd2}\xc1\x0e\xb6\xe6}\x95\xc6\xb1\x8f\xa09\xf5\x1aG'
-app.config.update(EDITABLE_CONFIG)  # Default editable config
+#app.config.update(EDITABLE_CONFIG)  # Default editable config
 app.config.from_object(__name__)  # load config from this file
 
 
@@ -133,12 +137,21 @@ class Role(db.Model, RoleMixin):
         return self.name
 
 
+def gen_pid(context):
+    try:
+        email = context.current_parameters.get('email')
+        pid = uuid.uuid5(uuid.NAMESPACE_X500, app.config['APP_PATH'] + email)
+    except:
+        pid = uuid.uuid4()
+    return str(pid)
+
+
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(255), unique=True)
     # username = db.Column(db.String(255), unique=True, index=True)
     password = db.Column(db.String(255))
-    pid = db.Column(db.String(255))
+    pid = db.Column(db.String(255), default=gen_pid)
     active = db.Column(db.Boolean())
     confirmed_at = db.Column(db.DateTime(), default=datetime.datetime.now)
     roles = db.relationship('Role', secondary=roles_users, backref=db.backref('users', lazy='dynamic'))
@@ -175,7 +188,7 @@ def load_config():
 def save_config():
     logger.debug('Save editable config')
     with open(CONFIG_FILE, 'w') as cf:
-        econf = {k: app.config[k] for k in EDITABLE_CONFIG.keys() if k in app.config}
+        econf = {k: app.config[k] for k in EDITABLE_CONFIG if k in app.config}
         yaml.dump(econf, cf, default_flow_style=False)
 
 def update_config(key, value):
@@ -202,11 +215,9 @@ def create_db():
         )
         # Create admin user
         if not user_datastore.get_user('admin'):
-            pid = uuid.uuid5(uuid.NAMESPACE_X500, app.config['APP_PATH'] + 'admin')
             user_datastore.create_user(
                 email='admin',
                 password='cta',
-                pid=str(pid),
                 active=True,
                 roles=['admin'],
             )
@@ -216,12 +227,11 @@ def create_db():
             user_datastore.create_user(
                 email='user',
                 password='cta',
-                pid=str(pid),
                 active=True,
                 roles=['user'],
             )
         db.session.commit()
-        logger.warning('Database created')
+        logger.debug('Database created')
     except Exception as e:
         db.session.rollback()
         logger.warning(e.message)
@@ -317,7 +327,7 @@ def preferences():
         for key, value in request.form.iteritems():
             if key in EDITABLE_CONFIG:
                 app.config[key] = str(value)
-        logger.debug({k: app.config[k] for k in EDITABLE_CONFIG.keys() if k in app.config})
+        logger.debug({k: app.config[k] for k in EDITABLE_CONFIG if k in app.config})
         save_config()
         flash('Preferences successfully updated', 'info')
         return redirect(url_for('preferences'), 303)
@@ -337,7 +347,7 @@ def add_url_to_context():
 def home():
     """Home page"""
     # logger.debug('app.config = {}'.format(app.config))
-    logger.debug({k: app.config[k] for k in EDITABLE_CONFIG.keys() if k in app.config})
+    logger.debug({k: app.config[k] for k in EDITABLE_CONFIG if k in app.config})
     logger.debug('g = {}'.format(g.__dict__))
     logger.info('session = {}'.format(session.__dict__))
     return render_template('home.html')
