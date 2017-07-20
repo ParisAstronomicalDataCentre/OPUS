@@ -1,7 +1,7 @@
 {% extends "skeleton.html" %}
 {% block content %}
     <div class="container bs-docs-container">
-	    <div class="col-md-6 col-md-offset-3">
+	    <div class="col-md-offset-2 col-md-8">
             <form class="form-horizontal" action="{{ url_for('profile') }}" method="POST" name="profile_form">
                 {% for key in order %}
                 <div class="form-group">
