@@ -9,13 +9,10 @@ import traceback
 import glob
 import re
 import uuid
-import collections
 import threading
 from subprocess import CalledProcessError
 
 from bottle import Bottle, request, response, abort, redirect, run, static_file
-from beaker.middleware import SessionMiddleware
-# from cork import Cork
 
 from uws_classes import *
 
@@ -1328,13 +1325,6 @@ def get_owner(jobname, jobid):
 # ----------
 # run server
 # ----------
-
-
-# Merge UWS Client app
-if MERGE_CLIENT:
-    from uws_client.uws_client_bottle import session_opts, app as client_app
-    app.merge(client_app)
-    app = SessionMiddleware(app, session_opts)
 
 
 if __name__ == '__main__':
