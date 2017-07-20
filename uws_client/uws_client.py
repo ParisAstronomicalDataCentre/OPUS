@@ -9,6 +9,7 @@ UWS client implementation using bottle.py and javascript
 import os
 import yaml
 import uuid
+import datetime
 import base64
 import requests
 from requests.auth import HTTPBasicAuth
@@ -16,10 +17,14 @@ import logging
 import logging.config
 from flask import Flask, request, abort, redirect, url_for, session, g, current_app, render_template, flash, Response, stream_with_context
 from flask_sqlalchemy import SQLAlchemy
-from flask_security import Security, SQLAlchemyUserDatastore, UserMixin, RoleMixin, login_required, roles_required
+from flask_security import Security, SQLAlchemyUserDatastore, UserMixin, RoleMixin, login_required, roles_required, utils
+from flask_security.forms import LoginForm, RegisterForm
 from flask_login import user_logged_in, user_logged_out, current_user
-# from werkzeug.wsgi import DispatcherMiddleware
-# from wsgiproxy import HostProxy
+from flask_admin import Admin
+from flask_admin.contrib import sqla
+from wtforms import StringField, PasswordField
+from wtforms.validators import InputRequired
+
 
 # Configuration
 
@@ -55,8 +60,9 @@ SECURITY_URL_PREFIX = '/accounts'
 SECURITY_FLASH_MESSAGES = True
 SECURITY_POST_LOGIN_VIEW = APPLICATION_ROOT
 SECURITY_POST_LOGOUT_VIEW = APPLICATION_ROOT
-SECURITY_USER_IDENTITY_ATTRIBUTES = ['email']
-#SECURITY_REGISTERABLE = True
+SECURITY_USER_IDENTITY_ATTRIBUTES = 'email'
+SECURITY_REGISTERABLE = False
+SECURITY_SEND_REGISTER_EMAIL = False
 SECURITY_CHANGEABLE = True
 SECURITY_SEND_PASSWORD_CHANGE_EMAIL = False
 
@@ -123,22 +129,35 @@ class Role(db.Model, RoleMixin):
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), unique=True)
     description = db.Column(db.String(255))
+    def __repr__(self):
+        return self.name
 
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(255), unique=True)
-    # username = db.Column(String(255))
+    # username = db.Column(db.String(255), unique=True, index=True)
     password = db.Column(db.String(255))
     pid = db.Column(db.String(255))
     active = db.Column(db.Boolean())
-    confirmed_at = db.Column(db.DateTime())
+    confirmed_at = db.Column(db.DateTime(), default=datetime.datetime.now)
     roles = db.relationship('Role', secondary=roles_users, backref=db.backref('users', lazy='dynamic'))
+    def __repr__(self):
+        return self.email
+
+
+class ExtendedLoginForm(LoginForm):
+    email = StringField('Username or Email Address', [InputRequired()])
+
+
+class ExtendedRegisterForm(RegisterForm):
+    email = StringField('Username or Email Address', [InputRequired()])
 
 
 # Setup Flask-Security
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
-security = Security(app, user_datastore)
+security = Security(app, user_datastore , login_form=ExtendedLoginForm)
+#, register_form=ExtendedRegisterForm)
 
 # ----------
 # Load/store g.config (different from app.config, g.config can be set by the admin user through the Preferences page)
@@ -173,31 +192,68 @@ def update_config(key, value):
 def create_db():
     try:
         db.create_all()
-        user_datastore.create_role(name='user')
-        user_datastore.create_role(name='admin')
+        user_datastore.find_or_create_role(
+            name='user',
+            description='User',
+        )
+        user_datastore.find_or_create_role(
+            name='admin',
+            description='Administrator',
+        )
         # Create admin user
-        pid = uuid.uuid5(uuid.NAMESPACE_X500, app.config['APP_PATH'] + 'admin')
-        user_datastore.create_user(
-            email='admin',
-            password='cta',
-            pid=str(pid),
-            active=True,
-            roles=['admin'],
-        )
+        if not user_datastore.get_user('admin'):
+            pid = uuid.uuid5(uuid.NAMESPACE_X500, app.config['APP_PATH'] + 'admin')
+            user_datastore.create_user(
+                email='admin',
+                password='cta',
+                pid=str(pid),
+                active=True,
+                roles=['admin'],
+            )
         # Create demo user
-        pid = uuid.uuid5(uuid.NAMESPACE_X500, app.config['APP_PATH'] + 'user')
-        user_datastore.create_user(
-            email='user',
-            password='cta',
-            pid=str(pid),
-            active=True,
-            roles=['user'],
-        )
+        if not user_datastore.get_user('user'):
+            pid = uuid.uuid5(uuid.NAMESPACE_X500, app.config['APP_PATH'] + 'user')
+            user_datastore.create_user(
+                email='user',
+                password='cta',
+                pid=str(pid),
+                active=True,
+                roles=['user'],
+            )
         db.session.commit()
         logger.warning('Database created')
     except Exception as e:
         db.session.rollback()
         logger.warning(e.message)
+
+
+# ----------
+# Create Admin pages
+
+
+# Customized User model for SQL-Admin
+class UserView(sqla.ModelView):
+    searchable_columns = ('email',)
+    column_exclude_list = ('password',)
+    # form_excluded_columns = ('password',)
+    column_auto_select_related = True
+    form_overrides = dict(password=PasswordField)
+    def is_accessible(self):
+        return current_user.has_role('admin')
+
+
+# Customized Role model for SQL-Admin
+class RoleView(sqla.ModelView):
+    # Prevent administration of Roles unless the currently logged-in user has the "admin" role
+    def is_accessible(self):
+        return current_user.has_role('admin')
+
+# Initialize Flask-Admin
+admin = Admin(app, template_mode='bootstrap3', url='/admin')
+
+# Add Flask-Admin views for Users and Roles
+admin.add_view(UserView(User, db.session))
+admin.add_view(RoleView(Role, db.session))
 
 
 # ----------
@@ -226,7 +282,7 @@ def profile():
     profile = {
         'email': {
             'value': current_user.email,
-            'label': 'Username/email',
+            'label': 'Username or Email Address',
             'description': '',
             'disabled': True
         },
