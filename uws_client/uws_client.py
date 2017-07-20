@@ -36,12 +36,12 @@ APPLICATION_ROOT = '/client'
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 VAR_PATH = '/var/www/opus'
 LOG_FILE_SUFFIX = ''
-UWS_SERVER_URL_JS = '/client/proxy'  # called by javascript, set to local url to avoid cross-calls
 
 # Default editable configuration
 EDITABLE_CONFIG = dict(
     # UWS_SERVER_URL = 'http://localhost',
     UWS_SERVER_URL = 'https://voparis-uws-test.obspm.fr',
+    UWS_SERVER_URL_JS = '/client/proxy',  # called by javascript, set to local url to avoid cross-calls
     UWS_AUTH = 'Basic',
     ALLOW_ANONYMOUS = False,
 )
