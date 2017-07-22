@@ -696,9 +696,9 @@ var uws_client = (function($) {
             var jobId = $(this).attr('id');
             var jobName = $(this).attr('jobname');
             $("#div_job").hide();
-            $("#div_info").html('<strong>Job deleted</strong>: '+jobId+', going back to job list').addClass('alert alert-success');
+            $("#messages").html('<strong>Job deleted</strong>: '+jobId+', going back to job list').addClass('alert alert-success');
             setTimeout(function(){
-                window.location.href = client_job_list_url + "?jobname=" + jobName + "&msg=deleted&jobid=" + jobId;
+                window.location.href = client_job_list_url;  // + "/" + jobName + "?msg=deleted&jobid=" + jobId;
             }, 3000);
         });
         // Change click event for Details buttons
@@ -726,10 +726,10 @@ var uws_client = (function($) {
     };
     var displaySingleJobError = function(jobId, exception){
         $("#div_job").hide();
-        $("#div_info").html('<strong>Job does not exist</strong>: '+jobId+', going back to job list').addClass('alert alert-warning');
+        $("#messages").html('<strong>Job does not exist</strong>: '+jobId+', going back to job list').addClass('alert alert-warning');
         logger('WARNING', 'displaySingleJob '+ jobId, exception);
         setTimeout(function(){
-            window.location.href = client_job_list_url + "?msg=missing&jobid=" + jobId;
+            window.location.href = client_job_list_url;  // + "?msg=missing&jobid=" + jobId;
         }, 3000);
     };
 
