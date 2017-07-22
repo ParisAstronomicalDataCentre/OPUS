@@ -20,6 +20,13 @@ the number of database access (in the case of a relational database)
 import datetime as dt
 from entity_store import *
 from settings import *
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import Column
+from sqlalchemy import ForeignKey, Float, String, Boolean, Integer, BigInteger, DateTime, Text
+from sqlalchemy.ext.automap import automap_base
+from sqlalchemy.dialects import sqlite
 
 
 # ---------
@@ -54,9 +61,173 @@ class JobStorage(object):
         """Delete job information from storage"""
         pass
 
-    def get_list(self, joblist, phase=None):
-        """Delete job information from storage"""
+    def get_list(self, joblist, phase=None, check_user=True):
+        """Get job list from storage"""
         pass
+
+
+# ----------
+# SQLAlchemy
+
+
+class SQLAlchemyJobStorage(JobStorage):
+
+    def __init__(self, db_string=SQLALCHEMY_DB):
+        self.engine = create_engine(db_string)
+        #self.Base = declarative_base()
+        self.Base = automap_base()
+        # dt_format = u'%(year)04d/%(month)02d/%(day)02dT%(hour)02d:%(min)02d:%(second)02d'
+        # dt_regexp = u'(\d+)/(\d+)/(\d+)T(\d+):(\d+):(\d+)'
+        # myDateTime = DateTime().with_variant(sqlite.DATETIME(storage_format=dt_format, regexp=dt_regexp), 'sqlite')
+        # myDateTime = DateTime().with_variant(sqlite.TIMESTAMP(), 'sqlite')
+        myDateTime = DateTime().with_variant(String(19), 'sqlite')
+        myBoolean = Boolean().with_variant(String(5), 'sqlite')
+
+        class Jobs(self.Base):
+            __tablename__ = 'jobs'
+            jobid = Column(String(80), primary_key=True)
+            jobname = Column(String(255))
+            phase = Column(String(10))
+            quote = Column(Integer(), nullable=True)
+            execution_duration = Column(Integer(), nullable=True)
+            error = Column(Text(), nullable=True)
+            creation_time = Column(myDateTime)
+            start_time = Column(myDateTime, nullable=True)
+            end_time = Column(myDateTime, nullable=True)
+            destruction_time = Column(myDateTime, nullable=True)
+            owner = Column(String(64), nullable=True)
+            owner_pid = Column(String(128), nullable=True)
+            run_id = Column(String(64), nullable=True)
+            pid = Column(BigInteger(), nullable=True)
+
+        class Parameters(self.Base):
+            __tablename__ = 'job_parameters'
+            jobid = Column(String(80), ForeignKey("jobs.jobid"), primary_key=True)
+            name = Column(String(255), primary_key=True)
+            value = Column(String(255), nullable=True)
+            byref = Column(myBoolean, default=False, nullable=True)
+
+        class Results(self.Base):
+            __tablename__ = 'job_results'
+            jobid = Column(String(80), ForeignKey("jobs.jobid"), primary_key=True)
+            name = Column(String(255), primary_key=True)
+            url = Column(String(255), nullable=True)
+            content_type = Column(String(64), nullable=True)
+
+        self.Base.prepare(self.engine, reflect=True)
+        self.Jobs = Jobs  # self.Base.classes.jobs
+        self.Parameters = Parameters  # self.Base.classes.job_parameters
+        self.Results = Results  # self.Base.classes.job_results
+        self.Session = sessionmaker(bind=self.engine)
+        self.session = self.Session()
+
+    def _save_parameter(self, job, pname):
+        # Save job parameter to db
+        d = {
+            'jobid': job.jobid,
+            'name': pname,
+            'value': job.parameters[pname]['value'],
+            'byref': job.parameters[pname]['byref']
+        }
+        p = self.Parameters(**d)
+        self.session.merge(p)
+
+    def _save_result(self, job, rname):
+        # Save job parameter to db
+        d = {
+            'jobid': job.jobid,
+            'name': rname,
+            'url': job.results[rname]['url'],
+            'content_type': job.results[rname]['content_type']
+        }
+        r = self.Results(**d)
+        self.session.merge(r)
+
+    def save(self, job, save_attributes=True, save_parameters=True, save_results=True):
+        """Save job information to storage (attributes, parameters and results)"""
+        if save_attributes:
+            # Save job description to db
+            d = {col: job.__dict__[col] for col in JOB_ATTRIBUTES}
+            j = self.Jobs(**d)
+            self.session.merge(j)
+            self.session.commit()
+        if save_parameters:
+            if isinstance(save_parameters, str):
+                # Save the given job parameter to db
+                pname = save_parameters
+                self._save_parameter(job, pname)
+                self.session.commit()
+            else:
+                # Save all job parameters to db
+                for pname in job.parameters.keys():
+                    self._save_parameter(job, pname)
+                self.session.commit()
+        if save_results:
+            # Save job results to db
+            for rname in job.results.keys():
+                self._save_result(job, rname)
+            self.session.commit()
+
+    def read(self, job, get_attributes=True, get_parameters=True, get_results=True,
+             from_pid=False):
+        """Read job information from storage"""
+        if get_attributes:
+            row = self.session.query(self.Jobs).filter_by(jobid=job.jobid).first()
+            if not row:
+                raise NotFoundWarning('Job "{}" NOT FOUND'.format(job.jobid))
+            for k in row.__dict__.keys():
+                if k in JOB_ATTRIBUTES:
+                    job.__dict__[k] = row.__dict__[k]
+        if get_parameters:
+            # Query db for job parameters
+            params = self.session.query(self.Parameters).filter_by(jobid=job.jobid).all()
+            # Format results to a parameter dict
+            params_dict = {
+                row.name: {
+                    'value': row.value,
+                    'byref': row.byref,
+                }
+                for row in params
+            }
+            job.parameters = params_dict
+        else:
+            job.parameters = {}
+        if get_results:
+            # Query db for job results
+            results = self.session.query(self.Results).filter_by(jobid=job.jobid).all()
+            results_dict = {
+                row.name: {
+                    'url': row.url,
+                    'content_type': row.content_type,
+                }
+                for row in results
+            }
+            job.results = results_dict
+        else:
+            job.results = {}
+
+    def delete(self, job):
+        """Delete job information from storage"""
+        self.session.query(self.Jobs).filter_by(jobid=job.jobid).delete()
+        self.session.query(self.Parameters).filter_by(jobid=job.jobid).delete()
+        self.session.query(self.Results).filter_by(jobid=job.jobid).delete()
+        self.session.commit()
+
+    def get_list(self, joblist, phase=None, check_user=True):
+        """Get job list from storage"""
+        query = self.session.query(self.Jobs).filter_by(jobname=joblist.jobname)
+        if phase:
+            query = query.filter_by(phase=phase)
+        if check_user:
+            query = query.filter_by(owner=joblist.user.name)
+            query = query.filter_by(owner_pid=joblist.user.pid)
+        query = query.order_by(self.Jobs.destruction_time.desc())
+        jobs = query.all()
+        djobs = [job.__dict__ for job in jobs]
+        return djobs
+
+# ----------
+# SQL
 
 
 class SQLStorage(object):
@@ -220,6 +391,10 @@ class SQLJobStorage(SQLStorage, JobStorage):
         return jobs
 
 
+# ----------
+# SQLite
+
+
 class SQLiteStorage(object):
     """Manage job information storage using SQLite"""
 
@@ -245,6 +420,10 @@ class SQLiteStorage(object):
 
 class SQLiteJobStorage(SQLiteStorage, SQLJobStorage):
     pass
+
+
+# ----------
+# PostgreSQL
 
 
 class PostgreSQLStorage(object):

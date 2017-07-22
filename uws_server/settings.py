@@ -50,7 +50,7 @@ GENERATE_PROV = True
 JDL = 'VOTFile'
 
 # Storage of job information
-STORAGE = 'SQLite'
+STORAGE = 'SQLAlchemy'  # 'SQLite'
 SQLITE_FILE_NAME = 'job_database.db'
 
 PGSQL_HOST = 'localhost'
@@ -191,6 +191,7 @@ JDL_PATH = VAR_PATH + '/jdl'
 SCRIPT_PATH = VAR_PATH + '/jdl/scripts'
 # Path to sqlite db file
 SQLITE_FILE = VAR_PATH + '/db/' + SQLITE_FILE_NAME
+SQLALCHEMY_DB = 'sqlite:///' + SQLITE_FILE
 # If POST contains files they are uploaded on the UWS server
 UPLOAD_PATH = VAR_PATH + '/uploads'
 # Path for job results and logs
