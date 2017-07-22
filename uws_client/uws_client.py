@@ -243,7 +243,7 @@ def create_db():
 
 # Customized User model for SQL-Admin
 class UserView(sqla.ModelView):
-    searchable_columns = ('email',)
+    column_searchable_list = ('email',)
     column_exclude_list = ('password',)
     # form_excluded_columns = ('password',)
     column_auto_select_related = True
