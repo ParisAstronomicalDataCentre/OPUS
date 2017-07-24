@@ -190,7 +190,8 @@ class Job(object):
                     value = post[pname]
                     # TODO: use url in jdl.used if set (replace $ID with value)
                 else:
-                    value = self.jdl.content['parameters'][pname]['default']
+                    if pname not in files:
+                        value = self.jdl.content['used'][pname]['default']
                 self.parameters[pname] = {'value': value, 'byref': False}
         # Upload files for multipart/form-data
         for fname, f in files.iteritems():
