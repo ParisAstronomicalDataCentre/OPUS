@@ -467,21 +467,21 @@ class SLURMManager(Manager):
         cmd = ['ssh', self.ssh_arg,
                'sbatch {}'.format(sbatch_file_distant)]
         # logger.debug(' '.join(cmd))
-        jobid_cluster = sp.check_output(cmd, stderr=sp.STDOUT)
+        pid = sp.check_output(cmd, stderr=sp.STDOUT)
         # Get pid from output (e.g. "Submitted batch job 9421")
-        return jobid_cluster.split(' ')[-1]
+        return pid.split(' ')[-1]
 
     def abort(self, job):
         """Abort job on SLURM server"""
         cmd = ['ssh', self.ssh_arg,
-               'scancel {}'.format(job.jobid_cluster)]
+               'scancel {}'.format(job.pid)]
         sp.check_output(cmd, stderr=sp.STDOUT)
 
     def delete(self, job):
         """Delete job on SLURM server"""
         if job.phase not in ['COMPLETED', 'ERROR']:
             cmd = ['ssh', self.ssh_arg,
-                   'scancel {}'.format(job.jobid_cluster)]
+                   'scancel {}'.format(job.pid)]
             try:
                 sp.check_output(cmd, stderr=sp.STDOUT)
             except sp.CalledProcessError as e:
@@ -506,7 +506,7 @@ class SLURMManager(Manager):
             job status (phase)
         """
         cmd = ['ssh', self.ssh_arg,
-               'sacct -j {}'.format(job.jobid_cluster),
+               'sacct -j {}'.format(job.pid),
                '-o state -P -n']
         phase = sp.check_output(cmd, stderr=sp.STDOUT)
         # Take first line: there is a trailing \n in output, and possibly several lines
@@ -523,7 +523,7 @@ class SLURMManager(Manager):
         """
         # sacct -j 9000 -o jobid,start,end,elapsed,state -P -n
         cmd = ['ssh', self.ssh_arg,
-               'sacct -j {}'.format(job.jobid_cluster),
+               'sacct -j {}'.format(job.pid),
                '-o jobid,start,end,elapsed,state -P -n']
         logger.debug(' '.join(cmd))
         info = sp.check_output(cmd, stderr=sp.STDOUT)
