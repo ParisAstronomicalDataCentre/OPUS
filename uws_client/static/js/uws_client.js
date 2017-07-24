@@ -50,6 +50,14 @@ var uws_client = (function($) {
         }
     }
 
+    $.event.special.destroyed = {
+        remove: function(o) {
+                if (o.handler) {
+                    o.handler()
+            }
+        }
+    }
+
 //    Array.prototype.contains = function(obj) {
 //        var i = this.length;
 //        while (i--) {
@@ -692,13 +700,12 @@ var uws_client = (function($) {
             scrollToAnchor(hash);
         };
         // Back to job list on remove
-        $("#"+job.jobId).on("remove", function () {
-            var jobId = $(this).attr('id');
-            var jobName = $(this).attr('jobname');
+        // $("#"+job.jobId).on("remove", function () {
+        $("#"+job.jobId).on('destroyed', function() {
+            console.log('Set on remove for: '+job.jobId)
             $("#div_job").hide();
-            $("#messages").html('<strong>Job deleted</strong>: '+jobId+', going back to job list').addClass('alert alert-success');
             setTimeout(function(){
-                window.location.href = client_job_list_url;  // + "/" + jobName + "?msg=deleted&jobid=" + jobId;
+                window.location.href = client_job_list_url + "/" + job.jobName;  // + "?msg=deleted&jobid=" + jobId;
             }, 3000);
         });
         // Change click event for Details buttons
@@ -936,6 +943,7 @@ var uws_client = (function($) {
     };
     var destroyJobSuccess = function(jobId, jobs){
         try {
+            $("#messages").html('<strong>Job deleted</strong>: '+jobId+', going back to job list').addClass('alert alert-success');
             clearTimeout(refreshPhaseTimeout[jobId]);
             logger('INFO', 'Job deleted '+jobId);
             $('#'+jobId).remove();
