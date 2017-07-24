@@ -170,6 +170,9 @@ class Job(object):
         # Pop attributes keywords from POST or JDL
         self.execution_duration = int(post.pop('EXECUTION_DURATION', self.jdl.content.get('executionduration', EXECUTION_DURATION_DEF)))
         self.quote = int(post.pop('QUOTE', self.jdl.content.get('quote', self.execution_duration)))
+        logger.info(files)
+        logger.info(files.keys())
+        logger.info(files.__dict__)
         # Search inputs in POST/files
         upload_dir = '{}/{}'.format(UPLOAD_PATH, self.jobid)
         for pname in self.jdl.content['used']:
