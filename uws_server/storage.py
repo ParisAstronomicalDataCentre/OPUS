@@ -173,7 +173,7 @@ class SQLAlchemyJobStorage(JobStorage):
         """Read job information from storage"""
         if from_pid:
             # Query db for jobname and jobid using pid
-            row = self.session.query(self.Parameters).filter_by(pid=job.pid).first()
+            row = self.session.query(self.Jobs).filter_by(pid=job.pid).first()
             if not row:
                 raise NotFoundWarning('Job with pid={} NOT FOUND'.format(job.pid))
             job.jobname = row.jobname
