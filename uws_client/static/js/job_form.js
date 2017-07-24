@@ -20,6 +20,11 @@
         $('#job_params').submit(function(event) {
             event.preventDefault();
             var formData = new FormData($('#job_params')[0]);
+//            $('input[type=file]').each( function() {
+//                console.log('Adding: ' + $(this).attr('name'));
+//                console.log($(this)[0].files[0]);
+//                formData.append($(this).attr('name'), $(this)[0].files[0]);
+//            });
             formData.append('PHASE', 'RUN');
             uws_client.createJob(jobname, formData);
         });

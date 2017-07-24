@@ -439,9 +439,9 @@ def cp_script(jobname):
 # Proxy (to avoid cross domain calls and add Auth header)
 
 
-@app.route('/proxy/<path:uri>', methods=['GET', 'POST'])
+@app.route('/proxy/<path:uri>', methods=['GET', 'POST', 'DELETE'])
 def proxy(uri):
-    r = uws_server_request('/' + uri, method=request.method, params=request.args, data=request.form, headers=request.headers)
+    r = uws_server_request('/' + uri, method=request.method, init_request=request)
     # logger.debug(r.headers.__dict__)
     # def generate():
     #     for chunk in r.iter_content(CHUNK_SIZE):
@@ -453,17 +453,26 @@ def proxy(uri):
     return Response(r, status=r.status_code, content_type=r.headers['content-type'])  # , headers=headers)
 
 
-def uws_server_request(uri, method='GET', params=None, data=None, headers={}):
+def uws_server_request(uri, method='GET', init_request=None):
     logger.debug(app.config['UWS_SERVER_URL'])
     # Add auth information (Basic, Token...)
     auth = None
     if app.config['UWS_AUTH'] == 'Basic':
         auth = HTTPBasicAuth(current_user.email, current_user.pid)
     # Send request
-    if method == 'POST':
-        r = requests.post('{}{}'.format(app.config['UWS_SERVER_URL'], uri), data=data, auth=auth)
+    if method == 'DELETE':
+        r = requests.delete('{}{}'.format(app.config['UWS_SERVER_URL'], uri), auth=auth)
+    elif method == 'POST':
+        files = {}
+        if init_request.files:
+            logger.debug('POST has files')
+            for fname in init_request.files.keys():
+                logger.debug('file: ' + fname)
+                fp = init_request.files[fname]
+                files[fname] = (fp.filename, fp.stream, fp.content_type, fp.headers)
+        r = requests.post('{}{}'.format(app.config['UWS_SERVER_URL'], uri), data=init_request.form, files=files, auth=auth)
     else:
-        r = requests.get('{}{}'.format(app.config['UWS_SERVER_URL'], uri), params=params, auth=auth)
+        r = requests.get('{}{}'.format(app.config['UWS_SERVER_URL'], uri), params=init_request.args, auth=auth)
     # Return response
     logger.info("{} {} ({})".format(request.method, uri, r.status_code))
     return r

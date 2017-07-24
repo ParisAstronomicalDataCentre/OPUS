@@ -170,13 +170,10 @@ class Job(object):
         # Pop attributes keywords from POST or JDL
         self.execution_duration = int(post.pop('EXECUTION_DURATION', self.jdl.content.get('executionduration', EXECUTION_DURATION_DEF)))
         self.quote = int(post.pop('QUOTE', self.jdl.content.get('quote', self.execution_duration)))
-        logger.info(files)
-        logger.info(files.keys())
-        logger.info(files.__dict__)
         # Search inputs in POST/files
         upload_dir = '{}/{}'.format(UPLOAD_PATH, self.jobid)
         for pname in self.jdl.content['used']:
-            if pname in files:
+            if pname in files.keys():
                 if not os.path.isdir(upload_dir):
                     os.makedirs(upload_dir)
                 f = files[pname]
@@ -191,10 +188,10 @@ class Job(object):
                 }
             elif pname in post:
                 value = post[pname]
-                logger.info('Input {} is a value : '.format(pname, value))
+                logger.info('Input {} is a value : {}'.format(pname, value))
                 # TODO: use url in jdl.used if set (replace $ID with value)
             else:
-                logger.info('Input {} set by deafult'.format(pname))
+                logger.info('Input {} set by default'.format(pname))
                 value = self.jdl.content['used'][pname]['default']
             self.parameters[pname] = {'value': value, 'byref': False}
         # Search parameters in POST
