@@ -170,43 +170,44 @@ class Job(object):
         # Pop attributes keywords from POST or JDL
         self.execution_duration = int(post.pop('EXECUTION_DURATION', self.jdl.content.get('executionduration', EXECUTION_DURATION_DEF)))
         self.quote = int(post.pop('QUOTE', self.jdl.content.get('quote', self.execution_duration)))
-        # Set parameters from POST
-        #for pname, value in post.iteritems():
-        for pname in self.jdl.content['parameters']:
-            # TODO: use JDL to check if value is valid
-            ptype = self.jdl.content['parameters'][pname]['datatype']
-            if 'anyURI' in ptype:
-                byref = True
-            else:
-                byref = False
-            if pname in post:
-                value = post[pname]
-            else:
-                value = self.jdl.content['parameters'][pname]['default']
-            self.parameters[pname] = {'value': value, 'byref': byref}
+        # Search inputs in POST/files
+        upload_dir = '{}/{}'.format(UPLOAD_PATH, self.jobid)
         for pname in self.jdl.content['used']:
+            if pname in files:
+                if not os.path.isdir(upload_dir):
+                    os.makedirs(upload_dir)
+                f = files[pname]
+                f.save(upload_dir + '/' + f.filename)
+                logger.info('Parameter {} is a file and was downloaded ({})'.format(pname, f.filename))
+                # Parameter value is set to the file name on server
+                value = 'file://' + f.filename
+                # value = f.filename
+                self.parameters[pname] = {
+                    'value': value,
+                    'byref': True
+                }
+            elif pname in post:
+                value = post[pname]
+                # TODO: use url in jdl.used if set (replace $ID with value)
+            else:
+                value = self.jdl.content['used'][pname]['default']
+            self.parameters[pname] = {'value': value, 'byref': False}
+        # Search parameters in POST
+        for pname in self.jdl.content['parameters']:
             if pname not in self.parameters:
+                # TODO: use JDL to check if value is valid
+                ptype = self.jdl.content['parameters'][pname]['datatype']
+                if 'anyURI' in ptype:
+                    byref = True
+                else:
+                    byref = False
                 if pname in post:
                     value = post[pname]
-                    # TODO: use url in jdl.used if set (replace $ID with value)
                 else:
-                    if pname not in files:
-                        value = self.jdl.content['used'][pname]['default']
-                self.parameters[pname] = {'value': value, 'byref': False}
+                    value = self.jdl.content['parameters'][pname]['default']
+                self.parameters[pname] = {'value': value, 'byref': byref}
         # Upload files for multipart/form-data
-        for fname, f in files.iteritems():
-            upload_dir = '{}/{}'.format(UPLOAD_PATH, self.jobid)
-            if not os.path.isdir(upload_dir):
-                os.makedirs(upload_dir)
-            f.save(upload_dir + '/' + f.filename)
-            logger.info('Parameter {} is a file and was downloaded ({})'.format(fname, f.filename))
-            # Parameter value is set to the file name on server
-            value = 'file://' + f.filename
-            # value = f.filename
-            self.parameters[fname] = {
-                'value': value,
-                'byref': True
-            }
+        #for fname, f in files.iteritems():
         # Save to storage
         self.storage.save(self, save_attributes=True, save_parameters=True)
 
@@ -534,7 +535,7 @@ class Job(object):
         if self.phase in ['PENDING', 'QUEUED', 'EXECUTING', 'HELD', 'SUSPENDED', 'ERROR']:
             # Change phase
             now = dt.datetime.now()
-            logger.info('now={}'.format(now))
+            # logger.info('now={}'.format(now))
             # destruction = dt.timedelta(DESTRUCTION_INTERVAL)
 
             def nul(*args):
@@ -608,7 +609,7 @@ class Job(object):
             previous_phase = self.phase
             self.phase = new_phase
             # Save job description
-            logger.info('end_time={}'.format(self.end_time))
+            # logger.info('end_time={}'.format(self.end_time))
             self.storage.save(self, save_results=True)
             # Send signal (e.g. if WAIT command expecting signal)
             change_status_signal = signal('job_status')
