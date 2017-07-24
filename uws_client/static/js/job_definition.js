@@ -399,8 +399,9 @@
             dataType: "json",
             success : function(json) {
                 console.log(json['jobnames']);
-                $('input[name=name]').autocomplete({
-                    source: json['jobnames']
+                $('input[name=name]').typeahead({
+                    source: json['jobnames'],
+                    autoSelect: false,
                 });
             },
             error : function(xhr, status, exception) {
