@@ -269,8 +269,10 @@ def get_jobnames():
         # List jdl files (=available jobs)
         flist = glob.glob('{}/*.sh'.format(SCRIPT_PATH))
         # Check if JDL file exists on server?
-        jobnames = {'jobnames': [os.path.splitext(os.path.basename(f))[0] for f in flist]}
-        return jobnames
+        jobnames = [os.path.splitext(os.path.basename(f))[0] for f in flist]
+        jobnames.sort()
+        jobnames_json = {'jobnames': jobnames}
+        return jobnames_json
     except UserWarning as e:
         abort_404(e.message)
 
