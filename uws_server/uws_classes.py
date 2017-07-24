@@ -178,7 +178,7 @@ class Job(object):
                     os.makedirs(upload_dir)
                 f = files[pname]
                 f.save(upload_dir + '/' + f.filename)
-                logger.info('Parameter {} is a file and was downloaded ({})'.format(pname, f.filename))
+                logger.info('Input {} is a file and was downloaded ({})'.format(pname, f.filename))
                 # Parameter value is set to the file name on server
                 value = 'file://' + f.filename
                 # value = f.filename
@@ -188,8 +188,10 @@ class Job(object):
                 }
             elif pname in post:
                 value = post[pname]
+                logger.info('Input {} is a value : '.format(pname, value))
                 # TODO: use url in jdl.used if set (replace $ID with value)
             else:
+                logger.info('Input {} set by deafult'.format(pname))
                 value = self.jdl.content['used'][pname]['default']
             self.parameters[pname] = {'value': value, 'byref': False}
         # Search parameters in POST
