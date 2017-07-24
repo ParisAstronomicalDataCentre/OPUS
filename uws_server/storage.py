@@ -171,17 +171,18 @@ class SQLAlchemyJobStorage(JobStorage):
     def read(self, job, get_attributes=True, get_parameters=True, get_results=True,
              from_pid=False):
         """Read job information from storage"""
-        if from_pid:
-            # Query db for jobname and jobid using pid
-            row = self.session.query(self.Jobs).filter_by(pid=job.pid).first()
-            if not row:
-                raise NotFoundWarning('Job with pid={} NOT FOUND'.format(job.pid))
-            job.jobname = row.jobname
-            job.jobid = row.jobid
         if get_attributes:
-            row = self.session.query(self.Jobs).filter_by(jobid=job.jobid).first()
-            if not row:
-                raise NotFoundWarning('Job "{}" NOT FOUND'.format(job.jobid))
+            if from_pid:
+                # Query db for jobname and jobid using pid
+                row = self.session.query(self.Jobs).filter_by(pid=job.pid).first()
+                if not row:
+                    raise NotFoundWarning('Job with pid={} NOT FOUND'.format(job.pid))
+                # job.jobname = row.jobname
+                # job.jobid = row.jobid
+            else:
+                row = self.session.query(self.Jobs).filter_by(jobid=job.jobid).first()
+                if not row:
+                    raise NotFoundWarning('Job "{}" NOT FOUND'.format(job.jobid))
             for k in row.__dict__.keys():
                 if k in JOB_ATTRIBUTES:
                     job.__dict__[k] = row.__dict__[k]

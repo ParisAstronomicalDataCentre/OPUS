@@ -579,13 +579,13 @@ def job_event():
         logger = logger_init
         logger.info('from {} with POST={}'.format(ip, str(request.POST.dict)))
         if 'jobid' in request.POST:
-            pid = request.POST['jobid'][0]
+            pid = request.POST['jobid']
             # Get job properties from DB based on pid
             job = Job('', pid, user, get_attributes=True, from_pid=True, check_user=False)
             # Update job
             if 'phase' in request.POST:
                 cur_phase = job.phase
-                new_phase = request.POST['phase'][0]
+                new_phase = request.POST['phase']
                 msg = ''
                 if new_phase not in PHASES:
                     if new_phase in PHASE_CONVERT:
