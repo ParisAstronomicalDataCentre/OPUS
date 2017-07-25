@@ -11,9 +11,7 @@ import re
 import uuid
 import threading
 from subprocess import CalledProcessError
-
 from bottle import Bottle, request, response, abort, redirect, run, static_file
-
 from uws_classes import *
 
 
@@ -34,9 +32,11 @@ def options_request():
     response.set_header('Access-Control-Allow-Headers', 'Authorization, X-Requested-With')
     #pass
 
+
 #@app.hook('after_request')
 #def enableCORSAfterRequestHook():
 #    response.set_header('Access-Control-Allow-Origin', '*')
+
 
 #@hook('after_request')
 #def enable_cors():
@@ -292,8 +292,7 @@ def get_prov(jobname, jobid):
         job.jdl.read(jobname)
         # Return job provenance
         pdoc = voprov.job2prov(job)
-        dot = voprov.prov2dot(pdoc)
-        svg_content = dot.create(format="svg")
+        svg_content = voprov.prov2svg(pdoc)
         response.content_type = 'text/xml; charset=UTF-8'
         return svg_content
     except storage.NotFoundWarning as e:
