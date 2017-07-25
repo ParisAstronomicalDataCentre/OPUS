@@ -20,7 +20,12 @@
                     <span class="pull-left" style="padding-top: 4px;">
                         <span class="panel-title">Job Description</span>
                     </span>
-                    <a id="to_job_list" type="button" class="btn btn-default btn-sm pull-right" href="{{ url_for('job_list', jobname=jobname) }}">Back to job list</a>
+                    <div class="btn-group pull-right">
+                        <a id="to_job_list" class="btn btn-default btn-sm" href="{{ url_for('job_list', jobname=jobname) }}">
+                            <span class="glyphicon glyphicon-arrow-left"></span>
+                            Back to job list
+                        </a>
+                    </div>
                 </div>
                 <div id="div_table" class="table-responsive">
                     <table id="job_list" class="table table-bordered table-condensed">

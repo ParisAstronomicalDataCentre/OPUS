@@ -584,15 +584,21 @@ var uws_client = (function($) {
             r_i++;
             var r_id = 'result_'+r
             var r_url = job['results'][r];
+            var r_url_auth = r_url.split(job.jobId).pop();
+            if (r_url_auth != r_url) {
+                r_url_auth = '/client/proxy/get/result/' + job.jobId + r_url_auth
+            }
             var r_name = r_url.split('/').pop();
             var r_panel = '\
                 <div id="'+r_id+'" class="panel panel-default" value="'+r_url+'">\
-                      <div class="panel-heading clearfix">\
-                          <span class="pull-left">\
-                              <span class="panel-title"><strong>'+r+'</strong></span>: \
-                              <a href="'+r_url+'" target="_blank">'+r_url+'</a>\
-                          </span>\
-                      </div>\
+                    <div class="panel-heading clearfix">\
+                        <span class="pull-left" style="padding-top: 4px;">\
+                            <span class="panel-title"><strong>'+r+'</strong></span>: \
+                            <a href="'+r_url+'" target="_blank">'+r_url+'</a>\
+                        </span>\
+                        <div class="btn-group pull-right">\
+                        </div>\
+                    </div>\
                 </div>';
             // Some results are shown in the details box if present
             var r_type = 'text/plain';
@@ -619,14 +625,19 @@ var uws_client = (function($) {
                     r_type = jdl.results[r]['content_type']; //r_name.split('.').pop();
                     $('#result_list').append(r_panel);
             }
+            $('#'+r_id+' div.panel-heading div.btn-group').append('\
+                        <a class="samp btn btn-default btn-sm pull-right" href="'+r_url_auth+'">\
+                            <span class="glyphicon glyphicon-save"></span>\
+                            Auth Access\
+                        </a>'
+            );
             // Show preview according to result type (file extension)
             switch (r_type) {
                 // FITS files can be SAMPed
                 case 'image/fits':
-                    $('#'+r_id+' div.panel-heading span.pull-left').attr('style', "padding-top: 4px;");
-                    $('#'+r_id+' div.panel-heading').append('\
-                        <button type="button" class="samp btn btn-default btn-sm pull-right">SAMP</button>\
-                    ');
+                    $('#'+r_id+' div.panel-heading div.btn-group').append('\
+                        <button type="button" class="samp btn btn-default btn-sm pull-right">SAMP</button>'
+                    );
                     // Add event on SAMP button click
                     $('#'+r_id+' div.panel-heading button.samp').click(function() {
                         var url = $(this).parents(".panel").attr('value');
