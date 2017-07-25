@@ -23,6 +23,7 @@ var uws_client = (function($) {
 
     // var serviceUrl = $(location).attr('protocol') + '//' + $(location).attr('host');
     // "https://voparis-uws-test.obspm.fr/"; // app_url+"/uws-v1.0/" //
+    var DEBUG = true;
     var server_jobs_url = '/rest/';
     var server_jdl_url = '/get/json/';
     var client_job_list_url = '/client/job_list';
@@ -39,6 +40,8 @@ var uws_client = (function($) {
     //----------
     // LOGGER (show info in console or other logger)
     function logger(lvl_name, msg, exception) {
+        if (lvl_name == 'DEBUG' && !DEBUG) { return; };
+        if (lvl_name == 'OBJECT') { console.log(msg); return; };
         console.log(lvl_name + ' ' + msg);
     }
 
@@ -59,16 +62,6 @@ var uws_client = (function($) {
         }
     }
 
-//    Array.prototype.contains = function(obj) {
-//        var i = this.length;
-//        while (i--) {
-//            if (this[i] === obj) {
-//                return true;
-//            }
-//        }
-//        return false;
-//    }
-
     //----------
     // CREATE MANAGER AND CLIENTS
     function initClient(serviceUrl, jobNames_init){
@@ -83,16 +76,15 @@ var uws_client = (function($) {
             });
             logger('INFO', 'uwsClient at ' + clients[jobNames[i]].serviceUrl);
         }
-        logger('INFO', 'initClient '+serviceUrl);
     };
 
     function wait_for_jdl(jobName, next_function, args){
         if ((typeof clients[jobName] !== "undefined") && (typeof clients[jobName].jdl !== "undefined")) {
-            console.log('JDL set for ' + jobName);
-            console.log(clients[jobName].jdl);
+            logger('DEBUG', 'JDL set for ' + jobName);
+            logger('OBJECT', clients[jobName].jdl);
             next_function.apply(this, args);
         } else {
-            console.log('Wait for JDL for ' + jobName);
+            logger('DEBUG', 'Wait for JDL for ' + jobName);
             setTimeout(function(){
                 wait_for_jdl(jobName, next_function, args);
             }, 500);
@@ -409,7 +401,7 @@ var uws_client = (function($) {
         };
         if (p.options) {
             // change input to select and run selectpicker
-            console.log('change to select input');
+            logger('DEBUG', 'Change text input to select input with limited options');
             var elt = '\
                 <select class="selectpicker" id="id_' + pname + '" name="' + pname + '">\n\
                 </select>\n';
@@ -562,7 +554,6 @@ var uws_client = (function($) {
     //----------
     // DISPLAY RESULTS
     var displayResultsOk = function(job){
-        console.log(job);
         var jdl = clients[job.jobName].jdl;
         $('#result_list').html('');
         $('#details_list').html('');
@@ -616,7 +607,6 @@ var uws_client = (function($) {
                     ');
                     // Add event on SAMP button click
                     $('#'+r_id+' div.panel-heading button.samp').click(function() {
-                        console.log('samp!');
                         var url = $(this).parents(".panel").attr('value');
                         var name = url.split('/').pop();
                         samp_client.samp_image(url, name);
@@ -703,7 +693,6 @@ var uws_client = (function($) {
         // Back to job list on remove
         // $("#"+job.jobId).on("remove", function () {
         $("#"+job.jobId).on('destroyed', function() {
-            console.log('Set on remove for: '+job.jobId)
             $("#div_job").hide();
             setTimeout(function(){
                 window.location.href = client_job_list_url + "/" + job.jobName;  // + "?msg=deleted&jobid=" + jobId;
