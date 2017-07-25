@@ -42,7 +42,7 @@ UWS_SERVER_URL_JS = '/client/proxy'  # called by javascript, set to local url (p
 UWS_AUTH = 'Basic'
 ALLOW_ANONYMOUS = False
 
-# Default editable configuration
+# Editable configuration keywords
 EDITABLE_CONFIG = [
     'UWS_SERVER_URL',
     'UWS_SERVER_URL_JS',
@@ -50,21 +50,20 @@ EDITABLE_CONFIG = [
     'ALLOW_ANONYMOUS'
 ]
 
-#--- Include host-specific settings ------------------------------------------------------------------------------------
+# Include host-specific setting
 if os.path.exists(APP_PATH + '/uws_client/settings_local.py'):
     from settings_local import *
-#--- Include host-specific settings ------------------------------------------------------------------------------------
 
 LOG_PATH = VAR_PATH + '/logs'  # the logs dir has to be writable from the app
 CONFIG_FILE = VAR_PATH + '/config/uws_client_config.yaml'  # the config dir has to be writable from the app
-SQLALCHEMY_DATABASE_URI = 'sqlite:///{}/db/flask_login.db'.format(VAR_PATH)  # SQLALCHEMY_DATABASE_URI_LOCAL,
+SQLALCHEMY_DATABASE_URI = 'sqlite:///{}/db/flask_login.db'.format(VAR_PATH),
 SQLALCHEMY_TRACK_MODIFICATIONS = True
-SECURITY_PASSWORD_SALT = 'test'
 SECURITY_URL_PREFIX = '/accounts'
 SECURITY_FLASH_MESSAGES = True
+SECURITY_PASSWORD_SALT = 'test'
+SECURITY_USER_IDENTITY_ATTRIBUTES = 'email'
 SECURITY_POST_LOGIN_VIEW = APPLICATION_ROOT
 SECURITY_POST_LOGOUT_VIEW = APPLICATION_ROOT
-SECURITY_USER_IDENTITY_ATTRIBUTES = 'email'
 SECURITY_REGISTERABLE = False
 SECURITY_SEND_REGISTER_EMAIL = False
 SECURITY_CHANGEABLE = True
@@ -119,7 +118,7 @@ app.config.from_object(__name__)  # load config from this file
 
 
 # ----------
-#  User DB
+# User DB
 
 db = SQLAlchemy(app)
 
@@ -172,8 +171,10 @@ user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 security = Security(app, user_datastore , login_form=ExtendedLoginForm)
 #, register_form=ExtendedRegisterForm)
 
+
 # ----------
-# Load/store g.config (different from app.config, g.config can be set by the admin user through the Preferences page)
+# Load/store editable config
+
 
 @app.before_first_request
 def load_config():
@@ -185,11 +186,13 @@ def load_config():
     else:
         save_config()
 
+
 def save_config():
     logger.debug('Save editable config')
     with open(CONFIG_FILE, 'w') as cf:
         econf = {k: app.config[k] for k in EDITABLE_CONFIG if k in app.config}
         yaml.dump(econf, cf, default_flow_style=False)
+
 
 def update_config(key, value):
     if key in EDITABLE_CONFIG:
@@ -327,7 +330,6 @@ def preferences():
         for key, value in request.form.iteritems():
             if key in EDITABLE_CONFIG:
                 app.config[key] = str(value)
-        logger.debug({k: app.config[k] for k in EDITABLE_CONFIG if k in app.config})
         save_config()
         flash('Preferences successfully updated', 'info')
         return redirect(url_for('preferences'), 303)
@@ -347,7 +349,7 @@ def add_url_to_context():
 def home():
     """Home page"""
     # logger.debug('app.config = {}'.format(app.config))
-    logger.debug({k: app.config[k] for k in EDITABLE_CONFIG if k in app.config})
+    logger.debug('config = '.format({k: app.config[k] for k in EDITABLE_CONFIG if k in app.config}))
     logger.debug('g = {}'.format(g.__dict__))
     logger.info('session = {}'.format(session.__dict__))
     return render_template('home.html')
@@ -478,30 +480,11 @@ def uws_server_request(uri, method='GET', init_request=None):
     return response
 
 
-# class MyProxy(HostProxy):
-#     def process_request(self, uri, method, headers, environ):
-#         uri = uri.replace(app.config['APPLICATION_ROOT'] + '/proxy', '')
-#         #headers['Authorization'] = app.
-#         logger.debug(headers)
-#         logger.debug(method + ' ' + uri)
-#         return self.http(uri, method, environ['wsgi.input'], headers)
-#
-# proxy_app = MyProxy('https://voparis-uws-test.obspm.fr/', strip_script_name=False)
-#
-# app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {'/proxy': proxy_app})
-
-# TODO: Need to set 'HTTP_AUTHORIZATION': 'Basic YWRtaW46NzQyY2M5N2ItMjgwYi01MTZhLWJkNDUtYjY4NGM3ZmZiNDY1' from proxy, not from javascript
-
-
 # ----------
 # run server
 
 
-# Create session
-#client_app = SessionMiddleware(app, session_opts)
-client_app = app
-
 if __name__ == '__main__':
     # Run local web server
-    #run(client_app, host='localhost', port=8080, debug=False, reloader=True)
+    #run(app, host='localhost', port=8080, debug=False, reloader=True)
     pass
