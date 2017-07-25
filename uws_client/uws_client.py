@@ -38,7 +38,7 @@ VAR_PATH = '/var/www/opus'
 LOG_FILE_SUFFIX = ''
 # UWS_SERVER_URL = 'http://localhost'
 UWS_SERVER_URL = 'https://voparis-uws-test.obspm.fr'
-UWS_SERVER_URL_JS = '/client/proxy'  # called by javascript, set to local url to avoid cross-calls
+UWS_SERVER_URL_JS = '/client/proxy'  # called by javascript, set to local url (proxy) to avoid cross-calls
 UWS_AUTH = 'Basic'
 ALLOW_ANONYMOUS = False
 
@@ -389,8 +389,8 @@ def job_definition(jobname):
     if request.method == 'POST':
         jobname = request.form.get('name').split('/')[-1]
         logger.info('Create new/{}'.format(jobname))
-        r = uws_server_request('/config/job_definition'.format(jobname), method='POST', data=request.form, headers=request.headers)
-        if r.status_code == 200:
+        response = uws_server_request('/config/job_definition'.format(jobname), method='POST', init_request=request)
+        if response.status_code == 200:
             flash('New job definition has been saved as new/{}'.format(jobname), 'info')
         else:
             flash('Job definition for {jn} was not found on the server. Cannot validate.'.format(jn=jobname))
@@ -410,9 +410,9 @@ def validate_job(jobname):
     """Validate job on server"""
     logger.info(jobname)
     # Send request to UWS Server
-    r = uws_server_request('/config/validate_job/{}'.format(jobname), method='GET', headers=request.headers)
+    response = uws_server_request('/config/validate_job/{}'.format(jobname), method='GET', init_request=request)
     # redirect to job_definition with message
-    if r.status_code == 200:
+    if response.status_code == 200:
         flash('Job definition for new/{jn} has been validated and renamed {jn}'.format(jn=jobname))
     else:
         flash('Job definition for {jn} was not found on the server. Cannot validate.'.format(jn=jobname))
@@ -426,9 +426,9 @@ def cp_script(jobname):
     """Copy job script to work server"""
     logger.info(jobname)
     # Send request to UWS Server
-    r = uws_server_request('/config/cp_script/{}'.format(jobname), method='GET')
+    response = uws_server_request('/config/cp_script/{}'.format(jobname), method='GET', init_request=request)
     # redirect to job_definition with message
-    if r.status_code == 200:
+    if response.status_code == 200:
         flash('Job script {}.sh has been copied to work cluster'.format(jobname))
     else:
         flash('Job definition for {jn} was not found on the server. Cannot validate.'.format(jn=jobname))
@@ -441,7 +441,7 @@ def cp_script(jobname):
 
 @app.route('/proxy/<path:uri>', methods=['GET', 'POST', 'DELETE'])
 def proxy(uri):
-    r = uws_server_request('/' + uri, method=request.method, init_request=request)
+    response = uws_server_request('/' + uri, method=request.method, init_request=request)
     # logger.debug(r.headers.__dict__)
     # def generate():
     #     for chunk in r.iter_content(CHUNK_SIZE):
@@ -450,7 +450,7 @@ def proxy(uri):
     # headers = {}
     # for k in ['content-length']:  #, 'content-encoding']:
     #     headers[k] = r.headers[k]
-    return Response(r, status=r.status_code, content_type=r.headers['content-type'])  # , headers=headers)
+    return Response(response, status=response.status_code, content_type=response.headers['content-type'])  # , headers=headers)
 
 
 def uws_server_request(uri, method='GET', init_request=None):
@@ -461,7 +461,7 @@ def uws_server_request(uri, method='GET', init_request=None):
         auth = HTTPBasicAuth(current_user.email, current_user.pid)
     # Send request
     if method == 'DELETE':
-        r = requests.delete('{}{}'.format(app.config['UWS_SERVER_URL'], uri), auth=auth)
+        response = requests.delete('{}{}'.format(app.config['UWS_SERVER_URL'], uri), auth=auth)
     elif method == 'POST':
         files = {}
         if init_request.files:
@@ -470,12 +470,12 @@ def uws_server_request(uri, method='GET', init_request=None):
                 logger.debug('file: ' + fname)
                 fp = init_request.files[fname]
                 files[fname] = (fp.filename, fp.stream, fp.content_type, fp.headers)
-        r = requests.post('{}{}'.format(app.config['UWS_SERVER_URL'], uri), data=init_request.form, files=files, auth=auth)
+        response = requests.post('{}{}'.format(app.config['UWS_SERVER_URL'], uri), data=init_request.form, files=files, auth=auth)
     else:
-        r = requests.get('{}{}'.format(app.config['UWS_SERVER_URL'], uri), params=init_request.args, auth=auth)
+        response = requests.get('{}{}'.format(app.config['UWS_SERVER_URL'], uri), params=init_request.args, auth=auth)
     # Return response
-    logger.info("{} {} ({})".format(request.method, uri, r.status_code))
-    return r
+    logger.info("{} {} ({})".format(request.method, uri, response.status_code))
+    return response
 
 
 # class MyProxy(HostProxy):
