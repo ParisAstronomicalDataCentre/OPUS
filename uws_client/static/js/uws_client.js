@@ -540,10 +540,11 @@ var uws_client = (function($) {
         // Fill value from job
         for (var pname in job['parameters']) {
             var pvalue = job['parameters'][pname];
+            pvalue = decodeURIComponent(pvalue).replace(/[+]/g, " ");
             // Add in param_list table (if present in DOM)
-            $('#param_list').append('<tr><td><strong>'+pname+'</strong></td><td>'+decodeURIComponent(pvalue)+'</td></tr>');
+            $('#param_list').append('<tr><td><strong>' + pname + '</strong></td><td>' + pvalue + '</td></tr>');
             // Update form fields
-            $('#id_'+pname).attr('value', decodeURIComponent(pvalue));
+            $('#id_' + pname).attr('value', pvalue);
         };
         $('.selectpicker').selectpicker('refresh');
         // Add buttons
