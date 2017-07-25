@@ -229,7 +229,7 @@ class SQLAlchemyJobStorage(JobStorage):
         if check_user:
             query = query.filter_by(owner=joblist.user.name)
             query = query.filter_by(owner_pid=joblist.user.pid)
-        query = query.order_by(self.Jobs.destruction_time.desc())
+        query = query.order_by(self.Jobs.destruction_time.asc())
         jobs = query.all()
         djobs = [job.__dict__ for job in jobs]
         return djobs
