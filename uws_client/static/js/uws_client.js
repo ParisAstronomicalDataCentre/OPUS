@@ -626,23 +626,23 @@ var uws_client = (function($) {
                     $('#result_list').append(r_panel);
             }
             $('#'+r_id+' div.panel-heading div.btn-group').append('\
-                        <a class="samp btn btn-default btn-sm pull-right" href="'+r_url_auth+'">\
-                            <span class="glyphicon glyphicon-save"></span>\
-                            Auth Access\
-                        </a>'
+                <a class="samp btn btn-default btn-sm" href="'+r_url_auth+'">\
+                    <span class="glyphicon glyphicon-save"></span>\
+                    Auth Access\
+                </a>'
             );
             // Show preview according to result type (file extension)
             switch (r_type) {
                 // FITS files can be SAMPed
                 case 'image/fits':
                     $('#'+r_id+' div.panel-heading div.btn-group').append('\
-                        <button type="button" class="samp btn btn-default btn-sm pull-right">SAMP</button>'
+                        <button type="button" class="samp btn btn-default btn-sm">SAMP</button>'
                     );
                     // Add event on SAMP button click
-                    $('#'+r_id+' div.panel-heading button.samp').click(function() {
-                        var url = $(this).parents(".panel").attr('value');
-                        var name = url.split('/').pop();
-                        samp_client.samp_image(url, name);
+                    $('#'+r_id+' div.panel-heading div.btn-group button.samp').click(function() {
+                        // var url = $(this).parents(".panel").attr('value');
+                        //var name = url.split('/').pop();
+                        samp_client.samp_image(r_url);
                     });
                     // Show image preview
                     //$('#'+r_id+' div.panel-body').html('\
