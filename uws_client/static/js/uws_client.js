@@ -26,9 +26,11 @@ var uws_client = (function($) {
     var DEBUG = true;
     var server_jobs_url = '/rest/';
     var server_jdl_url = '/get/json/';
+    var server_result_url = '/get/result/';
     var client_job_list_url = '/client/job_list';
     var client_job_edit_url = '/client/job_edit';
     var client_job_form_url = '/client/job_form';
+    var client_proxy_url = '/client/proxy';
     var jobNames;
     var clients = {};
     var refreshPhaseTimeout = {}; // stores setInterval functions for phase refresh
@@ -586,7 +588,7 @@ var uws_client = (function($) {
             var r_url = job['results'][r];
             var r_url_auth = r_url.split(job.jobId).pop();
             if (r_url_auth != r_url) {
-                r_url_auth = '/client/proxy/get/result/' + job.jobId + r_url_auth
+                r_url_auth = client_proxy_url + server_result_url + job.jobId + r_url_auth
             }
             var r_name = r_url.split('/').pop();
             var r_panel = '\
