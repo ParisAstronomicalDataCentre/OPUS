@@ -388,7 +388,7 @@ class Job(object):
 
     def add_result_entry(self, rname, rfname, content_type):
         # TODO: Use an Entity Store
-        url = '{}/get_result_file/{}/{}'.format(BASE_URL, self.jobid, rname)  # , rfname)
+        url = '{}/results/{}/{}'.format(BASE_URL, self.jobid, rname)  # , rfname)
         self.results[rname] = {'url': url, 'content_type': content_type}
         logger.info('add {} file to results'.format(rfname))
 
@@ -539,74 +539,29 @@ class Job(object):
             now = dt.datetime.now()
             # logger.info('now={}'.format(now))
             # destruction = dt.timedelta(DESTRUCTION_INTERVAL)
-
-            def nul(*args):
-                # Simply change phase
-                pass
-
-            def phase_executing(job, error_msg):
-                # Set job.start_time
-                job.start_time = now.strftime(DT_FMT)
-                # Estimates job.end_time from job.start_time + duration
-                # duration = dt.timedelta(0, self.execution_duration)
-                # end_time = dt.datetime.strptime(job.start_time, DT_FMT) + duration
-                # job.end_time = end_time.strftime(DT_FMT)
-
-            def phase_completed(job, error_msg):
-                # Set job.end_time
-                job.end_time = now.strftime(DT_FMT)
-                logger.info('end_time={}'.format(job.end_time))
-                # Copy back jobdata from cluster
-                job.manager.get_jobdata(job)
-                # Add results, logs, provenance
-                job.add_results()
-                job.add_logs()
-                job.add_provenance()
-
-            def phase_aborted(job, error_msg):
-                # Set job.end_time
-                job.end_time = now.strftime(DT_FMT)
-                # Copy back jobdata from cluster
-                job.manager.get_jobdata(job)
-                # Add results, logs, provenance
-                job.add_results()
-                job.add_logs()
-                # job.add_provenance()
-
-            def phase_error(job, error_msg):
-                # Set job.end_time if not already in ERROR phase
-                if job.phase != 'ERROR':
-                    job.end_time = now.strftime(DT_FMT)
-                # Set job.error or add
-                if job.error:
-                    job.error += '. ' + error_msg
-                else:
-                    job.error = error_msg
-                # Copy back jobdata from cluster
-                job.manager.get_jobdata(job)
-                # Add results, logs, provenance (if they exist...)
-                job.add_results()
-                job.add_logs()
-                # job.add_provenance()
-
-            # Switch for new_phase
-            cases = {
-                'QUEUED': nul,
-                'HELD': nul,
-                'SUSPENDED': nul,
-                'EXECUTING': phase_executing,
-                'COMPLETED': phase_completed,
-                'ABORTED': phase_aborted,
-                'ERROR': phase_error
-            }
-            if new_phase not in cases:
+            if new_phase not in ['QUEUED', 'HELD', 'SUSPENDED', 'EXECUTING', 'COMPLETED', 'ABORTED', 'ERROR']:
                 raise UserWarning('Phase change not allowed: {} --> {}'.format(self.phase, new_phase))
             # Run case
-            cases[new_phase](self, error)
+            # cases[new_phase](self, error)
+            # Set start_time
+            if new_phase in ['QUEUED']:
+                self.start_time = now.strftime(DT_FMT)
             # Set end_time
             if new_phase in ['COMPLETED', 'ABORTED', 'ERROR']:
+                self.manager.get_jobdata(self)
                 if self.phase != 'ERROR':
                     self.end_time = now.strftime(DT_FMT)
+                # Add results, logs, provenance (if they exist...)
+                self.add_results()
+                self.add_logs()
+                if new_phase in ['COMPLETED']:
+                    self.add_provenance()
+            if new_phase in ['ERROR']:
+                # Set job.error or add
+                if self.error:
+                    self.error += '. ' + error
+                else:
+                    self.error = error
             # Update phase
             previous_phase = self.phase
             self.phase = new_phase
