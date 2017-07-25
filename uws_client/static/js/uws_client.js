@@ -657,7 +657,7 @@ var uws_client = (function($) {
                     // Show image preview
                     $('#'+r_id).append('\
                         <div class="panel-body">\
-                            <img class="img-thumbnail" src="' + r_url + '" />\
+                            <img class="img-thumbnail" src="' + r_url_auth + '" />\
                         </div>\
                     ');
                     break;
@@ -671,11 +671,11 @@ var uws_client = (function($) {
                         </div>\
                     ');
                     $.ajax({
-                        url : r_url,
+                        url : r_url_auth,
                         dataType: "text",
                         context: r_id,  // Set this=r_id for success function
                         success : function (txt) {
-                            $('#'+this+' div.panel-body textarea').html(txt);
+                            $('#' + this + ' div.panel-body textarea').html(txt);
                         }
                     });
                     break;
@@ -686,8 +686,8 @@ var uws_client = (function($) {
                         </div>\
                     ');
                     var r_id_svg = r_id
-                    $('#'+r_id+' div.panel-body').load(r_url, function() {
-                        $('#'+r_id_svg+' > div.panel-body > svg').attr('width', '100%');
+                    $('#'+r_id+' div.panel-body').load(r_url_auth, function() {
+                        $('#' + r_id_svg + ' > div.panel-body > svg').attr('width', '100%');
                     });
                     break;
             };
