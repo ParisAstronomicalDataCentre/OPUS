@@ -56,7 +56,7 @@ if os.path.exists(APP_PATH + '/uws_client/settings_local.py'):
 
 LOG_PATH = VAR_PATH + '/logs'  # the logs dir has to be writable from the app
 CONFIG_FILE = VAR_PATH + '/config/uws_client_config.yaml'  # the config dir has to be writable from the app
-SQLALCHEMY_DATABASE_URI = 'sqlite:///{}/db/flask_login.db'.format(VAR_PATH),
+SQLALCHEMY_DATABASE_URI = 'sqlite:///{}/db/flask_login.db'.format(VAR_PATH)
 SQLALCHEMY_TRACK_MODIFICATIONS = True
 SECURITY_URL_PREFIX = '/accounts'
 SECURITY_FLASH_MESSAGES = True
@@ -120,7 +120,9 @@ app.config.from_object(__name__)  # load config from this file
 # ----------
 # User DB
 
+
 db = SQLAlchemy(app)
+
 
 # Define models for User and Role
 roles_users = db.Table('roles_users',
