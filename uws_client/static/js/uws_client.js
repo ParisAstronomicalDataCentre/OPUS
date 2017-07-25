@@ -626,7 +626,7 @@ var uws_client = (function($) {
                     $('#result_list').append(r_panel);
             }
             $('#'+r_id+' div.panel-heading div.btn-group').append('\
-                <a class="samp btn btn-default btn-sm" href="'+r_url_auth+'">\
+                <a class="samp btn btn-default btn-sm" href="' + r_url_auth + '">\
                     <span class="glyphicon glyphicon-save"></span>\
                     Auth Access\
                 </a>'
@@ -642,7 +642,7 @@ var uws_client = (function($) {
                     $('#'+r_id+' div.panel-heading div.btn-group button.samp').click(function() {
                         // var url = $(this).parents(".panel").attr('value');
                         //var name = url.split('/').pop();
-                        samp_client.samp_image(r_url);
+                        samp_client.samp_image(r_url_auth);
                     });
                     // Show image preview
                     //$('#'+r_id+' div.panel-body').html('\
