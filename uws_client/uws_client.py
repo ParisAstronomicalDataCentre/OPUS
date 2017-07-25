@@ -226,7 +226,6 @@ def create_db():
             )
         # Create demo user
         if not user_datastore.get_user('user'):
-            pid = uuid.uuid5(uuid.NAMESPACE_X500, app.config['APP_PATH'] + 'user')
             user_datastore.create_user(
                 email='user',
                 password='cta',
