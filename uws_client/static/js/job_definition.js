@@ -274,7 +274,7 @@
         var jobname = $('input[name=name]').val();
         // ajax command to get JDL from UWS server
         $.ajax({
-			url : server_url + '/get_jdl_json/' + jobname,  //.split("/").pop(),  // to remove new/ (not needed here)
+			url : server_url + '/get/json/' + jobname,  //.split("/").pop(),  // to remove new/ (not needed here)
 			async : true,
 			type : 'GET',
 			dataType: "json",
@@ -340,7 +340,7 @@
                 $('.selectpicker').selectpicker('refresh');
                 // ajax command to get_script from UWS server
                 $.ajax({
-                    url : server_url + '/get_script/' + jobname, //.split("/").pop(),
+                    url : server_url + '/get/script/' + jobname, //.split("/").pop(),
                     async : true,
                     cache : false,
                     type : 'GET',
@@ -375,7 +375,7 @@
         var jobname = $('input[name=name]').val();
         // ajax command to get_jdl on UWS server
         $.ajax({
-			url : server_url + '/get_jdl/' + jobname,  //.split("/").pop(),  // to remove new/ (not needed here)
+			url : server_url + '/get/jdl/' + jobname,  //.split("/").pop(),  // to remove new/ (not needed here)
 			type : 'GET',
 			dataType: "text",
 			success : function(jdl) {
@@ -393,7 +393,7 @@
     function get_jobnames() {
         // Get jobnames from server
         $.ajax({
-            url : server_url + '/get_jobnames',
+            url : server_url + '/get/jobnames',
             cache : false,
             type : 'GET',
             dataType: "json",
@@ -470,7 +470,7 @@
         // Load JDL on return keydown for job name
         $('input[name=name]').keydown(function (event) {
             if (event.keyCode == 13) {
-                $('.ui-autocomplete').hide();
+                //$('.ui-autocomplete').hide();
                 event.preventDefault();
                 load_jdl();
             }

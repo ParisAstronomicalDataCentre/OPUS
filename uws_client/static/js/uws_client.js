@@ -24,9 +24,10 @@ var uws_client = (function($) {
     // var serviceUrl = $(location).attr('protocol') + '//' + $(location).attr('host');
     // "https://voparis-uws-test.obspm.fr/"; // app_url+"/uws-v1.0/" //
     var server_jobs_url = '/rest/';
-    var server_jdl_url = '/get_jdl_json/';
+    var server_jdl_url = '/get/json/';
     var client_job_list_url = '/client/job_list';
     var client_job_edit_url = '/client/job_edit';
+    var client_job_form_url = '/client/job_form';
     var jobNames;
     var clients = {};
     var refreshPhaseTimeout = {}; // stores setInterval functions for phase refresh
