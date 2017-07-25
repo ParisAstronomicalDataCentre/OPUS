@@ -39,14 +39,17 @@ var uws_client = (function($) {
 
     //----------
     // LOGGER (show info in console or other logger)
+
     function logger(lvl_name, msg, exception) {
         if (lvl_name == 'DEBUG' && !DEBUG) { return; };
         if (lvl_name == 'OBJECT') { console.log(msg); return; };
         console.log(lvl_name + ' ' + msg);
     }
 
+
     //----------
     // Scroll to an anchor in the page with slow animation
+
     function scrollToAnchor(aid){
         var elt = $("#"+ aid);
         if (elt.length != 0) {
@@ -62,8 +65,10 @@ var uws_client = (function($) {
         }
     }
 
+
     //----------
     // CREATE MANAGER AND CLIENTS
+
     function initClient(serviceUrl, jobNames_init){
         jobNames = jobNames_init;
         for (var i in jobNames) {
@@ -91,8 +96,10 @@ var uws_client = (function($) {
         };
     }
 
+
     //----------
     // PREPARE TABLE
+
     var prepareTable = function() {
         var tcontent = '\
             <thead>\
@@ -110,8 +117,10 @@ var uws_client = (function($) {
         $('#job_list').html(tcontent);
     };
 
+
     //----------
     // SELECT JOB
+
     var selectJob = function(jobId) {
         $('#job_list tbody').find('tr.bg-info').removeClass('bg-info');
         $('#'+jobId).addClass("bg-info");
@@ -126,6 +135,7 @@ var uws_client = (function($) {
 
     //----------
     // DISPLAY PHASE
+
     var displayPhase = function(jobId, phase) {
         var phase_class = 'btn-default';
         var phase_icon = '';
@@ -188,8 +198,10 @@ var uws_client = (function($) {
         };
     };
 
+
     //----------
     // REFRESH PHASE
+
     var refreshPhase = function(jobId, phase) {
         // Display PHASE button
         displayPhase(jobId, phase);
@@ -213,8 +225,10 @@ var uws_client = (function($) {
         };
     };
 
+
     //----------
     // DISPLAY JOB ROW
+
     var displayJobRow = function(job){
         var start_time = job.startTime.split("T");
         if (start_time.length == 1) {
@@ -301,8 +315,10 @@ var uws_client = (function($) {
         });
     };
 
+
     //----------
     // DISPLAY JOB
+
     var displayJob = function(job){
         // Display row
         displayJobRow(job);
@@ -327,8 +343,10 @@ var uws_client = (function($) {
         });
     };
 
+
     //----------
     // DISPLAY PROPS
+
     var displayProps = function(job){
         for (var p in job) {
             if (job[p]) {
@@ -348,8 +366,10 @@ var uws_client = (function($) {
         };
     };
 
+
     //----------
     // DISPLAY PARAMS (as forms)
+
     var displayParamFormInput = function(pname, p){
         var phide = ''
         var pclass = 'form-group'
@@ -551,8 +571,10 @@ var uws_client = (function($) {
         wait_for_jdl(job.jobName, displayParamFormOkFilled, [job]);
     };
 
+
     //----------
     // DISPLAY RESULTS
+
     var displayResultsOk = function(job){
         var jdl = clients[job.jobName].jdl;
         $('#result_list').html('');
@@ -665,6 +687,7 @@ var uws_client = (function($) {
 
     //----------
     // DISPLAY SINGLE JOB INFO
+
     var displaySingleJob = function(jobName, jobId){
         prepareTable();
         clients[jobName].getJobInfos(jobId, displaySingleJobSuccess, displaySingleJobError);
@@ -730,8 +753,10 @@ var uws_client = (function($) {
         }, 3000);
     };
 
+
     //----------
     // REFRESH PROPS
+
     var refreshProps = function(jobId){
         var jobName = $('#'+jobId).attr('jobname');
         clients[jobName].getJobInfos(jobId, refreshPropsSuccess, refreshPropsError);
@@ -745,8 +770,10 @@ var uws_client = (function($) {
         logger('ERROR', 'refreshProps '+ jobId, exception);
     };
 
+
     //----------
     // REFRESH RESULTS
+
     var refreshResults = function(jobId){
         var jobName = $('#'+jobId).attr('jobname');
         clients[jobName].getJobInfos(jobId, refreshResultsSuccess, refreshResultsError);
@@ -768,6 +795,7 @@ var uws_client = (function($) {
 
     //----------
     // GET JOB LIST
+
     var getJobList = function() {
         $('#div_table').hide();
         $('#div_loading').show();
@@ -799,8 +827,10 @@ var uws_client = (function($) {
         logger('ERROR', 'getJobList', exception);
     };
 
+
     //----------
     // GET JOB PHASE
+
     var getJobPhase = function(jobId) {
         var jobName = $('#'+jobId).attr('jobname');
         clients[jobName].getJobPhase(jobId, getJobPhaseSuccess, getJobPhaseError);
@@ -836,8 +866,10 @@ var uws_client = (function($) {
         logger('ERROR', 'getJobPhase '+ jobId, exception);
     };
 
+
     //----------
     // GET JOB INFO
+
     var getJobInfos = function(jobId){
         var jobName = $('#'+jobId).attr('jobname');
         clients[jobName].getJobInfos(jobId,getJobInfosSuccess, getJobInfosError);
@@ -849,7 +881,9 @@ var uws_client = (function($) {
         logger('ERROR', 'getJobInfos '+ jobId, exception);
     };
 
+
     //----------
+
     // GET JOB RESULTS
     var getJobResults = function(jobId){
         var jobName = $('#'+jobId).attr('jobname');
@@ -871,6 +905,7 @@ var uws_client = (function($) {
 
     //----------
     // CREATE JOB
+
     var createJob = function(jobName, jobParams) {
         clients[jobName].createJob(jobParams, createJobSuccess, createJobError);
     };
@@ -883,8 +918,10 @@ var uws_client = (function($) {
         logger('ERROR', 'createJob', exception);
     };
 
+
     //----------
     // CREATE TEST JOB
+
     var createTestJob = function(jobName, jobParams) {
         clients[jobName].createJob(jobParams, createTestJobSuccess, createTestJobError);
     };
@@ -896,8 +933,10 @@ var uws_client = (function($) {
         logger('ERROR', 'createTestJob', exception);
     };
 
+
     //----------
     // START JOB
+
     var startJob = function(jobId) {
         var jobName = $('#'+jobId).attr('jobname');
         clients[jobName].startJob(jobId, startJobSuccess, startJobError);
@@ -910,8 +949,10 @@ var uws_client = (function($) {
         logger('ERROR', 'startJob '+jobId, exception);
     };
 
+
     //----------
     // ABORT JOB
+
     var abortJob = function (jobId){
         var jobName = $('#'+jobId).attr('jobname');
         clients[jobName].abortJob(jobId, abortJobSuccess, abortJobError);
@@ -925,8 +966,10 @@ var uws_client = (function($) {
         logger('ERROR', 'abortJob '+ jobId, exception);
     };
 
+
     //----------
     // DESTROY JOB
+
     var destroyJob = function (jobId){
         var jobName = $('#'+jobId).attr('jobname');
         clients[jobName].destroyJob(jobId, destroyJobSuccess, destroyJobError);
