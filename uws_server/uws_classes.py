@@ -388,7 +388,7 @@ class Job(object):
 
     def add_result_entry(self, rname, rfname, content_type):
         # TODO: Use an Entity Store
-        url = '{}/results/{}/{}'.format(BASE_URL, self.jobid, rname)  # , rfname)
+        url = '{}/get/result/{}/{}'.format(BASE_URL, self.jobid, rname)  # , rfname)
         self.results[rname] = {'url': url, 'content_type': content_type}
         logger.info('add {} file to results'.format(rfname))
 

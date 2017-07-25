@@ -209,7 +209,7 @@ def favicon():
     return static_file('favicon.ico', root=APP_PATH)
 
 
-@app.get('/get_jdl/<jobname:path>')
+@app.get('/get/jdl/<jobname:path>')
 def get_jdl(jobname):
     """
     Get JDL file for jobname
@@ -227,7 +227,7 @@ def get_jdl(jobname):
     abort_404('No WADL file found for ' + jobname)
 
 
-@app.get('/get_jdl_json/<jobname:path>')
+@app.get('/get/json/<jobname:path>')
 def get_jdl_json(jobname):
     """
     Get json description file for jobname
@@ -243,7 +243,7 @@ def get_jdl_json(jobname):
         abort_404(e.message)
 
 
-@app.get('/get_script/<jobname:path>')
+@app.get('/get/script/<jobname:path>')
 def get_script(jobname):
     """
     Get script file as text
@@ -258,7 +258,7 @@ def get_script(jobname):
     abort_404('No script file found for ' + jobname)
 
 
-@app.get('/get_jobnames')
+@app.get('/get/jobnames')
 def get_jobnames():
     """
     Get list of available jobs on server
@@ -277,7 +277,7 @@ def get_jobnames():
         abort_404(e.message)
 
 
-@app.get('/get_prov/<jobname>/<jobid>')
+@app.get('/get/prov/<jobname>/<jobid>')
 def get_prov(jobname, jobid):
     """
     Get list of available jobs on server
@@ -296,6 +296,54 @@ def get_prov(jobname, jobid):
         svg_content = dot.create(format="svg")
         response.content_type = 'text/xml; charset=UTF-8'
         return svg_content
+    except storage.NotFoundWarning as e:
+        abort_404(e.message)
+    except:
+        abort_500_except()
+
+
+@app.route('/get/result/<jobid>/<rname>')  # /<rfname>')
+def get_result_file(jobid, rname):  # , rfname):
+    """Get result file <rname> for job <jobid>
+
+    Returns:
+        200 OK: file (on success)
+        404 Not Found: Job not found (on NotFoundWarning)
+        404 Not Found: Result not found (on NotFoundWarning)
+        500 Internal Server Error (on error)
+    """
+    try:
+        user = set_user()
+        # Get job properties from DB
+        job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True, check_user=False)
+        # Check if result exists
+        if rname not in job.results:
+            raise storage.NotFoundWarning('Result "{}" NOT FOUND for job "{}"'.format(rname, jobid))
+        # Return result
+        result_details = {
+            'stdout': 'stdout.log',
+            'stderr': 'stderr.log',
+            'provjson': 'provenance.json',
+            'provxml': 'provenance.xml',
+            'provsvg': 'provenance.svg',
+        }
+        if rname in result_details:
+            rfname = result_details[rname]
+        else:
+            rfname = job.get_result_filename(rname)
+        #response.content_type = 'text/plain; charset=UTF-8'
+        #return str(job.results[result]['url'])
+        content_type = job.results[rname]['content_type']
+        logger.debug('{} {} {} {} {} [{}]'.format(job.jobname, jobid, rname, rfname, content_type, user))
+        response.set_header('Content-type', content_type)
+        if any(x in content_type for x in ['text', 'xml', 'json', 'image']):
+            return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid),
+                               mimetype=content_type)
+        else:
+            return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid),
+                               mimetype=content_type, download=rfname)
+    except JobAccessDenied as e:
+        abort_403(e.message)
     except storage.NotFoundWarning as e:
         abort_404(e.message)
     except:
@@ -595,8 +643,7 @@ def job_event():
                         raise UserWarning('Unknown new phase ' + new_phase + ' for job ' + job.jobid)
                 # If phase=ERROR, add error message if available
                 if new_phase == 'ERROR':
-                    if 'error_msg' in request.POST:
-                        msg = request.POST['error_msg']
+                    msg = request.POST.get('error_msg', '')
                     job.change_status('ERROR', msg)
                     logger.info('ERROR reported for job {} {} (from {})'.format(job.jobname, job.jobid, ip))
                 elif new_phase != cur_phase:
@@ -1245,53 +1292,6 @@ def get_result(jobname, jobid, rname):
     except:
         abort_500_except()
 
-
-@app.route('/get_result_file/<jobid>/<rname>')  # /<rfname>')
-def get_result_file(jobid, rname):  # , rfname):
-    """Get result file <rname> for job <jobid>
-
-    Returns:
-        200 OK: file (on success)
-        404 Not Found: Job not found (on NotFoundWarning)
-        404 Not Found: Result not found (on NotFoundWarning)
-        500 Internal Server Error (on error)
-    """
-    try:
-        user = set_user()
-        # Get job properties from DB
-        job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True, check_user=False)
-        # Check if result exists
-        if rname not in job.results:
-            raise storage.NotFoundWarning('Result "{}" NOT FOUND for job "{}"'.format(rname, jobid))
-        # Return result
-        result_details = {
-            'stdout': 'stdout.log',
-            'stderr': 'stderr.log',
-            'provjson': 'provenance.json',
-            'provxml': 'provenance.xml',
-            'provsvg': 'provenance.svg',
-        }
-        if rname in result_details:
-            rfname = result_details[rname]
-        else:
-            rfname = job.get_result_filename(rname)
-        #response.content_type = 'text/plain; charset=UTF-8'
-        #return str(job.results[result]['url'])
-        content_type = job.results[rname]['content_type']
-        logger.debug('{} {} {} {} {} [{}]'.format(job.jobname, jobid, rname, rfname, content_type, user))
-        response.set_header('Content-type', content_type)
-        if any(x in content_type for x in ['text', 'xml', 'json', 'image']):
-            return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid),
-                               mimetype=content_type)
-        else:
-            return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid),
-                               mimetype=content_type, download=rfname)
-    except JobAccessDenied as e:
-        abort_403(e.message)
-    except storage.NotFoundWarning as e:
-        abort_404(e.message)
-    except:
-        abort_500_except()
 
 
 # ----------
