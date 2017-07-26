@@ -692,10 +692,12 @@ def get_joblist(jobname):
         if 'PHASE' in request.query:
             # Allow for multiple PHASE keywords to be sent
             phase = re.split('&?PHASE=', request.query_string)[1:]
-
+        check_user = True
+        if user.name == 'admin':
+            check_user = False
         # TODO: UWS v1.1 AFTER keyword
         # TODO: UWS v1.1 LAST keyword
-        joblist = JobList(jobname, user, phase=phase)
+        joblist = JobList(jobname, user, phase=phase, check_user=check_user)
         xml_out = joblist.to_xml()
         response.content_type = 'text/xml; charset=UTF-8'
         return xml_out
