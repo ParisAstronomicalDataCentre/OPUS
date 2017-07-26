@@ -267,9 +267,11 @@ def get_jobnames():
     try:
         # jobnames = ['copy', 'ctbin']
         # List jdl files (=available jobs)
-        flist = glob.glob('{}/*.sh'.format(SCRIPT_PATH))
+        jdl = uws_jdl.__dict__[JDL]()
+        flist = glob.glob('{}/*.sh'.format(jdl.script_path))
         # Check if JDL file exists on server?
-        jobnames = [os.path.splitext(os.path.basename(f))[0] for f in flist]
+        jobnames_sh = [os.path.splitext(os.path.basename(f))[0] for f in flist]
+        jobnames = [j for j in jobnames_sh if os.path.isfile(jdl._get_filename(j))]
         jobnames.sort()
         jobnames_json = {'jobnames': jobnames}
         return jobnames_json
