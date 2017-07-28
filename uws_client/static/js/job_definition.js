@@ -109,7 +109,7 @@
                                 <span class="input-group-addon">=</span>\
                                 <input class="used_default form-control" name="used_default_' + ii + '" type="text" placeholder="Default value" />\
                                 <span class="input-group-btn">\
-                                    <select name="used_type_' + ii + '" class="used_type select-small selectpicker">\
+                                    <select name="used_type_' + ii + '" class="used_type select-small selectpicker" multiple>\
                                         ' + options + '\
                                     </select>\
                                 </span>\
@@ -318,6 +318,7 @@
 				    i++;
 				    $('input[name=used_name_' + i + ']').val(used);
 				    $('select[name=used_type_' + i + ']').val(jdl.used[used]['content_type']);
+				    // TODO: used_type_ is an array of values (comma separated)
 				    $('input[name=used_default_' + i + ']').val(jdl.used[used]['default']);
 				    $('input[name=used_description_' + i + ']').val(jdl.used[used]['description']);
 				    if (jdl.used[used]['url'].indexOf('file://') == -1) {

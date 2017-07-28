@@ -466,6 +466,15 @@ def uws_server_request(uri, method='GET', init_request=None):
     if method == 'DELETE':
         response = requests.delete('{}{}'.format(app.config['UWS_SERVER_URL'], uri), auth=auth)
     elif method == 'POST':
+        logger.debug(request.form.to_dict())
+        post={}
+        for key in init_request.form.keys():
+            value = init_request.form.getlist(key)
+            if len(value) == 1:
+                post[key] = value[0]
+            else:
+                post[key] = value
+        logger.debug(post)
         files = {}
         if init_request.files:
             logger.debug('POST has files')
@@ -473,7 +482,7 @@ def uws_server_request(uri, method='GET', init_request=None):
                 logger.debug('file: ' + fname)
                 fp = init_request.files[fname]
                 files[fname] = (fp.filename, fp.stream, fp.content_type, fp.headers)
-        response = requests.post('{}{}'.format(app.config['UWS_SERVER_URL'], uri), data=init_request.form, files=files, auth=auth)
+        response = requests.post('{}{}'.format(app.config['UWS_SERVER_URL'], uri), data=post, files=files, auth=auth)
     else:
         response = requests.get('{}{}'.format(app.config['UWS_SERVER_URL'], uri), params=init_request.args, auth=auth)
     # Return response

@@ -140,6 +140,7 @@ class JDLFile(object):
             pname = post.get('used_name_' + str(iused))
             if pname:
                 ptype = post.get('used_type_' + str(iused))
+                # TODO: do a getall for all options
                 pdefault = post.get('used_default_' + str(iused))
                 pdesc = post.get('used_description_' + str(iused))
                 pisfile = post.get('used_isfile_' + str(iused))
@@ -147,7 +148,7 @@ class JDLFile(object):
                 if pisfile == 'File':
                     purl = 'file://$ID'.format(pname)
                 used[pname] = {
-                    'content_type': ptype,
+                    'content_type': ptype,  # ', '.join(ptype),
                     'default': pdefault,
                     'description': pdesc,
                     'url': purl,
