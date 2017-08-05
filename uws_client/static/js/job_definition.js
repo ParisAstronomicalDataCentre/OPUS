@@ -274,7 +274,7 @@
         var jobname = $('input[name=name]').val();
         // ajax command to get JDL from UWS server
         $.ajax({
-			url : server_url + '/get/json/' + jobname,  //.split("/").pop(),  // to remove new/ (not needed here)
+			url : server_url + '/jdl/' + jobname + '/json',  //.split("/").pop(),  // to remove new/ (not needed here)
 			async : true,
 			type : 'GET',
 			dataType: "json",
@@ -341,7 +341,7 @@
                 $('.selectpicker').selectpicker('refresh');
                 // ajax command to get_script from UWS server
                 $.ajax({
-                    url : server_url + '/get/script/' + jobname, //.split("/").pop(),
+                    url : server_url + '/jdl/' + jobname + '/script', //.split("/").pop(),
                     async : true,
                     cache : false,
                     type : 'GET',
@@ -376,7 +376,7 @@
         var jobname = $('input[name=name]').val();
         // ajax command to get_jdl on UWS server
         $.ajax({
-			url : server_url + '/get/jdl/' + jobname,  //.split("/").pop(),  // to remove new/ (not needed here)
+			url : server_url + '/jdl/' + jobname + '/json',  //.split("/").pop(),  // to remove new/ (not needed here)
 			type : 'GET',
 			dataType: "text",
 			success : function(jdl) {
@@ -394,7 +394,7 @@
     function get_jobnames() {
         // Get jobnames from server
         $.ajax({
-            url : server_url + '/get/jobnames',
+            url : server_url + '/jdl',
             cache : false,
             type : 'GET',
             dataType: "json",
@@ -439,14 +439,14 @@
         $('#validate_job').click( function() {
             jobname = $('input[name=name]').val().split("/").pop();  // remove 'new/'
             if (jobname) {
-                window.location = '/client/validate_job/' + jobname;
+                window.location = '/client/jdl/' + jobname + '/validate';
             };
             console.log('no jobname given');
         });
         $('#cp_script').click( function() {
             jobname = $('input[name=name]').val().split("/").pop();
             if (jobname) {
-                window.location = '/client/cp_script/' + jobname;  // remove 'new/'
+                window.location = '/client/jdl/' + jobname + '/copy_script';
             }
             console.log('no jobname given');
         });

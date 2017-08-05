@@ -11,7 +11,7 @@
     function get_jobnames() {
         // Get jobnames from server
         $.ajax({
-            url : server_url + '/get/jobnames',
+            url : server_url + '/jdl',
             cache : false,
             type : 'GET',
             dataType: "json",

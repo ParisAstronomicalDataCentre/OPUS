@@ -209,148 +209,6 @@ def favicon():
     return static_file('favicon.ico', root=APP_PATH)
 
 
-@app.get('/get/jdl/<jobname:path>')
-def get_jdl(jobname):
-    """
-    Get JDL file for jobname
-    :param jobname:
-    :return: WADL file
-    """
-    #logger.info(jobname)
-    fname = '{}/votable/{}_vot.xml'.format(JDL_PATH, jobname)
-    #logger.info(fname)
-    if os.path.isfile(fname):
-        with open(fname) as f:
-            jdl = f.readlines()
-        response.content_type = 'text/xml; charset=UTF-8'
-        return jdl
-    abort_404('No WADL file found for ' + jobname)
-
-
-@app.get('/get/json/<jobname:path>')
-def get_jdl_json(jobname):
-    """
-    Get json description file for jobname
-    :param jobname:
-    :return: json description
-    """
-    try:
-        #logger.info(jobname)
-        jdl = uws_jdl.__dict__[JDL]()
-        jdl.read(jobname)
-        return jdl.content
-    except UserWarning as e:
-        abort_404(e.message)
-
-
-@app.get('/get/script/<jobname:path>')
-def get_script(jobname):
-    """
-    Get script file as text
-    :param jobname:
-    :return:
-    """
-    fname = '{}/{}.sh'.format(SCRIPT_PATH, jobname)
-    logger.info('Job script read: {}'.format(fname))
-    if os.path.isfile(fname):
-        response.content_type = 'text/plain; charset=UTF-8'
-        return static_file(fname, root='/')
-    abort_404('No script file found for ' + jobname)
-
-
-@app.get('/get/jobnames')
-def get_jobnames():
-    """
-    Get list of available jobs on server
-    :return: list of job names in json
-    """
-    try:
-        # jobnames = ['copy', 'ctbin']
-        # List jdl files (=available jobs)
-        jdl = uws_jdl.__dict__[JDL]()
-        flist = glob.glob('{}/*.sh'.format(jdl.script_path))
-        # Check if JDL file exists on server?
-        jobnames_sh = [os.path.splitext(os.path.basename(f))[0] for f in flist]
-        jobnames = [j for j in jobnames_sh if os.path.isfile(jdl._get_filename(j))]
-        jobnames.sort()
-        jobnames_json = {'jobnames': jobnames}
-        return jobnames_json
-    except UserWarning as e:
-        abort_404(e.message)
-
-
-@app.get('/get/prov/<jobname>/<jobid>')
-def get_prov(jobname, jobid):
-    """
-    Get list of available jobs on server
-    :return: list of job names in json
-    """
-    try:
-        user = set_user()
-        logger.info('{} {} [{}]'.format(jobname, jobid, user))
-        # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True, get_results=True, check_user=False)
-        # Get JDL
-        job.jdl.read(jobname)
-        # Return job provenance
-        pdoc = voprov.job2prov(job)
-        svg_content = voprov.prov2svg(pdoc)
-        response.content_type = 'text/xml; charset=UTF-8'
-        return svg_content
-    except storage.NotFoundWarning as e:
-        abort_404(e.message)
-    except:
-        abort_500_except()
-
-
-@app.route('/get/result/<jobid>/<rname>')  # /<rfname>')
-def get_result_file(jobid, rname):  # , rfname):
-    """Get result file <rname> for job <jobid>
-
-    Returns:
-        200 OK: file (on success)
-        404 Not Found: Job not found (on NotFoundWarning)
-        404 Not Found: Result not found (on NotFoundWarning)
-        500 Internal Server Error (on error)
-    """
-    try:
-        user = set_user()
-        # Get job properties from DB
-        job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True, check_user=False)
-        # Check if result exists
-        if rname not in job.results:
-            raise storage.NotFoundWarning('Result "{}" NOT FOUND for job "{}"'.format(rname, jobid))
-        # Return result
-        result_details = {
-            'stdout': 'stdout.log',
-            'stderr': 'stderr.log',
-            'provjson': 'provenance.json',
-            'provxml': 'provenance.xml',
-            'provsvg': 'provenance.svg',
-        }
-        if rname in result_details:
-            rfname = result_details[rname]
-        else:
-            rfname = job.get_result_filename(rname)
-        #response.content_type = 'text/plain; charset=UTF-8'
-        #return str(job.results[result]['url'])
-        content_type = job.results[rname]['content_type']
-        logger.debug('{} {} {} {} {} [{}]'.format(job.jobname, jobid, rname, rfname, content_type, user))
-        response.set_header('Content-type', content_type)
-        if any(x in content_type for x in ['text', 'xml', 'json', 'image']):
-            return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid),
-                               mimetype=content_type)
-        else:
-            return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid),
-                               mimetype=content_type, download=rfname)
-    except JobAccessDenied as e:
-        abort_403(e.message)
-    except storage.NotFoundWarning as e:
-        abort_404(e.message)
-    except:
-        abort_500_except()
-
-
 # ----------
 # Database testing
 # ----------
@@ -438,11 +296,45 @@ def show_db(jobname):
 
 
 # ----------
-# Config
+# JDL functions
 # ----------
 
+# TODO: change /jdl urls to match more closely the rest uws interface :
+# /jdl = list of job descriptions
+# /jdl/<jobname> = description for this job (json ? votable ?)
+# /jdl/<jobname>/votable
+# /jdl/<jobname>/json
+# /jdl/<jobname>/script
+# /jdl/<jobname> POST = create or modify
+# /jdl/<jobname> DELETE = delete
+# /jdl/<jobname>/activate
+# /jdl/<jobname>/deactivate
+# /jdl/<jobname>/copy_script (to job cluster)
 
-@app.post('/config/job_definition')
+
+@app.get('/jdl')
+def get_jobnames():
+    """
+    Get list of available jobs on server
+    :return: list of job names in json
+    """
+    try:
+        # jobnames = ['copy', 'ctbin']
+        # List jdl files (=available jobs)
+        jdl = uws_jdl.__dict__[JDL]()
+        flist = glob.glob('{}/*.sh'.format(jdl.script_path))
+        # Check if JDL file exists on server?
+        jobnames_sh = [os.path.splitext(os.path.basename(f))[0] for f in flist]
+        jobnames = [j for j in jobnames_sh if os.path.isfile(jdl._get_filename(j))]
+        jobnames.sort()
+        jobnames_json = {'jobnames': jobnames}
+        return jobnames_json
+    except UserWarning as e:
+        abort_404(e.message)
+
+
+#@app.post('/config/job_definition')
+@app.post('/jdl')
 def create_new_job_definition():
     """Use posted parameters to create a new JDL file for the given job"""
     # No need to authenticate, users can propose new jobs that will have to be validated
@@ -468,7 +360,58 @@ def create_new_job_definition():
     # redirect('/client/job_definition?jobname=new/{}&msg=new'.format(jobname), 303)
 
 
-@app.get('/config/validate_job/<jobname>')
+@app.get('/jdl/<jobname:path>/json')
+def get_jdl_json(jobname):
+    """
+    Get json description file for jobname
+    :param jobname:
+    :return: json description
+    """
+    try:
+        #logger.info(jobname)
+        jdl = uws_jdl.__dict__[JDL]()
+        jdl.read(jobname)
+        return jdl.content
+    except UserWarning as e:
+        abort_404(e.message)
+
+
+@app.get('/jdl/<jobname:path>/votable')
+#@app.get('/jdl/<jobname:path>')
+def get_jdl(jobname):
+    """
+    Get JDL file for jobname
+    :param jobname:
+    :return: WADL file
+    """
+    #logger.info(jobname)
+    fname = '{}/votable/{}_vot.xml'.format(JDL_PATH, jobname)
+    #logger.info(fname)
+    if os.path.isfile(fname):
+        with open(fname) as f:
+            jdl = f.readlines()
+        response.content_type = 'text/xml; charset=UTF-8'
+        return jdl
+    abort_404('No WADL file found for ' + jobname)
+
+
+@app.get('/jdl/<jobname:path>/script')
+def get_script(jobname):
+    """
+    Get script file as text
+    :param jobname:
+    :return:
+    """
+    fname = '{}/{}.sh'.format(SCRIPT_PATH, jobname)
+    logger.info('Job script read: {}'.format(fname))
+    if os.path.isfile(fname):
+        response.content_type = 'text/plain; charset=UTF-8'
+        return static_file(fname, root='/')
+    abort_404('No script file found for ' + jobname)
+
+
+#@app.get('/config/validate_job/<jobname>')
+@app.post('/jdl/<jobname:path>/validate')
 def validate_job_definition(jobname):
     """Use filled form to create a JDL file for the given job"""
     # Check if client is trusted (only admin should be allowed to validate a job)
@@ -521,7 +464,8 @@ def validate_job_definition(jobname):
     # redirect('/client/job_definition?jobname={}&msg=validated'.format(jobname), 303)
 
 
-@app.get('/config/cp_script/<jobname>')
+#@app.get('/config/cp_script/<jobname>')
+@app.post('/jdl/<jobname:path>/copy_script')
 def cp_script(jobname):
     """copy script to job manager for the given job"""
     # Check if client is trusted (only admin should be allowed to validate a job)
@@ -545,6 +489,83 @@ def cp_script(jobname):
     response.content_type = 'text/plain; charset=UTF-8'
     return 'Script copied for job {}'.format(jobname)
     # redirect('/client/job_definition?jobname={}&msg=script_copied'.format(jobname), 303)
+
+
+# ----------
+# Results and provenance
+# ----------
+
+
+@app.route('/get/result/<jobid>/<rname>')  # /<rfname>')
+def get_result_file(jobid, rname):  # , rfname):
+    """Get result file <rname> for job <jobid>
+
+    Returns:
+        200 OK: file (on success)
+        404 Not Found: Job not found (on NotFoundWarning)
+        404 Not Found: Result not found (on NotFoundWarning)
+        500 Internal Server Error (on error)
+    """
+    try:
+        user = set_user()
+        # Get job properties from DB
+        job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True, check_user=False)
+        # Check if result exists
+        if rname not in job.results:
+            raise storage.NotFoundWarning('Result "{}" NOT FOUND for job "{}"'.format(rname, jobid))
+        # Return result
+        result_details = {
+            'stdout': 'stdout.log',
+            'stderr': 'stderr.log',
+            'provjson': 'provenance.json',
+            'provxml': 'provenance.xml',
+            'provsvg': 'provenance.svg',
+        }
+        if rname in result_details:
+            rfname = result_details[rname]
+        else:
+            rfname = job.get_result_filename(rname)
+        #response.content_type = 'text/plain; charset=UTF-8'
+        #return str(job.results[result]['url'])
+        content_type = job.results[rname]['content_type']
+        logger.debug('{} {} {} {} {} [{}]'.format(job.jobname, jobid, rname, rfname, content_type, user))
+        response.set_header('Content-type', content_type)
+        if any(x in content_type for x in ['text', 'xml', 'json', 'image']):
+            return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid),
+                               mimetype=content_type)
+        else:
+            return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid),
+                               mimetype=content_type, download=rfname)
+    except JobAccessDenied as e:
+        abort_403(e.message)
+    except storage.NotFoundWarning as e:
+        abort_404(e.message)
+    except:
+        abort_500_except()
+
+
+@app.get('/prov/<jobid>')
+def get_prov(jobid):
+    """
+    Get list of available jobs on server
+    :return: list of job names in json
+    """
+    try:
+        user = set_user()
+        # Get job properties from DB
+        job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True, check_user=False)
+        logger.info('{} {} [{}]'.format(job.jobname, jobid, user))
+        # Get JDL
+        job.jdl.read(job.jobname)
+        # Return job provenance
+        pdoc = voprov.job2prov(job)
+        svg_content = voprov.prov2svg(pdoc)
+        response.content_type = 'text/xml; charset=UTF-8'
+        return svg_content
+    except storage.NotFoundWarning as e:
+        abort_404(e.message)
+    except:
+        abort_500_except()
 
 
 # ----------

@@ -392,11 +392,11 @@ def job_definition(jobname):
     if request.method == 'POST':
         jobname = request.form.get('name').split('/')[-1]
         logger.info('Create new/{}'.format(jobname))
-        response = uws_server_request('/config/job_definition'.format(jobname), method='POST', init_request=request)
+        response = uws_server_request('/jdl', method='POST', init_request=request)
         if response.status_code == 200:
             flash('New job definition has been saved as new/{}'.format(jobname), 'info')
         else:
-            flash('Job definition for {jn} was not found on the server. Cannot validate.'.format(jn=jobname))
+            flash('Job definition for {jn} was not found on the server. Error during creation.'.format(jn=jobname))
         return redirect(url_for('job_definition', jobname='/new/{}'.format(jobname)), 303)
     # Show form
     # Set is_admin (will show validate buttons)
@@ -406,14 +406,14 @@ def job_definition(jobname):
     return render_template('job_definition.html', jobname=jobname, is_admin=is_admin)
 
 
-@app.route('/validate_job/<jobname>')
+@app.route('/jdl/<path:jobname>/validate')
 @login_required
 @roles_required('admin')
 def validate_job(jobname):
     """Validate job on server"""
     logger.info(jobname)
     # Send request to UWS Server
-    response = uws_server_request('/config/validate_job/{}'.format(jobname), method='GET', init_request=request)
+    response = uws_server_request('/jdl/{}/validate'.format(jobname), method='POST', init_request=request)
     # redirect to job_definition with message
     if response.status_code == 200:
         flash('Job definition for new/{jn} has been validated and renamed {jn}'.format(jn=jobname))
@@ -422,14 +422,14 @@ def validate_job(jobname):
     return redirect(url_for('job_definition', jobname=jobname), 303)
 
 
-@app.route('/cp_script/<jobname>')
+@app.route('/jdl/<path:jobname>/copy_script')
 @login_required
 @roles_required('admin')
 def cp_script(jobname):
     """Copy job script to work server"""
     logger.info(jobname)
     # Send request to UWS Server
-    response = uws_server_request('/config/cp_script/{}'.format(jobname), method='GET', init_request=request)
+    response = uws_server_request('/jdl/{}/copy_script'.format(jobname), method='POST', init_request=request)
     # redirect to job_definition with message
     if response.status_code == 200:
         flash('Job script {}.sh has been copied to work cluster'.format(jobname))
@@ -486,7 +486,7 @@ def uws_server_request(uri, method='GET', init_request=None):
     else:
         response = requests.get('{}{}'.format(app.config['UWS_SERVER_URL'], uri), params=init_request.args, auth=auth)
     # Return response
-    logger.info("{} {} ({})".format(request.method, uri, response.status_code))
+    logger.info("{} {} ({})".format(method, uri, response.status_code))
     return response
 
 

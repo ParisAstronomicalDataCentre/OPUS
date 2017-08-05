@@ -25,7 +25,7 @@ var uws_client = (function($) {
     // "https://voparis-uws-test.obspm.fr/"; // app_url+"/uws-v1.0/" //
     var DEBUG = true;
     var server_jobs_url = '/rest/';
-    var server_jdl_url = '/get/json/';
+    var server_jdl_url = '/jdl/<jobname>/json';
     var server_result_url = '/get/result/';
     var client_job_list_url = '/client/job_list';
     var client_job_edit_url = '/client/job_edit';
@@ -78,7 +78,7 @@ var uws_client = (function($) {
             var url = serviceUrl + server_jobs_url + jobNames[i];
             clients[jobNames[i]] = new uwsLib.uwsClient(url);
             // Get JDL for job
-            $.getJSON(serviceUrl + server_jdl_url + jobNames[i], function(jdl) {
+            $.getJSON(serviceUrl + server_jdl_url.replace("<jobname>", jobNames[i]), function(jdl) {
                 clients[jobNames[i]].jdl = jdl;
             });
             logger('INFO', 'uwsClient at ' + clients[jobNames[i]].serviceUrl);
