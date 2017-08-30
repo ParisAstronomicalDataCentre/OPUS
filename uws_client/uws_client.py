@@ -461,7 +461,7 @@ def uws_server_request(uri, method='GET', init_request=None):
     # Add auth information (Basic, Token...)
     auth = None
     if app.config['UWS_AUTH'] == 'Basic':
-        if current_user.is_authenticated():
+        if current_user.is_authenticated:
             auth = HTTPBasicAuth(current_user.email, current_user.pid)
         else:
             auth = HTTPBasicAuth('anonymous', 'anonymous')
