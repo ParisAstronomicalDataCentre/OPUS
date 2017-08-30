@@ -461,7 +461,10 @@ def uws_server_request(uri, method='GET', init_request=None):
     # Add auth information (Basic, Token...)
     auth = None
     if app.config['UWS_AUTH'] == 'Basic':
-        auth = HTTPBasicAuth(current_user.email, current_user.pid)
+        if current_user.is_authenticated():
+            auth = HTTPBasicAuth(current_user.email, current_user.pid)
+        else:
+            auth = HTTPBasicAuth('anonymous', 'anonymous')
     # Send request
     if method == 'DELETE':
         response = requests.delete('{}{}'.format(app.config['UWS_SERVER_URL'], uri), auth=auth)
