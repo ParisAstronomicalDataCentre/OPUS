@@ -664,8 +664,9 @@ def job_event():
                     logger.info('ERROR reported for job {} {} (from {})'.format(job.jobname, job.jobid, ip))
                 if new_phase not in PHASES:
                     if new_phase in PHASE_CONVERT:
-                        msg = PHASE_CONVERT[new_phase]['msg']
                         new_phase = PHASE_CONVERT[new_phase]['phase']
+                        if new_phase == 'ERROR':
+                            msg = PHASE_CONVERT[new_phase]['msg']
                     else:
                         raise UserWarning('Unknown new phase ' + new_phase + ' for job ' + job.jobid)
                 if new_phase not in [cur_phase]:

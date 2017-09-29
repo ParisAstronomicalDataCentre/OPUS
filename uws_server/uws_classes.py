@@ -562,6 +562,9 @@ class Job(object):
                     self.error += '. ' + error
                 else:
                     self.error = error
+                # If phase is already ABORTED, keep it
+                if self.phase == 'ABORTED':
+                    new_phase = 'ABORTED'
             # Update phase
             previous_phase = self.phase
             self.phase = new_phase
