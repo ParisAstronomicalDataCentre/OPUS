@@ -74,8 +74,8 @@ class SQLAlchemyJobStorage(JobStorage):
 
     def __init__(self, db_string=SQLALCHEMY_DB):
         self.engine = create_engine(db_string)
-        #self.Base = declarative_base()
-        self.Base = automap_base()
+        self.Base = declarative_base()
+        #self.Base = automap_base()
         # dt_format = u'%(year)04d/%(month)02d/%(day)02dT%(hour)02d:%(min)02d:%(second)02d'
         # dt_regexp = u'(\d+)/(\d+)/(\d+)T(\d+):(\d+):(\d+)'
         # myDateTime = DateTime().with_variant(sqlite.DATETIME(storage_format=dt_format, regexp=dt_regexp), 'sqlite')
@@ -114,7 +114,8 @@ class SQLAlchemyJobStorage(JobStorage):
             url = Column(String(255), nullable=True)
             content_type = Column(String(64), nullable=True)
 
-        self.Base.prepare(self.engine, reflect=True)
+        # self.Base.prepare(self.engine, reflect=True)
+        self.Base.metadata.create_all(self.engine)
         self.Jobs = Jobs  # self.Base.classes.jobs
         self.Parameters = Parameters  # self.Base.classes.job_parameters
         self.Results = Results  # self.Base.classes.job_results
