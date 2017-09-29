@@ -547,10 +547,10 @@ class Job(object):
             if new_phase in ['QUEUED']:
                 self.start_time = now.strftime(DT_FMT)
             # Set end_time
+            if new_phase in ['COMPLETED', 'ABORTED']:
+                self.end_time = now.strftime(DT_FMT)
             if new_phase in ['COMPLETED', 'ABORTED', 'ERROR']:
                 self.manager.get_jobdata(self)
-                if self.phase != 'ERROR':
-                    self.end_time = now.strftime(DT_FMT)
                 # Add results, logs, provenance (if they exist...)
                 self.add_results()
                 self.add_logs()
@@ -570,7 +570,7 @@ class Job(object):
             self.phase = new_phase
             # Save job description
             # logger.info('end_time={}'.format(self.end_time))
-            self.storage.save(self, save_results=True)
+            self.storage.save(self)
             # Send signal (e.g. if WAIT command expecting signal)
             change_status_signal = signal('job_status')
             result = change_status_signal.send('change_status', sig_jobid=self.jobid, sig_phase=self.phase)
