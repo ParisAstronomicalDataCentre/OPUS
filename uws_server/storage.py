@@ -70,50 +70,55 @@ class JobStorage(object):
 # SQLAlchemy
 
 
+Base = automap_base()
+# dt_format = u'%(year)04d/%(month)02d/%(day)02dT%(hour)02d:%(min)02d:%(second)02d'
+# dt_regexp = u'(\d+)/(\d+)/(\d+)T(\d+):(\d+):(\d+)'
+# myDateTime = DateTime().with_variant(sqlite.DATETIME(storage_format=dt_format, regexp=dt_regexp), 'sqlite')
+# myDateTime = DateTime().with_variant(sqlite.TIMESTAMP(), 'sqlite')
+myDateTime = DateTime().with_variant(String(19), 'sqlite')
+myBoolean = Boolean().with_variant(String(5), 'sqlite')
+
+
+class Jobs(Base):
+    __tablename__ = 'jobs'
+    jobid = Column(String(80), primary_key=True)
+    jobname = Column(String(255))
+    phase = Column(String(10))
+    quote = Column(Integer(), nullable=True)
+    execution_duration = Column(Integer(), nullable=True)
+    error = Column(Text(), nullable=True)
+    creation_time = Column(myDateTime)
+    start_time = Column(myDateTime, nullable=True)
+    end_time = Column(myDateTime, nullable=True)
+    destruction_time = Column(myDateTime, nullable=True)
+    owner = Column(String(64), nullable=True)
+    owner_pid = Column(String(128), nullable=True)
+    run_id = Column(String(64), nullable=True)
+    pid = Column(BigInteger(), nullable=True)
+
+
+class Parameters(Base):
+    __tablename__ = 'job_parameters'
+    jobid = Column(String(80), ForeignKey("jobs.jobid"), primary_key=True)
+    name = Column(String(255), primary_key=True)
+    value = Column(String(255), nullable=True)
+    byref = Column(myBoolean, default=False, nullable=True)
+
+
+class Results(Base):
+    __tablename__ = 'job_results'
+    jobid = Column(String(80), ForeignKey("jobs.jobid"), primary_key=True)
+    name = Column(String(255), primary_key=True)
+    url = Column(String(255), nullable=True)
+    content_type = Column(String(64), nullable=True)
+
+
 class SQLAlchemyJobStorage(JobStorage):
 
     def __init__(self, db_string=SQLALCHEMY_DB):
         self.engine = create_engine(db_string)
         #self.Base = declarative_base()
-        self.Base = automap_base()
-        # dt_format = u'%(year)04d/%(month)02d/%(day)02dT%(hour)02d:%(min)02d:%(second)02d'
-        # dt_regexp = u'(\d+)/(\d+)/(\d+)T(\d+):(\d+):(\d+)'
-        # myDateTime = DateTime().with_variant(sqlite.DATETIME(storage_format=dt_format, regexp=dt_regexp), 'sqlite')
-        # myDateTime = DateTime().with_variant(sqlite.TIMESTAMP(), 'sqlite')
-        myDateTime = DateTime().with_variant(String(19), 'sqlite')
-        myBoolean = Boolean().with_variant(String(5), 'sqlite')
-
-        class Jobs(self.Base):
-            __tablename__ = 'jobs'
-            jobid = Column(String(80), primary_key=True)
-            jobname = Column(String(255))
-            phase = Column(String(10))
-            quote = Column(Integer(), nullable=True)
-            execution_duration = Column(Integer(), nullable=True)
-            error = Column(Text(), nullable=True)
-            creation_time = Column(myDateTime)
-            start_time = Column(myDateTime, nullable=True)
-            end_time = Column(myDateTime, nullable=True)
-            destruction_time = Column(myDateTime, nullable=True)
-            owner = Column(String(64), nullable=True)
-            owner_pid = Column(String(128), nullable=True)
-            run_id = Column(String(64), nullable=True)
-            pid = Column(BigInteger(), nullable=True)
-
-        class Parameters(self.Base):
-            __tablename__ = 'job_parameters'
-            jobid = Column(String(80), ForeignKey("jobs.jobid"), primary_key=True)
-            name = Column(String(255), primary_key=True)
-            value = Column(String(255), nullable=True)
-            byref = Column(myBoolean, default=False, nullable=True)
-
-        class Results(self.Base):
-            __tablename__ = 'job_results'
-            jobid = Column(String(80), ForeignKey("jobs.jobid"), primary_key=True)
-            name = Column(String(255), primary_key=True)
-            url = Column(String(255), nullable=True)
-            content_type = Column(String(64), nullable=True)
-
+        self.Base = Base
         self.Base.prepare(self.engine, reflect=True)
         self.Jobs = Jobs  # self.Base.classes.jobs
         self.Parameters = Parameters  # self.Base.classes.job_parameters
@@ -183,8 +188,8 @@ class SQLAlchemyJobStorage(JobStorage):
                 row = self.session.query(self.Jobs).filter_by(jobid=job.jobid).first()
                 if not row:
                     raise NotFoundWarning('Job "{}" NOT FOUND'.format(job.jobid))
-            for k in row.__dict__.keys():
-                if k in JOB_ATTRIBUTES:
+            for k in JOB_ATTRIBUTES:
+                if k in row.__dict__.keys():
                     job.__dict__[k] = row.__dict__[k]
         if get_parameters:
             # Query db for job parameters
