@@ -556,7 +556,7 @@ class Job(object):
                 self.add_logs()
                 if new_phase in ['COMPLETED']:
                     self.add_provenance()
-            if new_phase in ['ERROR']:
+            if new_phase in ['ERROR', 'ABORTED']:
                 # Set job.error or add
                 if self.error:
                     self.error += '. ' + error
