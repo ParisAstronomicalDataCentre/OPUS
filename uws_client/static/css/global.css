@@ -1,21 +1,6 @@
-/* simulate .input-group-btn:first-child > .btn in bootstrap.js */
-select.select-small:first-child + .bootstrap-select > .btn {
-    margin-right: -1px;
-    height: 30px;
-    font-size: 12px;
-    line-height: 1.5;
-}
 
-/* simulate .input-group .input-group-btn:first-child > .btn in bootstrap.js
-.input-group select:first-child + .bootstrap-select > .btn {        
-    border-bottom-right-radius: 0;
-    border-top-right-radius:0;
-} */
-
-.input-group > .bootstrap-select {
-    /* Fix the problem that the dropdown will not resize to fit the dropdown content in IE */
-    /* Actually, it overwrites .bootstrap-select { width: 220px; } */
-    width: 1%;
+.btn-group {
+  display: inline-flex;
 }
 
 .input-group .form-control {
@@ -56,6 +41,26 @@ select.select-small:first-child + .bootstrap-select > .btn {
 .bootstrap-select > button.disabled {
     background-color: #eee;
     border-color: #ccc;
+}
+
+/* simulate .input-group-btn:first-child > .btn in bootstrap.js */
+select.select-small:first-child + .bootstrap-select > .btn {
+    margin-right: -1px;
+    height: 30px;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+/* simulate .input-group .input-group-btn:first-child > .btn in bootstrap.js
+.input-group select:first-child + .bootstrap-select > .btn {
+    border-bottom-right-radius: 0;
+    border-top-right-radius:0;
+} */
+
+.input-group > .bootstrap-select {
+    /* Fix the problem that the dropdown will not resize to fit the dropdown content in IE */
+    /* Actually, it overwrites .bootstrap-select { width: 220px; } */
+    width: 1%;
 }
 
 .checkbox {
