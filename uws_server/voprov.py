@@ -50,11 +50,11 @@ def job2prov(job):
     ns_uws_job = job.jobname
     pdoc.add_namespace(ns_uws_job, 'https://voparis-uws-test.obspm.fr/get_jdl/' + job.jobname + '/#')
     # Activity
-    job = pdoc.activity(ns_uws_job + ':' + job.jobname, job.start_time, job.end_time)
+    job = pdoc.activity(ns_uws_job + ':' + job.id, job.start_time, job.end_time)
     # TODO: add job description, version, url, ...
     job.add_attributes({
         # 'prov:label': job.jdl.content['description'],
-        'prov:location': job.jdl.content.get('url'),
+        'voprov:location': job.jdl.content.get('url'),
         'contact_name': job.jdl.content.get('contact_name'),
         'contact_email': job.jdl.content.get('contact_email'),
     })
@@ -76,7 +76,7 @@ def job2prov(job):
             e_in.append(pdoc.entity(pqn))
             # TODO: use publisher_did? add prov attributes, add voprov attributes?
             e_in[-1].add_attributes({
-                'prov:type': pdict['datatype'],
+                'voprov:type': pdict['datatype'],
                 #'prov:location': job.parameters[pname]['value']
             })
             job.used(e_in[-1])
@@ -96,7 +96,7 @@ def job2prov(job):
             e_out.append(pdoc.entity(rqn))
             # TODO: use publisher_did? add prov attributes, add voprov attributes?
             e_out[-1].add_attributes({
-                'prov:type': rdict['content_type'],
+                'voprov:type': rdict['content_type'],
                 #'prov:location': job.results[rname]['url']
             })
             e_out[-1].wasGeneratedBy(job)
