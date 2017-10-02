@@ -59,7 +59,7 @@ def job2prov(job):
         'contact_email': job.jdl.content.get('contact_email'),
     })
     # Agent: owner of the job
-    agent = pdoc.agent('org:' + job.owner)
+    agent = pdoc.agent('ctao:' + job.owner)
     # ctac.add_attributes({
     #     'prov:label': 'CTA Consortium',
     #     'prov:type': 'Organization',
