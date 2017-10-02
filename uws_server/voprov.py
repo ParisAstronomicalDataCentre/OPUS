@@ -68,6 +68,15 @@ def job2prov(job):
     # Entities, in and out with relations
     e_in = []
     act_attr = {}
+    for pname, pdict in job.jdl.content['used'].iteritems():
+        pqn = ns_uws_job + ':' + pname
+        e_in.append(pdoc.entity(pqn))
+        # TODO: use publisher_did? add prov attributes, add voprov attributes?
+        e_in[-1].add_attributes({
+            'voprov:type': pdict['datatype'],
+            #'prov:location': job.parameters[pname]['value']
+        })
+        act.used(e_in[-1])
     for pname, pdict in job.jdl.content['parameters'].iteritems():
         pqn = ns_uws_job + ':' + pname
         # Add some UWS parameters as input Entities
