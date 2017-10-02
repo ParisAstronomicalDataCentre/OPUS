@@ -45,18 +45,14 @@ def job2prov(job):
     # Declaring namespaces for various prefixes used in the example
     pdoc.set_default_namespace('https://voparis-uws-test.obspm.fr/get_jdl/' + job.jobname + '/#')
     pdoc.add_namespace('prov', 'http://www.w3.org/ns/prov#')
-    pdoc.add_namespace('voprov', 'http://www.ivoa.net/ns/voprov#')
-    pdoc.add_namespace('org', 'http://www.cta-observatory.org#')
-    ns_uws_job = 'job'
-    pdoc.add_namespace(ns_uws_job, 'https://voparis-uws-test.obspm.fr/rest/' + job.jobname + '/' + job.jobid + '#')
-    ns_uws_param = 'param'
-    pdoc.add_namespace(ns_uws_param, 'https://voparis-uws-test.obspm.fr/rest/' + job.jobname + '/' + job.jobid + '/parameters/')
-    ns_uws_result = 'result'
-    pdoc.add_namespace(ns_uws_result, 'https://voparis-uws-test.obspm.fr/rest/' + job.jobname + '/' + job.jobid + '/results/')
+    pdoc.add_namespace('voprov', 'http://www.ivoa.net/documents/dm/provdm/voprov#')
+    pdoc.add_namespace('ctao', 'http://www.cta-observatory.org#')
+    ns_uws_job = job.jobname
+    pdoc.add_namespace(ns_uws_job, 'https://voparis-uws-test.obspm.fr/get_jdl/' + job.jobname + '/#')
     # Activity
-    ctbin = pdoc.activity(ns_uws_job + ':' + job.jobname, job.start_time, job.end_time)
+    job = pdoc.activity(ns_uws_job + ':' + job.jobname, job.start_time, job.end_time)
     # TODO: add job description, version, url, ...
-    ctbin.add_attributes({
+    job.add_attributes({
         # 'prov:label': job.jdl.content['description'],
         'prov:location': job.jdl.content.get('url'),
         'contact_name': job.jdl.content.get('contact_name'),
@@ -68,12 +64,12 @@ def job2prov(job):
     #     'prov:label': 'CTA Consortium',
     #     'prov:type': 'Organization',
     # })
-    pdoc.wasAssociatedWith(ctbin, agent)
+    pdoc.wasAssociatedWith(job, agent)
     # Entities, in and out with relations
     e_in = []
     act_attr = {}
     for pname, pdict in job.jdl.content['parameters'].iteritems():
-        pqn = ns_uws_param + ':' + pname
+        pqn = ns_uws_job + ':' + pname
         # Add some UWS parameters as input Entities
         #if pname.startswith('in'):
         if any(x in pdict['datatype'] for x in ['file', 'xs:anyURI']):
@@ -81,9 +77,9 @@ def job2prov(job):
             # TODO: use publisher_did? add prov attributes, add voprov attributes?
             e_in[-1].add_attributes({
                 'prov:type': pdict['datatype'],
-                'prov:location': job.parameters[pname]['value']
+                #'prov:location': job.parameters[pname]['value']
             })
-            ctbin.used(e_in[-1])
+            job.used(e_in[-1])
         else:
             # Otherwise add UWS parameters as attributes to the Activity
             if pname in job.parameters:
@@ -91,19 +87,19 @@ def job2prov(job):
             else:
                 act_attr[pqn] = pdict['default']
     if len(act_attr) > 0:
-        ctbin.add_attributes(act_attr)
+        job.add_attributes(act_attr)
     e_out = []
     for rname in job.results:
         if rname not in ['stdout', 'stderr', 'provjson', 'provxml', 'provsvg']:
             rdict = job.jdl.content['results'][rname]
-            rqn = ns_uws_result + ':' + rname
+            rqn = ns_uws_job + ':' + rname
             e_out.append(pdoc.entity(rqn))
             # TODO: use publisher_did? add prov attributes, add voprov attributes?
             e_out[-1].add_attributes({
                 'prov:type': rdict['content_type'],
-                'prov:location': job.results[rname]['url']
+                #'prov:location': job.results[rname]['url']
             })
-            e_out[-1].wasGeneratedBy(ctbin)
+            e_out[-1].wasGeneratedBy(job)
             for e in e_in:
                 e_out[-1].wasDerivedFrom(e)
     return pdoc
