@@ -155,3 +155,24 @@ def prov2svg(prov_doc, fname):
 '''
     with open(fname, "w") as f:
         f.write(svg_content)
+
+
+def prov2svg_content(prov_doc):
+    """
+    Convert ProvDocument to dot graphical format
+    :param prov_doc:
+    :param fname: file name
+    :return:
+    """
+    try:
+        dot = prov2dot(prov_doc)
+        svg_content = dot.create(format="svg")
+    except InvocationException as e:
+        svg_content = '''
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.0"
+	width="38" height="32"  viewBox="0 0 39.875 33.6667">
+<path style="stroke: none; fill: #323296;" d="M 10,0 L 30.5,0 39.875,17.5 30.5,33.6667 10,33.6667 L 0,17.5 L 10,0 z"/>
+</svg>
+'''
+    return svg_content

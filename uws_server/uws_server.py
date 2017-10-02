@@ -559,7 +559,7 @@ def get_prov(jobid):
         job.jdl.read(job.jobname)
         # Return job provenance
         pdoc = voprov.job2prov(job)
-        svg_content = voprov.prov2svg(pdoc)
+        svg_content = voprov.prov2svg_content(pdoc)
         response.content_type = 'text/xml; charset=UTF-8'
         return svg_content
     except storage.NotFoundWarning as e:
