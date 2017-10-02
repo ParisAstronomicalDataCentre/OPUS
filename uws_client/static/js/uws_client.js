@@ -597,7 +597,7 @@ var uws_client = (function($) {
                     <div class="panel-heading clearfix">\
                         <span class="pull-left" style="padding-top: 4px;">\
                             <span class="panel-title"><strong>'+r+'</strong></span>: \
-                            <a href="'+r_url+'" target="_blank">'+r_url+'</a>\
+                            <a href="'+r_url+'" target="_blank">Download</a>\
                         </span>\
                         <div class="btn-group pull-right">\
                         </div>\
@@ -628,6 +628,8 @@ var uws_client = (function($) {
                     r_type = jdl.results[r]['content_type']; //r_name.split('.').pop();
                     $('#result_list').append(r_panel);
             }
+            $('#'+r_id+' div.panel-heading span a').html('Download ['+r_type+']');
+            // Add download button through proxy (with auth)
             $('#'+r_id+' div.panel-heading div.btn-group').append('\
                 <a class="samp btn btn-default btn-sm" href="' + r_url_auth + '">\
                     <span class="glyphicon glyphicon-save"></span>\
