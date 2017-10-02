@@ -50,9 +50,9 @@ def job2prov(job):
     ns_uws_job = job.jobname
     pdoc.add_namespace(ns_uws_job, 'https://voparis-uws-test.obspm.fr/get_jdl/' + job.jobname + '/#')
     # Activity
-    job = pdoc.activity(ns_uws_job + ':' + job.jobid, job.start_time, job.end_time)
+    act = pdoc.activity(ns_uws_job + ':' + job.jobid, job.start_time, job.end_time)
     # TODO: add job description, version, url, ...
-    job.add_attributes({
+    act.add_attributes({
         # 'prov:label': job.jdl.content['description'],
         'voprov:location': job.jdl.content.get('url'),
         'contact_name': job.jdl.content.get('contact_name'),
@@ -64,7 +64,7 @@ def job2prov(job):
     #     'prov:label': 'CTA Consortium',
     #     'prov:type': 'Organization',
     # })
-    pdoc.wasAssociatedWith(job, agent)
+    pdoc.wasAssociatedWith(act, agent)
     # Entities, in and out with relations
     e_in = []
     act_attr = {}
@@ -79,7 +79,7 @@ def job2prov(job):
                 'voprov:type': pdict['datatype'],
                 #'prov:location': job.parameters[pname]['value']
             })
-            job.used(e_in[-1])
+            act.used(e_in[-1])
         else:
             # Otherwise add UWS parameters as attributes to the Activity
             if pname in job.parameters:
@@ -87,7 +87,7 @@ def job2prov(job):
             else:
                 act_attr[pqn] = pdict['default']
     if len(act_attr) > 0:
-        job.add_attributes(act_attr)
+        act.add_attributes(act_attr)
     e_out = []
     for rname in job.results:
         if rname not in ['stdout', 'stderr', 'provjson', 'provxml', 'provsvg']:
@@ -99,7 +99,7 @@ def job2prov(job):
                 'voprov:type': rdict['content_type'],
                 #'prov:location': job.results[rname]['url']
             })
-            e_out[-1].wasGeneratedBy(job)
+            e_out[-1].wasGeneratedBy(act)
             for e in e_in:
                 e_out[-1].wasDerivedFrom(e)
     return pdoc
