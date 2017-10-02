@@ -50,7 +50,7 @@ def job2prov(job):
     ns_uws_job = job.jobname
     pdoc.add_namespace(ns_uws_job, 'https://voparis-uws-test.obspm.fr/get_jdl/' + job.jobname + '/#')
     # Activity
-    job = pdoc.activity(ns_uws_job + ':' + job.id, job.start_time, job.end_time)
+    job = pdoc.activity(ns_uws_job + ':' + job.jobid, job.start_time, job.end_time)
     # TODO: add job description, version, url, ...
     job.add_attributes({
         # 'prov:label': job.jdl.content['description'],
