@@ -657,19 +657,21 @@ def job_event():
                 cur_phase = job.phase
                 new_phase = request.POST['phase']
                 msg = ''
-                # If phase=ERROR, add error message if available
+                # If phase=ERROR, add error message if available and change job status
                 if new_phase == 'ERROR':
                     msg = request.POST.get('error_msg', '')
                     job.change_status('ERROR', msg)
                     logger.info('ERROR reported for job {} {} (from {})'.format(job.jobname, job.jobid, ip))
-                if new_phase not in PHASES:
-                    if new_phase in PHASE_CONVERT:
-                        new_phase = PHASE_CONVERT[new_phase]['phase']
-                        if new_phase == 'ERROR':
-                            msg = PHASE_CONVERT[new_phase]['msg']
-                    else:
-                        raise UserWarning('Unknown new phase ' + new_phase + ' for job ' + job.jobid)
-                if new_phase not in [cur_phase]:
+                elif new_phase not in [cur_phase]:
+                    # Convert phase if needed
+                    if new_phase not in PHASES:
+                        if new_phase in PHASE_CONVERT:
+                            new_phase = PHASE_CONVERT[new_phase]['phase']
+                            if new_phase == 'ERROR':
+                                msg = PHASE_CONVERT[new_phase]['msg']
+                        else:
+                            raise UserWarning('Unknown new phase ' + new_phase + ' for job ' + job.jobid)
+                    # Change job status
                     job.change_status(new_phase, msg)
                     logger.info('Phase {} --> {} for job {} {} (from {})'
                                 ''.format(cur_phase, new_phase, job.jobname, job.jobid, ip))
