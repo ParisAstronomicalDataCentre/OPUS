@@ -110,8 +110,8 @@ def job2prov(job):
                 #'prov:location': job.results[rname]['url']
             })
             e_out[-1].wasGeneratedBy(act)
-            for e in e_in:
-                e_out[-1].wasDerivedFrom(e)
+            #for e in e_in:
+            #    e_out[-1].wasDerivedFrom(e)
     return pdoc
 
 
