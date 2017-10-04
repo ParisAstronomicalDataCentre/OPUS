@@ -47,14 +47,16 @@ def job2prov(job):
     pdoc.add_namespace('prov', 'http://www.w3.org/ns/prov#')
     pdoc.add_namespace('voprov', 'http://www.ivoa.net/documents/dm/provdm/voprov#')
     pdoc.add_namespace('ctao', 'http://www.cta-observatory.org#')
-    ns_uws_job = job.jobname
+    ns_uws_jdl = job.jobname
+    pdoc.add_namespace(ns_uws_jdl, 'https://voparis-uws-test.obspm.fr/jdl/' + job.jobname + '/votable#')
+    ns_uws_job = job.jobname + '/' + job.jobid
     pdoc.add_namespace(ns_uws_job, 'https://voparis-uws-test.obspm.fr/jdl/' + job.jobname + '/votable#')
     # Activity
-    act = pdoc.activity(ns_uws_job + ':' + job.jobid, job.start_time, job.end_time)
+    act = pdoc.activity(ns_uws_jdl + ':' + job.jobid, job.start_time, job.end_time)
     # TODO: add job description, version, url, ...
     act.add_attributes({
         # 'prov:label': job.jdl.content['description'],
-        'prov:location': job.jdl.content.get('url'),
+        'voprov:doculink': job.jdl.content.get('url'),
         'voprov:contact_name': job.jdl.content.get('contact_name'),
         'voprov:contact_email': job.jdl.content.get('contact_email'),
     })
@@ -69,17 +71,17 @@ def job2prov(job):
     e_in = []
     act_attr = {}
     for pname, pdict in job.jdl.content['used'].iteritems():
-        pqn = ns_uws_job + ':' + pname
+        pqn = ns_uws_jdl + ':' + pname
         e_in.append(pdoc.entity(pqn))
         # TODO: use publisher_did? add prov attributes, add voprov attributes?
         e_in[-1].add_attributes({
             'prov:value': job.parameters[pname]['value'],
             'prov:type': pdict['datatype'],
-            #'prov:location': job.parameters[pname]['value']
+            'prov:location': ns_uws_job + ':parameters/' + pname
         })
         act.used(e_in[-1])
     for pname, pdict in job.jdl.content['parameters'].iteritems():
-        pqn = ns_uws_job + ':' + pname
+        pqn = ns_uws_jdl + ':' + pname
         # Add some UWS parameters as input Entities
         #if pname.startswith('in'):
         if any(x in pdict['datatype'] for x in ['file', 'xs:anyURI']):
@@ -102,12 +104,12 @@ def job2prov(job):
     for rname in job.results:
         if rname not in ['stdout', 'stderr', 'provjson', 'provxml', 'provsvg']:
             rdict = job.jdl.content['results'][rname]
-            rqn = ns_uws_job + ':' + rname
+            rqn = ns_uws_jdl + ':' + rname
             e_out.append(pdoc.entity(rqn))
             # TODO: use publisher_did? add prov attributes, add voprov attributes?
             e_out[-1].add_attributes({
                 'prov:type': rdict['content_type'],
-                #'prov:location': job.results[rname]['url']
+                'prov:location': ns_uws_job + ':results/' + rname
             })
             e_out[-1].wasGeneratedBy(act)
             #for e in e_in:
