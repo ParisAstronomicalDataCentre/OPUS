@@ -43,27 +43,27 @@ def job2prov(job):
 
     pdoc = ProvDocument()
     # Declaring namespaces for various prefixes used in the example
-    pdoc.set_default_namespace('https://voparis-uws-test.obspm.fr/get_jdl/' + job.jobname + '/#')
+    pdoc.set_default_namespace('https://voparis-uws-test.obspm.fr/jdl/' + job.jobname + '/votable#')
     pdoc.add_namespace('prov', 'http://www.w3.org/ns/prov#')
     pdoc.add_namespace('voprov', 'http://www.ivoa.net/documents/dm/provdm/voprov#')
     pdoc.add_namespace('ctao', 'http://www.cta-observatory.org#')
     ns_uws_job = job.jobname
-    pdoc.add_namespace(ns_uws_job, 'https://voparis-uws-test.obspm.fr/get_jdl/' + job.jobname + '/#')
+    pdoc.add_namespace(ns_uws_job, 'https://voparis-uws-test.obspm.fr/jdl/' + job.jobname + '/votable#')
     # Activity
     act = pdoc.activity(ns_uws_job + ':' + job.jobid, job.start_time, job.end_time)
     # TODO: add job description, version, url, ...
     act.add_attributes({
         # 'prov:label': job.jdl.content['description'],
-        'voprov:location': job.jdl.content.get('url'),
-        'contact_name': job.jdl.content.get('contact_name'),
-        'contact_email': job.jdl.content.get('contact_email'),
+        'prov:location': job.jdl.content.get('url'),
+        'voprov:contact_name': job.jdl.content.get('contact_name'),
+        'voprov:contact_email': job.jdl.content.get('contact_email'),
     })
     # Agent: owner of the job
     agent = pdoc.agent('ctao:' + job.owner)
-    # ctac.add_attributes({
-    #     'prov:label': 'CTA Consortium',
-    #     'prov:type': 'Organization',
-    # })
+    agent.add_attributes({
+        'prov:label': 'CTA Consortium',
+        'prov:type': 'Organization',
+    })
     pdoc.wasAssociatedWith(act, agent)
     # Entities, in and out with relations
     e_in = []
@@ -73,7 +73,8 @@ def job2prov(job):
         e_in.append(pdoc.entity(pqn))
         # TODO: use publisher_did? add prov attributes, add voprov attributes?
         e_in[-1].add_attributes({
-            'voprov:type': pdict['datatype'],
+            'prov:value': job.parameters[pname]['value'],
+            'prov:type': pdict['datatype'],
             #'prov:location': job.parameters[pname]['value']
         })
         act.used(e_in[-1])
@@ -85,7 +86,7 @@ def job2prov(job):
             e_in.append(pdoc.entity(pqn))
             # TODO: use publisher_did? add prov attributes, add voprov attributes?
             e_in[-1].add_attributes({
-                'voprov:type': pdict['datatype'],
+                'prov:type': pdict['datatype'],
                 #'prov:location': job.parameters[pname]['value']
             })
             act.used(e_in[-1])
@@ -105,7 +106,7 @@ def job2prov(job):
             e_out.append(pdoc.entity(rqn))
             # TODO: use publisher_did? add prov attributes, add voprov attributes?
             e_out[-1].add_attributes({
-                'voprov:type': rdict['content_type'],
+                'prov:type': rdict['content_type'],
                 #'prov:location': job.results[rname]['url']
             })
             e_out[-1].wasGeneratedBy(act)
