@@ -77,7 +77,7 @@ def job2prov(job):
         e_in[-1].add_attributes({
             'prov:value': job.parameters[pname]['value'],
             'prov:type': pdict['datatype'],
-            'prov:location': ns_uws_job + ':parameters/' + pname
+            #'prov:location': ns_uws_job + ':parameters/' + pname
         })
         act.used(e_in[-1])
     for pname, pdict in job.jdl.content['parameters'].iteritems():
@@ -109,7 +109,7 @@ def job2prov(job):
             # TODO: use publisher_did? add prov attributes, add voprov attributes?
             e_out[-1].add_attributes({
                 'prov:type': rdict['content_type'],
-                'prov:location': ns_uws_job + ':results/' + rname
+                #'prov:location': ns_uws_job + ':results/' + rname
             })
             e_out[-1].wasGeneratedBy(act)
             #for e in e_in:
