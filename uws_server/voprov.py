@@ -70,16 +70,19 @@ def job2prov(job):
     # Entities, in and out with relations
     e_in = []
     act_attr = {}
+    # Used entities
     for pname, pdict in job.jdl.content['used'].iteritems():
         pqn = ns_uws_jdl + ':' + pname
         e_in.append(pdoc.entity(pqn))
         # TODO: use publisher_did? add prov attributes, add voprov attributes?
         e_in[-1].add_attributes({
+            'prov:label': pname,
             'prov:value': job.parameters[pname]['value'],
             'prov:type': pdict['datatype'],
             #'prov:location': ns_uws_job + ':parameters/' + pname
         })
         act.used(e_in[-1])
+    # Parameters as Activity attributes
     for pname, pdict in job.jdl.content['parameters'].iteritems():
         pqn = ns_uws_jdl + ':' + pname
         # Add some UWS parameters as input Entities
@@ -108,6 +111,7 @@ def job2prov(job):
             e_out.append(pdoc.entity(rqn))
             # TODO: use publisher_did? add prov attributes, add voprov attributes?
             e_out[-1].add_attributes({
+                'prov:label': rname,
                 'prov:type': rdict['content_type'],
                 #'prov:location': ns_uws_job + ':results/' + rname
             })
