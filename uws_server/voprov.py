@@ -147,7 +147,7 @@ def prov2dot(prov_doc):
     :param prov_doc:
     :return:
     """
-    dot = prov_to_dot(prov_doc)
+    dot = prov_to_dot(prov_doc, use_labels=True)
     return dot
 
 
