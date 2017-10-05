@@ -55,7 +55,7 @@ def job2prov(job):
     act = pdoc.activity(ns_uws_jdl + ':' + job.jobid, job.start_time, job.end_time)
     # TODO: add job description, version, url, ...
     act.add_attributes({
-        # 'prov:label': job.jdl.content['description'],
+        'prov:label': job.jobname,
         'voprov:doculink': job.jdl.content.get('url'),
         'voprov:contact_name': job.jdl.content.get('contact_name'),
         'voprov:contact_email': job.jdl.content.get('contact_email'),
