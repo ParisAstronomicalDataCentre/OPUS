@@ -547,8 +547,6 @@ class Job(object):
             if new_phase in ['QUEUED']:
                 self.start_time = now.strftime(DT_FMT)
             # Set end_time
-            if new_phase in ['COMPLETED', 'ABORTED']:
-                self.end_time = now.strftime(DT_FMT)
             if new_phase in ['COMPLETED', 'ABORTED', 'ERROR']:
                 self.manager.get_jobdata(self)
                 # Add results, logs, provenance (if they exist...)
@@ -565,11 +563,12 @@ class Job(object):
                 # If phase is already ABORTED, keep it
                 if self.phase == 'ABORTED':
                     new_phase = 'ABORTED'
+            if new_phase in ['COMPLETED', 'ABORTED']:
+                self.end_time = now.strftime(DT_FMT)
             # Update phase
             previous_phase = self.phase
             self.phase = new_phase
             # Save job description
-            # logger.info('end_time={}'.format(self.end_time))
             self.storage.save(self)
             # Send signal (e.g. if WAIT command expecting signal)
             change_status_signal = signal('job_status')
