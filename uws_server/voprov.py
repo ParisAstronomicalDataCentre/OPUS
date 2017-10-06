@@ -63,8 +63,8 @@ def job2prov(job):
     # Agent: owner of the job
     agent = pdoc.agent('ctao:' + job.owner)
     agent.add_attributes({
-        'prov:label': 'CTA Consortium',
-        'prov:type': 'Organization',
+        'prov:label': job.owner,
+        #'prov:type': 'Organization',
     })
     pdoc.wasAssociatedWith(act, agent)
     # Entities, in and out with relations
