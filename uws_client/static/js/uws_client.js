@@ -252,7 +252,7 @@ var uws_client = (function($) {
                 <td class="text-center" style="vertical-align: middle;">\
                     <button type="button" class="phase btn btn-default">PHASE...</button>\
                 </td>\
-                <td class="text-center">\
+                <td class="text-center" style="vertical-align: middle;">\
                     <div class="btn-group">\
                     <button type="button" class="properties btn btn-default btn-sm">\
                         <span class="glyphicon glyphicon-info-sign"></span>\
@@ -268,7 +268,7 @@ var uws_client = (function($) {
                     </button>\
                     </div>\
                 </td>\
-                <td class="text-center">\
+                <td class="text-center" style="vertical-align: middle;">\
                     <div class="btn-group">\
                     <button type="button" class="start btn btn-default btn-sm">\
                         <span class="glyphicon glyphicon-play"></span>\
