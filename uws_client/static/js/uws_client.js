@@ -107,8 +107,7 @@ var uws_client = (function($) {
             <thead>\
                 <tr>\
                     <th class="text-center">Type</th>\
-                    <th class="text-center">Start Time</th>\
-                    <th class="text-center">Destruction Time</th>\
+                    <th class="text-center">Creation Time</th>\
                     <th class="text-center">Phase</th>\
                     <th class="text-center">Details</th>\
                     <th class="text-center">Control</th>\
@@ -232,11 +231,23 @@ var uws_client = (function($) {
     // DISPLAY JOB ROW
 
     var displayJobRow = function(job){
+        var creation_time = job.creationTime.split("T");
+        if (creation_time.length == 1) {
+            creation_time = "";
+        } else {
+            creation_time = creation_time[0]+' '+creation_time[1].split('+')[0];
+        };
         var start_time = job.startTime.split("T");
         if (start_time.length == 1) {
             start_time = "";
         } else {
             start_time = start_time[0]+' '+start_time[1].split('+')[0];
+        };
+        var end_time = job.endTime.split("T");
+        if (end_time.length == 1) {
+            end_time = "";
+        } else {
+            end_time = end_time[0]+' '+end_time[1].split('+')[0];
         };
         var destr_time = job.destruction.split("T");
         if (destr_time.length == 1) {
@@ -244,11 +255,11 @@ var uws_client = (function($) {
         } else {
             destr_time = destr_time[0]+' '+destr_time[1].split('+')[0];
         };
+        var times = 'creation:    \t'+creation_time+'\n'+'start:         \t'+start_time+'\n'+'end:           \t'+end_time+'\n'+'destruction:\t'+destr_time
         var row = '\
             <tr id='+ job.jobId +' jobname='+ job.jobName +'>\
                 <td class="text-center" style="vertical-align: middle;">' + job.jobName + '</td>\
-                <td class="text-center" style="vertical-align: middle;">' + start_time + '</td>\
-                <td class="text-center" style="vertical-align: middle;">' + destr_time + '</td>\
+                <td class="text-center" style="vertical-align: middle;" title="' + times + '">' + creation_time + '</td>\
                 <td class="text-center" style="vertical-align: middle;">\
                     <button type="button" class="phase btn btn-default">PHASE...</button>\
                 </td>\
