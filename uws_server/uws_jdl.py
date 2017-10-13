@@ -249,6 +249,7 @@ class VOTFile(JDLFile):
         # Job attributes
         if self.content['description']:
             ETree.SubElement(resource, 'DESCRIPTION').text = self.content['description'].decode()
+        # TODO: automatic list of attributes from jdl.content
         job_attr = [
             '<LINK content-role="doc" href="{}"/>'.format(self.content.get('doculink', '')),
             '<PARAM name="label" datatype="char" arraysize="*" value="{}" utype="voprov:ActivityDescription.label"/>'.format(self.content.get('label', raw_jobname)),

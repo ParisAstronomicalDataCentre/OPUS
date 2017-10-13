@@ -87,6 +87,7 @@ class SQLAlchemyJobStorage(JobStorage):
             __tablename__ = 'jobs'
             jobid = Column(String(80), primary_key=True)
             jobname = Column(String(255))
+            # TODO: add label ?
             phase = Column(String(10))
             quote = Column(Integer(), nullable=True)
             execution_duration = Column(Integer(), nullable=True)
