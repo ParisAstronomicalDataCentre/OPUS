@@ -493,9 +493,7 @@ var uws_client = (function($) {
         for (var pname in jdl.used_keys) {
             pname = jdl.used_keys[pname]
             if ($.inArray(pname, Object.keys(jdl.parameters)) == -1) {
-                logger('DEBUG', pname);
                 var p = jdl.used[pname];
-                logger('DEBUG', p);
                 displayParamFormInput(pname, p);
                 if (p.datatype != 'file') {
                     $('#id_'+pname).wrap('<div class="input-group"></div>');
@@ -601,6 +599,7 @@ var uws_client = (function($) {
         $('#details_list').html('');
         var r_i = 0;
         for (var r in jdl.results_keys.concat(['stdout','stderr','provjson','provxml','provsvg'])) {
+            logger('DEBUG', r);
             r = jdl.results_keys[r]
             // if r is in job['results']
             if ($.inArray(r, Object.keys(job['results'])) !== -1) {
