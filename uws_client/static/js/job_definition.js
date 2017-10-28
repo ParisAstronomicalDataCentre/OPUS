@@ -291,9 +291,9 @@
 				// Fill param_list table
 				remove_all_items('param');
 				var i = 0;
-				for (var param in jdl.parameters) {
+				for (var param in jdl.parameters_keys) {
 				    add_item('param');
-				    i++;
+				    i++;  // = jdl.parameters[param]['order'];
 				    var attributes = "";
 				    var att = ['unit', 'ucd', 'utype', 'min', 'max'];
 				    for (var j in att) {
@@ -313,7 +313,7 @@
 				// Fill used_list table
 				remove_all_items('used');
 				var i = 0;
-				for (var used in jdl.used) {
+				for (var used in jdl.used_keys) {
                     add_item('used');
 				    i++;
 				    $('input[name=used_name_' + i + ']').val(used);
@@ -330,7 +330,7 @@
 				// Fill result_list table
 				remove_all_items('result');
 				var i = 0;
-				for (var result in jdl.results) {
+				for (var result in jdl.results_keys) {
                     add_item('result');
 				    i++;
 				    $('input[name=result_name_' + i + ']').val(result);

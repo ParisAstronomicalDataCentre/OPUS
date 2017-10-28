@@ -453,14 +453,14 @@ var uws_client = (function($) {
         // Run displayParamForm before to check that jdl is defined
         var jdl = clients[jobName].jdl;
         // Create form fields from WADL/JDL
-        for (var pname in jdl.used) {
+        for (var pname in jdl.used_keys) {
             if ($.inArray(pname, Object.keys(jdl.parameters)) == -1) {
                 var p = jdl.used[pname];
                 displayParamFormInput(pname, p)
                 displayParamFormInputType(pname, p)
             }
         };
-        for (var pname in jdl.parameters) {
+        for (var pname in jdl.parameters_keys) {
             var p = jdl.parameters[pname];
             displayParamFormInput(pname, p)
             displayParamFormInputType(pname, p)
@@ -489,7 +489,7 @@ var uws_client = (function($) {
     var displayParamFormOkFilled = function(job){
         var jdl = clients[job.jobName].jdl;
         // Create form fields from JDL
-        for (var pname in jdl.used) {
+        for (var pname in jdl.used_keys) {
             if ($.inArray(pname, Object.keys(jdl.parameters)) == -1) {
                 var p = jdl.used[pname];
                 displayParamFormInput(pname, p);
@@ -594,116 +594,119 @@ var uws_client = (function($) {
         $('#result_list').html('');
         $('#details_list').html('');
         var r_i = 0;
-        for (var r in job['results']) {
-            r_i++;
-            var r_id = 'result_'+r
-            var r_url = job['results'][r];
-            var r_url_auth = r_url.split(job.jobId).pop();
-            if (r_url_auth != r_url) {
-                r_url_auth = client_proxy_url + server_result_url + job.jobId + r_url_auth
-            }
-            var r_name = r_url.split('/').pop();
-            var r_panel = '\
-                <div id="'+r_id+'" class="panel panel-default" value="'+r_url+'">\
-                    <div class="panel-heading clearfix">\
-                        <span class="pull-left" style="padding-top: 4px;">\
-                            <span class="panel-title"><strong>'+r+'</strong></span>: \
-                            <a href="'+r_url+'" target="_blank">Download</a>\
-                        </span>\
-                        <div class="btn-group pull-right">\
+        for (var r in jdl.results_keys) {
+            // if r is in job['results']
+            if ($.inArray(pname, Object.keys(job['results'])) !== -1) {
+                r_i++;
+                var r_id = 'result_'+r
+                var r_url = job['results'][r];
+                var r_url_auth = r_url.split(job.jobId).pop();
+                if (r_url_auth != r_url) {
+                    r_url_auth = client_proxy_url + server_result_url + job.jobId + r_url_auth
+                }
+                var r_name = r_url.split('/').pop();
+                var r_panel = '\
+                    <div id="'+r_id+'" class="panel panel-default" value="'+r_url+'">\
+                        <div class="panel-heading clearfix">\
+                            <span class="pull-left" style="padding-top: 4px;">\
+                                <span class="panel-title"><strong>'+r+'</strong></span>: \
+                                <a href="'+r_url+'" target="_blank">Download</a>\
+                            </span>\
+                            <div class="btn-group pull-right">\
+                            </div>\
                         </div>\
-                    </div>\
-                </div>';
-            // Some results are shown in the details box if present
-            var r_type = 'text/plain';
-            switch (r) {
-                case 'stdout':
-                    $('#details_list').append(r_panel);
-                    break;
-                case 'stderr':
-                    $('#details_list').append(r_panel);
-                    break;
-                case 'provjson':
-                    r_type = 'application/json'
-                    $('#details_list').append(r_panel);
-                    break;
-                case 'provxml':
-                    r_type = 'text/xml'
-                    $('#details_list').append(r_panel);
-                    break;
-                case 'provsvg':
-                    r_type = 'image/svg+xml'
-                    $('#details_list').append(r_panel);
-                    break;
-                default:
-                    r_type = jdl.results[r]['content_type']; //r_name.split('.').pop();
-                    $('#result_list').append(r_panel);
-            }
-            $('#'+r_id+' div.panel-heading span a').html('Download ['+r_type+']');
-            // Add download button through proxy (with auth)
-            $('#'+r_id+' div.panel-heading div.btn-group').append('\
-                <a class="samp btn btn-default btn-sm" href="' + r_url_auth + '">\
-                    <span class="glyphicon glyphicon-save"></span>\
-                    Auth Access\
-                </a>'
-            );
-            // Show preview according to result type (file extension)
-            switch (r_type) {
-                // FITS files can be SAMPed
-                case 'image/fits':
-                    $('#'+r_id+' div.panel-heading div.btn-group').append('\
-                        <button type="button" class="samp btn btn-default btn-sm">SAMP</button>'
-                    );
-                    // Add event on SAMP button click
-                    $('#'+r_id+' div.panel-heading div.btn-group button.samp').click(function() {
-                        // var url = $(this).parents(".panel").attr('value');
-                        //var name = url.split('/').pop();
-                        samp_client.samp_image(r_url_auth);
-                    });
-                    // Show image preview
-                    //$('#'+r_id+' div.panel-body').html('\
-                    //    <img class="img-thumbnail" src="/static/images/crab_cta.png" />\
-                    //');
-                    break;
-                // Show images
-                case 'image/jpeg':
-                case 'image/png':
-                    // Show image preview
-                    $('#'+r_id).append('\
-                        <div class="panel-body">\
-                            <img class="img-thumbnail" src="' + r_url_auth + '" />\
-                        </div>\
-                    ');
-                    break;
-                // Show text in textarea
-                case 'text/plain':
-                    // show textarea with log
-                    $('#'+r_id).append('\
-                        <div class="panel-body">\
-                            <textarea class="log form-control" rows="10" style="font-family: monospace;" readonly>\
-                            </textarea>\
-                        </div>\
-                    ');
-                    $.ajax({
-                        url : r_url_auth,
-                        dataType: "text",
-                        context: r_id,  // Set this=r_id for success function
-                        success : function (txt) {
-                            $('#' + this + ' div.panel-body textarea').html(txt);
-                        }
-                    });
-                    break;
-                // Show SVG
-                case 'image/svg+xml':
-                    $('#'+r_id).append('\
-                        <div class="panel-body">\
-                        </div>\
-                    ');
-                    var r_id_svg = r_id
-                    $('#'+r_id+' div.panel-body').load(r_url_auth, function() {
-                        $('#' + r_id_svg + ' > div.panel-body > svg').attr('width', '100%');
-                    });
-                    break;
+                    </div>';
+                // Some results are shown in the details box if present
+                var r_type = 'text/plain';
+                switch (r) {
+                    case 'stdout':
+                        $('#details_list').append(r_panel);
+                        break;
+                    case 'stderr':
+                        $('#details_list').append(r_panel);
+                        break;
+                    case 'provjson':
+                        r_type = 'application/json'
+                        $('#details_list').append(r_panel);
+                        break;
+                    case 'provxml':
+                        r_type = 'text/xml'
+                        $('#details_list').append(r_panel);
+                        break;
+                    case 'provsvg':
+                        r_type = 'image/svg+xml'
+                        $('#details_list').append(r_panel);
+                        break;
+                    default:
+                        r_type = jdl.results[r]['content_type']; //r_name.split('.').pop();
+                        $('#result_list').append(r_panel);
+                }
+                $('#'+r_id+' div.panel-heading span a').html('Download ['+r_type+']');
+                // Add download button through proxy (with auth)
+                $('#'+r_id+' div.panel-heading div.btn-group').append('\
+                    <a class="samp btn btn-default btn-sm" href="' + r_url_auth + '">\
+                        <span class="glyphicon glyphicon-save"></span>\
+                        Auth Access\
+                    </a>'
+                );
+                // Show preview according to result type (file extension)
+                switch (r_type) {
+                    // FITS files can be SAMPed
+                    case 'image/fits':
+                        $('#'+r_id+' div.panel-heading div.btn-group').append('\
+                            <button type="button" class="samp btn btn-default btn-sm">SAMP</button>'
+                        );
+                        // Add event on SAMP button click
+                        $('#'+r_id+' div.panel-heading div.btn-group button.samp').click(function() {
+                            // var url = $(this).parents(".panel").attr('value');
+                            //var name = url.split('/').pop();
+                            samp_client.samp_image(r_url_auth);
+                        });
+                        // Show image preview
+                        //$('#'+r_id+' div.panel-body').html('\
+                        //    <img class="img-thumbnail" src="/static/images/crab_cta.png" />\
+                        //');
+                        break;
+                    // Show images
+                    case 'image/jpeg':
+                    case 'image/png':
+                        // Show image preview
+                        $('#'+r_id).append('\
+                            <div class="panel-body">\
+                                <img class="img-thumbnail" src="' + r_url_auth + '" />\
+                            </div>\
+                        ');
+                        break;
+                    // Show text in textarea
+                    case 'text/plain':
+                        // show textarea with log
+                        $('#'+r_id).append('\
+                            <div class="panel-body">\
+                                <textarea class="log form-control" rows="10" style="font-family: monospace;" readonly>\
+                                </textarea>\
+                            </div>\
+                        ');
+                        $.ajax({
+                            url : r_url_auth,
+                            dataType: "text",
+                            context: r_id,  // Set this=r_id for success function
+                            success : function (txt) {
+                                $('#' + this + ' div.panel-body textarea').html(txt);
+                            }
+                        });
+                        break;
+                    // Show SVG
+                    case 'image/svg+xml':
+                        $('#'+r_id).append('\
+                            <div class="panel-body">\
+                            </div>\
+                        ');
+                        var r_id_svg = r_id
+                        $('#'+r_id+' div.panel-body').load(r_url_auth, function() {
+                            $('#' + r_id_svg + ' > div.panel-body > svg').attr('width', '100%');
+                        });
+                        break;
+                };
             };
         };
     };

@@ -424,10 +424,14 @@ class VOTFile(JDLFile):
                 if elt.tag == '{}GROUP'.format(xmlns):
                     group = groups[elt.get('name')]
                     #print group
+                    order = 0
+                    keys = []
                     if group == 'parameters':
                         for p in elt:
                             if p.tag == '{}PARAM'.format(xmlns):
+                                order += 1
                                 name = p.get('name')
+                                keys.append(name)
                                 #print name, p.get('datatype', 'char')
                                 pdatatype = p.get('datatype', 'char')
                                 pxtype = p.get('xtype', None)
@@ -444,7 +448,8 @@ class VOTFile(JDLFile):
                                     'default': p.get('value'),
                                     'unit': p.get('unit', ''),
                                     'ucd': p.get('ucd', ''),
-                                    'utype': p.get('utype', '')
+                                    'utype': p.get('utype', ''),
+                                    'order': order,
                                 }
                                 for pp in p:
                                     if pp.tag == '{}DESCRIPTION'.format(xmlns):
@@ -462,7 +467,9 @@ class VOTFile(JDLFile):
                                 job_def[group][name] = item
                     if group == 'used':
                         for p in elt:
+                            order += 1
                             name = p.get('name')
+                            keys.append(name)
                             ref = p.get('ref')
                             if ref:
                                 item = {
@@ -471,6 +478,7 @@ class VOTFile(JDLFile):
                                     'content_type': p.get('xtype'),
                                     'description': job_def.get('parameters').get(ref).get('description'),
                                     'url': '',
+                                    'order': order,
                                 }
                             else:
                                 item = {
@@ -479,6 +487,7 @@ class VOTFile(JDLFile):
                                     'content_type': p.get('xtype'),
                                     'description': '',  # filled below
                                     'url': '',
+                                    'order': order,
                                 }
                             for pp in p:
                                 if pp.tag == '{}DESCRIPTION'.format(xmlns):
@@ -492,24 +501,29 @@ class VOTFile(JDLFile):
                             job_def[group][name] = item
                     if group == 'results':
                         for p in elt:
+                            order += 1
                             name = p.get('name')
+                            keys.append(name)
                             ref = p.get('ref')
                             if ref:
                                 item = {
                                     'default': job_def.get('parameters').get(ref).get('default'),
                                     'content_type': p.get('xtype'),
-                                    'description': job_def.get('parameters').get(ref).get('description')
+                                    'description': job_def.get('parameters').get(ref).get('description'),
+                                    'order': order,
                                 }
                             else:
                                 item = {
                                     'default': p.get('value'),
                                     'content_type': p.get('xtype'),
                                     'description': '',  # filled below
+                                    'order': order,
                                 }
                                 for pp in p:
                                     if pp.tag == '{}DESCRIPTION'.format(xmlns):
                                         item['description'] = pp.text
                             job_def[group][name] = item
+                    job_def[group + '_keys'] = keys
             # Log votable access
             # frame, filename, line_number, function_name, lines, index = inspect.stack()[1]
             # logger.debug('VOTable read at {} ({}:{}): {}'.format(function_name, filename, line_number, fname))
