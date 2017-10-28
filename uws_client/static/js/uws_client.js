@@ -490,8 +490,8 @@ var uws_client = (function($) {
         var jdl = clients[job.jobName].jdl;
         // Create form fields from JDL
         // list all used entities
-        for (var pname in jdl.used_keys.values()) {
-            //pname = jdl.used_keys[pname]
+        for (var pname in jdl.used_keys) {
+            pname = jdl.used_keys[pname]
             if ($.inArray(pname, Object.keys(jdl.parameters)) == -1) {
                 logger('DEBUG', pname);
                 var p = jdl.used[pname];
@@ -520,7 +520,8 @@ var uws_client = (function($) {
             }
         };
         // list remaining parameters
-        for (var pname in jdl.parameters) {
+        for (var pname in jdl.parameters_keys) {
+            pname = jdl.parameters_keys[pname]
             var p = jdl.parameters[pname];
             displayParamFormInput(pname, p);
             if (p.datatype != 'file') {
@@ -600,6 +601,7 @@ var uws_client = (function($) {
         $('#details_list').html('');
         var r_i = 0;
         for (var r in jdl.results_keys) {
+            r = jdl.results_keys[r]
             // if r is in job['results']
             if ($.inArray(pname, Object.keys(job['results'])) !== -1) {
                 r_i++;
