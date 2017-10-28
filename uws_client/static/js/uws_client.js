@@ -598,9 +598,11 @@ var uws_client = (function($) {
         $('#result_list').html('');
         $('#details_list').html('');
         var r_i = 0;
-        for (var r in jdl.results_keys.concat(['stdout','stderr','provjson','provxml','provsvg'])) {
+        var results_keys = jdl.results_keys.concat(['stdout','stderr','provjson','provxml','provsvg']);
+        for (var r in results_keys) {
             logger('DEBUG', r);
-            r = jdl.results_keys[r]
+            r = results_keys[r]
+            logger('DEBUG', r);
             // if r is in job['results']
             if ($.inArray(r, Object.keys(job['results'])) !== -1) {
                 r_i++;
