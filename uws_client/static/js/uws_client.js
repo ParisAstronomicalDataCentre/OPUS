@@ -490,7 +490,8 @@ var uws_client = (function($) {
         var jdl = clients[job.jobName].jdl;
         // Create form fields from JDL
         // list all used entities
-        for (var pname in jdl.used_keys) {
+        for (var pname in jdl.used_keys.values()) {
+            //pname = jdl.used_keys[pname]
             if ($.inArray(pname, Object.keys(jdl.parameters)) == -1) {
                 logger('DEBUG', pname);
                 var p = jdl.used[pname];
