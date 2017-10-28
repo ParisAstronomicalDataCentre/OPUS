@@ -600,7 +600,7 @@ var uws_client = (function($) {
         $('#result_list').html('');
         $('#details_list').html('');
         var r_i = 0;
-        for (var r in jdl.results_keys) {
+        for (var r in jdl.results_keys.concat(['stdout','stderr','provjson','provxml','provsvg'])) {
             r = jdl.results_keys[r]
             // if r is in job['results']
             if ($.inArray(r, Object.keys(job['results'])) !== -1) {
