@@ -9,6 +9,8 @@ Interfaces between UWS server and job description
 import collections
 import inspect
 import copy
+import json
+import yaml
 import lxml.etree as ETree
 from settings import *
 
@@ -190,6 +192,31 @@ class JDLFile(object):
             'quote': post.get('quote'),
             'script': post.get('script'),
         }
+
+
+class JSONFile(JDLFile):
+
+    def __init__(self, jdl_path=JDL_PATH, script_path=SCRIPT_PATH):
+        self.extension = '.json'
+        self.jdl_path = os.path.join(jdl_path, 'json')
+        self.script_path = script_path
+
+    def save(self, jobname):
+        """Save job description to file"""
+        raw_jobname = jobname.split('/')[-1]  # remove new/ prefix
+        js = json.dumps(self.content, indent=4)
+        jdl_fname = self._get_filename(jobname)
+        with open(jdl_fname, 'w') as f:
+            f.write(js)
+            logger.info('JSON saved: ' + jdl_fname)
+
+    def read(self, jobname):
+        """Read job description from file"""
+        raw_jobname = jobname.split('/')[-1]  # remove new/ prefix
+        fname = self._get_filename(jobname)
+        with open(fname, 'r') as f:
+            #self.content = json.load(f)
+            self.content = yaml.safe_load(f)
 
 
 class VOTFile(JDLFile):
