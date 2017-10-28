@@ -449,7 +449,6 @@ class VOTFile(JDLFile):
                                     'unit': p.get('unit', ''),
                                     'ucd': p.get('ucd', ''),
                                     'utype': p.get('utype', ''),
-                                    'order': order,
                                 }
                                 for pp in p:
                                     if pp.tag == '{}DESCRIPTION'.format(xmlns):
@@ -478,7 +477,6 @@ class VOTFile(JDLFile):
                                     'content_type': p.get('xtype'),
                                     'description': job_def.get('parameters').get(ref).get('description'),
                                     'url': '',
-                                    'order': order,
                                 }
                             else:
                                 item = {
@@ -487,7 +485,6 @@ class VOTFile(JDLFile):
                                     'content_type': p.get('xtype'),
                                     'description': '',  # filled below
                                     'url': '',
-                                    'order': order,
                                 }
                             for pp in p:
                                 if pp.tag == '{}DESCRIPTION'.format(xmlns):
@@ -510,14 +507,12 @@ class VOTFile(JDLFile):
                                     'default': job_def.get('parameters').get(ref).get('default'),
                                     'content_type': p.get('xtype'),
                                     'description': job_def.get('parameters').get(ref).get('description'),
-                                    'order': order,
                                 }
                             else:
                                 item = {
                                     'default': p.get('value'),
                                     'content_type': p.get('xtype'),
                                     'description': '',  # filled below
-                                    'order': order,
                                 }
                                 for pp in p:
                                     if pp.tag == '{}DESCRIPTION'.format(xmlns):
