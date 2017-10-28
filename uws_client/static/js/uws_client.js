@@ -603,7 +603,7 @@ var uws_client = (function($) {
         for (var r in jdl.results_keys) {
             r = jdl.results_keys[r]
             // if r is in job['results']
-            if ($.inArray(pname, Object.keys(job['results'])) !== -1) {
+            if ($.inArray(r, Object.keys(job['results'])) !== -1) {
                 r_i++;
                 var r_id = 'result_'+r
                 var r_url = job['results'][r];
