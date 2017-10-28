@@ -27,7 +27,7 @@ jobname = 'ctbin'
 class TestGet(unittest.TestCase):
 
     def setUp(self):
-        print '\n***** TestGet *****'
+        print('\n***** TestGet *****')
 
     def test_get(self):
         # Initialize db, must be localhost
