@@ -454,6 +454,7 @@ var uws_client = (function($) {
         var jdl = clients[jobName].jdl;
         // Create form fields from WADL/JDL
         for (var pname in jdl.used_keys) {
+            pname = jdl.used_keys[pname];
             if ($.inArray(pname, Object.keys(jdl.parameters)) == -1) {
                 var p = jdl.used[pname];
                 displayParamFormInput(pname, p)
@@ -461,6 +462,7 @@ var uws_client = (function($) {
             }
         };
         for (var pname in jdl.parameters_keys) {
+            pname = jdl.parameters_keys[pname];
             var p = jdl.parameters[pname];
             displayParamFormInput(pname, p)
             displayParamFormInputType(pname, p)
@@ -491,7 +493,7 @@ var uws_client = (function($) {
         // Create form fields from JDL
         // list all used entities
         for (var pname in jdl.used_keys) {
-            pname = jdl.used_keys[pname]
+            pname = jdl.used_keys[pname];
             if ($.inArray(pname, Object.keys(jdl.parameters)) == -1) {
                 var p = jdl.used[pname];
                 displayParamFormInput(pname, p);
@@ -519,7 +521,7 @@ var uws_client = (function($) {
         };
         // list remaining parameters
         for (var pname in jdl.parameters_keys) {
-            pname = jdl.parameters_keys[pname]
+            pname = jdl.parameters_keys[pname];
             var p = jdl.parameters[pname];
             displayParamFormInput(pname, p);
             if (p.datatype != 'file') {
@@ -600,9 +602,7 @@ var uws_client = (function($) {
         var r_i = 0;
         var results_keys = jdl.results_keys.concat(['stdout','stderr','provjson','provxml','provsvg']);
         for (var r in results_keys) {
-            logger('DEBUG', r);
-            r = results_keys[r]
-            logger('DEBUG', r);
+            r = results_keys[r];
             // if r is in job['results']
             if ($.inArray(r, Object.keys(job['results'])) !== -1) {
                 r_i++;
