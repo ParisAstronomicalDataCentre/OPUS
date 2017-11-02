@@ -20,7 +20,7 @@
             'xs:long',
             'xs:boolean',
         ],
-        'result': [
+        'generated': [
             'text/plain',
             'text/xml',
             'text/x-votable+xml',
@@ -145,28 +145,28 @@
                     </tr>';
                 break;
             // Results
-	        case 'result':
+	        case 'generated':
                 var options = '<option>' + type_options[type].join('</option><option>') + '</option>';
                 var row = '\
-                    <tr id="result_' + ii + '">\
+                    <tr id="generated_' + ii + '">\
                         <td>\
                             <div class="input-group input-group-sm col-md-12">\
-                                <input class="result_name form-control" style="font-weight: bold;" name="result_name_' + ii + '" type="text" placeholder="Name" />\
+                                <input class="generated_name form-control" style="font-weight: bold;" name="generated_name_' + ii + '" type="text" placeholder="Name" />\
                                 <span class="input-group-addon">=</span>\
-                                <input class="result_default form-control" name="result_default_' + ii + '" type="text" placeholder="Default value" />\
+                                <input class="generated_default form-control" name="generated_default_' + ii + '" type="text" placeholder="Default value" />\
                                 <span class="input-group-btn">\
-                                    <select name="result_type_' + ii + '" class="result_type select-small selectpicker">\
+                                    <select name="generated_type_' + ii + '" class="generated_type select-small selectpicker">\
                                         ' + options + '\
                                     </select>\
                                 </span>\
                                 <span class="input-group-btn">\
-                                    <button id="moveup_result_' + ii + '" class="moveup_result btn btn-default" type="button" >\
+                                    <button id="moveup_generated_' + ii + '" class="moveup_generated btn btn-default" type="button" >\
                                         <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>\
                                     </button>\
-                                    <button id="movedown_result_' + ii + '" class="movedown_result btn btn-default" type="button" >\
+                                    <button id="movedown_generated_' + ii + '" class="movedown_generated btn btn-default" type="button" >\
                                         <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span>\
                                     </button>\
-                                    <button id="remove_result_' + ii + '" class="remove_result btn btn-default" type="button" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" >\
+                                    <button id="remove_generated_' + ii + '" class="remove_generated btn btn-default" type="button" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" >\
                                         <span class="glyphicon glyphicon-remove"></span>\
                                     </button>\
                                 </span>\
@@ -174,7 +174,7 @@
                             <div style="height: 1px;"></div>\
                             <div class="input-group input-group-sm col-md-12">\
                                 <span class="input-group-addon" style="width:70px" title="Description">Desc.</span>\
-                                <input class="result_annotation form-control" name="result_annotation_' + ii + '" type="text" placeholder="Description" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" />\
+                                <input class="generated_annotation form-control" name="generated_annotation_' + ii + '" type="text" placeholder="Description" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" />\
                             </div>\
                             <div style="height: 10px;"></div>\
                         </td>\
@@ -330,17 +330,17 @@
 				    }
 				};
                 $('.selectpicker').selectpicker('refresh');
-				// Fill result_list table
-				remove_all_items('result');
+				// Fill generated_list table
+				remove_all_items('generated');
 				var i = 0;
-				for (var result in jdl.results_keys) {
-				    result = jdl.results_keys[result];
-                    add_item('result');
+				for (var result in jdl.generated_keys) {
+				    result = jdl.generated_keys[result];
+                    add_item('generated');
 				    i++;
-				    $('input[name=result_name_' + i + ']').val(result);
-				    $('select[name=result_type_' + i + ']').val(jdl.results[result]['content_type']);
-				    $('input[name=result_default_' + i + ']').val(jdl.results[result]['default']);
-				    $('input[name=result_annotation_' + i + ']').val(jdl.results[result]['annotation']);
+				    $('input[name=generated_name_' + i + ']').val(result);
+				    $('select[name=generated_type_' + i + ']').val(jdl.generated[result]['content_type']);
+				    $('input[name=generated_default_' + i + ']').val(jdl.generated[result]['default']);
+				    $('input[name=generated_annotation_' + i + ']').val(jdl.generated[result]['annotation']);
 				};
                 $('.selectpicker').selectpicker('refresh');
                 // ajax command to get_script from UWS server
@@ -426,7 +426,7 @@
         $('div.CodeMirror').addClass('panel panel-default');
         // Prepare empty form
         // add_item('param');
-        // add_item('result');
+        // add_item('generated');
         // Get jobname from DOM (if set), and fill input form
         var jobname = $('#jobname').attr('value');
         if (jobname) {
@@ -466,11 +466,11 @@
         $('#remove_all_used').click( function() {
             remove_all_items('used');
         });
-        $('#add_result').click( function() {
-            add_item('result');
+        $('#add_generated').click( function() {
+            add_item('generated');
         });
-        $('#remove_all_results').click( function() {
-            remove_all_items('result');
+        $('#remove_all_generateds').click( function() {
+            remove_all_items('generated');
         });
         // Load JDL on return keydown for job name
         $('input[name=name]').keydown(function (event) {

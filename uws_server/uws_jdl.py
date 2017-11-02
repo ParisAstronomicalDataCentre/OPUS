@@ -22,18 +22,16 @@ from settings import *
 '''
 jdl.content = {
     'name': 'test',
-    'label': 'test label',             # add
     'annotation': 'test annotation',
     'version': '1.2',
     'group': '',
-    'job_type': '',
-    'job_subtype': '',
+    'type': '',
+    'subtype': '',
     'doculink': '',                    # 'url' --> 'doculink'
     'contact_name': 'contact name',
-    'contact_affil': '',               # remove...
     'contact_email': 'contact@email.com',
     'parameters': {},
-    'results': {},
+    'generated': {},
     'used': {},                        # add
     'executionduration': 1,
     'quote': 1,
@@ -55,7 +53,7 @@ used[pname] = {                        # add!
     'content_type': p.get('type'),     # xtype in VOTable (?)
     'annotation': list(r)[0].text,
 }
-results[rname] = {
+generated[rname] = {
     'default': r.get('default'),
     'content_type': r.get('content_type'),
     'annotation': list(r)[0].text,
@@ -159,12 +157,12 @@ class JDLFile(object):
         # Create results dict
         results = collections.OrderedDict()
         iresult = 1
-        while 'result_name_' + str(iresult) in keys:
-            rname = post.get('result_name_' + str(iresult))
+        while 'generated_name_' + str(iresult) in keys:
+            rname = post.get('generated_name_' + str(iresult))
             if rname:
-                rtype = post.get('result_type_' + str(iresult))
-                rdefault = post.get('result_default_' + str(iresult))
-                rdesc = post.get('result_annotation_' + str(iresult))
+                rtype = post.get('generated_type_' + str(iresult))
+                rdefault = post.get('generated_default_' + str(iresult))
+                rdesc = post.get('generated_annotation_' + str(iresult))
                 results[rname] = {
                     'content_type': rtype,
                     'default': rdefault,
@@ -185,7 +183,7 @@ class JDLFile(object):
             'contact_name': post.get('contact_name'),
             'contact_email': post.get('contact_email'),
             'parameters': params,
-            'results': results,
+            'generated': results,
             'used': used,
             'executionduration': post.get('executionduration'),
             'quote': post.get('quote'),
@@ -300,7 +298,7 @@ class VOTFile(JDLFile):
             'name': "Used",
             'utype': "voprov:Used",
         })
-        group_results = ETree.SubElement(resource, 'GROUP', attrib={
+        group_generated = ETree.SubElement(resource, 'GROUP', attrib={
             'name': "Generated",
             'utype': "voprov:WasGeneratedBy",
         })
@@ -361,8 +359,8 @@ class VOTFile(JDLFile):
                 ETree.SubElement(used, 'DESCRIPTION').text = p.get('annotation', '')
                 group_used.append(used)
         # Prepare results block
-        if 'results' in self.content:
-            for rname, r in self.content['results'].iteritems():
+        if 'generated' in self.content:
+            for rname, r in self.content['generated'].iteritems():
                 attrib={
                     'name': rname,
                     'datatype': 'char',
@@ -375,7 +373,7 @@ class VOTFile(JDLFile):
                     attrib['ref'] = rname
                 result = ETree.Element('PARAM', attrib=attrib)
                 ETree.SubElement(result, 'DESCRIPTION').text = r.get('annotation', '')
-                group_results.append(result)
+                group_generated.append(result)
         # Write file
         jdl_content = ETree.tostring(jdl_tree, pretty_print=True)
         jdl_fname = self._get_filename(jobname)
@@ -391,7 +389,7 @@ class VOTFile(JDLFile):
         groups = {
             'InputParams': 'parameters',
             'Used': 'used',
-            'Generated': 'results'
+            'Generated': 'generated'
         }
         try:
             with open(fname, 'r') as f:
@@ -408,7 +406,7 @@ class VOTFile(JDLFile):
             job_def = {
                 'name': resource_block.get('name'),
                 'parameters': collections.OrderedDict(),
-                'results': collections.OrderedDict(),
+                'generated': collections.OrderedDict(),
                 'used': collections.OrderedDict()
             }
             for elt in resource_block.getchildren():
@@ -497,7 +495,7 @@ class VOTFile(JDLFile):
                                     if 'file://' in purl:
                                         item['datatype'] = 'file'
                             job_def[group][name] = item
-                    if group == 'results':
+                    if group == 'generated':
                         for p in elt:
                             order += 1
                             name = p.get('name')
@@ -580,7 +578,7 @@ class WADLFile(JDLFile):
             jdl_popts.append(poelt)
         # Prepare result block
         jdl_ropts = []
-        for rname, r in self.content['results'].iteritems():
+        for rname, r in self.content['generated'].iteritems():
             # rline = '<option value="{}" content_type="{}" default="{}"><doc>{}</doc></option>' \
             #         ''.format(rname, r['content_type'], r['default'], r.get('annotation', ''))
             roelt = ETree.Element('option', attrib={
@@ -683,7 +681,7 @@ class WADLFile(JDLFile):
                 'name': jobname,
                 'parameters': parameters,
                 'used': used,
-                'results': results,
+                'generated': results,
             }
             # Read job description
             joblist_description_block = jdl_tree.find(".//{}doc[@title='description']".format(xmlns))
@@ -692,7 +690,7 @@ class WADLFile(JDLFile):
             joblist_block = jdl_tree.find(".//{}resource[@id='joblist']".format(xmlns))
             job_def['doculink'] = joblist_block.get('doculink')
             job_def['contact_name'] = joblist_block.get('contact_name')
-            job_def['contact_affil'] = joblist_block.get('contact_affil')
+            #job_def['contact_affil'] = joblist_block.get('contact_affil')
             job_def['contact_email'] = joblist_block.get('contact_email')
             # Read execution duration
             execdur_block = jdl_tree.find(".//{}param[@name='EXECUTIONDURATION']".format(xmlns))
