@@ -222,6 +222,7 @@ JDL_PATH = VAR_PATH + '/jdl'
 SCRIPT_PATH = VAR_PATH + '/jdl/scripts'
 # Path for job results and logs
 JOBDATA_PATH = VAR_PATH + '/jobdata'
+ENTITY_STORE_PATH = VAR_PATH + '/entitystore'
 # If POST contains files they are uploaded on the UWS server
 UPLOAD_PATH = VAR_PATH + '/uploads'
 # Path for e.g. SLURM sbatch files created by SLURMManager
