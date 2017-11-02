@@ -23,7 +23,7 @@ from settings import *
 jdl.content = {
     'name': 'test',
     'label': 'test label',             # add
-    'description': 'test description',
+    'annotation': 'test annotation',
     'version': '1.2',
     'group': '',
     'job_type': '',
@@ -48,17 +48,17 @@ parameters[pname] = {
     'min': p.get('default'),           # add
     'max': p.get('default'),           # add
     'options': p.get('default'),       # add
-    'description': list(p)[0].text,
+    'annotation': list(p)[0].text,
 }
 used[pname] = {                        # add!
     'default': r.get('default'),
     'content_type': p.get('type'),     # xtype in VOTable (?)
-    'description': list(r)[0].text,
+    'annotation': list(r)[0].text,
 }
 results[rname] = {
     'default': r.get('default'),
     'content_type': r.get('content_type'),
-    'description': list(r)[0].text,
+    'annotation': list(r)[0].text,
 }
 '''
 
@@ -118,12 +118,12 @@ class JDLFile(object):
                 ptype = post.get('param_datatype_' + str(iparam))
                 pdefault = post.get('param_default_' + str(iparam))
                 preq = post.get('param_required_' + str(iparam))
-                pdesc = post.get('param_description_' + str(iparam))
+                pdesc = post.get('param_annotation_' + str(iparam))
                 params[pname] = {
                     'datatype': ptype,
                     'default': pdefault,
                     'required': (preq == 'on'),
-                    'description': pdesc,
+                    'annotation': pdesc,
                 }
                 poptions = post.get('param_options_' + str(iparam))
                 if poptions:
@@ -144,7 +144,7 @@ class JDLFile(object):
                 ptype = post.get('used_type_' + str(iused))
                 # TODO: do a getall for all options
                 pdefault = post.get('used_default_' + str(iused))
-                pdesc = post.get('used_description_' + str(iused))
+                pdesc = post.get('used_annotation_' + str(iused))
                 pisfile = post.get('used_isfile_' + str(iused))
                 purl = post.get('used_url_' + str(iused))
                 if pisfile == 'File':
@@ -152,7 +152,7 @@ class JDLFile(object):
                 used[pname] = {
                     'content_type': ptype,  # ', '.join(ptype),
                     'default': pdefault,
-                    'description': pdesc,
+                    'annotation': pdesc,
                     'url': purl,
                 }
             iused += 1
@@ -164,26 +164,25 @@ class JDLFile(object):
             if rname:
                 rtype = post.get('result_type_' + str(iresult))
                 rdefault = post.get('result_default_' + str(iresult))
-                rdesc = post.get('result_description_' + str(iresult))
+                rdesc = post.get('result_annotation_' + str(iresult))
                 results[rname] = {
                     'content_type': rtype,
                     'default': rdefault,
-                    'description': rdesc,
+                    'annotation': rdesc,
                 }
             iresult += 1
         # Create job.content structure
         self.content = {
             'name': jobname,
-            'label': post.get('label', jobname),
-            'description': post.get('description'),
+            'annotation': post.get('annotation', jobname),
+            #'description': post.get('description'),
             'version': post.get('version'),
             'group': post.get('group'),
-            'job_type': post.get('job_type'),
-            'job_subtype': post.get('job_subtype'),
+            'type': post.get('type'),
+            'subtype': post.get('subtype'),
             'doculink': post.get('doculink'),
             'url': post.get('url'),
             'contact_name': post.get('contact_name'),
-            'contact_affil': post.get('contact_affil'),
             'contact_email': post.get('contact_email'),
             'parameters': params,
             'results': results,
@@ -274,20 +273,22 @@ class VOTFile(JDLFile):
             'utype': "voprov:ActivityDescription"
         })
         # Job attributes
-        if self.content['description']:
-            ETree.SubElement(resource, 'DESCRIPTION').text = self.content['description'].decode()
+        if self.content['annotation']:
+            ETree.SubElement(resource, 'DESCRIPTION').text = self.content['annotation'].decode()
         # TODO: automatic list of attributes from jdl.content
-        job_attr = [
-            '<LINK content-role="doc" href="{}"/>'.format(self.content.get('doculink', '')),
-            '<PARAM name="label" datatype="char" arraysize="*" value="{}" utype="voprov:ActivityDescription.label"/>'.format(self.content.get('label', raw_jobname)),
-            '<PARAM name="type" datatype="char" arraysize="*" value="{}" utype="voprov:ActivityDescription.type"/>'.format(self.content.get('job_type', '')),
-            '<PARAM name="subtype" datatype="char" arraysize="*" value="{}" utype="voprov:ActivityDescription.subtype"/>'.format(self.content.get('job_subtype', '')),
-            '<PARAM name="version" datatype="float" value="{}" utype="voprov:ActivityDescription.version"/>'.format(self.content.get('version', '')),
-            '<PARAM name="contact_name" datatype="char" arraysize="*" value="{}" utype="voprov:Agent.name"/>'.format(self.content.get('contact_name', '')),
-            '<PARAM name="contact_email" datatype="char" arraysize="*" value="{}" utype="voprov:Agent.email"/>'.format(self.content.get('contact_email', '')),
-            '<PARAM name="executionduration" datatype="int" value="{}" utype="uws:Job.executionduration"/>'.format(self.content.get('executionduration', '1')),
-            '<PARAM name="quote" datatype="int" value="{}" utype="uws:Job.quote"/>'.format(self.content.get('quote', '1')),
-        ]
+        job_attr = []
+        for key in ['type', 'subtype', 'annotation', 'version', 'doculink']:
+            job_attr.append('<PARAM name="{key}" datatype="char" arraysize="*" value="{value}" utype="voprov:ActivityDescription.{key}"/>'.format(key=key, value=self.content.get(key, '')))
+        #     ,
+        #     '<PARAM name="subtype" datatype="char" arraysize="*" value="{}" utype="voprov:ActivityDescription.subtype"/>'.format(self.content.get('job_subtype', '')),
+        #     '<PARAM name="annotation" datatype="char" arraysize="*" value="{}" utype="voprov:ActivityDescription.annotation"/>'.format(self.content.get('annotation', raw_jobname)),
+        #     '<PARAM name="version" datatype="float" value="{}" utype="voprov:ActivityDescription.version"/>'.format(self.content.get('version', '')),
+        #     '<PARAM name="doculink" datatype="float" value="{}" utype="voprov:ActivityDescription.doculink"/>'.format(self.content.get('doculink', '')),
+        job_attr.append('<PARAM name="contact_name" datatype="char" arraysize="*" value="{}" utype="voprov:Agent.name"/>'.format(self.content.get('contact_name', '')))
+        job_attr.append('<PARAM name="contact_email" datatype="char" arraysize="*" value="{}" utype="voprov:Agent.email"/>'.format(self.content.get('contact_email', '')))
+        job_attr.append('<PARAM name="executionduration" datatype="int" value="{}" utype="uws:Job.executionduration"/>'.format(self.content.get('executionduration', '1')))
+        job_attr.append('<PARAM name="quote" datatype="int" value="{}" utype="uws:Job.quote"/>'.format(self.content.get('quote', '1')))
+
         for attr in job_attr:
             resource.append(ETree.fromstring(attr))
         # Insert groups
@@ -322,7 +323,7 @@ class VOTFile(JDLFile):
     #                'required': str(p['required']),
     #                'content_type': 'text/plain'
                 param = ETree.Element('PARAM', attrib=param_attrib)
-                pdesc = p.get('description', '')
+                pdesc = p.get('annotation', '')
                   # .encode(encoding='utf-8', errors='ignore')
                 #pdesc_clean = ''.join(c for c in pdesc if self.valid_xml_char_ordinal(c))
                 #logger.debug(pdesc)
@@ -357,7 +358,7 @@ class VOTFile(JDLFile):
                     'href': p.get('url'),
                 }
                 ETree.SubElement(used, 'LINK', attrib=url_attrib)
-                ETree.SubElement(used, 'DESCRIPTION').text = p.get('description', '')
+                ETree.SubElement(used, 'DESCRIPTION').text = p.get('annotation', '')
                 group_used.append(used)
         # Prepare results block
         if 'results' in self.content:
@@ -373,7 +374,7 @@ class VOTFile(JDLFile):
                 if rname in self.content['parameters']:
                     attrib['ref'] = rname
                 result = ETree.Element('PARAM', attrib=attrib)
-                ETree.SubElement(result, 'DESCRIPTION').text = r.get('description', '')
+                ETree.SubElement(result, 'DESCRIPTION').text = r.get('annotation', '')
                 group_results.append(result)
         # Write file
         jdl_content = ETree.tostring(jdl_tree, pretty_print=True)
@@ -413,7 +414,7 @@ class VOTFile(JDLFile):
             for elt in resource_block.getchildren():
 
                 if elt.tag == '{}DESCRIPTION'.format(xmlns):
-                    job_def['description'] = elt.text
+                    job_def['annotation'] = elt.text
                     #print elt.text
                 if elt.tag == '{}LINK'.format(xmlns):
                     job_def['doculink'] = elt.get('href')
@@ -452,7 +453,7 @@ class VOTFile(JDLFile):
                                 }
                                 for pp in p:
                                     if pp.tag == '{}DESCRIPTION'.format(xmlns):
-                                        item['description'] = pp.text
+                                        item['annotation'] = pp.text
                                     if pp.tag == '{}VALUES'.format(xmlns):
                                         options = []
                                         for ppp in pp:
@@ -475,7 +476,7 @@ class VOTFile(JDLFile):
                                     'datatype': job_def.get('parameters').get(ref).get('datatype', 'xs:string'),
                                     'default': job_def.get('parameters').get(ref).get('default'),
                                     'content_type': p.get('xtype'),
-                                    'description': job_def.get('parameters').get(ref).get('description'),
+                                    'annotation': job_def.get('parameters').get(ref).get('annotation'),
                                     'url': '',
                                 }
                             else:
@@ -483,13 +484,13 @@ class VOTFile(JDLFile):
                                     'datatype': 'xs:string',  # may be changed below
                                     'default': p.get('value'),
                                     'content_type': p.get('xtype'),
-                                    'description': '',  # filled below
+                                    'annotation': '',  # filled below
                                     'url': '',
                                 }
                             for pp in p:
                                 if pp.tag == '{}DESCRIPTION'.format(xmlns):
                                     if not ref:
-                                        item['description'] = pp.text
+                                        item['annotation'] = pp.text
                                 if pp.tag == '{}LINK'.format(xmlns):
                                     purl = pp.get('href')
                                     item['url'] = purl
@@ -506,17 +507,17 @@ class VOTFile(JDLFile):
                                 item = {
                                     'default': job_def.get('parameters').get(ref).get('default'),
                                     'content_type': p.get('xtype'),
-                                    'description': job_def.get('parameters').get(ref).get('description'),
+                                    'annotation': job_def.get('parameters').get(ref).get('annotation'),
                                 }
                             else:
                                 item = {
                                     'default': p.get('value'),
                                     'content_type': p.get('xtype'),
-                                    'description': '',  # filled below
+                                    'annotation': '',  # filled below
                                 }
                                 for pp in p:
                                     if pp.tag == '{}DESCRIPTION'.format(xmlns):
-                                        item['description'] = pp.text
+                                        item['annotation'] = pp.text
                             job_def[group][name] = item
                     job_def[group + '_keys'] = keys
             # Log votable access
@@ -558,7 +559,7 @@ class WADLFile(JDLFile):
         jdl_popts = []
         for pname, p in self.content['parameters'].iteritems():
             # pline = '<param style="query" name="{}" type="{}" required="{}" default="{}"><doc>{}</doc></param>' \
-            #        ''.format(pname, p['type'], p['required'], p['default'], p.get('description', ''))
+            #        ''.format(pname, p['type'], p['required'], p['default'], p.get('annotation', ''))
             pelt_attrib = {
                 'style': 'query',
                 'name': pname,
@@ -567,27 +568,27 @@ class WADLFile(JDLFile):
                 'default': p['default']
             }
             pelt = ETree.Element('param', attrib=pelt_attrib)
-            ETree.SubElement(pelt, 'doc').text = p.get('description', '')
+            ETree.SubElement(pelt, 'doc').text = p.get('annotation', '')
             jdl_params.append(pelt)
             # line = '<option value="{}" content_type="text/plain"><doc>{}</doc></option>' \
-            #        ''.format(pname, p['description'])
+            #        ''.format(pname, p['annotation'])
             poelt = ETree.Element('option', attrib={
                 'value': pname,
                 'content_type': 'text/plain'
             })
-            ETree.SubElement(poelt, 'doc').text = p.get('description', '')
+            ETree.SubElement(poelt, 'doc').text = p.get('annotation', '')
             jdl_popts.append(poelt)
         # Prepare result block
         jdl_ropts = []
         for rname, r in self.content['results'].iteritems():
             # rline = '<option value="{}" content_type="{}" default="{}"><doc>{}</doc></option>' \
-            #         ''.format(rname, r['content_type'], r['default'], r.get('description', ''))
+            #         ''.format(rname, r['content_type'], r['default'], r.get('annotation', ''))
             roelt = ETree.Element('option', attrib={
                 'value': rname,
                 'content_type': r['content_type'],
                 'default': r['default']
             })
-            ETree.SubElement(roelt, 'doc').text = r.get('description', '')
+            ETree.SubElement(roelt, 'doc').text = r.get('annotation', '')
             jdl_ropts.append(roelt)
         # Read WADL UWS template as XML Tree
         filename = '{}/uws_template.wadl'.format(JDL_PATH)
@@ -604,7 +605,7 @@ class WADLFile(JDLFile):
         joblist_block.set('contact_email', self.content['contact_email'])
         # Insert job description
         job_list_description_block = jdl_tree.find(".//{}doc[@title='description']".format(xmlns))
-        job_list_description_block.text = self.content['description'].decode()
+        job_list_description_block.text = self.content['annotation'].decode()
         # Insert parameters
         params_block = {}
         for block in ['create_job_parameters', 'control_job_parameters', 'set_job_parameters']:
@@ -654,7 +655,7 @@ class WADLFile(JDLFile):
                         'datatype': p.get('type'),
                         'required': p.get('required'),
                         'default': p.get('default'),
-                        'description': list(p)[0].text,
+                        'annotation': list(p)[0].text,
                     }
                     for attr in ['min', 'max', 'choices']:
                         if p.get(attr):
@@ -663,7 +664,7 @@ class WADLFile(JDLFile):
                         item = {
                             'default': parameters[pname]['default'],
                             'content_type': '',
-                            'description': parameters[pname]['description']
+                            'annotation': parameters[pname]['annotation']
                         }
                         used[pname] = item
             # Read results description
@@ -676,7 +677,7 @@ class WADLFile(JDLFile):
                     results[r.get('value')] = {
                         'content_type': ctype,
                         'default': r.get('default'),
-                        'description': list(r)[0].text,
+                        'annotation': list(r)[0].text,
                     }
             job_def = {
                 'name': jobname,
@@ -686,7 +687,7 @@ class WADLFile(JDLFile):
             }
             # Read job description
             joblist_description_block = jdl_tree.find(".//{}doc[@title='description']".format(xmlns))
-            job_def['description'] = joblist_description_block.text
+            job_def['annotation'] = joblist_description_block.text
             # Read job attributes
             joblist_block = jdl_tree.find(".//{}resource[@id='joblist']".format(xmlns))
             job_def['doculink'] = joblist_block.get('doculink')

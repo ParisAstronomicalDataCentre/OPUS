@@ -82,7 +82,7 @@
                             <div style="height: 1px;"></div>\
                             <div class="input-group input-group-sm col-md-12">\
                                 <span class="input-group-addon" style="width:70px" title="Description">Desc.</span>\
-                                <input class="param_description form-control" name="param_description_' + ii + '" type="text" placeholder="Description" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" />\
+                                <input class="param_annotation form-control" name="param_annotation_' + ii + '" type="text" placeholder="Description" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" />\
                             </div>\
                             <div style="height: 1px;"></div>\
                             <div class="input-group input-group-sm col-md-12">\
@@ -128,14 +128,15 @@
                             <div style="height: 1px;"></div>\
                             <div class="input-group input-group-sm col-md-12">\
                                 <span class="input-group-addon" style="width:70px" title="Description">Desc.</span>\
-                                <input class="used_description form-control" name="used_description_' + ii + '" type="text" placeholder="Description" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" />\
+                                <input class="used_annotation form-control" name="used_annotation_' + ii + '" type="text" placeholder="Description" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" />\
                             </div>\
                             <div style="height: 1px;"></div>\
                             <div class="input-group input-group-sm col-md-12">\
                                 <span class="input-group-addon" style="width:70px" title="The input is a File or an ID, possibly with a URL to resolve the ID and download the file (use $ID in the URL template).">\
                                     File <input class="used_isfile" name="used_isfile_' + ii + '" type="radio" value="File" checked/>\
+                                    or value  <input class="used_isfile" name="used_isfile_' + ii + '" type="radio" value="value"/>\
                                     or ID  <input class="used_isfile" name="used_isfile_' + ii + '" type="radio" value="ID"/>\
-                                    and URL\
+                                    + access URL\
                                 </span>\
                                 <input class="used_url form-control" name="used_url_' + ii + '" type="text" placeholder="http://url_to_the_input_file?id=$ID" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" />\
                             </div>\
@@ -173,7 +174,7 @@
                             <div style="height: 1px;"></div>\
                             <div class="input-group input-group-sm col-md-12">\
                                 <span class="input-group-addon" style="width:70px" title="Description">Desc.</span>\
-                                <input class="result_description form-control" name="result_description_' + ii + '" type="text" placeholder="Description" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" />\
+                                <input class="result_annotation form-control" name="result_annotation_' + ii + '" type="text" placeholder="Description" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" />\
                             </div>\
                             <div style="height: 10px;"></div>\
                         </td>\
@@ -229,7 +230,7 @@
                 $(this).find('.' + type + '_default').attr('name', type + '_default_' + i);
                 $(this).find('.' + type + '_required').attr('name', type + '_required_' + i);
                 $(this).find('.' + type + '_datatype').attr('name', type + '_datatype_' + i);
-                $(this).find('.' + type + '_description').attr('name', type + '_description_' + i);
+                $(this).find('.' + type + '_annotation').attr('name', type + '_annotation_' + i);
                 $(this).find('.' + type + '_options').attr('name', type + '_options_' + i);
                 $(this).find('.' + type + '_attributes').attr('name', type + '_attributes_' + i);
                 $(this).find('.' + type + '_isfile').attr('name', type + '_isfile_' + i);
@@ -287,7 +288,7 @@
 				$('input[name=contact_email]').val(jdl.contact_email);
 				$('input[name=executionduration]').val(jdl.executionduration);
 				$('input[name=quote]').val(jdl.quote);
-				$('textarea[name=description]').val(jdl.description);
+				$('textarea[name=annotation]').val(jdl.annotation);
 				// Fill param_list table
 				remove_all_items('param');
 				var i = 0;
@@ -307,7 +308,7 @@
 				    $('select[name=param_datatype_' + i + ']').val(jdl.parameters[param]['datatype']);
 				    $('input[name=param_default_' + i + ']').val(jdl.parameters[param]['default']);
 				    $('input[name=param_required_' + i + ']').prop("checked", jdl.parameters[param]['required'].toString().toLowerCase() == "true");
-				    $('input[name=param_description_' + i + ']').val(jdl.parameters[param]['description']);
+				    $('input[name=param_annotation_' + i + ']').val(jdl.parameters[param]['annotation']);
 				    $('input[name=param_options_' + i + ']').val(jdl.parameters[param]['options']);
 				    $('input[name=param_attributes_' + i + ']').val(attributes);
 				};
@@ -322,7 +323,7 @@
 				    $('select[name=used_type_' + i + ']').val(jdl.used[used]['content_type']);
 				    // TODO: used_type_ is an array of values (comma separated)
 				    $('input[name=used_default_' + i + ']').val(jdl.used[used]['default']);
-				    $('input[name=used_description_' + i + ']').val(jdl.used[used]['description']);
+				    $('input[name=used_annotation_' + i + ']').val(jdl.used[used]['annotation']);
 				    if (jdl.used[used]['url'].indexOf('file://') == -1) {
     				    $('input[name=used_isfile_' + i + '][value=ID]').prop("checked", true);
                         $('input[name=used_url_' + i + ']').val(jdl.used[used]['url']);
@@ -339,7 +340,7 @@
 				    $('input[name=result_name_' + i + ']').val(result);
 				    $('select[name=result_type_' + i + ']').val(jdl.results[result]['content_type']);
 				    $('input[name=result_default_' + i + ']').val(jdl.results[result]['default']);
-				    $('input[name=result_description_' + i + ']').val(jdl.results[result]['description']);
+				    $('input[name=result_annotation_' + i + ']').val(jdl.results[result]['annotation']);
 				};
                 $('.selectpicker').selectpicker('refresh');
                 // ajax command to get_script from UWS server
