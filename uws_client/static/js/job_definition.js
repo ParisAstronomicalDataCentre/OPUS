@@ -292,6 +292,7 @@
 				remove_all_items('param');
 				var i = 0;
 				for (var param in jdl.parameters_keys) {
+				    param = jdl.parameters_keys[param];
 				    add_item('param');
 				    i++;  // = jdl.parameters[param]['order'];
 				    var attributes = "";
@@ -314,6 +315,7 @@
 				remove_all_items('used');
 				var i = 0;
 				for (var used in jdl.used_keys) {
+				    used = jdl.used_keys[used];
                     add_item('used');
 				    i++;
 				    $('input[name=used_name_' + i + ']').val(used);
@@ -331,6 +333,7 @@
 				remove_all_items('result');
 				var i = 0;
 				for (var result in jdl.results_keys) {
+				    result = jdl.results_keys[result];
                     add_item('result');
 				    i++;
 				    $('input[name=result_name_' + i + ']').val(result);
