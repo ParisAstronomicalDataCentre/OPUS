@@ -6,6 +6,7 @@ requests
 lxml
 webtest
 prov
+pydot
 pydotplus
 wsgiproxy2
-psutils
+psutil
