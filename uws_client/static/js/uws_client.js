@@ -600,9 +600,9 @@ var uws_client = (function($) {
         $('#result_list').html('');
         $('#details_list').html('');
         var r_i = 0;
-        var results_keys = jdl.results_keys.concat(['stdout','stderr','provjson','provxml','provsvg']);
-        for (var r in results_keys) {
-            r = results_keys[r];
+        var generated_keys = jdl.generated_keys.concat(['stdout','stderr','provjson','provxml','provsvg']);
+        for (var r in generated_keys) {
+            r = generated_keys[r];
             // if r is in job['results']
             if ($.inArray(r, Object.keys(job['results'])) !== -1) {
                 r_i++;
@@ -646,7 +646,7 @@ var uws_client = (function($) {
                         $('#details_list').append(r_panel);
                         break;
                     default:
-                        r_type = jdl.results[r]['content_type']; //r_name.split('.').pop();
+                        r_type = jdl.generated[r]['content_type']; //r_name.split('.').pop();
                         $('#result_list').append(r_panel);
                 }
                 $('#'+r_id+' div.panel-heading span a').html('Download ['+r_type+']');
