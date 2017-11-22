@@ -199,7 +199,7 @@ if os.path.exists(APP_PATH + '/uws_server/settings_local.py'):
 #--- If imported from test.py, redefine settings -----------------------------------------------------------------------
 main_dict = sys.modules['__main__'].__dict__
 if 'test.py' in main_dict.get('__file__', ''):
-    print '\nPerforming tests'
+    print('\nPerforming tests')
     if 'LOG_FILE_SUFFIX' in main_dict:
         LOG_FILE_SUFFIX = main_dict['LOG_FILE_SUFFIX']
     if 'STORAGE' in main_dict:

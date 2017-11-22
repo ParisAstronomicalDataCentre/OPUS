@@ -330,7 +330,7 @@ def get_jobnames():
         jobnames_json = {'jobnames': jobnames}
         return jobnames_json
     except UserWarning as e:
-        abort_404(e.message)
+        abort_404(e.args[0])
 
 
 #@app.post('/config/job_definition')
@@ -373,7 +373,7 @@ def get_jdl_json(jobname):
         jdl.read(jobname)
         return jdl.content
     except UserWarning as e:
-        abort_404(e.message)
+        abort_404(e.args[0])
 
 
 @app.get('/jdl/<jobname:path>/votable')
@@ -686,7 +686,7 @@ def job_event():
     except storage.NotFoundWarning as e:
         abort_404(e.message)
     except UserWarning as e:
-        abort_500(e.message)
+        abort_500(e.args[0])
     except:
         abort_500_except()
     # Response
@@ -752,7 +752,7 @@ def create_job(jobname):
             logger.info('{} {} started with pid={} [{}]'
                         ''.format(jobname, jobid, str(job.pid), user))
     except UserWarning as e:
-        abort_500(e.message)
+        abort_500(e.args[0])
     except CalledProcessError as e:
         abort_500_except('STDERR output:\n' + e.output)
     except:
@@ -871,7 +871,7 @@ def post_job(jobname, jobid):
     except storage.NotFoundWarning as e:
         abort_404(e.message)
     except UserWarning as e:
-        abort_500(e.message)
+        abort_500(e.args[0])
     except CalledProcessError as e:
         abort_500_except('STDERR output:\n' + e.output)
     except:
@@ -948,7 +948,7 @@ def post_phase(jobname, jobid):
     except storage.NotFoundWarning as e:
         abort_404(e.message)
     except UserWarning as e:
-        abort_500(e.message)
+        abort_500(e.args[0])
     except CalledProcessError as e:
         abort_500_except('STDERR output:\n' + e.output)
     except:
@@ -1020,7 +1020,7 @@ def post_executionduration(jobname, jobid):
     except storage.NotFoundWarning as e:
         abort_404(e.message)
     except UserWarning as e:
-        abort_500(e.message)
+        abort_500(e.args[0])
     except:
         abort_500_except()
     # Response
@@ -1092,7 +1092,7 @@ def post_destruction(jobname, jobid):
     except storage.NotFoundWarning as e:
         abort_404(e.message)
     except UserWarning as e:
-        abort_500(e.message)
+        abort_500(e.args[0])
     except:
         abort_500_except()
     # Response
@@ -1252,7 +1252,7 @@ def post_parameter(jobname, jobid, pname):
     except storage.NotFoundWarning as e:
         abort_404(e.message)
     except UserWarning as e:
-        abort_500(e.message)
+        abort_500(e.args[0])
     except:
         abort_500_except()
     # Response
