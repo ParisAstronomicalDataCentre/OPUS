@@ -152,7 +152,7 @@ class Job(object):
             fname = self.jdl.content['parameters'][rname]['default']
         else:
             # The result filename is the name given as default in the JDL
-            fname = self.jdl.content['results'][rname]['default']
+            fname = self.jdl.content['generated'][rname]['default']
         logger.debug('Result filename for {} is {}'.format(rname, fname))
         return fname
 
@@ -281,7 +281,7 @@ class Job(object):
                 params.append(pname + '=\"' + pvalue + '\"')
         # Results
         params.append('# Results')
-        for rname, rdict in self.jdl.content['results'].iteritems():
+        for rname, rdict in self.jdl.content['generated'].iteritems():
             if not rname in self.parameters:
                 rvalue = rdict['default']
                 params.append(rname + '=\"' + rvalue + '\"')
@@ -397,7 +397,7 @@ class Job(object):
         if not self.jdl.content:
             self.jdl.read(self.jobname)
         # Check results and all links to db (maybe not all results listed in JDL have been created)
-        for rname, r in self.jdl.content['results'].iteritems():
+        for rname, r in self.jdl.content['generated'].iteritems():
             rfname = self.get_result_filename(rname)
             rfpath = '{}/{}/results/{}'.format(JOBDATA_PATH, self.jobid, rfname)
             if os.path.isfile(rfpath):
