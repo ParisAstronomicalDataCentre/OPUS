@@ -81,7 +81,7 @@ class Manager(object):
         cp_results = [
             '    echo "[`timestamp`] Copy results"',
         ]
-        for rname, r in job.jdl.content['results'].iteritems():
+        for rname, r in job.jdl.content['generated'].iteritems():
             fname = job.get_result_filename(rname)
             cp_results.append(
                 '    [ -f $wd/{fname} ]'
