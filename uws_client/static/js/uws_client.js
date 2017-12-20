@@ -411,6 +411,7 @@ var uws_client = (function($) {
             || (p.datatype.indexOf('float') > -1)
             || (p.datatype.indexOf('double') > -1)) {
             $('#id_'+pname).attr('type', 'number');
+            $('#id_'+pname).attr('step', 'any');
             if (p.min) {
                 $('#id_'+pname).attr('min', p.min);
             };
