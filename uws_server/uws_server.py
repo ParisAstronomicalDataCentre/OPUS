@@ -534,6 +534,7 @@ def get_result_file(jobid, rname):  # , rfname):
             return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid),
                                mimetype=content_type)
         else:
+            response.set_header('Content-Disposition', 'attachment; filename="{}"'.format(rfname))
             return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid),
                                mimetype=content_type, download=rfname)
     except JobAccessDenied as e:
