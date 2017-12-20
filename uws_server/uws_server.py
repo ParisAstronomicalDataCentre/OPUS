@@ -530,7 +530,7 @@ def get_result_file(jobid, rname):  # , rfname):
         content_type = job.results[rname]['content_type']
         logger.debug('{} {} {} {} {} [{}]'.format(job.jobname, jobid, rname, rfname, content_type, user))
         response.set_header('Content-type', content_type)
-        if any(x in content_type for x in ['text', 'xml', 'json', 'image']):
+        if any(x in content_type for x in ['text', 'xml', 'json', 'image/png', 'image/jpeg']):
             return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid),
                                mimetype=content_type)
         else:
