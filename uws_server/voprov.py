@@ -106,7 +106,7 @@ def job2prov(job):
     e_out = []
     for rname in job.results:
         if rname not in ['stdout', 'stderr', 'provjson', 'provxml', 'provsvg']:
-            rdict = job.jdl.content['results'][rname]
+            rdict = job.jdl.content['generated'][rname]
             rqn = ns_uws_jdl + ':' + rname
             e_out.append(pdoc.entity(rqn))
             # TODO: use publisher_did? add prov attributes, add voprov attributes?
