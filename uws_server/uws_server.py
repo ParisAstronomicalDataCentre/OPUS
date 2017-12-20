@@ -536,7 +536,7 @@ def get_result_file(jobid, rname):  # , rfname):
         else:
             response.set_header('Content-Disposition', 'attachment; filename="{}"'.format(rfname))
             return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid),
-                               mimetype=content_type, download=rfname)
+                               mimetype=content_type, download=True)
     except JobAccessDenied as e:
         abort_403(e.message)
     except storage.NotFoundWarning as e:
