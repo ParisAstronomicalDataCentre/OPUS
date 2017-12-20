@@ -397,7 +397,7 @@ var uws_client = (function($) {
                     <input class="form-control" id="id_' + pname + '" name="' + pname + '" type="text" value="' + p.default + '"/>\
                 </div>\
                 <div class="col-md-5 help-block">\
-                    ' + p.description + '\
+                    ' + p.annotation + '\
                 </div>\
             </div>';
         $('#job_params').append(row);
