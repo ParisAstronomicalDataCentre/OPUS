@@ -68,7 +68,7 @@ LOGGING = {
 }
 
 # Set path to uws_client templates
-TEMPLATE_PATH.insert(0, APP_PATH + '/uws_client/views/')
+TEMPLATE_PATH.insert(0, APP_PATH + '/uws_client/views_old/')
 
 # Set logger
 #if ('uws_client' not in logging.Logger.manager.loggerDict):
