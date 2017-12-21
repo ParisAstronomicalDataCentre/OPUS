@@ -256,9 +256,15 @@ var uws_client = (function($) {
             destr_time = destr_time[0]+' '+destr_time[1].split('+')[0];
         };
         var times = 'creation:    \t'+creation_time+'\n'+'start:         \t'+start_time+'\n'+'end:           \t'+end_time+'\n'+'destruction:\t'+destr_time
+        var param_list = "jobid = " + job.jobId + '\nParameters:';
+        for (var pname in job['parameters']) {
+            var pvalue = job['parameters'][pname];
+            pvalue = decodeURIComponent(pvalue).replace(/[+]/g, " ");
+            param_list += '\n' + pname + ' = ' + pvalue;
+        };
         var row = '\
             <tr id='+ job.jobId +' jobname='+ job.jobName +'>\
-                <td class="text-center" style="vertical-align: middle;">' + job.jobName + '</td>\
+                <td class="text-center" style="vertical-align: middle;" title="' + param_list + '">' + job.jobName + '</td>\
                 <td class="text-center" style="vertical-align: middle;" title="' + times + '">' + creation_time + '</td>\
                 <td class="text-center" style="vertical-align: middle;">\
                     <button type="button" class="phase btn btn-default">PHASE...</button>\
@@ -450,24 +456,34 @@ var uws_client = (function($) {
             $('.selectpicker').selectpicker('refresh');
         };
     };
-    var displayParamFormOk = function(jobName){
+    var displayParamFormOk = function(jobName, init_params){
         // Run displayParamForm before to check that jdl is defined
         var jdl = clients[jobName].jdl;
         // Create form fields from WADL/JDL
-        for (var pname in jdl.used_keys) {
-            pname = jdl.used_keys[pname];
+        for (var pkey in jdl.used_keys) {
+            var pname = jdl.used_keys[pkey];
             if ($.inArray(pname, Object.keys(jdl.parameters)) == -1) {
                 var p = jdl.used[pname];
                 displayParamFormInput(pname, p)
                 displayParamFormInputType(pname, p)
             }
         };
-        for (var pname in jdl.parameters_keys) {
-            pname = jdl.parameters_keys[pname];
+        for (var pkey in jdl.parameters_keys) {
+            var pname = jdl.parameters_keys[pkey];
             var p = jdl.parameters[pname];
             displayParamFormInput(pname, p)
             displayParamFormInputType(pname, p)
         };
+        // Fill with init_params
+        for(var pname in init_params){
+            if (init_params.hasOwnProperty(pname)){
+                var pvalue=init_params[pname];
+                // work with key and value
+                pvalue = decodeURIComponent(pvalue).replace(/[+]/g, " ");
+                // Update form fields
+                $('#id_' + pname).attr('value', pvalue);
+            }
+        }
         // Add buttons
         var elt = '\
             <div id="form-buttons" class="form-group">\n\
@@ -493,8 +509,8 @@ var uws_client = (function($) {
         var jdl = clients[job.jobName].jdl;
         // Create form fields from JDL
         // list all used entities
-        for (var pname in jdl.used_keys) {
-            pname = jdl.used_keys[pname];
+        for (var pkey in jdl.used_keys) {
+            var pname = jdl.used_keys[pkey];
             if ($.inArray(pname, Object.keys(jdl.parameters)) == -1) {
                 var p = jdl.used[pname];
                 displayParamFormInput(pname, p);
@@ -521,8 +537,8 @@ var uws_client = (function($) {
             }
         };
         // list remaining parameters
-        for (var pname in jdl.parameters_keys) {
-            pname = jdl.parameters_keys[pname];
+        for (var pkey in jdl.parameters_keys) {
+            var pname = jdl.parameters_keys[pkey];
             var p = jdl.parameters[pname];
             displayParamFormInput(pname, p);
             if (p.datatype != 'file') {
@@ -556,6 +572,8 @@ var uws_client = (function($) {
             $('#job_params button').attr('disabled','disabled');
         };
         // Fill value from job
+        $('#job_params').append('<input id="all_params" name="all_params" type="hidden" value=""/>');
+        $('#all_params').attr('value', JSON.stringify(job['parameters']));
         for (var pname in job['parameters']) {
             var pvalue = job['parameters'][pname];
             pvalue = decodeURIComponent(pvalue).replace(/[+]/g, " ");
@@ -585,8 +603,8 @@ var uws_client = (function($) {
         });
 
     };
-    var displayParamForm = function(jobName){
-        wait_for_jdl(jobName, displayParamFormOk, [jobName]);
+    var displayParamForm = function(jobName, init_params){
+        wait_for_jdl(jobName, displayParamFormOk, [jobName, init_params]);
     };
     var displayParams = function(job){
         wait_for_jdl(job.jobName, displayParamFormOkFilled, [job]);
@@ -602,8 +620,8 @@ var uws_client = (function($) {
         $('#details_list').html('');
         var r_i = 0;
         var generated_keys = jdl.generated_keys.concat(['stdout','stderr','provjson','provxml','provsvg']);
-        for (var r in generated_keys) {
-            r = generated_keys[r];
+        for (var rkey in generated_keys) {
+            var r = generated_keys[rkey];
             // if r is in job['results']
             if ($.inArray(r, Object.keys(job['results'])) !== -1) {
                 r_i++;

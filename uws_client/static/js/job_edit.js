@@ -24,6 +24,13 @@
             uws_client.initClient(server_url, [jobname]);
             uws_client.displaySingleJob(jobname, jobid);
         };
+        // Rerun job button
+        $('#rerun_job').click( function() {
+            // Collect job params
+            var all_params = JSON.parse($('#all_params').attr('value'));
+            var query_string = $.param(all_params);
+            location.href = "/client/job_form/" + jobname + '?' + query_string;
+        })
     });
 
 })(jQuery);

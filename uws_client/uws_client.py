@@ -12,6 +12,7 @@ import uuid
 import datetime
 import base64
 import requests
+import json
 from requests.auth import HTTPBasicAuth
 import logging
 import logging.config
@@ -265,7 +266,7 @@ class RoleView(sqla.ModelView):
 # Initialize Flask-Admin
 admin = Admin(app, template_mode='bootstrap3', url='/admin')
 
-# Add Flask-Admin views for Users and Roles
+# Add Flask-Admin views_old for Users and Roles
 admin.add_view(UserView(User, db.session))
 admin.add_view(RoleView(Role, db.session))
 
@@ -379,7 +380,7 @@ def job_edit(jobname, jobid):
 def job_form(jobname):
     """Job edit page"""
     logger.info(jobname)
-    return render_template('job_form.html', jobname=jobname)
+    return render_template('job_form.html', jobname=jobname, init_params=json.dumps(request.args.to_dict(flat=False)))
 
 
 @app.route('/job_definition', methods=['GET', 'POST'], defaults={'jobname': ''})
