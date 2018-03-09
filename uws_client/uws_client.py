@@ -127,16 +127,34 @@ db = SQLAlchemy(app)
 
 # Define models for User and Role
 roles_users = db.Table('roles_users',
-        db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
-        db.Column('role_id', db.Integer(), db.ForeignKey('role.id')))
+                       db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
+                       db.Column('role_id', db.Integer(), db.ForeignKey('role.id')))
 
 
 class Role(db.Model, RoleMixin):
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), unique=True)
     description = db.Column(db.String(255))
+
     def __repr__(self):
         return self.name
+
+
+# Define models for User and Jobs
+jobs_users = db.Table('jobs_users',
+                      db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
+                      db.Column('job_id', db.Integer(), db.ForeignKey('job.id')))
+
+
+class Job(db.Model, RoleMixin):
+    id = db.Column(db.Integer(), primary_key=True)
+    name = db.Column(db.String(80))
+    server_url = db.Column(db.String(255))
+    description = db.Column(db.String(255))
+    __table_args__ = (db.UniqueConstraint('name', 'server_url', name='_name_server_url'),)
+
+    def __repr__(self):
+        return '{} (on {})'.format(self.name, self.server_url)
 
 
 def gen_pid(context):
@@ -157,6 +175,8 @@ class User(db.Model, UserMixin):
     active = db.Column(db.Boolean())
     confirmed_at = db.Column(db.DateTime(), default=datetime.datetime.now)
     roles = db.relationship('Role', secondary=roles_users, backref=db.backref('users', lazy='dynamic'))
+    jobs = db.relationship('Job', secondary=jobs_users, backref=db.backref('users', lazy='dynamic'), order_by='Job.name')
+
     def __repr__(self):
         return self.email
 
@@ -168,6 +188,16 @@ class ExtendedLoginForm(LoginForm):
 class ExtendedRegisterForm(RegisterForm):
     email = StringField('Username or Email Address', [InputRequired()])
 
+
+def get_or_create(session, model, **kwargs):
+    instance = session.query(model).filter_by(**kwargs).first()
+    if instance:
+        return instance
+    else:
+        instance = model(**kwargs)
+        session.add(instance)
+        session.commit()
+        return instance
 
 # Setup Flask-Security
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
@@ -219,27 +249,73 @@ def create_db():
             name='admin',
             description='Administrator',
         )
+        user_datastore.find_or_create_role(
+            name='job_definition',
+            description='Access to job definition',
+        )
+        user_datastore.find_or_create_role(
+            name='job_list',
+            description='Access to job list',
+        )
         # Create admin user
         if not user_datastore.get_user('admin'):
             user_datastore.create_user(
                 email='admin',
-                password='cta',
+                password='OPUS4dm1n',
                 active=True,
-                roles=['admin'],
+                roles=['admin','job_definition','job_list'],
             )
         # Create demo user
-        if not user_datastore.get_user('user'):
+        if not user_datastore.get_user('testuser'):
             user_datastore.create_user(
-                email='user',
-                password='cta',
+                email='testuser',
+                password='OPUSu53r',
                 active=True,
-                roles=['user'],
+                roles=['user','job_definition','job_list'],
             )
         db.session.commit()
         logger.debug('Database created')
     except Exception as e:
         db.session.rollback()
         logger.warning(e.message)
+    add_server_jobs_to_db()
+
+
+def add_jobs_to_db(jobnames, server_url):
+    try:
+        for jobname in jobnames:
+            new_job = get_or_create(db.session, Job,
+                name=jobname,
+                server_url=server_url,
+                description='Access to job {} on {}'.format(jobname, server_url),
+            )
+            logger.debug('Database job created : ' + jobname)
+            add_job_to_user('admin', new_job, commit=False)
+            if jobname == 'dummy':
+                add_job_to_user('testuser', new_job, commit=False)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        logger.warning(e.message)
+
+
+def add_server_jobs_to_db():
+    try:
+        response = requests.get('{}/jdl'.format(app.config['UWS_SERVER_URL']))
+        json_data = json.loads(response.text)
+        add_jobs_to_db(json_data['jobnames'], app.config['UWS_SERVER_URL'])
+    except Exception as e:
+        db.session.rollback()
+        logger.warning(e.message)
+
+
+def add_job_to_user(username, ajob, commit=True):
+    auser = db.session.query(User).filter(User.email==username).first()
+    auser.jobs.append(ajob)
+    db.session.add(auser)
+    logger.debug('Add job {} to {}'.format(ajob, username))
+    if commit:
+        db.session.commit()
 
 
 # ----------
@@ -263,12 +339,25 @@ class RoleView(sqla.ModelView):
     def is_accessible(self):
         return current_user.has_role('admin')
 
+
+# Customized Role model for SQL-Admin
+class JobView(sqla.ModelView):
+    # Prevent administration of Roles unless the currently logged-in user has the "admin" role
+    def is_accessible(self):
+        return current_user.has_role('admin')
+    def get_list(self, page, sort_column, sort_desc, search, filters,
+                 execute=True, page_size=None):
+        count, query = super(JobView, self).get_list(page, 'name', sort_desc, search, filters,
+                 execute=execute, page_size=page_size)
+        return count, query
+
 # Initialize Flask-Admin
 admin = Admin(app, template_mode='bootstrap3', url='/admin')
 
 # Add Flask-Admin views_old for Users and Roles
 admin.add_view(UserView(User, db.session))
 admin.add_view(RoleView(Role, db.session))
+admin.add_view(JobView(Job, db.session))
 
 
 # ----------
@@ -333,6 +422,7 @@ def preferences():
             if key in EDITABLE_CONFIG:
                 app.config[key] = str(value)
         save_config()
+        add_server_jobs_to_db()
         flash('Preferences successfully updated', 'info')
         return redirect(url_for('preferences'), 303)
     return render_template('preferences.html')
@@ -418,6 +508,7 @@ def validate_job(jobname):
     # redirect to job_definition with message
     if response.status_code == 200:
         flash('Job definition for new/{jn} has been validated and renamed {jn}'.format(jn=jobname))
+        #TODO: add job to db and link to admin and current_user
     else:
         flash('Job definition for {jn} was not found on the server. Cannot validate.'.format(jn=jobname))
     return redirect(url_for('job_definition', jobname=jobname), 303)
