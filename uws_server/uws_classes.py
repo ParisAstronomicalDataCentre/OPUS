@@ -14,7 +14,7 @@ from blinker import signal
 import uws_jdl
 import storage
 import managers
-import voprov
+import provenance
 from settings import *
 
 
@@ -425,10 +425,10 @@ class Job(object):
                 'xml': 'text/xml',
                 'svg': 'image/svg+xml'}
             try:
-                pdoc = voprov.job2prov(self)
-                voprov.prov2json(pdoc, rfdir + 'provenance.json')
-                voprov.prov2xml(pdoc, rfdir + 'provenance.xml')
-                voprov.prov2svg(pdoc, rfdir + 'provenance.svg')
+                pdoc = provenance.job2prov(self)
+                provenance.prov2json(pdoc, rfdir + 'provenance.json')
+                provenance.prov2xml(pdoc, rfdir + 'provenance.xml')
+                provenance.prov2svg(pdoc, rfdir + 'provenance.svg')
             except Exception as e:
                 logger.warning('ERROR in provenance files creation: ' + e.message)
             for ptype in ptypes:
