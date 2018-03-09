@@ -66,11 +66,34 @@ class JobStorage(object):
         pass
 
 
+
+class UserStorage(object):
+    """
+    Manage user information storage.
+    """
+
+    def add_user(self, name, pid, roles=''):
+        """Add user"""
+        pass
+
+    def remove_user(self, name, pid):
+        """Remove user from storage"""
+        pass
+
+    def add_role(self, name, pid, role=''):
+        """Add role to user, i.e. access to a job"""
+        pass
+
+    def remove_role(self, name, pid, role=''):
+        """Get job list from storage, i.e. access to a job"""
+        pass
+
+
 # ----------
 # SQLAlchemy
 
 
-class SQLAlchemyJobStorage(JobStorage):
+class SQLAlchemyJobStorage(JobStorage, UserStorage):
 
     def __init__(self, db_string=SQLALCHEMY_DB):
         self.engine = create_engine(db_string)
@@ -115,13 +138,72 @@ class SQLAlchemyJobStorage(JobStorage):
             url = Column(String(255), nullable=True)
             content_type = Column(String(64), nullable=True)
 
+        class Users(self.Base):
+            __tablename__ = 'users'
+            name = Column(String(80), primary_key=True)
+            pid = Column(String(255))
+            roles = Column(String(255), nullable=True)
+
         # self.Base.prepare(self.engine, reflect=True)
         self.Base.metadata.create_all(self.engine)
         self.Jobs = Jobs  # self.Base.classes.jobs
         self.Parameters = Parameters  # self.Base.classes.job_parameters
         self.Results = Results  # self.Base.classes.job_results
+        self.Users = Users  # self.Base.classes.job_results
         self.Session = sessionmaker(bind=self.engine)
         self.session = self.Session()
+
+    # UserStorage methods
+
+    def add_user(self, name, pid, roles=''):
+        """Add user"""
+        d = {
+            'name': name,
+            'pid': pid,
+            'roles': roles
+        }
+        u = self.User(**d)
+        self.session.merge(u)
+        self.session.commit()
+
+    def remove_user(self, name, pid):
+        """Remove user from storage"""
+        self.session.query(self.Users).filter_by(name=name, pid=pid).delete()
+        self.session.commit()
+
+    def add_role(self, name, pid, role=''):
+        """Add role to user, i.e. access to a job"""
+        row = self.session.query(self.Users).filter_by(name=name, pid=pid).first()
+        roles = row.roles.split(',')
+        if not role in roles:
+            roles.append(role)
+            self.session.merge(row)
+            self.session.commit()
+            logger.debug('Role {} added for user {}:{}'.format(role, name, id))
+        else:
+            logger.debug('Role {} already set for user {}:{}'.format(role, name, id))
+
+    def remove_role(self, name, pid, role=''):
+        """Get job list from storage, i.e. access to a job"""
+        row = self.session.query(self.Users).filter_by(name=name, pid=pid).first()
+        roles = row.roles.split(',')
+        if role in roles:
+            roles.pop(role)
+            self.session.merge(row)
+            self.session.commit()
+            logger.debug('Role {} removed for user {}:{}'.format(role, name, id))
+        else:
+            logger.debug('Role {} not found for user {}:{}'.format(role, name, id))
+
+    def has_role(self, name, pid, role=''):
+        row = self.session.query(self.Users).filter_by(name=name, pid=pid).first()
+        roles = row.roles.split(',')
+        if role in roles:
+            return True
+        else:
+            return False
+
+    # JobStorage methods
 
     def _save_parameter(self, job, pname):
         # Save job parameter to db
@@ -235,6 +317,7 @@ class SQLAlchemyJobStorage(JobStorage):
         jobs = query.all()
         djobs = [job.__dict__ for job in jobs]
         return djobs
+
 
 # ----------
 # SQL
