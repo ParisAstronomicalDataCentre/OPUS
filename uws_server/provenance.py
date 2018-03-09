@@ -61,7 +61,7 @@ def job2prov(job):
         'voprov:contact_email': job.jdl.content.get('contact_email'),
     })
     # Agent: owner of the job
-    agent = pdoc.agent('ctao:' + job.owner)
+    agent = pdoc.agent('opus:' + job.owner)
     agent.add_attributes({
         'prov:label': job.owner,
         #'prov:type': 'Organization',
