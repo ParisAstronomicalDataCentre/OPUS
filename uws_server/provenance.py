@@ -46,7 +46,7 @@ def job2prov(job):
     pdoc.set_default_namespace('https://voparis-uws-test.obspm.fr/jdl/' + job.jobname + '/votable#')
     pdoc.add_namespace('prov', 'http://www.w3.org/ns/prov#')
     pdoc.add_namespace('voprov', 'http://www.ivoa.net/documents/dm/provdm/voprov#')
-    pdoc.add_namespace('ctao', 'http://www.cta-observatory.org#')
+    pdoc.add_namespace('opus', 'https://voparis-uws-test.obspm.fr/user/')
     ns_uws_jdl = job.jobname
     pdoc.add_namespace(ns_uws_jdl, 'https://voparis-uws-test.obspm.fr/jdl/' + job.jobname + '/votable#')
     ns_uws_job = job.jobname + '/' + job.jobid
