@@ -167,7 +167,7 @@ class Job(object):
         # Read JDL
         if not self.jdl.content:
             self.jdl.read(self.jobname)
-        # Pop attributes keywords from POST or JDL
+        # Pop UWS attributes keywords from POST or JDL
         self.execution_duration = int(post.pop('EXECUTION_DURATION', self.jdl.content.get('executionduration', EXECUTION_DURATION_DEF)))
         self.quote = int(post.pop('QUOTE', self.jdl.content.get('quote', self.execution_duration)))
         # Search inputs in POST/files
@@ -431,6 +431,7 @@ class Job(object):
                 provenance.prov2svg(pdoc, rfdir + 'provenance.svg')
             except Exception as e:
                 logger.warning('ERROR in provenance files creation: ' + e.message)
+                raise
             for ptype in ptypes:
                 # PROV JSON
                 rname = 'prov' + ptype
@@ -552,8 +553,6 @@ class Job(object):
                 # Add results, logs, provenance (if they exist...)
                 self.add_results()
                 self.add_logs()
-                if new_phase in ['COMPLETED']:
-                    self.add_provenance()
             if new_phase in ['ERROR', 'ABORTED']:
                 # Set job.error or add
                 if self.error:
@@ -565,6 +564,8 @@ class Job(object):
                     new_phase = 'ABORTED'
             if new_phase in ['COMPLETED', 'ABORTED']:
                 self.end_time = now.strftime(DT_FMT)
+            if new_phase in ['COMPLETED']:
+                self.add_provenance()
             # Update phase
             previous_phase = self.phase
             self.phase = new_phase
