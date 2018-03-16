@@ -88,6 +88,10 @@ class UserStorage(object):
         """Get job list from storage, i.e. access to a job"""
         pass
 
+    def has_access(self, job, user, role=''):
+        """Check if user has access to the job"""
+        pass
+
 
 # ----------
 # SQLAlchemy
@@ -202,6 +206,10 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
             return True
         else:
             return False
+
+    def has_access(self, user, job):
+        """Check if user has access to the job"""
+        return self.has_role(user.name, user.pid, role=job.jobname)
 
     # JobStorage methods
 

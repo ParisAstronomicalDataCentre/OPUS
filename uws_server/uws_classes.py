@@ -75,6 +75,11 @@ class Job(object):
         self.jdl = uws_jdl.__dict__[JDL]()
         # Link to the storage, e.g. SQLiteStorage, see settings.py
         self.storage = storage.__dict__[STORAGE + 'JobStorage']()
+
+        # TODO: check if user has rights to create the job, else raise JobAccessDenied
+        if not self.storage.has_access(user, self):
+            raise JobAccessDenied('User {} not accepted for job creation'.format(user.name))
+
         # Link to the job manager, e.g. SLURMManager, see settings.py
         self.manager = managers.__dict__[MANAGER + 'Manager']()
         # Fill job attributes
@@ -90,7 +95,7 @@ class Job(object):
                 if user.name != 'admin':
                     if self.owner == user.name:
                         if self.owner_pid != user.pid:
-                            raise JobAccessDenied('User {} is the owner of the job but has a wrong PID'.format(user.name))
+                            raise JobAccessDenied('User {} has a wrong PID'.format(user.name))
                     else:
                         raise JobAccessDenied('User {} is not the owner of the job'.format(user.name))
         elif from_post:
