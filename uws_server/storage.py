@@ -88,7 +88,11 @@ class UserStorage(object):
         """Get job list from storage, i.e. access to a job"""
         pass
 
-    def has_access(self, job, user, role=''):
+    def has_role(self, name, pid, role=''):
+        """Check if user has role"""
+        pass
+
+    def has_access(self, user, job):
         """Check if user has access to the job"""
         pass
 
@@ -102,14 +106,14 @@ class EntityStorage(object):
     Manage user information storage.
     """
 
-    def get_hash(self, fname):
-        """Generate SHA1 hassh for given file
+    def get_hash(self, path):
+        """Generate SHA1 hash for given file
         :param fname:
         :return: hax hash
         """
         BUF_SIZE = 65536  # lets read stuff in 64kb chunks!
         sha1 = hashlib.sha1()
-        with open(fname, 'rb') as f:
+        with open(path, 'rb') as f:
             while True:
                 data = f.read(BUF_SIZE)
                 if not data:
@@ -119,6 +123,14 @@ class EntityStorage(object):
 
     def register_entity(self, jobid, name, path, owner='anonymous', owner_pid='anonymous'):
         """Add entity, store hash and properties, return id"""
+        pass
+
+    def remove_entity(self, jobid, name, path, owner='anonymous', owner_pid='anonymous'):
+        """Add entity, store hash and properties, return id"""
+        pass
+
+    def search_entity(self, path):
+        """Search entity, store hash and properties, return id or False"""
         pass
 
 
@@ -132,7 +144,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
     def __init__(self, db_string=SQLALCHEMY_DB):
         self.engine = create_engine(db_string)
         self.Base = declarative_base()
-        #self.Base = automap_base()
+        # self.Base = automap_base()
         # dt_format = u'%(year)04d/%(month)02d/%(day)02dT%(hour)02d:%(min)02d:%(second)02d'
         # dt_regexp = u'(\d+)/(\d+)/(\d+)T(\d+):(\d+):(\d+)'
         # myDateTime = DateTime().with_variant(sqlite.DATETIME(storage_format=dt_format, regexp=dt_regexp), 'sqlite')
