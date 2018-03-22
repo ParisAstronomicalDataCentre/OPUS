@@ -50,20 +50,22 @@ class User(object):
         return self.name == other.name and self.pid == other.pid
 
 
+special_users = [
+    User(ADMIN_NAME, ADMIN_PID),
+    User('job_event', JOB_EVENT_PID),
+    User('maintenance', MAINTENANCE_PID)
+]
+
+
 def check_permissions(job):
     """Check if user has rights to create/edit such a job, else raise JobAccessDenied"""
     if CHECK_PERMISSIONS:
-        special_users = [
-            User(ADMIN_NAME, ADMIN_PID),
-            User('job_event', JOB_EVENT_PID),
-            User('maintenance', MAINTENANCE_PID)
-        ]
-        if job.user not in special_users:
+        if job.user in special_users:
+           logger.debug('Permission granted for special user {} (job {}/{})'.format(job.user.name, job.jobname, job.jobid))
+        else:
             if job.jobname:
                 if not job.storage.has_access(job.user, job):
                     raise JobAccessDenied('User {} does not have permission to create/edit {} jobs'.format(job.user.name, job.jobname))
-        else:
-           logger.debug('Permission granted for special user {} (job {}/{})'.format(job.user.name, job.jobname, job.jobid))
     else:
        logger.debug('Permissions not checked for job {}/{}'.format(job.jobname, job.jobid))
 
@@ -112,16 +114,14 @@ class Job(object):
                               get_results=get_results,
                               from_pid=from_pid)
             if check_owner:
-                # First check if user is admin
-                if user != User(ADMIN_NAME, ADMIN_PID):
-                    # Check if user is the owner of the job
-                    if self.owner == user.name:
-                        if self.owner_pid != user.pid:
-                            raise JobAccessDenied('User {} is not the owner of the job'.format(user.name))
+                # Check if the user is the owner of the job, else raise JobAccessDenied
+                if self.user == User(self.owner, self.owner_pid):
+                    pass
+                else:
+                    if self.user in special_users:
+                        pass
                     else:
                         raise JobAccessDenied('User {} is not the owner of the job'.format(user.name))
-                else:
-                    logger.debug('User is the admin')
         elif from_post:
             # Create a new PENDING job and save to storage
             now = dt.datetime.now()

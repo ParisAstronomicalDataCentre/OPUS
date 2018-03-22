@@ -92,6 +92,36 @@ class UserStorage(object):
         """Check if user has access to the job"""
         pass
 
+    def get_list(self):
+        """Get list of users with their pid and roles"""
+        pass
+
+
+class EntityStorage(object):
+    """
+    Manage user information storage.
+    """
+
+    def get_hash(self, fname):
+        """Generate SHA1 hassh for given file
+        :param fname:
+        :return: hax hash
+        """
+        BUF_SIZE = 65536  # lets read stuff in 64kb chunks!
+        sha1 = hashlib.sha1()
+        with open(fname, 'rb') as f:
+            while True:
+                data = f.read(BUF_SIZE)
+                if not data:
+                    break
+                sha1.update(data)
+        return sha1.hexdigest()
+
+    def register_entity(self, jobid, name, path, owner='anonymous', owner_pid='anonymous'):
+        """Add entity, store hash and properties, return id"""
+        pass
+
+
 
 # ----------
 # SQLAlchemy
