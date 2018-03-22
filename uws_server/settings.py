@@ -33,6 +33,14 @@ VAR_PATH = '/var/www/opus'
 BASE_URL = 'http://localhost'
 BASE_IP = '127.0.0.1'
 
+# Admin name+pid has access to user database changes (i.e. set permissions)
+ADMIN_NAME = 'admin'
+ADMIN_PID = 'e85d2a4e-27ea-5202-8b5c-241e82f5871a'
+JOB_EVENT_PID = 'c18de332'  # PID for special user job_event, used internally
+MAINTENANCE_PID = '419cb761'  # PID for special user maintenant, used internally
+ALLOW_ANONYMOUS = True
+CHECK_PERMISSIONS = False
+
 # Those servers can have access to /job_event/<jobid_manager> to change the phase or report an error
 # The IP can be truncated to allow to refer to a set of IPs
 JOB_SERVERS = {

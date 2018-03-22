@@ -61,7 +61,7 @@ class JobStorage(object):
         """Delete job information from storage"""
         pass
 
-    def get_list(self, joblist, phase=None, check_user=True):
+    def get_list(self, joblist, phase=None, check_owner=True):
         """Get job list from storage"""
         pass
 
@@ -201,11 +201,15 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
 
     def has_role(self, name, pid, role=''):
         row = self.session.query(self.Users).filter_by(name=name, pid=pid).first()
-        roles = row.roles.split(',')
-        if role in roles:
-            return True
-        else:
-            return False
+        if row:
+            roles = row.roles.split(',')
+            if role in roles:
+                logger.debug('Role {} ok user {}:{}'.format(role, name, id))
+                return True
+            else:
+                logger.debug('Role {} not found for user {}:{}'.format(role, name, id))
+                return False
+
 
     def has_access(self, user, job):
         """Check if user has access to the job"""
@@ -313,12 +317,12 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
         self.session.query(self.Results).filter_by(jobid=job.jobid).delete()
         self.session.commit()
 
-    def get_list(self, joblist, phase=None, check_user=True):
+    def get_list(self, joblist, phase=None, where_owner=True):
         """Get job list from storage"""
         query = self.session.query(self.Jobs).filter_by(jobname=joblist.jobname)
         if phase:
             query = query.filter_by(phase=phase)
-        if check_user:
+        if where_owner:
             query = query.filter_by(owner=joblist.user.name)
             query = query.filter_by(owner_pid=joblist.user.pid)
         query = query.order_by(self.Jobs.destruction_time.asc())
@@ -472,7 +476,7 @@ class SQLJobStorage(SQLStorage, JobStorage):
         self.cursor.execute(query3)
         self.conn.commit()
 
-    def get_list(self, joblist, phase=None, check_user=True):
+    def get_list(self, joblist, phase=None, where_owner=True):
         """Query storage for job list"""
         query = "SELECT jobid, phase FROM jobs"
         where = ["jobname='{}'".format(joblist.jobname)]
@@ -481,10 +485,9 @@ class SQLJobStorage(SQLStorage, JobStorage):
             for p in phase:
                 where_phase.append("phase='{}'".format(p))
             where.append('({})'.format(" OR ".join(where_phase)))
-        if check_user:
-            if joblist.user.name not in ['admin']:
-                where.append("owner='{}'".format(joblist.user.name))
-                where.append("owner_pid='{}'".format(joblist.user.pid))
+        if where_owner:
+            where.append("owner='{}'".format(joblist.user.name))
+            where.append("owner_pid='{}'".format(joblist.user.pid))
         query += " WHERE " + " AND ".join(where)
         query += " ORDER BY destruction_time ASC"
         logger.debug('query = {}'.format(query))

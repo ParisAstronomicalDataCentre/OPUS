@@ -88,6 +88,8 @@ def set_user():
     user = User(user_name, user_pid)
     # Add user name at the end of each log entry
     #logger = CustomAdapter(logger_init, {'username': user_name})
+    if user == User('anonymous', 'anonymous') and ALLOW_ANONYMOUS == False:
+        abort_403('User anomymous not allowed on this server')
     return user
 
 
@@ -224,8 +226,8 @@ def init_db():
         500 Internal Server Error
     """
     # user = set_user()
-    #if not is_localhost():
-    #    abort_403()
+    # if not is_localhost():
+    #     abort_403()
     ip = request.environ.get('REMOTE_ADDR', '')
     if not is_client_trusted(ip):
         abort_403()
@@ -509,7 +511,7 @@ def get_result_file(jobid, rname):  # , rfname):
     try:
         user = set_user()
         # Get job properties from DB
-        job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True, check_user=False)
+        job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True)
         # Check if result exists
         if rname not in job.results:
             raise storage.NotFoundWarning('Result "{}" NOT FOUND for job "{}"'.format(rname, jobid))
@@ -554,7 +556,7 @@ def get_prov(jobid):
     try:
         user = set_user()
         # Get job properties from DB
-        job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True, check_user=False)
+        job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True)
         logger.info('{} {} [{}]'.format(job.jobname, jobid, user))
         # Get JDL
         job.jdl.read(job.jobname)
@@ -587,17 +589,17 @@ def maintenance(jobname):
     if not is_localhost():
         abort_403()
     try:
-        user = User('maintenance', 'maintenance')
+        user = User('maintenance', MAINTENANCE_PID)
         logger = logger_init
         logger.info('Maintenance checks for {}'.format(jobname))
         # Get joblist
-        joblist = JobList(jobname, user, check_user=False)
+        joblist = JobList(jobname, user, where_owner=False)
         for j in joblist.jobs:
             # For each job:
             now = dt.datetime.now()
             job = Job(jobname, j['jobid'], user,
                       get_attributes=True, get_parameters=False, get_results=False,
-                      check_user=False)
+                      check_owner=False)
             # TODO: Check consistency of dates (destruction_time > end_time > start_time > creation_time)
             if not job.start_time and job.phase not in ['PENDING', 'QUEUED']:
                 logger.warning('Start time not set for {} {}'.format(jobname, job.jobid))
@@ -646,13 +648,13 @@ def job_event():
     if not is_job_server(ip):
         abort_403()
     try:
-        user = User('job_event', 'job_event')
+        user = User('job_event', JOB_EVENT_PID)
         logger = logger_init
         logger.info('from {} with POST={}'.format(ip, str(request.POST.dict)))
         if 'jobid' in request.POST:
             pid = request.POST['jobid']
             # Get job properties from DB based on pid
-            job = Job('', pid, user, get_attributes=True, from_pid=True, check_user=False)
+            job = Job('', pid, user, get_attributes=True, from_pid=True)
             # Update job
             if 'phase' in request.POST:
                 cur_phase = job.phase
@@ -717,12 +719,9 @@ def get_joblist(jobname):
         if 'PHASE' in request.query:
             # Allow for multiple PHASE keywords to be sent
             phase = re.split('&?PHASE=', request.query_string)[1:]
-        check_user = True
-        if user.name == 'admin':
-            check_user = False
         # TODO: UWS v1.1 AFTER keyword
         # TODO: UWS v1.1 LAST keyword
-        joblist = JobList(jobname, user, phase=phase, check_user=check_user)
+        joblist = JobList(jobname, user, phase=phase)
         xml_out = joblist.to_xml()
         response.content_type = 'text/xml; charset=UTF-8'
         return xml_out
@@ -783,7 +782,7 @@ def get_job(jobname, jobid):
         # Get job properties from DB
         job = Job(jobname, jobid, user,
                   get_attributes=True, get_parameters=True, get_results=True,
-                  check_user=False)
+                  check_owner=False)
         # UWS v1.1 blocking behaviour
         if job.phase in ACTIVE_PHASES:
             client_phase = request.query.get('PHASE', job.phase)
@@ -811,7 +810,7 @@ def get_job(jobname, jobid):
                 if event_is_set:
                     job = Job(jobname, jobid, user,
                               get_attributes=True, get_parameters=True, get_results=True,
-                              check_user=False)
+                              check_owner=False)
         # Return job description in UWS format
         xml_out = job.to_xml()
         response.content_type = 'text/xml; charset=UTF-8'
@@ -898,7 +897,7 @@ def get_phase(jobname, jobid):
         user = set_user()
         # logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True, check_user=False)
+        job = Job(jobname, jobid, user, get_attributes=True)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return job.phase
@@ -976,7 +975,7 @@ def get_executionduration(jobname, jobid):
         user = set_user()
         logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True, check_user=False)
+        job = Job(jobname, jobid, user, get_attributes=True)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return str(job.execution_duration)
@@ -1046,7 +1045,7 @@ def get_destruction(jobname, jobid):
         user = set_user()
         logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True, check_user=False)
+        job = Job(jobname, jobid, user, get_attributes=True)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return job.destruction_time
@@ -1119,7 +1118,7 @@ def get_error(jobname, jobid):
         user = set_user()
         logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True, check_user=False)
+        job = Job(jobname, jobid, user, get_attributes=True)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return job.error
@@ -1149,7 +1148,7 @@ def get_quote(jobname, jobid):
         user = set_user()
         logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True, check_user=False)
+        job = Job(jobname, jobid, user, get_attributes=True)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return str(job.quote)
@@ -1180,7 +1179,7 @@ def get_parameters(jobname, jobid):
         user = set_user()
         logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_parameters=True, check_user=False)
+        job = Job(jobname, jobid, user, get_parameters=True)
         # Return job parameters in UWS format
         xml_out = job.parameters_to_xml()
         response.content_type = 'text/xml; charset=UTF-8'
@@ -1207,7 +1206,7 @@ def get_parameter(jobname, jobid, pname):
         user = set_user()
         logger.info('param=' + pname + ' ' + jobname + ' ' + jobid)
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_parameters=True, check_user=False)
+        job = Job(jobname, jobid, user, get_parameters=True)
         # Check if param exists
         if pname not in job.parameters:
             raise storage.NotFoundWarning('Parameter "{}" NOT FOUND for job "{}"'.format(pname, jobid))
@@ -1279,7 +1278,7 @@ def get_results(jobname, jobid):
         user = set_user()
         logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_results=True, check_user=False)
+        job = Job(jobname, jobid, user, get_results=True)
         # Return job results in UWS format
         xml_out = job.results_to_xml()
         response.content_type = 'text/xml; charset=UTF-8'
@@ -1306,7 +1305,7 @@ def get_result(jobname, jobid, rname):
         user = set_user()
         logger.info('rname={} {} {} [{}]'.format(rname, jobname, jobid, user))
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_results=True, check_user=False)
+        job = Job(jobname, jobid, user, get_results=True)
         # Check if result exists
         if rname not in job.results:
             raise storage.NotFoundWarning('Result "{}" NOT FOUND for job "{}"'.format(rname, jobid))
@@ -1340,7 +1339,7 @@ def get_owner(jobname, jobid):
         user = set_user()
         logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True, check_user=False)
+        job = Job(jobname, jobid, user, get_attributes=True)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return job.owner

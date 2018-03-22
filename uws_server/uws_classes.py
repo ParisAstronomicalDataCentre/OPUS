@@ -45,6 +45,28 @@ class User(object):
     def __str__(self):
         return self.name
 
+    def __eq__(self, other):
+        """Override the default Equals behavior"""
+        return self.name == other.name and self.pid == other.pid
+
+
+def check_permissions(job):
+    """Check if user has rights to create/edit such a job, else raise JobAccessDenied"""
+    if CHECK_PERMISSIONS:
+        special_users = [
+            User(ADMIN_NAME, ADMIN_PID),
+            User('job_event', JOB_EVENT_PID),
+            User('maintenance', MAINTENANCE_PID)
+        ]
+        if job.user not in special_users:
+            if job.jobname:
+                if not job.storage.has_access(job.user, job):
+                    raise JobAccessDenied('User {} does not have permission to create/edit {} jobs'.format(job.user.name, job.jobname))
+        else:
+           logger.debug('Permission granted for special user {} (job {}/{})'.format(job.user.name, job.jobname, job.jobid))
+    else:
+       logger.debug('Permissions not checked for job {}/{}'.format(job.jobname, job.jobid))
+
 
 # ---------
 # Job class
@@ -56,7 +78,7 @@ class Job(object):
     def __init__(self, jobname, jobid, user,
                  get_attributes=False, get_parameters=False, get_results=False,
                  from_post=None, from_pid=False,
-                 check_user=True):
+                 check_owner=True):
         """Initialize from storage or from POST
 
         from_post should contain the request object if not None
@@ -64,24 +86,23 @@ class Job(object):
         # Job description
         if from_pid:
             self.jobname = jobname
-            self.jobid = None
+            self.jobid = jobid
             self.pid = jobid
         else:
             self.jobname = jobname
             self.jobid = jobid
             self.pid = None
         self.user = user
-        # Prepare jdl attribute, e.g. WADL, see settings.py
-        self.jdl = uws_jdl.__dict__[JDL]()
-        # Link to the storage, e.g. SQLiteStorage, see settings.py
+        # Link to the storage, e.g. SQLite, see settings.py
         self.storage = storage.__dict__[STORAGE + 'JobStorage']()
 
-        # TODO: check if user has rights to create the job, else raise JobAccessDenied
-        if not self.storage.has_access(user, self):
-            raise JobAccessDenied('User {} not accepted for job creation'.format(user.name))
+        # Check if user has rights to create/edit such a job, else raise JobAccessDenied
+        check_permissions(self)
 
-        # Link to the job manager, e.g. SLURMManager, see settings.py
+        # Link to the job manager, e.g. SLURM, see settings.py
         self.manager = managers.__dict__[MANAGER + 'Manager']()
+        # Prepare jdl attribute, see settings.py
+        self.jdl = uws_jdl.__dict__[JDL]()
         # Fill job attributes
         if get_attributes or get_parameters or get_results:
             # Get from storage
@@ -90,14 +111,17 @@ class Job(object):
                               get_parameters=get_parameters,
                               get_results=get_results,
                               from_pid=from_pid)
-            if check_user:
-                # Check if user has rights to manipulate the job
-                if user.name != 'admin':
+            if check_owner:
+                # First check if user is admin
+                if user != User(ADMIN_NAME, ADMIN_PID):
+                    # Check if user is the owner of the job
                     if self.owner == user.name:
                         if self.owner_pid != user.pid:
-                            raise JobAccessDenied('User {} has a wrong PID'.format(user.name))
+                            raise JobAccessDenied('User {} is not the owner of the job'.format(user.name))
                     else:
                         raise JobAccessDenied('User {} is not the owner of the job'.format(user.name))
+                else:
+                    logger.debug('User is the admin')
         elif from_post:
             # Create a new PENDING job and save to storage
             now = dt.datetime.now()
@@ -592,12 +616,22 @@ class Job(object):
 class JobList(object):
     """JobList with attributes and function to fetch from storage and return as XML"""
 
-    def __init__(self, jobname, user, phase=None, check_user=True):
+    def __init__(self, jobname, user, phase=None, where_owner=True):
         self.jobname = jobname
+        self.jobid = 'joblist'
         self.user = user
         # Link to the storage, e.g. SQLiteStorage, see settings.py
         self.storage = storage.__dict__[STORAGE + 'JobStorage']()
-        self.jobs = self.storage.get_list(self, phase=phase, check_user=check_user)
+
+        # Check if user has rights to create/edit such a job, else raise JobAccessDenied
+        check_permissions(self)
+
+        # Check if user is admin, then get all jobs
+        if user == User(ADMIN_NAME, ADMIN_PID):
+            where_owner = False
+            logger.debug('User is the admin')
+
+        self.jobs = self.storage.get_list(self, phase=phase, where_owner=where_owner)
 
     def to_xml(self):
         """Returns the XML representation of jobs (uws:jobs)"""
