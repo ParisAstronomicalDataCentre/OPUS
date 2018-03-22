@@ -738,7 +738,7 @@ def create_job(jobname):
         500 Internal Server Error (on error)
     """
     # Create new jobid for new job
-    jobid = str(uuid.uuid4())
+    jobid = UUID_GEN()
     try:
         user = set_user()
         # TODO: Check if form submitted correctly, detect file size overflow?
