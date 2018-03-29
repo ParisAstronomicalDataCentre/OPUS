@@ -154,7 +154,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
 
         class Jobs(self.Base):
             __tablename__ = 'jobs'
-            jobid = Column(String(80), primary_key=True)
+            jobid = Column(String(80), primary_key=True)  # uuid: max=36
             jobname = Column(String(255))
             # TODO: add label ?
             phase = Column(String(10))
@@ -172,17 +172,20 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
 
         class Parameters(self.Base):
             __tablename__ = 'job_parameters'
-            jobid = Column(String(80), ForeignKey("jobs.jobid"), primary_key=True)
+            jobid = Column(String(80), ForeignKey("jobs.jobid"), primary_key=True)  # uuid: max=36
             name = Column(String(255), primary_key=True)
             value = Column(String(255), nullable=True)
             byref = Column(myBoolean, default=False, nullable=True)
+            # is_entity = Column(myBoolean, default=False, nullable=True)
+            # entity_id = Column(String(255), ForeignKey("entities.id"), nullable=True)
 
         class Results(self.Base):
             __tablename__ = 'job_results'
-            jobid = Column(String(80), ForeignKey("jobs.jobid"), primary_key=True)
+            jobid = Column(String(80), ForeignKey("jobs.jobid"), primary_key=True)  # uuid: max=36
             name = Column(String(255), primary_key=True)
             url = Column(String(255), nullable=True)
             content_type = Column(String(64), nullable=True)
+            # entity_id = Column(String(255), ForeignKey("entities.id"), nullable=True)
 
         class Users(self.Base):
             __tablename__ = 'users'
@@ -190,12 +193,21 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
             pid = Column(String(255))
             roles = Column(String(255), nullable=True)
 
+        class Entities(self.Base):
+            __tablename__ = 'entities'
+            id = Column(String(80), primary_key=True)
+            hash = Column(String(255))
+            filename = Column(String(255), nullable=True)
+            path = Column(String(255), nullable=True)
+
+
         # self.Base.prepare(self.engine, reflect=True)
         self.Base.metadata.create_all(self.engine)
         self.Jobs = Jobs  # self.Base.classes.jobs
         self.Parameters = Parameters  # self.Base.classes.job_parameters
         self.Results = Results  # self.Base.classes.job_results
-        self.Users = Users  # self.Base.classes.job_results
+        self.Users = Users
+        self.Entities = Entities
         self.Session = sessionmaker(bind=self.engine)
         self.session = self.Session()
 
