@@ -141,8 +141,9 @@ def abort_403(msg=''):
         403 Forbidden
     """
     logger.warning('403 Forbidden: {} ({})'.format(msg, request.urlparts.path))
-    abort(403, 'You don\'t have permission to access {} on this server. \n{}'
-               ''.format(request.urlparts.path, msg))
+    abort(403, '{}'.format(msg))
+    # abort(403, 'You don\'t have permission to access {} on this server. \n{}'
+    #            ''.format(request.urlparts.path, msg))
 
 
 def abort_404(msg=None):
@@ -725,6 +726,8 @@ def get_joblist(jobname):
         xml_out = joblist.to_xml()
         response.content_type = 'text/xml; charset=UTF-8'
         return xml_out
+    except JobAccessDenied as e:
+        abort_403(e.message)
     except:
         abort_500_except()
 

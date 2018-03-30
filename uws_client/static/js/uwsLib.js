@@ -260,7 +260,7 @@ var uwsLib = (function() {
     			};
 			},
 			error : function(xhr, status, exception) {
-				errorCallback(exception);
+				errorCallback(xhr, status, exception);
 			},
 		});
 	}

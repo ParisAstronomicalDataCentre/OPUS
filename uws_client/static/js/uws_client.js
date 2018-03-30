@@ -46,6 +46,7 @@ var uws_client = (function($) {
         if (lvl_name == 'DEBUG' && !DEBUG) { return; };
         if (lvl_name == 'OBJECT') { console.log(msg); return; };
         console.log(lvl_name + ' ' + msg);
+        if (exception) { console.log(exception); }
     }
 
 
@@ -854,8 +855,6 @@ var uws_client = (function($) {
     // GET JOB LIST
 
     var getJobList = function() {
-        $('#div_table').hide();
-        $('#div_loading').show();
         prepareTable();
         for (var i in jobNames) {
             var jobName = jobNames[i];
@@ -880,8 +879,22 @@ var uws_client = (function($) {
         $('#div_loading').hide();
         $('#div_table').show();
     };
-    var getJobListError = function(exception) {
-        logger('ERROR', 'getJobList', exception);
+    var getJobListError = function(xhr, status, exception) {
+
+        //var responseJSON = $.parseJSON( xhr.responseText );
+        //var dataHtml = $($.parseHTML(xhr.responseText)).children('html');
+        //$('pre', $(dataHtml)).each( function() {
+        //    // 'this' refers to the pre element
+        //    $(this).html();
+        //});
+        var msg = xhr.responseText.match(/<pre>(.*?)<\/pre>/g)[0].replace(/<\/?pre>/g,'');
+        var elt = '\
+            <div class="alert alert-danger text-center"> ' + msg + '\
+            </div>\n';
+        logger('ERROR', 'getJobList', msg);
+        $('#div_loading').hide();
+        $('#messages').append(elt);
+        $('#messages div').delay(3000).fadeOut(3000, function() { $(this).remove(); });
     };
 
 
