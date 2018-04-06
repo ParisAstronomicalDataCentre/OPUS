@@ -199,6 +199,7 @@ class Job(object):
         # Pop UWS attributes keywords from POST or JDL
         self.execution_duration = int(post.pop('uws:executionDuration', self.jdl.content.get('executionduration', EXECUTION_DURATION_DEF)))
         self.quote = int(post.pop('uws:quote', self.jdl.content.get('quote', self.execution_duration)))
+        # TODO:
         # Search inputs in POST/files
         upload_dir = '{}/{}'.format(UPLOAD_PATH, self.jobid)
         for pname in self.jdl.content['used']:

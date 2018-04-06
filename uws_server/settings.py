@@ -103,17 +103,17 @@ SLURM_SBATCH_DEFAULT = {
 }
 PHASE_CONVERT = {
     # Conversions for SLURM job state codes
-    'RUNNING': dict(phase='EXECUTING', msg='Job currently has an allocation.'),
-    'PENDING': dict(phase='QUEUED', msg='Job is awaiting resource allocation.'),
+    'RUNNING': dict(phase='EXECUTING', msg='Job currently has an allocation'),
+    'PENDING': dict(phase='QUEUED', msg='Job is awaiting resource allocation'),
     'CONFIGURING': dict(phase='QUEUED', msg='Job has been allocated resources, but are waiting for them '
                                             'to become ready for use'),
-    'FAILED': dict(phase='ERROR', msg='Job terminated with non-zero exit code or other failure condition.'),
-    'NODE_FAIL': dict(phase='ERROR', msg='Job terminated due to failure of one or more allocated nodes.'),
-    'TIMEOUT': dict(phase='ERROR', msg='Job terminated upon reaching its time limit.'),
-    'PREEMPTED': dict(phase='ERROR', msg='Job terminated due to preemption.'),
+    'FAILED': dict(phase='ERROR', msg='Job terminated with non-zero exit code or other failure condition'),
+    'NODE_FAIL': dict(phase='ERROR', msg='Job terminated due to failure of one or more allocated nodes'),
+    'TIMEOUT': dict(phase='ERROR', msg='Job terminated upon reaching its time limit'),
+    'PREEMPTED': dict(phase='ERROR', msg='Job terminated due to preemption'),
     'CANCELLED': dict(phase='ABORTED', msg='Job was explicitly cancelled by the user or system '
-                                           'administrator. The job may or may not have been initiated.'),
-    'SUSPENDED': dict(phase='SUSPENDED', msg='Job has an allocation, but execution has been suspended.'),
+                                           'administrator. The job may or may not have been initiated'),
+    'SUSPENDED': dict(phase='SUSPENDED', msg='Job has an allocation, but execution has been suspended'),
 }
 
 # Default destruction interval
