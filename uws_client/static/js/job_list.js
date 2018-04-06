@@ -38,6 +38,8 @@
 
     function load_job_list() {
         var jobname = $('select[name=jobname]').val();
+        // write new url in browser bar
+        history.pushState({ jobname: jobname }, '', "/client/job_list/" + jobname);
         // init UWS Client
         uws_client.initClient(server_url, [jobname]);
         uws_client.getJobList();
