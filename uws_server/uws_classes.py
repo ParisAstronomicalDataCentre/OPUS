@@ -66,8 +66,8 @@ def check_permissions(job):
             if job.jobname:
                 if not job.storage.has_access(job.user, job):
                     raise JobAccessDenied('User {} does not have permission to create/edit {} jobs'.format(job.user.name, job.jobname))
-    else:
-       logger.debug('Permissions not checked for job {}/{}'.format(job.jobname, job.jobid))
+    # else:
+    #    logger.debug('Permissions not checked for job {}/{}'.format(job.jobname, job.jobid))
 
 
 # ---------
@@ -197,8 +197,8 @@ class Job(object):
         if not self.jdl.content:
             self.jdl.read(self.jobname)
         # Pop UWS attributes keywords from POST or JDL
-        self.execution_duration = int(post.pop('EXECUTION_DURATION', self.jdl.content.get('executionduration', EXECUTION_DURATION_DEF)))
-        self.quote = int(post.pop('QUOTE', self.jdl.content.get('quote', self.execution_duration)))
+        self.execution_duration = int(post.pop('uws:executionDuration', self.jdl.content.get('executionduration', EXECUTION_DURATION_DEF)))
+        self.quote = int(post.pop('uws:quote', self.jdl.content.get('quote', self.execution_duration)))
         # Search inputs in POST/files
         upload_dir = '{}/{}'.format(UPLOAD_PATH, self.jobid)
         for pname in self.jdl.content['used']:
@@ -207,7 +207,6 @@ class Job(object):
                     os.makedirs(upload_dir)
                 f = files[pname]
                 f.save(upload_dir + '/' + f.filename)
-                logger.info('Input {} is a file and was downloaded ({})'.format(pname, f.filename))
                 # Parameter value is set to the file name on server
                 value = 'file://' + f.filename
                 # value = f.filename
@@ -215,13 +214,14 @@ class Job(object):
                     'value': value,
                     'byref': True
                 }
+                logger.info('Input {} is a file and was downloaded ({})'.format(pname, f.filename))
             elif pname in post:
                 value = post[pname]
-                logger.info('Input {} is a value : {}'.format(pname, value))
+                logger.info('Input {} is a value (identifier) : {}'.format(pname, value))
                 # TODO: use url in jdl.used if set (replace $ID with value)
             else:
-                logger.info('Input {} set by default'.format(pname))
                 value = self.jdl.content['used'][pname]['default']
+                logger.info('Input {} set by default'.format(pname))
             self.parameters[pname] = {'value': value, 'byref': False}
         # Search parameters in POST
         for pname in self.jdl.content['parameters']:
