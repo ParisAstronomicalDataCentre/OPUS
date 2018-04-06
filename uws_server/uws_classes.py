@@ -416,7 +416,6 @@ class Job(object):
 
 
     def add_result_entry(self, rname, rfname, content_type):
-        # TODO: Use an Entity Store
         url = '{}/get/result/{}/{}'.format(BASE_URL, self.jobid, rname)  # , rfname)
         self.results[rname] = {'url': url, 'content_type': content_type}
         logger.info('add {} file to results'.format(rfname))
@@ -430,6 +429,8 @@ class Job(object):
             rfname = self.get_result_filename(rname)
             rfpath = '{}/{}/results/{}'.format(JOBDATA_PATH, self.jobid, rfname)
             if os.path.isfile(rfpath):
+                # TODO: check if entity exist (though it should be a new result ?)
+                # TODO: get hash and entity_id (new or existant)
                 self.add_result_entry(rname, rfname, r['content_type'])
             else:
                 logger.info('No result for {}'.format(rname))
