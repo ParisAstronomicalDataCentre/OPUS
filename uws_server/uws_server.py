@@ -670,8 +670,8 @@ def job_event():
                     # Convert phase if needed
                     if new_phase not in PHASES:
                         if new_phase in PHASE_CONVERT:
-                            new_phase = PHASE_CONVERT[new_phase]['phase']
                             new_msg = PHASE_CONVERT[new_phase]['msg']
+                            new_phase = PHASE_CONVERT[new_phase]['phase']
                             if new_phase == 'ERROR':
                                 msg = new_msg
                         else:
