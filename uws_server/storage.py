@@ -257,11 +257,11 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
         row = self.session.query(self.Users).filter_by(name=name, pid=pid).first()
         if row:
             roles = row.roles.split(',')
-            if role in roles:
-                logger.debug('Role {} ok user {}:{}'.format(role, name, id))
+            if ('all' in roles) or (role in roles):
+                logger.debug('Role \"{}\" ok for user {}:{}'.format(role, name, id))
                 return True
             else:
-                logger.debug('Role {} not found for user {}:{}'.format(role, name, id))
+                logger.debug('Role \"{}\" not found for user {}:{}'.format(role, name, id))
                 return False
 
 
