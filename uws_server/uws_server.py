@@ -753,7 +753,7 @@ def create_job(jobname):
         # If PHASE=RUN, start job
         if request.forms.get('PHASE') == 'RUN':
             job.start()
-            logger.info('{} {} started with pid={} [{}]'
+            logger.info('{} {} QUEUED with pid={} [{}]'
                         ''.format(jobname, jobid, str(job.pid), user))
     except UserWarning as e:
         abort_500(e.args[0])
