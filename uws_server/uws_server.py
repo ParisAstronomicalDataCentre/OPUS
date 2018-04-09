@@ -599,8 +599,7 @@ def maintenance(jobname):
             # For each job:
             now = dt.datetime.now()
             job = Job(jobname, j['jobid'], user,
-                      get_attributes=True, get_parameters=False, get_results=False,
-                      check_owner=False)
+                      get_attributes=True, get_parameters=False, get_results=False)
             # TODO: Check consistency of dates (destruction_time > end_time > start_time > creation_time)
             if not job.start_time and job.phase not in ['PENDING', 'QUEUED']:
                 logger.warning('Start time not set for {} {}'.format(jobname, job.jobid))
@@ -785,8 +784,7 @@ def get_job(jobname, jobid):
         # logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
         job = Job(jobname, jobid, user,
-                  get_attributes=True, get_parameters=True, get_results=True,
-                  check_owner=False)
+                  get_attributes=True, get_parameters=True, get_results=True)
         # UWS v1.1 blocking behaviour
         if job.phase in ACTIVE_PHASES:
             client_phase = request.query.get('PHASE', job.phase)
@@ -813,8 +811,7 @@ def get_job(jobname, jobid):
                 # Reload job if necessary
                 if event_is_set:
                     job = Job(jobname, jobid, user,
-                              get_attributes=True, get_parameters=True, get_results=True,
-                              check_owner=False)
+                              get_attributes=True, get_parameters=True, get_results=True)
         # Return job description in UWS format
         xml_out = job.to_xml()
         response.content_type = 'text/xml; charset=UTF-8'
