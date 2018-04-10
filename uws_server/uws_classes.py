@@ -214,7 +214,7 @@ class Job(object):
         if not self.jdl.content:
             self.jdl.read(self.jobname)
         # Pop UWS attributes keywords from POST or JDL
-        self.execution_duration = int(post.pop('uws:executionDuration', self.jdl.content.get('executionduration', EXECUTION_DURATION_DEF)))
+        self.execution_duration = int(post.pop('uws:execution_duration', self.jdl.content.get('executionduration', EXECUTION_DURATION_DEF)))
         self.quote = int(post.pop('uws:quote', self.jdl.content.get('quote', self.execution_duration)))
         # TODO:
         # Search inputs in POST/files
@@ -432,7 +432,6 @@ class Job(object):
     # Metadata management
     # ----------
 
-
     def add_result_entry(self, rname, rfname, content_type):
         url = '{}/get/result/{}/{}'.format(BASE_URL, self.jobid, rname)  # , rfname)
         self.results[rname] = {'url': url, 'content_type': content_type}
@@ -493,7 +492,6 @@ class Job(object):
     # ----------
     # Actions on a job
     # ----------
-
 
     def start(self):
         """Start job
