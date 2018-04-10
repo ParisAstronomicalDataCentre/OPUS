@@ -40,6 +40,7 @@ BASE_IP = '127.0.0.1'
 # Admin name+pid has access to user database changes (i.e. set permissions)
 ADMIN_NAME = 'admin'
 ADMIN_PID = 'e85d2a4e-27ea-5202-8b5c-241e82f5871a'
+ADMIN_EMAIL = 'mathieu.servillat@obspm.fr'
 JOB_EVENT_PID = 'c18de332'  # PID for special user job_event, used internally
 MAINTENANCE_PID = '419cb761'  # PID for special user maintenant, used internally
 ALLOW_ANONYMOUS = True
@@ -75,10 +76,15 @@ TRUSTED_CLIENTS = {
 # Add the provenance files to the results of the jobs
 GENERATE_PROV = True
 
-# Job Description Language (VOTFile, WADLFile)
+# Job Description Language
+# VOTFile: VOTable following the Provenance DM
+# WADLFile: WADL file describing the web service
+# WSDLFile: WSDL file describing the web service -- not implemented
 JDL = 'VOTFile'
 
 # Storage of job information (SQLAlchemy, SQLite, PGSQL)
+# SQLAlchemy: SQLAlchemy interface to the relational DB, e.g. SQLite, PostgreSQL...)
+# SQLite: direct use of SQLite -- to be deprecated
 STORAGE = 'SQLAlchemy'  # define SQLALCHEMY_DB further below
 # SQLite storage info
 SQLITE_FILE_NAME = 'job_database.db'
@@ -90,16 +96,26 @@ PGSQL_USER = 'opus'
 PGSQL_PASSWORD = 'opus'
 
 # Archive for results
+# Local: store results in the local directory VAR_PATH/archive
+# Path: specific path on the UWS server (given in ARCHIVE_PATH)
+# SLURM: specific path accessible from the SLURM work cluster / nodes (given in SLURM_ARCHIVE_PATH)
+# FTP: not implemented
+# VOSpace: not implemented
+ARCHIVE = 'Local'
+ARCHIVE_PATH = ''
 
-# Define a Manager and its properties (Local, SLURM)
+# Define a Manager and its properties
+# Local: execution on the UWS server directly using Bash commands
+# SLURM: execution through a SLURM control manager (additional config required)
 MANAGER = 'Local'
 # SLURM Manager
 SLURM_URL = 'tycho.obspm.fr'  # 'quadri12.obspm.fr'  #
 SLURM_USER = 'vouws'
-SLURM_USER_MAIL = 'mathieu.servillat@obspm.fr'
+SLURM_USER_EMAIL = ADMIN_EMAIL
 SLURM_HOME_PATH = '/obs/vouws'  # '/obs/vouws'
-SLURM_JOBDATA_PATH = '/poubelle/vouws/jobdata'
 SLURM_WORKDIR_PATH = '/scratch/vouws'
+SLURM_JOBDATA_PATH = '/poubelle/vouws/jobdata'
+SLURM_ARCHIVE_PATH = '/poubelle/vouws/results'
 SLURM_SBATCH_DEFAULT = {
     'mem': '200mb',
     'nodes': 1,
@@ -108,6 +124,7 @@ SLURM_SBATCH_DEFAULT = {
     # 'account': 'obspm',  # for quadri12...
     # 'partition': 'def',  # for quadri12...'
 }
+
 PHASE_CONVERT = {
     # Conversions for SLURM job state codes
     'RUNNING': dict(phase='EXECUTING', msg='Job currently has an allocation'),
@@ -130,9 +147,8 @@ DESTRUCTION_INTERVAL = 30  # in days
 EXECUTION_DURATION_DEF = 120  # in seconds
 EXECUTION_DURATION_MAX = 3600  # in seconds
 
-# Maximum and default wait time (UWS1.1)
-WAIT_TIME_DEF = 60  # in seconds
-WAIT_TIME_MAX = 60  # in seconds
+# Maximum wait time (UWS1.1)
+WAIT_TIME_MAX = 600  # in seconds
 
 
 # ----------
@@ -144,36 +160,6 @@ UWS_VERSION = 'ivo://ivoa.net/std/UWS#rest-1.1'
 
 # ISO date format for datetime
 DT_FMT = '%Y-%m-%dT%H:%M:%S'
-
-# Table columns defined in database
-JOB_ATTRIBUTES = [
-    'jobid',
-    'jobname',
-    'phase',
-    'creation_time',
-    'start_time',
-    'end_time',
-    'destruction_time',
-    'execution_duration',
-    'quote',
-    'error',
-    'owner',
-    'owner_pid',
-    'run_id',
-    'pid',
-]
-JOB_PARAMETERS_ATTR = [
-    'jobid',
-    'name',
-    'value',
-    'byref',
-]
-JOB_RESULTS_ATTR = [
-    'jobid',
-    'name',
-    'url',
-    'content_type'
-]
 
 # Known phases (UWS v1.1)
 PHASES = [
@@ -227,6 +213,36 @@ TERMINAL_PHASES = [
     'HELD',
     # 'SUSPENDED',
     'ARCHIVED',
+]
+
+# Table columns defined in database
+JOB_ATTRIBUTES = [
+    'jobid',
+    'jobname',
+    'phase',
+    'creation_time',
+    'start_time',
+    'end_time',
+    'destruction_time',
+    'execution_duration',
+    'quote',
+    'error',
+    'owner',
+    'owner_pid',
+    'run_id',
+    'pid',
+]
+JOB_PARAMETERS_ATTR = [
+    'jobid',
+    'name',
+    'value',
+    'byref',
+]
+JOB_RESULTS_ATTR = [
+    'jobid',
+    'name',
+    'url',
+    'content_type'
 ]
 
 
