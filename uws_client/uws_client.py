@@ -80,20 +80,20 @@ LOGGING = {
         },
     },
     'handlers': {
-        'file_client_flask': {
+        'file_client': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': LOG_PATH + '/client_flask' + LOG_FILE_SUFFIX + '.log',
+            'filename': LOG_PATH + '/client' + LOG_FILE_SUFFIX + '.log',
             'formatter': 'default'
         },
     },
     'loggers': {
         'uws_client': {
-            'handlers': ['file_client_flask'],
+            'handlers': ['file_client'],
             'level': 'DEBUG',
         },
         'wsgiproxy': {
-            'handlers': ['file_client_flask'],
+            'handlers': ['file_client'],
             'level': 'DEBUG',
         },
     }
