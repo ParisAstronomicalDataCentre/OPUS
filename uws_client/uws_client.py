@@ -27,6 +27,7 @@ from wtforms import StringField, PasswordField
 from wtforms.validators import InputRequired
 
 
+# ----------
 # Configuration
 
 # App configuration
@@ -41,14 +42,12 @@ LOG_FILE_SUFFIX = ''
 UWS_SERVER_URL = 'https://voparis-uws-test.obspm.fr'
 UWS_SERVER_URL_JS = '/client/proxy'  # called by javascript, set to local url (proxy) to avoid cross-calls
 UWS_AUTH = 'Basic'
-ALLOW_ANONYMOUS = False
 
 # Editable configuration keywords
 EDITABLE_CONFIG = [
     'UWS_SERVER_URL',
     'UWS_SERVER_URL_JS',
     'UWS_AUTH',
-    'ALLOW_ANONYMOUS'
 ]
 
 # Include host-specific setting
@@ -450,7 +449,7 @@ def home():
 @app.route('/job_list', defaults={'jobname': ''})
 @app.route('/job_list/', defaults={'jobname': ''})
 @app.route('/job_list/<jobname>')
-@login_required
+#@login_required
 def job_list(jobname):
     """Job list page"""
     logger.info(jobname)
@@ -458,7 +457,7 @@ def job_list(jobname):
 
 
 @app.route('/job_edit/<jobname>/<jobid>')
-@login_required
+#@login_required
 def job_edit(jobname, jobid):
     """Job edit page"""
     logger.info(jobname + ' ' + jobid)
@@ -466,7 +465,7 @@ def job_edit(jobname, jobid):
 
 
 @app.route('/job_form/<jobname>')
-@login_required
+#@login_required
 def job_form(jobname):
     """Job edit page"""
     logger.info(jobname)
