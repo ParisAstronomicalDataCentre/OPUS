@@ -18,7 +18,8 @@ the number of database access (in the case of a relational database)
 """
 
 import datetime as dt
-from entity_store import *
+#from entity_store import *
+import hashlib
 from settings import *
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
@@ -242,9 +243,9 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
             roles.append(role)
             self.session.merge(row)
             self.session.commit()
-            logger.debug('Role {} added for user {}:{}'.format(role, name, id))
+            logger.debug('Role {} added for user {}:{}'.format(role, name, pid))
         else:
-            logger.debug('Role {} already set for user {}:{}'.format(role, name, id))
+            logger.debug('Role {} already set for user {}:{}'.format(role, name, pid))
 
     def remove_role(self, name, pid, role=''):
         """Get job list from storage, i.e. access to a job"""
@@ -254,19 +255,19 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
             roles.pop(role)
             self.session.merge(row)
             self.session.commit()
-            logger.debug('Role {} removed for user {}:{}'.format(role, name, id))
+            logger.debug('Role {} removed for user {}:{}'.format(role, name, pid))
         else:
-            logger.debug('Role {} not found for user {}:{}'.format(role, name, id))
+            logger.debug('Role {} not found for user {}:{}'.format(role, name, pid))
 
     def has_role(self, name, pid, role=''):
         row = self.session.query(self.Users).filter_by(name=name, pid=pid).first()
         if row:
             roles = row.roles.split(',')
             if ('all' in roles) or (role in roles):
-                logger.debug('Role \"{}\" ok for user {}:{}'.format(role, name, id))
+                # logger.debug('Role \"{}\" ok for user {}:{}'.format(role, name, pid))
                 return True
             else:
-                logger.debug('Role \"{}\" not found for user {}:{}'.format(role, name, id))
+                logger.debug('Role \"{}\" not found for user {}:{}'.format(role, name, pid))
                 return False
 
 
