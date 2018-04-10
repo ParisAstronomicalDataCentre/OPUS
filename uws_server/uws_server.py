@@ -721,8 +721,10 @@ def get_joblist(jobname):
             # Allow for multiple PHASE keywords to be sent
             phase = re.split('&?PHASE=', request.query_string)[1:]
         # TODO: UWS v1.1 AFTER keyword
+        after = request.query.get('AFTER', None)
         # TODO: UWS v1.1 LAST keyword
-        joblist = JobList(jobname, user, phase=phase)
+        last = request.query.get('LAST', None)
+        joblist = JobList(jobname, user, phase=phase, after=after, last=last)
         xml_out = joblist.to_xml()
         response.content_type = 'text/xml; charset=UTF-8'
         return xml_out
@@ -788,7 +790,11 @@ def get_job(jobname, jobid):
         # UWS v1.1 blocking behaviour
         if job.phase in ACTIVE_PHASES:
             client_phase = request.query.get('PHASE', job.phase)
-            wait_time = int(request.query.get('WAIT', False))
+            wait_time = int(request.query.get('WAIT', 0))
+            if wait_time > WAIT_TIME_MAX:
+                wait_time = WAIT_TIME_MAX
+            if wait_time == -1:
+                wait_time = WAIT_TIME_MAX
             if (client_phase == job.phase) and (wait_time > 0):
                 change_status_signal = signal('job_status')
                 change_status_event = threading.Event()
