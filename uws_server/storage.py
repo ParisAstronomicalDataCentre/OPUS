@@ -72,6 +72,10 @@ class UserStorage(object):
     Manage user information storage.
     """
 
+    def get_users(self):
+        """Get list of users with their pid and roles"""
+        pass
+
     def add_user(self, name, pid, roles=''):
         """Add user"""
         pass
@@ -94,10 +98,6 @@ class UserStorage(object):
 
     def has_access(self, user, job):
         """Check if user has access to the job"""
-        pass
-
-    def get_list(self):
-        """Get list of users with their pid and roles"""
         pass
 
 
@@ -211,7 +211,12 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
         self.Session = sessionmaker(bind=self.engine)
         self.session = self.Session()
 
+    # ----------
     # UserStorage methods
+
+    def get_users(self):
+        """Get list of users with their pid and roles"""
+        pass
 
     def add_user(self, name, pid, roles=''):
         """Add user"""
@@ -269,6 +274,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
         """Check if user has access to the job"""
         return self.has_role(user.name, user.pid, role=job.jobname)
 
+    # ----------
     # JobStorage methods
 
     def _save_parameter(self, job, pname):
@@ -371,18 +377,25 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
         self.session.query(self.Results).filter_by(jobid=job.jobid).delete()
         self.session.commit()
 
-    def get_list(self, joblist, phase=None, where_owner=True):
+    def get_list(self, joblist, phase=None, after=None, last=None, where_owner=True):
         """Get job list from storage"""
         query = self.session.query(self.Jobs).filter_by(jobname=joblist.jobname)
         if phase:
-            query = query.filter_by(phase=phase)
+            query = query.filter(self.Jobs.phase.in_(phase))
+        if after:
+            pass
         if where_owner:
             query = query.filter_by(owner=joblist.user.name)
             query = query.filter_by(owner_pid=joblist.user.pid)
-        query = query.order_by(self.Jobs.destruction_time.asc())
+        query = query.order_by(self.Jobs.creation_time.asc())
+        if last:
+            query = query.limit(last)
         jobs = query.all()
         djobs = [job.__dict__ for job in jobs]
         return djobs
+
+
+# ----------
 
 
 # ----------
@@ -530,7 +543,7 @@ class SQLJobStorage(SQLStorage, JobStorage):
         self.cursor.execute(query3)
         self.conn.commit()
 
-    def get_list(self, joblist, phase=None, where_owner=True):
+    def get_list(self, joblist, phase=None, after=None, last=None, where_owner=True):
         """Query storage for job list"""
         query = "SELECT jobid, phase FROM jobs"
         where = ["jobname='{}'".format(joblist.jobname)]
