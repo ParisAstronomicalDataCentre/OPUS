@@ -75,13 +75,14 @@ class Manager(object):
             ' -d "jobid=$JOBID" -d "phase=$1" --data-urlencode "error_msg=$2" {}/handler/job_event'.format(BASE_URL),
             '    fi',
             '}',
-            'copy_results() {',
         ]
         # Function to copy results from wd to jd
         cp_results = [
+            'copy_results() {',
             '    echo "[`timestamp`] Copy results"',
         ]
         for rname, r in job.jdl.content['generated'].iteritems():
+            # TODO: copy directly to archive directory (?)
             fname = job.get_result_filename(rname)
             cp_results.append(
                 '    [ -f $wd/{fname} ]'
@@ -89,10 +90,12 @@ class Manager(object):
                 ' || echo "NOT FOUND: {rname}={fname}"'
                 ''.format(rname=rname, fname=fname)
             )
-        batch.extend(cp_results)
-        batch.extend([
+        cp_results.append(
             '}',
-            # Error/Suspend/Term handler (send signals to server with curl)
+        )
+        batch.extend(cp_results)
+        # Error/Suspend/Term handler (send signals to server with curl)
+        batch.extend([
             'set -e ',
             'error_handler() {',
             '    touch $jd/error',
@@ -114,7 +117,9 @@ class Manager(object):
             '}',
             'trap "error_handler" ERR',
             'trap "term_handler" SIGHUP SIGINT SIGQUIT SIGTERM',
-            # Set $wd and $jd
+        ])
+        # Set $wd and $jd
+        batch.extend([
             '### PREPARE DIRECTORIES',
             'wd={}'.format(wd),
             'jd={}'.format(jd),
@@ -127,6 +132,9 @@ class Manager(object):
             # Move uploaded files to working directory if they exist
             'echo "[`timestamp`] Prepare input files"',
             'for filename in $jd/input/*; do [ -f "$filename" ] && cp $filename $wd; done',
+        ])
+        # Execution
+        batch.extend([
             '### EXECUTION',
             'job_event "EXECUTING"',
             'echo "[`timestamp`] ***** Start job *****"',
@@ -305,7 +313,9 @@ class LocalManager(Manager):
             # Redirect stdout and stderr to files
             'exec >{jd}/results/stdout.log 2>{jd}/results/stderr.log'.format(jd=jd),
         ]
-        batch.extend(self._make_batch(job))
+        batch.extend(
+            self._make_batch(job)
+        )
         batch_file = '{}/batch.sh'.format(jd)
         with open(batch_file, 'w') as f:
             f.write('\n'.join(batch))
@@ -355,7 +365,7 @@ class SLURMManager(Manager):
     The ssh key should be placed in the .ssh/authorized_keys file on the SLURM work cluster for the account used
     """
 
-    def __init__(self, host=SLURM_URL, user=SLURM_USER, home=SLURM_HOME_PATH, mail=SLURM_USER_MAIL,
+    def __init__(self, host=SLURM_URL, user=SLURM_USER, home=SLURM_HOME_PATH, mail=SLURM_MAIL_USER,
                  jobdata_path=SLURM_JOBDATA_PATH, workdir_path=SLURM_WORKDIR_PATH):
         # Set basic attributes
         self.host = host
@@ -395,7 +405,9 @@ class SLURMManager(Manager):
             sbline = '#SBATCH --{}={}'.format(k, v)
             sbatch.append(sbline)
         # Script init and execution
-        sbatch.extend(self._make_batch(job, jobid_var='$SLURM_JOBID'))
+        sbatch.extend(
+            self._make_batch(job, jobid_var='$SLURM_JOBID')
+        )
         # On completion, SLURM executes the script /usr/local/sbin/completion_script.sh
         # """
         # # vouws
