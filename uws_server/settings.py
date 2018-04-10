@@ -73,10 +73,7 @@ TRUSTED_CLIENTS = {
     '93.15.50.214':    'savagnin_home',
 }
 
-# Add the provenance files to the results of the jobs
-GENERATE_PROV = True
-
-# Job Description Language
+# Job Description Language files
 # VOTFile: VOTable following the Provenance DM
 # WADLFile: WADL file describing the web service
 # WSDLFile: WSDL file describing the web service -- not implemented
@@ -103,6 +100,12 @@ PGSQL_PASSWORD = 'opus'
 # VOSpace: not implemented
 ARCHIVE = 'Local'
 ARCHIVE_PATH = ''
+RETRIEVAL_URL = ''
+COPY_RESULTS = True  # copy results from Manager to UWS server (may be irrelevant if Manager = Local)
+COPY_LOGS = True
+
+# Add the provenance files to the results of the jobs
+GENERATE_PROV = True
 
 # Define a Manager and its properties
 # Local: execution on the UWS server directly using Bash commands
@@ -111,7 +114,7 @@ MANAGER = 'Local'
 # SLURM Manager
 SLURM_URL = 'tycho.obspm.fr'  # 'quadri12.obspm.fr'  #
 SLURM_USER = 'vouws'
-SLURM_USER_EMAIL = ADMIN_EMAIL
+SLURM_MAIL_USER = ADMIN_EMAIL
 SLURM_HOME_PATH = '/obs/vouws'  # '/obs/vouws'
 SLURM_WORKDIR_PATH = '/scratch/vouws'
 SLURM_JOBDATA_PATH = '/poubelle/vouws/jobdata'
@@ -140,6 +143,17 @@ PHASE_CONVERT = {
     'SUSPENDED': dict(phase='SUSPENDED', msg='Job has an allocation, but execution has been suspended'),
 }
 
+# Parameters allowed at Job creation for job control
+JOB_CONTROL_PARAMETERS = [
+    'uws:execution_duration',
+    'uws:quote',
+    'slurm:mem',
+    'slurm:nodes',
+    'slurm:ntasks-per-node',
+    'slurm:partition',
+    'slurm:account',
+]
+
 # Default destruction interval
 DESTRUCTION_INTERVAL = 30  # in days
 
@@ -149,6 +163,9 @@ EXECUTION_DURATION_MAX = 3600  # in seconds
 
 # Maximum wait time (UWS1.1)
 WAIT_TIME_MAX = 600  # in seconds
+
+# ARCHIVED phase (UWS1.1)
+USE_ARCHIVED_PHASE = True
 
 
 # ----------
