@@ -57,6 +57,10 @@ special_users = [
 ]
 
 
+def check_admin(user):
+    return user == User(ADMIN_NAME, ADMIN_PID)
+
+
 def check_permissions(job):
     """Check if user has rights to create/edit such a job, else raise JobAccessDenied"""
     if CHECK_PERMISSIONS:
@@ -76,6 +80,19 @@ def check_permissions(job):
 
 class Job(object):
     """Job with UWS attributes and methods to create, set and show job information"""
+
+    # Each Job contains:
+    # • Exactly one Execution Phase.
+    # • Exactly one Execution Duration.
+    # • Exactly one Destruction Time
+    # • Zero or one Quote.
+    # • Exactly one Results List.
+    # • Exactly one Owner.
+    # • Zero or one Run Identifier.
+    # • Zero or one Error.
+    # In addition a job has a number of other properties (e.g. creationTime) which are set automatically
+    # by the UWS and are not able to be directly manipulated by the client, hence are not represented
+    # as separate object.
 
     def __init__(self, jobname, jobid, user,
                  get_attributes=False, get_parameters=False, get_results=False,
@@ -113,8 +130,8 @@ class Job(object):
                               get_parameters=get_parameters,
                               get_results=get_results,
                               from_pid=from_pid)
+            # Check if the user is the owner of the job, else raise JobAccessDenied
             if check_owner:
-                # Check if the user is the owner of the job, else raise JobAccessDenied
                 if self.user == User(self.owner, self.owner_pid):
                     pass
                 else:
@@ -618,7 +635,7 @@ class Job(object):
 class JobList(object):
     """JobList with attributes and function to fetch from storage and return as XML"""
 
-    def __init__(self, jobname, user, phase=None, where_owner=True):
+    def __init__(self, jobname, user, phase=None, after=None, last=None, where_owner=True):
         self.jobname = jobname
         self.jobid = 'joblist'
         self.user = user
@@ -629,11 +646,11 @@ class JobList(object):
         check_permissions(self)
 
         # Check if user is admin, then get all jobs
-        if user == User(ADMIN_NAME, ADMIN_PID):
+        if check_admin(user):
             where_owner = False
             logger.debug('User is the admin')
 
-        self.jobs = self.storage.get_list(self, phase=phase, where_owner=where_owner)
+        self.jobs = self.storage.get_list(self, phase=phase, after=after, last=last, where_owner=where_owner)
 
     def to_xml(self):
         """Returns the XML representation of jobs (uws:jobs)"""
