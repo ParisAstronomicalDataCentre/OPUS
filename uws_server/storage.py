@@ -383,7 +383,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
         if phase:
             query = query.filter(self.Jobs.phase.in_(phase))
         if after:
-            pass
+            query = query.filter(self.Jobs.creation_time >= after)
         if where_owner:
             query = query.filter_by(owner=joblist.user.name)
             query = query.filter_by(owner_pid=joblist.user.pid)
