@@ -74,7 +74,7 @@ TRUSTED_CLIENTS = {
 }
 
 # Job Description Language files
-# VOTFile: VOTable following the Provenance DM
+# VOTFile: VOTable following the Provenance DM ActivityDescription class
 # WADLFile: WADL file describing the web service
 # WSDLFile: WSDL file describing the web service -- not implemented
 JDL = 'VOTFile'
@@ -82,7 +82,8 @@ JDL = 'VOTFile'
 # Storage of job information (SQLAlchemy, SQLite, PGSQL)
 # SQLAlchemy: SQLAlchemy interface to the relational DB, e.g. SQLite, PostgreSQL...)
 # SQLite: direct use of SQLite -- to be deprecated
-STORAGE = 'SQLAlchemy'  # define SQLALCHEMY_DB further below
+STORAGE = 'SQLAlchemy'
+# SQLALCHEMY_DB = ''  # defined further below
 # SQLite storage info
 SQLITE_FILE_NAME = 'job_database.db'
 # PGSQL storage info
@@ -93,8 +94,7 @@ PGSQL_USER = 'opus'
 PGSQL_PASSWORD = 'opus'
 
 # Archive for results
-# Local: store results in the local directory VAR_PATH/archive
-# Path: specific path on the UWS server (given in ARCHIVE_PATH)
+# Local: store results in the local directory VAR_PATH/archive or specific path on the UWS server (if given in ARCHIVE_PATH)
 # SLURM: specific path accessible from the SLURM work cluster / nodes (given in SLURM_ARCHIVE_PATH)
 # FTP: not implemented
 # VOSpace: not implemented
@@ -111,11 +111,12 @@ GENERATE_PROV = True
 # Local: execution on the UWS server directly using Bash commands
 # SLURM: execution through a SLURM control manager (additional config required)
 MANAGER = 'Local'
+LOCAL_WORKDIR_PATH = '/tmp'
 # SLURM Manager
 SLURM_URL = 'tycho.obspm.fr'  # 'quadri12.obspm.fr'  #
-SLURM_USER = 'vouws'
+SLURM_USER = 'vouws'  # need to add the web server ssh key (e.g. user www) in .ssh/authorized_hosts
 SLURM_MAIL_USER = ADMIN_EMAIL
-SLURM_HOME_PATH = '/obs/vouws'  # '/obs/vouws'
+SLURM_SCRIPTS_PATH = '/obs/vouws/scripts'
 SLURM_WORKDIR_PATH = '/scratch/vouws'
 SLURM_JOBDATA_PATH = '/poubelle/vouws/jobdata'
 SLURM_ARCHIVE_PATH = '/poubelle/vouws/results'
@@ -236,6 +237,7 @@ TERMINAL_PHASES = [
 JOB_ATTRIBUTES = [
     'jobid',
     'jobname',
+    'run_id',
     'phase',
     'creation_time',
     'start_time',
@@ -246,7 +248,6 @@ JOB_ATTRIBUTES = [
     'error',
     'owner',
     'owner_pid',
-    'run_id',
     'pid',
 ]
 JOB_PARAMETERS_ATTR = [
@@ -299,9 +300,10 @@ LOG_PATH = VAR_PATH + '/logs'
 # Path for JDL files, should probably be accessed through a URL as static files
 JDL_PATH = VAR_PATH + '/jdl'
 # Path for script files, should probably be accessed through a URL as static files
-SCRIPT_PATH = VAR_PATH + '/jdl/scripts'
+SCRIPTS_PATH = VAR_PATH + '/jdl/scripts'
 # Default path for job results and logs
 JOBDATA_PATH = VAR_PATH + '/jobdata'
+RESULTS_PATH = VAR_PATH + '/results'
 # If POST contains files they are uploaded on the UWS server
 UPLOAD_PATH = VAR_PATH + '/uploads'
 # Path for e.g. SLURM sbatch files created by SLURMManager

@@ -325,7 +325,7 @@ def get_jobnames():
         # jobnames = ['copy', 'ctbin']
         # List jdl files (=available jobs)
         jdl = uws_jdl.__dict__[JDL]()
-        flist = glob.glob('{}/*.sh'.format(jdl.script_path))
+        flist = glob.glob('{}/*.sh'.format(jdl.scripts_path))
         # Check if JDL file exists on server?
         jobnames_sh = [os.path.splitext(os.path.basename(f))[0] for f in flist]
         jobnames = [j for j in jobnames_sh if os.path.isfile(jdl._get_filename(j))]
@@ -405,7 +405,7 @@ def get_script(jobname):
     :param jobname:
     :return:
     """
-    fname = '{}/{}.sh'.format(SCRIPT_PATH, jobname)
+    fname = '{}/{}.sh'.format(SCRIPTS_PATH, jobname)
     logger.info('Job script read: {}'.format(fname))
     if os.path.isfile(fname):
         response.content_type = 'text/plain; charset=UTF-8'
@@ -426,8 +426,8 @@ def validate_job_definition(jobname):
         jdl = uws_jdl.__dict__[JDL]()
         jdl_src = '{}/new/{}{}'.format(jdl.jdl_path, jobname, jdl.extension)
         jdl_dst = '{}/{}{}'.format(jdl.jdl_path, jobname, jdl.extension)
-        script_src = '{}/new/{}.sh'.format(jdl.script_path, jobname)
-        script_dst = '{}/{}.sh'.format(jdl.script_path, jobname)
+        script_src = '{}/new/{}.sh'.format(jdl.scripts_path, jobname)
+        script_dst = '{}/{}.sh'.format(jdl.scripts_path, jobname)
         # Save, then copy from new/
         if os.path.isfile(jdl_src):
             if os.path.isfile(jdl_dst):
@@ -446,7 +446,7 @@ def validate_job_definition(jobname):
             if os.path.isfile(script_dst):
                 # Save file with time stamp
                 mt = dt.datetime.fromtimestamp(os.path.getmtime(script_dst)).isoformat()
-                script_dst_save = '{}/saved/{}_{}.sh'.format(SCRIPT_PATH, jobname, mt)
+                script_dst_save = '{}/saved/{}_{}.sh'.format(SCRIPTS_PATH, jobname, mt)
                 os.rename(script_dst, script_dst_save)
                 logger.info('Previous job script saved: ' + script_dst_save)
             shutil.copy(script_src, script_dst)
@@ -477,7 +477,7 @@ def cp_script(jobname):
         abort_403()
     try:
         # Copy script to job manager
-        script_dst = '{}/{}.sh'.format(SCRIPT_PATH, jobname)
+        script_dst = '{}/{}.sh'.format(SCRIPTS_PATH, jobname)
         if os.path.isfile(script_dst):
             manager = managers.__dict__[MANAGER + 'Manager']()
             manager.cp_script(jobname)

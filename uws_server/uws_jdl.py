@@ -72,7 +72,7 @@ class JDLFile(object):
     content = {}
     extension = ''
     jdl_path = '.'
-    script_path = '.'
+    scripts_path = '.'
 
     def _get_filename(self, jobname):
         fn = '{}/{}{}'.format(self.jdl_path, jobname, self.extension)
@@ -98,7 +98,7 @@ class JDLFile(object):
             )
 
     def save_script(self, jobname, script):
-        script_fname = '{}/{}.sh'.format(self.script_path, jobname)
+        script_fname = '{}/{}.sh'.format(self.scripts_path, jobname)
         with open(script_fname, 'w') as f:
             f.write(script.replace('\r', ''))
             logger.info('Job script saved: ' + script_fname)
@@ -193,10 +193,10 @@ class JDLFile(object):
 
 class JSONFile(JDLFile):
 
-    def __init__(self, jdl_path=JDL_PATH, script_path=SCRIPT_PATH):
+    def __init__(self, jdl_path=JDL_PATH, scripts_path=SCRIPTS_PATH):
         self.extension = '.json'
         self.jdl_path = os.path.join(jdl_path, 'json')
-        self.script_path = script_path
+        self.scripts_path = scripts_path
 
     def save(self, jobname):
         """Save job description to file"""
@@ -242,10 +242,10 @@ class VOTFile(JDLFile):
         'file': 'file'
     }
 
-    def __init__(self, jdl_path=JDL_PATH, script_path=SCRIPT_PATH):
+    def __init__(self, jdl_path=JDL_PATH, scripts_path=SCRIPTS_PATH):
         self.extension = '_vot.xml'
         self.jdl_path = os.path.join(jdl_path, 'votable')
-        self.script_path = script_path
+        self.scripts_path = scripts_path
         self.xmlns_uris = {
             'xmlns': 'http://www.ivoa.net/xml/VOTable/v1.3',
             'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
@@ -534,10 +534,10 @@ class VOTFile(JDLFile):
 
 class WADLFile(JDLFile):
 
-    def __init__(self, jdl_path=JDL_PATH, script_path=SCRIPT_PATH):
+    def __init__(self, jdl_path=JDL_PATH, scripts_path=SCRIPTS_PATH):
         self.extension = '.wadl'
         self.jdl_path = os.path.join(jdl_path, 'wadl')
-        self.script_path = script_path
+        self.scripts_path = scripts_path
         self.xmlns_uris = {
             'xmlns:wadl': 'http://wadl.dev.java.net/2009/02',
             'xmlns:uws': 'http://www.ivoa.net/xml/UWS/v1.0',

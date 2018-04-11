@@ -210,11 +210,11 @@ class LocalManager(Manager):
     poll_interval = 2  # poll processes regularly to avoid zombies
     suspended_processes = []  # suspended processes, restart signals will be sent regularly
 
-    def __init__(self, jobdata_path=JOBDATA_PATH, script_path=SCRIPT_PATH):
+    def __init__(self, jobdata_path=JOBDATA_PATH, scripts_path=SCRIPTS_PATH, workdir_path=LOCAL_WORKDIR_PATH):
         # PATHs
         self.jobdata_path = jobdata_path
-        self.scripts_path = script_path
-        self.workdir_path = '{}/../workdir'.format(jobdata_path)
+        self.scripts_path = scripts_path
+        self.workdir_path = workdir_path
 
     def _send_signal(self, pid, phase, error_msg=''):
         data = {'jobid': pid, 'phase': phase}
@@ -365,16 +365,15 @@ class SLURMManager(Manager):
     The ssh key should be placed in the .ssh/authorized_keys file on the SLURM work cluster for the account used
     """
 
-    def __init__(self, host=SLURM_URL, user=SLURM_USER, home=SLURM_HOME_PATH, mail=SLURM_MAIL_USER,
-                 jobdata_path=SLURM_JOBDATA_PATH, workdir_path=SLURM_WORKDIR_PATH):
+    def __init__(self, host=SLURM_URL, user=SLURM_USER, mail=SLURM_MAIL_USER,
+                 scripts_path=SLURM_SCRIPTS_PATH, workdir_path=SLURM_WORKDIR_PATH, jobdata_path=SLURM_JOBDATA_PATH):
         # Set basic attributes
         self.host = host
         self.user = user
-        self.home = home
         self.mail = mail
         self.ssh_arg = user + '@' + host
         # PATHs
-        self.scripts_path = '{}/scripts'.format(home)
+        self.scripts_path = scripts_path
         self.jobdata_path = jobdata_path
         self.workdir_path = workdir_path
 
@@ -557,7 +556,7 @@ class SLURMManager(Manager):
     def cp_script(self, jobname):
         """Copy job script to SLURM server"""
         cmd = ['scp',
-               '{}/{}.sh'.format(SCRIPT_PATH, jobname),
+               '{}/{}.sh'.format(SCRIPTS_PATH, jobname),
                '{}:{}/{}.sh'.format(self.ssh_arg, self.scripts_path, jobname)]
         logger.debug(' '.join(cmd))
         sp.check_output(cmd, stderr=sp.STDOUT)
