@@ -610,6 +610,8 @@ class Job(object):
                     new_phase = 'ABORTED'
             if new_phase in ['COMPLETED', 'ABORTED']:
                 self.end_time = now.strftime(DT_FMT)
+            if new_phase == 'ERROR' and self.phase != 'ERROR':
+                self.end_time = now.strftime(DT_FMT)
             if new_phase in ['COMPLETED']:
                 self.add_provenance()
             # Update phase
@@ -682,6 +684,9 @@ class JobList(object):
                 'xlink:href': href,
             })
             ETree.SubElement(xml_job, 'uws:phase').text = job['phase']
+            ETree.SubElement(xml_job, 'uws:runId').text = job['run_id']
+            ETree.SubElement(xml_job, 'uws:ownerId').text = job['owner']
+            ETree.SubElement(xml_job, 'uws:creationTime').text = job['creation_time']
         return ETree.tostring(xml_jobs)
 
 
