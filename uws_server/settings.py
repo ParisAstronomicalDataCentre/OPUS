@@ -95,15 +95,16 @@ PGSQL_PASSWORD = 'opus'
 
 # Archive for results
 # Local: store results in the local directory VAR_PATH/archive or specific path on the UWS server (if given in ARCHIVE_PATH)
-# SLURM: specific path accessible from the SLURM work cluster / nodes (given in SLURM_ARCHIVE_PATH)
+# SLURM: specific path accessible from the SLURM work cluster / nodes (given in ARCHIVE_PATH, need also the base access URL)
 # FTP: not implemented
 # VOSpace: not implemented
 ARCHIVE = 'Local'
 ARCHIVE_PATH = ''
-RETRIEVAL_URL = ''
+ARCHIVE_URL = ''
+
+# Copy back results/logs
 COPY_RESULTS = True  # copy results from Manager to UWS server (may be irrelevant if Manager = Local)
 COPY_LOGS = True
-
 # Add the provenance files to the results of the jobs
 GENERATE_PROV = True
 
@@ -119,7 +120,7 @@ SLURM_MAIL_USER = ADMIN_EMAIL
 SLURM_SCRIPTS_PATH = '/obs/vouws/scripts'
 SLURM_WORKDIR_PATH = '/scratch/vouws'
 SLURM_JOBDATA_PATH = '/poubelle/vouws/jobdata'
-SLURM_ARCHIVE_PATH = '/poubelle/vouws/results'
+SLURM_RESULTS_PATH = '/poubelle/vouws/results'
 SLURM_SBATCH_DEFAULT = {
     'mem': '200mb',
     'nodes': 1,

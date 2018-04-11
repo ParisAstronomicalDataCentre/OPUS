@@ -50,6 +50,7 @@ class Manager(object):
             batch file content as a string
         """
         jd = '{}/{}'.format(self.jobdata_path, job.jobid)
+        rs = '{}/{}'.format(self.results_path, job.jobid)
         wd = '{}/{}'.format(self.workdir_path, job.jobid)
         # Need JDL for results description
         if not job.jdl.content:
@@ -210,11 +211,12 @@ class LocalManager(Manager):
     poll_interval = 2  # poll processes regularly to avoid zombies
     suspended_processes = []  # suspended processes, restart signals will be sent regularly
 
-    def __init__(self, jobdata_path=JOBDATA_PATH, scripts_path=SCRIPTS_PATH, workdir_path=LOCAL_WORKDIR_PATH):
+    def __init__(self):
         # PATHs
-        self.jobdata_path = jobdata_path
-        self.scripts_path = scripts_path
-        self.workdir_path = workdir_path
+        self.scripts_path = SCRIPTS_PATH
+        self.jobdata_path = JOBDATA_PATH
+        self.results_path = RESULTS_PATH
+        self.workdir_path = LOCAL_WORKDIR_PATH
 
     def _send_signal(self, pid, phase, error_msg=''):
         data = {'jobid': pid, 'phase': phase}
@@ -365,17 +367,17 @@ class SLURMManager(Manager):
     The ssh key should be placed in the .ssh/authorized_keys file on the SLURM work cluster for the account used
     """
 
-    def __init__(self, host=SLURM_URL, user=SLURM_USER, mail=SLURM_MAIL_USER,
-                 scripts_path=SLURM_SCRIPTS_PATH, workdir_path=SLURM_WORKDIR_PATH, jobdata_path=SLURM_JOBDATA_PATH):
+    def __init__(self):
         # Set basic attributes
-        self.host = host
-        self.user = user
-        self.mail = mail
-        self.ssh_arg = user + '@' + host
+        self.host = SLURM_URL
+        self.user = SLURM_USER
+        self.mail = SLURM_MAIL_USER
+        self.ssh_arg = self.user + '@' + self.host
         # PATHs
-        self.scripts_path = scripts_path
-        self.jobdata_path = jobdata_path
-        self.workdir_path = workdir_path
+        self.scripts_path = SLURM_SCRIPTS_PATH
+        self.jobdata_path = SLURM_JOBDATA_PATH
+        self.results_path = SLURM_RESULTS_PATH
+        self.workdir_path = SLURM_WORKDIR_PATH
 
     def _make_sbatch(self, job):
         """Make sbatch file content for given job
@@ -392,8 +394,8 @@ class SLURMManager(Manager):
             '#!/bin/bash -l',
             '### INIT SLURMManager',
             '#SBATCH --job-name={}'.format(job.jobname),
-            '#SBATCH --error={}/results/stderr.log'.format(jd),
-            '#SBATCH --output={}/results/stdout.log'.format(jd),
+            '#SBATCH --error={}/stderr.log'.format(jd),
+            '#SBATCH --output={}/stdout.log'.format(jd),
             '#SBATCH --mail-user={}'.format(self.mail),
             '#SBATCH --mail-type=ALL',
             '#SBATCH --no-requeue',
