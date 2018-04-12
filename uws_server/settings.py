@@ -248,7 +248,7 @@ JOB_ATTRIBUTES = [
     'error',
     'owner',
     'owner_pid',
-    'pid',
+    'process_id',
 ]
 JOB_PARAMETERS_ATTR = [
     'jobid',

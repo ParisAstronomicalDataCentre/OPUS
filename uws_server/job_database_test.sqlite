@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     owner              varchar(64),
     owner_pid          varchar(128),
     run_id             varchar(64),
-    pid                int,
+    process_id                int,
     PRIMARY KEY (jobid)
 );
 
@@ -37,13 +37,13 @@ CREATE TABLE IF NOT EXISTS job_results (
 );
 
 
-INSERT INTO jobs (jobid, jobname, phase, quote, execution_duration, error, creation_time, start_time, end_time, destruction_time, owner, owner_pid, run_id, pid)
+INSERT INTO jobs (jobid, jobname, phase, quote, execution_duration, error, creation_time, start_time, end_time, destruction_time, owner, owner_pid, run_id, process_id)
  VALUES ('00000000-dbf3-6b04-b1e7-28d47ad32794', 'dummy', 'PENDING', NULL, 60, NULL,
  '2015-02-25T12:06:24', '2015-02-25T12:06:24', '2015-02-25T12:06:58', '2015-03-04T12:06:20', 'anonymous', 'anonymous', NULL, '1234');
 INSERT INTO job_parameters (jobid, name, value)
  VALUES ('00000000-dbf3-6b04-b1e7-28d47ad32794', 'input', 'Test 0');
 
-INSERT INTO jobs (jobid, jobname, phase, quote, execution_duration, error, creation_time, start_time, end_time, destruction_time, owner, owner_pid, run_id, pid)
+INSERT INTO jobs (jobid, jobname, phase, quote, execution_duration, error, creation_time, start_time, end_time, destruction_time, owner, owner_pid, run_id, process_id)
  VALUES ('11111111-9c85-4873-a4b1-8d7e5e91ed57', 'dummy', 'EXECUTING', NULL, 60, NULL,
  '2015-04-25T12:06:24', '2015-04-25T12:06:24', '2015-04-25T12:06:58', '2015-06-04T12:06:20', 'anonymous', 'anonymous', NULL, '5678');
 INSERT INTO job_parameters (jobid, name, value)

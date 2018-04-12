@@ -96,21 +96,21 @@ class Job(object):
 
     def __init__(self, jobname, jobid, user,
                  get_attributes=False, get_parameters=False, get_results=False,
-                 from_post=None, from_pid=False,
+                 from_post=None, from_process_id=False,
                  check_owner=True):
         """Initialize from storage or from POST
 
         from_post should contain the request object if not None
         """
         # Job description
-        if from_pid:
+        if from_process_id:
             self.jobname = jobname
             self.jobid = jobid
-            self.pid = jobid
+            self.process_id = jobid
         else:
             self.jobname = jobname
             self.jobid = jobid
-            self.pid = None
+            self.process_id = None
         self.user = user
         # Link to the storage, e.g. SQLite, see settings.py
         self.storage = storage.__dict__[STORAGE + 'JobStorage']()
@@ -129,7 +129,7 @@ class Job(object):
                               get_attributes=get_attributes,
                               get_parameters=get_parameters,
                               get_results=get_results,
-                              from_pid=from_pid)
+                              from_process_id=from_process_id)
             # Check if the user is the owner of the job, else raise JobAccessDenied
             if check_owner:
                 if self.user == User(self.owner, self.owner_pid):
@@ -426,7 +426,7 @@ class Job(object):
         xml_results = ETree.SubElement(xml_job, 'uws:results')
         self._results_to_xml_fill(xml_results)
         xml_jobinfo = ETree.SubElement(xml_job, 'uws:jobInfo')
-        ETree.SubElement(xml_jobinfo, 'process_id').text = str(self.pid)
+        ETree.SubElement(xml_jobinfo, 'process_id').text = str(self.process_id)
         return ETree.tostring(xml_job)
 
 
@@ -502,16 +502,16 @@ class Job(object):
         """
         # Test if status is PENDING as expected
         if self.phase == 'PENDING':
-            pid = self.manager.start(self)
+            process_id = self.manager.start(self)
         else:
             raise UserWarning('Job {} is not in the PENDING state'.format(self.jobid))
         try:
-            # Test if pid is an integer
-            pid = int(pid)
+            # Test if process_id is an integer
+            process_id = int(process_id)
         except ValueError:
-            raise RuntimeError('Bad pid returned for job {}:\npid:\n{}'
-                               ''.format(self.jobid, pid))
-        self.pid = pid
+            raise RuntimeError('Bad process_id returned for job {}:\nprocess_id:\n{}'
+                               ''.format(self.jobid, process_id))
+        self.process_id = process_id
         # No need to change times: job not started yet
         # now = dt.datetime.now()
         # duration = dt.timedelta(0, self.execution_duration)

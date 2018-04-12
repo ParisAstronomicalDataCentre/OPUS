@@ -177,7 +177,7 @@ class Manager(object):
 
     def start(self, job):
         """Start job
-        :return: pid, jobid on work cluster
+        :return: process_id, jobid on work cluster
         """
         # Make directories if needed
         # Create parameter file
@@ -235,8 +235,8 @@ class LocalManager(Manager):
         self.results_path = RESULTS_PATH
         self.workdir_path = LOCAL_WORKDIR_PATH
 
-    def _send_signal(self, pid, phase, error_msg=''):
-        data = {'jobid': pid, 'phase': phase}
+    def _send_signal(self, process_id, phase, error_msg=''):
+        data = {'jobid': process_id, 'phase': phase}
         if error_msg:
             data['error_msg'] = error_msg
         url = '{}/handler/job_event'.format(BASE_URL)
@@ -248,57 +248,57 @@ class LocalManager(Manager):
 
     def _poll_process(self, popen):
         rcode = popen.poll()
-        pid = popen.pid
+        process_id = popen.pid
         # Actions depending on rcode value
         if not rcode:
             try:
-                p = psutil.Process(pid)
+                p = psutil.Process(process_id)
             except psutil.NoSuchProcess as e:
-                logger.info('process {} ended (NoSuchProcess)'.format(pid))
+                logger.info('process {} ended (NoSuchProcess)'.format(process_id))
                 return
             # TODO: Handle sleeping, idle, suspended processes?...
             # Handle stopped processes
             if p.status() in [psutil.STATUS_STOPPED, psutil.STATUS_TRACING_STOP]:
-                logger.info('process {} stopped'.format(pid))
+                logger.info('process {} stopped'.format(process_id))
                 try:
                     # Try to restart the process by sending SIGCONT
-                    os.kill(pid, signal.SIGCONT)
+                    os.kill(process_id, signal.SIGCONT)
                 except OSError as e:
                     if 'No such process' in str(e):
-                        logger.warning('No such process ({})'.format(pid))
+                        logger.warning('No such process ({})'.format(process_id))
                     else:
                         logger.warning(str(e))
                 if p.status() == psutil.STATUS_STOPPED:
                     # If this did not work, change status to SUSPENDED for now
-                    self._send_signal(pid, 'SUSPENDED')
-                    self.suspended_processes.append(pid)
+                    self._send_signal(process_id, 'SUSPENDED')
+                    self.suspended_processes.append(process_id)
                 else:
                     # If this worked, continue execution
-                    if pid in self.suspended_processes:
-                        self._send_signal(pid, 'EXECUTING')
-                        self.suspended_processes.remove(pid)
-                    logger.info('process {} continued'.format(pid))
+                    if process_id in self.suspended_processes:
+                        self._send_signal(process_id, 'EXECUTING')
+                        self.suspended_processes.remove(process_id)
+                    logger.info('process {} continued'.format(process_id))
                 # Rerun _poll_process after some time
                 threading.Timer(self.poll_interval, self._poll_process, [popen]).start()
             else:
                 # Let the process run
-                logger.info('process {} running'.format(pid))
+                logger.info('process {} running'.format(process_id))
                 # Rerun _poll_process after some time
                 threading.Timer(self.poll_interval, self._poll_process, [popen]).start()
         # Handle killed processes
         elif rcode == -9:
-            logger.info('process {} killed during execution'.format(pid))
-            self._send_signal(pid, 'ERROR', error_msg='Process killed during execution')
+            logger.info('process {} killed during execution'.format(process_id))
+            self._send_signal(process_id, 'ERROR', error_msg='Process killed during execution')
         # Handle processes terminated with errors
         elif rcode <= -1:
-            logger.info('process {} terminated with errors'.format(pid))
+            logger.info('process {} terminated with errors'.format(process_id))
         # Otherwise process has terminated
         else:
-            logger.info('process {} terminated (rcode=0)'.format(pid))
+            logger.info('process {} terminated (rcode=0)'.format(process_id))
 
     def start(self, job):
         """Start job locally
-        :return: pid
+        :return: process_id
         """
         # Make directories if needed
         jd = '{}/{}'.format(self.jobdata_path, job.jobid)
@@ -345,16 +345,16 @@ class LocalManager(Manager):
         popen = sp.Popen(cmd)
         # poll popen regularly
         self._poll_process(popen)
-        # Return pid
+        # Return process_id
         return popen.pid
 
     def abort(self, job):
         """Abort/Cancel job"""
         try:
-            os.kill(job.pid, signal.SIGKILL) # SIGTERM => error sent ; SIGKILL => no error sent, just killed!
+            os.kill(job.process_id, signal.SIGKILL) # SIGTERM => error sent ; SIGKILL => no error sent, just killed!
         except OSError as e:
             if 'No such process' in str(e):
-                logger.info('No such process ({}) for job {} {}'.format(job.pid, job.jobname, job.jobid))
+                logger.info('No such process ({}) for job {} {}'.format(job.process_id, job.jobname, job.jobid))
             else:
                 logger.info(str(e))
         except:
@@ -364,10 +364,10 @@ class LocalManager(Manager):
         """Delete job"""
         # jobdata is already deleted by the server
         try:
-            os.kill(job.pid, signal.SIGKILL) # SIGTERM => error sent ; SIGKILL => no error sent, just killed!
+            os.kill(job.process_id, signal.SIGKILL) # SIGTERM => error sent ; SIGKILL => no error sent, just killed!
         except OSError as e:
             if 'No such process' in str(e):
-                logger.info('No such process ({}) for job {} {}'.format(job.pid, job.jobname, job.jobid))
+                logger.info('No such process ({}) for job {} {}'.format(job.process_id, job.jobname, job.jobid))
             else:
                 logger.info(str(e))
         except:
@@ -439,7 +439,7 @@ class SLURMManager(Manager):
         """Start job on SLURM server
 
         Returns:
-            pid on SLURM server
+            process_id on SLURM server
         """
         # Create jobdata dir (to upload the scripts, parameters and input files)
         jd = '{}/{}'.format(self.jobdata_path, job.jobid)
@@ -497,21 +497,21 @@ class SLURMManager(Manager):
         cmd = ['ssh', self.ssh_arg,
                'sbatch {}'.format(sbatch_file_distant)]
         # logger.debug(' '.join(cmd))
-        pid = sp.check_output(cmd, stderr=sp.STDOUT)
-        # Get pid from output (e.g. "Submitted batch job 9421")
-        return pid.split(' ')[-1]
+        process_id = sp.check_output(cmd, stderr=sp.STDOUT)
+        # Get process_id from output (e.g. "Submitted batch job 9421")
+        return process_id.split(' ')[-1]
 
     def abort(self, job):
         """Abort job on SLURM server"""
         cmd = ['ssh', self.ssh_arg,
-               'scancel {}'.format(job.pid)]
+               'scancel {}'.format(job.process_id)]
         sp.check_output(cmd, stderr=sp.STDOUT)
 
     def delete(self, job):
         """Delete job on SLURM server"""
         if job.phase not in ['COMPLETED', 'ERROR']:
             cmd = ['ssh', self.ssh_arg,
-                   'scancel {}'.format(job.pid)]
+                   'scancel {}'.format(job.process_id)]
             try:
                 sp.check_output(cmd, stderr=sp.STDOUT)
             except sp.CalledProcessError as e:
@@ -540,7 +540,7 @@ class SLURMManager(Manager):
             job status (phase)
         """
         cmd = ['ssh', self.ssh_arg,
-               'sacct -j {}'.format(job.pid),
+               'sacct -j {}'.format(job.process_id),
                '-o state -P -n']
         phase = sp.check_output(cmd, stderr=sp.STDOUT)
         # Take first line: there is a trailing \n in output, and possibly several lines
@@ -557,7 +557,7 @@ class SLURMManager(Manager):
         """
         # sacct -j 9000 -o jobid,start,end,elapsed,state -P -n
         cmd = ['ssh', self.ssh_arg,
-               'sacct -j {}'.format(job.pid),
+               'sacct -j {}'.format(job.process_id),
                '-o jobid,start,end,elapsed,state -P -n']
         logger.debug(' '.join(cmd))
         info = sp.check_output(cmd, stderr=sp.STDOUT)

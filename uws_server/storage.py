@@ -54,7 +54,7 @@ class JobStorage(object):
         pass
 
     def read(self, job, get_attributes=True, get_parameters=True, get_results=True,
-             from_pid=False):
+             from_process_id=False):
         """Read job information from storage"""
         pass
 
@@ -169,7 +169,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
             owner = Column(String(64), nullable=True)
             owner_pid = Column(String(128), nullable=True)
             run_id = Column(String(64), nullable=True)
-            pid = Column(BigInteger(), nullable=True)
+            process_id = Column(BigInteger(), nullable=True)
 
         class Parameters(self.Base):
             __tablename__ = 'job_parameters'
@@ -326,14 +326,14 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
             self.session.commit()
 
     def read(self, job, get_attributes=True, get_parameters=True, get_results=True,
-             from_pid=False):
+             from_process_id=False):
         """Read job information from storage"""
         if get_attributes:
-            if from_pid:
-                # Query db for jobname and jobid using pid
-                row = self.session.query(self.Jobs).filter_by(pid=job.pid).first()
+            if from_process_id:
+                # Query db for jobname and jobid using process_id
+                row = self.session.query(self.Jobs).filter_by(process_id=job.process_id).first()
                 if not row:
-                    raise NotFoundWarning('Job with pid={} NOT FOUND'.format(job.pid))
+                    raise NotFoundWarning('Job with process_id={} NOT FOUND'.format(job.process_id))
                 # job.jobname = row.jobname
                 # job.jobid = row.jobid
             else:
@@ -470,15 +470,15 @@ class SQLJobStorage(SQLStorage, JobStorage):
                 self._save_result(job, rname)
 
     # noinspection PyTypeChecker
-    def read(self, job, get_attributes=True, get_parameters=False, get_results=False, from_pid=False):
+    def read(self, job, get_attributes=True, get_parameters=False, get_results=False, from_process_id=False):
         """Read job from storage"""
         # TODO: add owner and owner_pid to all SELECT (except if... admin?)
-        if from_pid:
-            # Query db for jobname and jobid using pid
-            query = "SELECT jobname, jobid FROM jobs WHERE pid='{}';".format(job.pid)
+        if from_process_id:
+            # Query db for jobname and jobid using process_id
+            query = "SELECT jobname, jobid FROM jobs WHERE process_id='{}';".format(job.process_id)
             row = self.cursor.execute(query).fetchone()
             if not row:
-                raise NotFoundWarning('Job with pid={} NOT FOUND'.format(job.pid))
+                raise NotFoundWarning('Job with process_id={} NOT FOUND'.format(job.process_id))
             job.jobname = row['jobname']
             job.jobid = row['jobid']
         if get_attributes:
@@ -503,7 +503,7 @@ class SQLJobStorage(SQLStorage, JobStorage):
             job.owner = row['owner']
             job.owner_pid = row['owner_pid']
             job.run_id = row['run_id']
-            job.pid = row['pid']
+            job.process_id = row['process_id']
         if get_parameters:
             # Query db for job parameters
             query = "SELECT * FROM job_parameters WHERE jobid='{}';".format(job.jobid)

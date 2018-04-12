@@ -635,7 +635,7 @@ def maintenance(jobname):
 
 @app.post('/handler/job_event')
 def job_event():
-    """New events for job with given pid
+    """New events for job with given process_id
 
     This hook expects POST commands that must come from a referenced job server
     POST should include: jobid=, phase=, error_msg=
@@ -655,9 +655,9 @@ def job_event():
         logger = logger_init
         logger.info('from {} with POST={}'.format(ip, str(request.POST.dict)))
         if 'jobid' in request.POST:
-            pid = request.POST['jobid']
-            # Get job properties from DB based on pid
-            job = Job('', pid, user, get_attributes=True, from_pid=True)
+            process_id = request.POST['jobid']
+            # Get job properties from DB based on process_id
+            job = Job('', process_id, user, get_attributes=True, from_process_id=True)
             # Update job
             if 'phase' in request.POST:
                 cur_phase = job.phase
@@ -757,8 +757,8 @@ def create_job(jobname):
         # If PHASE=RUN, start job
         if request.forms.get('PHASE') == 'RUN':
             job.start()
-            logger.info('{} {} QUEUED with pid={} [{}]'
-                        ''.format(jobname, jobid, str(job.pid), user))
+            logger.info('{} {} QUEUED with process_id={} [{}]'
+                        ''.format(jobname, jobid, str(job.process_id), user))
     except UserWarning as e:
         abort_500(e.args[0])
     except CalledProcessError as e:
@@ -941,8 +941,8 @@ def post_phase(jobname, jobid):
                     raise UserWarning('Job has to be in PENDING phase')
                 # Start job
                 job.start()
-                logger.info('{} {} STARTED with pid={} [{}]'
-                            ''.format(jobname, jobid, str(job.pid), user))
+                logger.info('{} {} STARTED with process_id={} [{}]'
+                            ''.format(jobname, jobid, str(job.process_id), user))
             elif new_phase == 'ABORT':
                 # Get job properties from DB
                 job = Job(jobname, jobid, user, get_attributes=True)

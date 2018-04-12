@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     owner              varchar(64),
     owner_pid          varchar(128),
     run_id             varchar(64),
-    pid                int,
+    process_id                int,
     PRIMARY KEY (jobid)
 );
 
