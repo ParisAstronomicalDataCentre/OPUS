@@ -185,7 +185,7 @@ class JDLFile(object):
             'parameters': params,
             'generated': results,
             'used': used,
-            'executionduration': post.get('executionduration'),
+            'executionDuration': post.get('executionDuration'),
             'quote': post.get('quote'),
             'script': post.get('script'),
         }
@@ -253,7 +253,7 @@ class VOTFile(JDLFile):
                 'http://www.ivoa.net/xml/VOTable/v1.3 http://www.ivoa.net/xml/VOTable/v1.3',
         }
 
-    def save(self, jobname):
+    def save_old(self, jobname):
         """Save job description to VOTable file"""
         raw_jobname = jobname.split('/')[-1]  # remove new/ prefix
         # VOTable root
@@ -381,7 +381,284 @@ class VOTFile(JDLFile):
             f.write(jdl_content)
             logger.info('JDL saved as VOTable: ' + jdl_fname)
 
+    def save(self, jobname):
+        """Save job description to VOTable file"""
+        raw_jobname = jobname.split('/')[-1]  # remove new/ prefix
+        # VOTable root
+        xmlns = self.xmlns_uris['xmlns']
+        xsi = self.xmlns_uris['xmlns:xsi']
+        jdl_tree = ETree.Element('VOTABLE', attrib={
+            'version': '1.3',
+            '{' + xsi + '}schemaLocation':
+                'http://www.ivoa.net/xml/VOTable/v1.3 http://www.ivoa.net/xml/VOTable/v1.3',
+        }, nsmap={'xsi': xsi, None: xmlns})
+        resource = ETree.SubElement(jdl_tree, 'RESOURCE', attrib={
+            'ID': raw_jobname,
+            'name': raw_jobname,
+            'type': "meta",
+            'utype': "voprov:ActivityDescription"
+        })
+        # Job attributes
+        if self.content['annotation']:
+            ETree.SubElement(resource, 'DESCRIPTION').text = self.content['annotation'].decode()
+        # TODO: automatic list of attributes from jdl.content
+        job_attr = []
+        for key in ['type', 'subtype', 'annotation', 'version', 'doculink']:
+            job_attr.append('<PARAM name="{key}" datatype="char" arraysize="*" value="{value}" utype="voprov:ActivityDescription.{key}"/>'.format(key=key, value=self.content.get(key, '')))
+        #     ,
+        #     '<PARAM name="subtype" datatype="char" arraysize="*" value="{}" utype="voprov:ActivityDescription.subtype"/>'.format(self.content.get('job_subtype', '')),
+        #     '<PARAM name="annotation" datatype="char" arraysize="*" value="{}" utype="voprov:ActivityDescription.annotation"/>'.format(self.content.get('annotation', raw_jobname)),
+        #     '<PARAM name="version" datatype="float" value="{}" utype="voprov:ActivityDescription.version"/>'.format(self.content.get('version', '')),
+        #     '<PARAM name="doculink" datatype="float" value="{}" utype="voprov:ActivityDescription.doculink"/>'.format(self.content.get('doculink', '')),
+        job_attr.append('<PARAM name="contact_name" datatype="char" arraysize="*" value="{}" utype="voprov:Agent.name"/>'.format(self.content.get('contact_name', '')))
+        job_attr.append('<PARAM name="contact_email" datatype="char" arraysize="*" value="{}" utype="voprov:Agent.email"/>'.format(self.content.get('contact_email', '')))
+        job_attr.append('<PARAM name="executionDuration" datatype="int" value="{}" utype="uws:Job.executionDuration"/>'.format(self.content.get('executionDuration', '1')))
+        job_attr.append('<PARAM name="quote" datatype="int" value="{}" utype="uws:Job.quote"/>'.format(self.content.get('quote', '1')))
+
+        for attr in job_attr:
+            resource.append(ETree.fromstring(attr))
+        # Insert groups
+        group_params = ETree.SubElement(resource, 'GROUP', attrib={
+            'name': "InputParams",
+            'utype': "voprov:Parameter",
+        })
+        group_used = ETree.SubElement(resource, 'GROUP', attrib={
+            'name': "Used",
+            'utype': "voprov:UsedDescription",
+        })
+        group_generated = ETree.SubElement(resource, 'GROUP', attrib={
+            'name': "Generated",
+            'utype': "voprov:WasGeneratedBy",
+        })
+        # Prepare InputParams group
+        if 'parameters' in self.content:
+            for pname, p in self.content['parameters'].iteritems():
+                param_attrib = {
+                    'ID': pname,
+                    'name': pname,
+                    'datatype': self.datatype_xs2vo[p['datatype']],
+                    'value': p.get('default'),
+                }
+                if param_attrib['datatype'] == 'file':
+                    param_attrib['xtype'] = 'application/octet-stream'
+                    param_attrib['datatype'] = 'char'
+                if param_attrib['datatype'] == 'char':
+                    param_attrib['arraysize'] = '*'
+                if str(p['required']).lower() == 'false' :
+                    param_attrib['type'] = 'no_query'
+                param = ETree.Element('PARAM', attrib=param_attrib)
+                pdesc = p.get('annotation', '')
+                # .encode(encoding='utf-8', errors='ignore')
+                # pdesc_clean = ''.join(c for c in pdesc if self.valid_xml_char_ordinal(c))
+                # logger.debug(pdesc)
+                # logger.debug(pdesc_clean)
+                ETree.SubElement(param, 'DESCRIPTION').text = pdesc
+                if p.get('min', False) or p.get('max', False) or p.get('options', False):
+                    values = ETree.SubElement(param, 'VALUES')
+                    if p.get('min', False):
+                        ETree.SubElement(values, 'MIN', attrib={'value': p['min']})
+                    if p.get('max', False):
+                        ETree.SubElement(values, 'MAX', attrib={'value': p['max']})
+                    if p.get('options', False):
+                        for o in p['options'].split(','):
+                            ETree.SubElement(values, 'OPTION', attrib={'value': o})
+                group_params.append(param)
+        utypes = {
+            'default': 'voprov:Entity.id',
+            'role': 'voprov:UsedDescription.role',
+            'url': 'voprov:EntityDescription.url',
+            'content_type': 'voprov:EntityDescription.content_type',
+        }
+        # Prepare used block
+        if 'used' in self.content:
+            for pname, p in self.content['used'].iteritems():
+                attrib={
+                    'name': pname,
+                    'utype': 'voprov:EntityDescription',
+                }
+                if pname in self.content['parameters']:
+                    attrib['ref'] = pname
+                used = ETree.Element('GROUP', attrib=attrib)
+                ETree.SubElement(used, 'DESCRIPTION').text = p.get('annotation', '')
+                for edattr in ['role', 'default', 'url', 'content_type']:
+                    ETree.SubElement(used, 'PARAM', attrib={
+                        'name': edattr,
+                        'value': p.get(edattr, ''),
+                        'arraysize': "*",
+                        'datatype': "char",
+                        'utype': utypes[edattr],
+                    })
+                group_used.append(used)
+        # Prepare results block
+        if 'generated' in self.content:
+            for rname, r in self.content['generated'].iteritems():
+                attrib={
+                    'name': rname,
+                    'utype': 'voprov:EntityDescription',
+                }
+                if rname in self.content['parameters']:
+                    attrib['ref'] = rname
+                result = ETree.Element('GROUP', attrib=attrib)
+                ETree.SubElement(result, 'DESCRIPTION').text = r.get('annotation', '')
+                for edattr in ['role', 'default', 'content_type']:
+                    ETree.SubElement(result, 'PARAM', attrib={
+                        'name': edattr,
+                        'value': r.get(edattr, ''),
+                        'arraysize': "*",
+                        'datatype': "char",
+                        'utype': utypes[edattr],
+                    })
+                group_generated.append(result)
+        # Write file
+        jdl_content = ETree.tostring(jdl_tree, pretty_print=True)
+        jdl_fname = self._get_filename(jobname)
+        with open(jdl_fname, 'w') as f:
+            f.write(jdl_content)
+            logger.info('JDL saved as VOTable: ' + jdl_fname)
+
     def read(self, jobname):
+        """Read job description from VOTable file"""
+        raw_jobname = jobname.split('/')[-1]  # remove new/ prefix
+        fname = self._get_filename(jobname)
+        # '{}/{}{}'.format(JDL_PATH, job.jobname, self.extension)
+        groups = {
+            'InputParams': 'parameters',
+            'Used': 'used',
+            'Generated': 'generated'
+        }
+        try:
+            with open(fname, 'r') as f:
+                jdl_string = f.read()
+            #print jdl_string
+            jdl_tree = ETree.fromstring(jdl_string)
+            #print jdl_tree
+            # Get default namespace
+            xmlns = '{' + jdl_tree.nsmap[None] + '}'
+            #print xmlns
+            # Read parameters description
+            resource_block = jdl_tree.find(".//{}RESOURCE[@ID='{}']".format(xmlns, raw_jobname))
+            #print resource_block
+            job_def = {
+                'name': resource_block.get('name'),
+                'parameters': collections.OrderedDict(),
+                'generated': collections.OrderedDict(),
+                'used': collections.OrderedDict()
+            }
+            for elt in resource_block.getchildren():
+
+                if elt.tag == '{}DESCRIPTION'.format(xmlns):
+                    job_def['annotation'] = elt.text
+                    #print elt.text
+                if elt.tag == '{}LINK'.format(xmlns):
+                    job_def['doculink'] = elt.get('href')
+                if elt.tag == '{}PARAM'.format(xmlns):
+                    # TODO: set datatype of value in the dictionary?
+                    #print elt.get('name'), elt.get('value')
+                    job_def[elt.get('name')] = elt.get('value', '')
+                if elt.tag == '{}GROUP'.format(xmlns):
+                    group = groups[elt.get('name')]
+                    #print group
+                    order = 0
+                    keys = []
+                    if group == 'parameters':
+                        for p in elt:
+                            if p.tag == '{}PARAM'.format(xmlns):
+                                order += 1
+                                name = p.get('name')
+                                keys.append(name)
+                                #print name, p.get('datatype', 'char')
+                                pdatatype = p.get('datatype', 'char')
+                                pxtype = p.get('xtype', None)
+                                if pxtype == 'application/octet-stream':
+                                    pdatatype = 'file'
+                                else:
+                                    pdatatype = self.datatype_vo2xs[pdatatype]
+                                prequired = 'true'
+                                if p.get('type') == 'no_query':    # type="no_query" in VOTable
+                                    prequired = 'false'
+                                item = {
+                                    'datatype': pdatatype,
+                                    'required': prequired,
+                                    'default': p.get('value'),
+                                    'unit': p.get('unit', ''),
+                                    'ucd': p.get('ucd', ''),
+                                    'utype': p.get('utype', ''),
+                                }
+                                for pp in p:
+                                    if pp.tag == '{}DESCRIPTION'.format(xmlns):
+                                        item['annotation'] = pp.text
+                                    if pp.tag == '{}VALUES'.format(xmlns):
+                                        options = []
+                                        for ppp in pp:
+                                            if ppp.tag == '{}MIN'.format(xmlns):
+                                                item['min'] = ppp.get('value')
+                                            if ppp.tag == '{}MAX'.format(xmlns):
+                                                item['max'] = ppp.get('value')
+                                            if ppp.tag == '{}OPTION'.format(xmlns):
+                                                options.append(ppp.get('value'))
+                                        item['options'] = ','.join(options)
+                                job_def[group][name] = item
+                    if group == 'used':
+                        for p in elt:
+                            order += 1
+                            name = p.get('name')
+                            keys.append(name)
+                            ref = p.get('ref')
+                            item = {
+                                'datatype': 'xs:string',  # may be changed below
+                                'annotation': '',         # filled below
+                                'url': '',                # default to ''
+                            }
+                            if ref:
+                                item['datatype'] = job_def.get('parameters').get(ref).get('datatype', item['datatype'])
+                                item['default'] = job_def.get('parameters').get(ref).get('default')
+                                item['annotation'] = job_def.get('parameters').get(ref).get('annotation', item['annotation'])
+                            for pp in p:
+                                if pp.tag == '{}PARAM'.format(xmlns):
+                                    if pp.get('name'):
+                                        item[pp.get('name')] = pp.get('value')
+                                if pp.tag == '{}DESCRIPTION'.format(xmlns):
+                                    item['annotation'] = pp.text
+                                if pp.tag == '{}LINK'.format(xmlns):
+                                    purl = pp.get('href')
+                                    item['url'] = purl
+                                    if 'file://' in purl:
+                                        item['datatype'] = 'file'
+                            job_def[group][name] = item
+                    if group == 'generated':
+                        for p in elt:
+                            order += 1
+                            name = p.get('name')
+                            keys.append(name)
+                            ref = p.get('ref')
+                            item = {
+                                'annotation': '',  # filled below
+                            }
+                            if ref:
+                                item['default'] = job_def.get('parameters').get(ref).get('default')
+                                item['annotation'] = job_def.get('parameters').get(ref).get('annotation')
+                            for pp in p:
+                                if pp.tag == '{}PARAM'.format(xmlns):
+                                    if pp.get('name'):
+                                        item[pp.get('name')] = pp.get('value')
+                                if pp.tag == '{}DESCRIPTION'.format(xmlns):
+                                    item['annotation'] = pp.text
+                            job_def[group][name] = item
+                    job_def[group + '_keys'] = keys
+            # Log votable access
+            # frame, filename, line_number, function_name, lines, index = inspect.stack()[1]
+            # logger.debug('VOTable read at {} ({}:{}): {}'.format(function_name, filename, line_number, fname))
+        except IOError:
+            # if file does not exist, continue and return an empty dict
+            logger.debug('VOTable not found for job {}'.format(jobname))
+            raise UserWarning('VOTable not found for job {}'.format(jobname))
+        except Exception as e:
+            logger.error('{}'.format(e))
+            raise
+            # return {}
+        self.content = job_def
+
+    def read_old(self, jobname):
         """Read job description from VOTable file"""
         raw_jobname = jobname.split('/')[-1]  # remove new/ prefix
         fname = self._get_filename(jobname)
@@ -707,6 +984,39 @@ class WADLFile(JDLFile):
             raise UserWarning('WADL not found for job {}'.format(jobname))
             # return {}
         self.content = job_def
+
+
+# ----------
+# Convert JDL File
+
+
+def update_vot(jobname):
+    logger.info('Updating VOTFile for {}'.format(jobname))
+    vot = VOTFile()
+    vot.read_old(jobname)
+    vot.content['executionDuration'] = vot.content['executionduration']
+    vot.save(jobname)
+    vot.read(jobname)
+
+
+def wadl2vot(jobname):
+    logger.info('Convert WADLFile to VOTFile for {}'.format(jobname))
+    wadl = WADLFile()
+    vot = VOTFile()
+    wadl.read(jobname)
+    vot.content = wadl.content
+    vot.save(jobname)
+    vot.read(jobname)  # test if file can be read
+
+
+def vot2json(jobname):
+    logger.info('Convert VOTFile to JSONFile for {}'.format(jobname))
+    js = JSONFile()
+    vot = VOTFile()
+    vot.read(jobname)
+    js.content = vot.content
+    js.save(jobname)
+    js.read(jobname)  # test if file can be read
 
 
 # ---------
