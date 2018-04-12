@@ -49,9 +49,9 @@ class Manager(object):
         Returns:
             batch file content as a string
         """
+        wd = '{}/{}'.format(self.workdir_path, job.jobid)
         jd = '{}/{}'.format(self.jobdata_path, job.jobid)
         rs = '{}/{}'.format(self.results_path, job.jobid)
-        wd = '{}/{}'.format(self.workdir_path, job.jobid)
         # Need JDL for results description
         if not job.jdl.content:
             job.jdl.read(job.jobname)
@@ -64,40 +64,10 @@ class Manager(object):
             '    date +"%Y-%m-%dT%H:%M:%S"',
             '}',
             'echo "[`timestamp`] Initialize job"',
-            # Useful functions
-            'job_event() {',
-            '    if [ -z "$2" ]',
-            '    then',
-            '        curl -k -s -o $jd/curl_$1_signal.log'
-            ' -d "jobid=$JOBID" -d "phase=$1" {}/handler/job_event'.format(BASE_URL),
-            '    else',
-            '        echo "$1 $2"',
-            '        curl -k -s -o $jd/curl_$1_signal.log'
-            ' -d "jobid=$JOBID" -d "phase=$1" --data-urlencode "error_msg=$2" {}/handler/job_event'.format(BASE_URL),
-            '    fi',
-            '}',
         ]
-        # Function to copy results from wd to jd
-        cp_results = [
-            'copy_results() {',
-            '    echo "[`timestamp`] Copy results"',
-        ]
-        for rname, r in job.jdl.content['generated'].iteritems():
-            # TODO: copy directly to archive directory (?)
-            fname = job.get_result_filename(rname)
-            cp_results.append(
-                '    [ -f $wd/{fname} ]'
-                ' && {{ cp $wd/{fname} $jd/results; echo "Found and copied: {rname}={fname}"; }}'
-                ' || echo "NOT FOUND: {rname}={fname}"'
-                ''.format(rname=rname, fname=fname)
-            )
-        cp_results.append(
-            '}',
-        )
-        batch.extend(cp_results)
         # Error/Suspend/Term handler (send signals to server with curl)
         batch.extend([
-            'set -e ',
+            #'set -e ',
             'error_handler() {',
             '    touch $jd/error',
             '    copy_results',
@@ -119,13 +89,59 @@ class Manager(object):
             'trap "error_handler" ERR',
             'trap "term_handler" SIGHUP SIGINT SIGQUIT SIGTERM',
         ])
+        # Useful functions
+        batch.extend([
+            'job_event() {',
+            '    if [ -z "$2" ]',
+            '    then',
+            '        curl -k -s -o $jd/curl_$1_signal.log'
+            ' -d "jobid=$JOBID" -d "phase=$1" {}/handler/job_event'.format(BASE_URL),
+            '    else',
+            '        echo "$1 $2"',
+            '        curl -k -s -o $jd/curl_$1_signal.log'
+            ' -d "jobid=$JOBID" -d "phase=$1" --data-urlencode "error_msg=$2" {}/handler/job_event'.format(BASE_URL),
+            '    fi',
+            '}',
+        ])
+        # Function to copy results from wd to jd
+        cp_results = [
+            'copy_results() {',
+        ]
+        for rname, r in job.jdl.content['generated'].iteritems():
+            # TODO: copy directly to archive directory (?)
+            fname = job.get_result_filename(rname)
+            line = [
+                '    if [ -f $wd/{fname} ]; then',
+                "        hash=`shasum $wd/{fname} | awk '{{print $1}}'`",
+                '        echo {rname} >> $jd/results.yml',
+                '        echo "  name: {fname}" >> $jd/results.yml',
+                '        echo "  hash: "$hash >> $jd/results.yml',
+                '        echo "Found and copied: {rname}={fname}";',
+                '        cp $wd/{fname} $rs;',
+                '    else',
+                '        echo "NOT FOUND: {rname}={fname}"',
+                '    fi',
+            ]
+            cp_results.append('\n'.join(line).format(rname=rname, fname=fname))
+            # cp_results.append(
+            #     '    [ -f $wd/{fname} ]'
+            #     ' && {{ cp $wd/{fname} $rs; echo "Found and copied: {rname}={fname}"; }}'
+            #     ' || echo "NOT FOUND: {rname}={fname}"'
+            #     ''.format(rname=rname, fname=fname)
+            # )
+        cp_results.append(
+            '}',
+        )
+        batch.extend(cp_results)
         # Set $wd and $jd
         batch.extend([
             '### PREPARE DIRECTORIES',
-            'wd={}'.format(wd),
             'jd={}'.format(jd),
+            'wd={}'.format(wd),
+            'rs={}'.format(rs),
             'cp {}/{}.sh $jd'.format(self.scripts_path, job.jobname),
             'mkdir -p $wd',
+            'mkdir -p $rs',
             'cd $wd',
             # 'echo "User is `id`"',
             # 'echo "Working dir is $wd"',
@@ -147,6 +163,7 @@ class Manager(object):
             '### COPY RESULTS',
             'echo "[`timestamp`] List files in workdir"',
             'ls -oht',
+            'echo "[`timestamp`] Copy results"',
             'copy_results',
             '### CLEAN',
             'rm -rf $wd',
@@ -237,7 +254,7 @@ class LocalManager(Manager):
             try:
                 p = psutil.Process(pid)
             except psutil.NoSuchProcess as e:
-                logger.info('process {} terminated'.format(pid))
+                logger.info('process {} ended (NoSuchProcess)'.format(pid))
                 return
             # TODO: Handle sleeping, idle, suspended processes?...
             # Handle stopped processes
@@ -277,7 +294,7 @@ class LocalManager(Manager):
             logger.info('process {} terminated with errors'.format(pid))
         # Otherwise process has terminated
         else:
-            logger.info('process {} terminated'.format(pid))
+            logger.info('process {} terminated (rcode=0)'.format(pid))
 
     def start(self, job):
         """Start job locally
@@ -313,7 +330,7 @@ class LocalManager(Manager):
             '#!/bin/bash -l',
             '### INIT LocalManager',
             # Redirect stdout and stderr to files
-            'exec >{jd}/results/stdout.log 2>{jd}/results/stderr.log'.format(jd=jd),
+            'exec >{jd}/stdout.log 2>{jd}/stderr.log'.format(jd=jd),
         ]
         batch.extend(
             self._make_batch(job)
@@ -511,6 +528,10 @@ class SLURMManager(Manager):
         cmd = ['ssh', self.ssh_arg,
                'rm -rf {}/{}'.format(self.jobdata_path, job.jobid)]
         sp.check_output(cmd, stderr=sp.STDOUT)
+        # Delete results_path
+        cmd = ['ssh', self.ssh_arg,
+               'rm -rf {}/{}'.format(self.results_path, job.jobid)]
+        sp.check_output(cmd, stderr=sp.STDOUT)
 
     def get_status(self, job):
         """Get job status (phase) from SLURM server
@@ -549,11 +570,19 @@ class SLURMManager(Manager):
         Returns:
             list of results?
         """
+        # Retrieve jobdata (scripts used, stdout/err...)
         cmd = ['scp', '-rp',
                '{}:{}/{}'.format(self.ssh_arg, self.jobdata_path, job.jobid),
                JOBDATA_PATH]
         logger.debug(' '.join(cmd))
         sp.check_output(cmd, stderr=sp.STDOUT)
+        # Retrieve results
+        if COPY_RESULTS:
+            cmd = ['scp', '-rp',
+                   '{}:{}/{}'.format(self.ssh_arg, self.results_path, job.jobid),
+                   RESULTS_PATH]
+            logger.debug(' '.join(cmd))
+            sp.check_output(cmd, stderr=sp.STDOUT)
 
     def cp_script(self, jobname):
         """Copy job script to SLURM server"""
