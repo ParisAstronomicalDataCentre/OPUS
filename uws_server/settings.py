@@ -102,9 +102,8 @@ ARCHIVE = 'Local'
 ARCHIVE_PATH = ''
 ARCHIVE_URL = ''
 
-# Copy back results/logs
+# Copy back results
 COPY_RESULTS = True  # copy results from Manager to UWS server (may be irrelevant if Manager = Local)
-COPY_LOGS = True
 # Add the provenance files to the results of the jobs
 GENERATE_PROV = True
 
