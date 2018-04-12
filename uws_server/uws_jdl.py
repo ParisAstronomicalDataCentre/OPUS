@@ -463,13 +463,13 @@ class VOTFile(JDLFile):
                         for o in p['options'].split(','):
                             ETree.SubElement(values, 'OPTION', attrib={'value': o})
                 group_params.append(param)
-        utypes = {
+        # Prepare used block
+        used_utypes = {
             'default': 'voprov:Entity.id',
             'role': 'voprov:UsedDescription.role',
             'url': 'voprov:EntityDescription.url',
             'content_type': 'voprov:EntityDescription.content_type',
         }
-        # Prepare used block
         if 'used' in self.content:
             for pname, p in self.content['used'].iteritems():
                 attrib={
@@ -486,10 +486,16 @@ class VOTFile(JDLFile):
                         'value': p.get(edattr, ''),
                         'arraysize': "*",
                         'datatype': "char",
-                        'utype': utypes[edattr],
+                        'utype': used_utypes[edattr],
                     })
                 group_used.append(used)
         # Prepare results block
+        gen_utypes = {
+            'default': 'voprov:Entity.id',
+            'role': 'voprov:WasGeneratedByDescription.role',
+            'url': 'voprov:EntityDescription.url',
+            'content_type': 'voprov:EntityDescription.content_type',
+        }
         if 'generated' in self.content:
             for rname, r in self.content['generated'].iteritems():
                 attrib={
@@ -506,7 +512,7 @@ class VOTFile(JDLFile):
                         'value': r.get(edattr, ''),
                         'arraysize': "*",
                         'datatype': "char",
-                        'utype': utypes[edattr],
+                        'utype': gen_utypes[edattr],
                     })
                 group_generated.append(result)
         # Write file
