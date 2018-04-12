@@ -265,8 +265,8 @@ def test_db():
         with open(filename) as f:
             sql = f.read()
         db = storage.__dict__[STORAGE + 'JobStorage']()
-        db.cursor.executescript(sql)
-        db.conn.commit()
+        db.session.query(sql)
+        db.session.commit()
         logger.info('Database initialized using ' + filename)
     except:
         abort_500_except()

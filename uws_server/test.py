@@ -10,7 +10,6 @@ import unittest
 from webtest import TestApp
 
 # Redefine LOG_FILE, SQLITE_FILE, MANAGER
-STORAGE = 'SQLite'
 SQLITE_FILE_NAME = 'job_database_test.db'
 LOG_FILE_SUFFIX = '_test'
 MANAGER = ''
