@@ -12,9 +12,16 @@ uws_client = UWS.client.Client(url=url)  # , user=user_name, password=password)
 # Create dummy job with default parameters
 job = uws_client.new_job({'other': 'test'})
 job = uws_client.run_job(job.job_id)
+pid = job.job_info[0].text
+print(pid)
 
 # send kill signal to process
-pid = job.job_info[0].text
 
+# send hup
 
-print(pid)
+# send quit
+
+# send term
+
+# send stop
+
