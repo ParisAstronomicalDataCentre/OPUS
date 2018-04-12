@@ -446,6 +446,11 @@ class Job(object):
         logger.info('add {} file to results'.format(rfname))
 
     def add_results(self):
+        # Read results.yml to know generated results
+        # TODO: store results in local archive (if ARCHIVE='Local', i.e. RESULTS_PATH/{jobid})
+        # TODO: store results as entities (entity_id, job_id, filename, hash, path, access_url, owner)
+        # access_url computed for UWS server (retrieve endpoint with entity_id)
+        #                     or distant server (url given with $ID to replace by entity_id)
         # Get JDL to know expected job results
         if not self.jdl.content:
             self.jdl.read(self.jobname)
@@ -454,8 +459,6 @@ class Job(object):
             rfname = self.get_result_filename(rname)
             rfpath = '{}/{}/{}'.format(RESULTS_PATH, self.jobid, rfname)
             if os.path.isfile(rfpath):
-                # TODO: check if entity exist (though it should be a new result ?)
-                # TODO: get hash and entity_id (new or existant)
                 self.add_result_entry(rname, rfname, r['content_type'])
             else:
                 logger.info('No result for {}'.format(rname))
@@ -480,6 +483,7 @@ class Job(object):
                 'xml': 'text/xml',
                 'svg': 'image/svg+xml'}
             try:
+                # TODO: check input entities and retrieve their provenance...
                 pdoc = provenance.job2prov(self)
                 provenance.prov2json(pdoc, rfdir + 'provenance.json')
                 provenance.prov2xml(pdoc, rfdir + 'provenance.xml')
@@ -605,6 +609,7 @@ class Job(object):
             if new_phase in ['COMPLETED', 'ABORTED', 'ERROR']:
                 self.manager.get_jobdata(self)
                 # Add results, logs, provenance (if they exist...) to job control db
+                # TODO: store results as entities (entity_id, job_id, filename, hash, path, access_url, owner)
                 self.add_results()
                 self.add_logs()
             if new_phase in ['ERROR', 'ABORTED']:
