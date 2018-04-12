@@ -286,7 +286,7 @@
 				$('input[name=doculink]').val(jdl.doculink);
 				$('input[name=contact_name]').val(jdl.contact_name);
 				$('input[name=contact_email]').val(jdl.contact_email);
-				$('input[name=executionduration]').val(jdl.executionduration);
+				$('input[name=executionDuration]').val(jdl.executionDuration);
 				$('input[name=quote]').val(jdl.quote);
 				$('textarea[name=annotation]').val(jdl.annotation);
 				// Fill param_list table

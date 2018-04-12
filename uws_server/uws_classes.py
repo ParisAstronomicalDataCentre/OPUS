@@ -214,7 +214,7 @@ class Job(object):
         if not self.jdl.content:
             self.jdl.read(self.jobname)
         # Pop UWS attributes keywords from POST or JDL
-        self.execution_duration = int(post.pop('uws:execution_duration', self.jdl.content.get('executionduration', EXECUTION_DURATION_DEF)))
+        self.execution_duration = int(post.pop('executionDuration', self.jdl.content.get('executionDuration', EXECUTION_DURATION_DEF)))
         self.quote = int(post.pop('uws:quote', self.jdl.content.get('quote', self.execution_duration)))
         # TODO:
         # Search inputs in POST/files
@@ -378,7 +378,12 @@ class Job(object):
     def _results_to_xml_fill(self, xml_results):
         for rname, r in self.results.iteritems():
             if r['url']:
-                ETree.SubElement(xml_results, 'uws:result', attrib={'id': rname, 'xlink:href': r['url']})
+                attrib={
+                    'id': rname,
+                    'xlink:href': r['url'],
+                    'mime-type': r['content_type'],
+                }
+                ETree.SubElement(xml_results, 'uws:result', attrib=attrib)
 
     def results_to_xml(self):
         """Returns the XML representation of job results"""
@@ -412,19 +417,20 @@ class Job(object):
         }
         xml_job = ETree.Element('uws:job', attrib=xmlns_uris)
         add_sub_elt(xml_job, 'uws:jobId', self.jobid)
+        add_sub_elt(xml_job, 'uws:runId', self.owner)
+        add_sub_elt(xml_job, 'uws:ownerId', self.owner)
         add_sub_elt(xml_job, 'uws:phase', self.phase)
-        add_sub_elt(xml_job, 'uws:executionDuration', self.execution_duration)
-        add_sub_elt(xml_job, 'uws:quote', self.quote)
-        add_sub_elt(xml_job, 'uws:error', self.error)
         add_sub_elt(xml_job, 'uws:creationTime', self.creation_time)
         add_sub_elt(xml_job, 'uws:startTime', self.start_time)
         add_sub_elt(xml_job, 'uws:endTime', self.end_time)
+        add_sub_elt(xml_job, 'uws:quote', self.quote)
+        add_sub_elt(xml_job, 'uws:executionDuration', self.execution_duration)
         add_sub_elt(xml_job, 'uws:destruction', self.destruction_time)
-        add_sub_elt(xml_job, 'uws:ownerId', self.owner)
         xml_params = ETree.SubElement(xml_job, 'uws:parameters')
         self._parameters_to_xml_fill(xml_params)
         xml_results = ETree.SubElement(xml_job, 'uws:results')
         self._results_to_xml_fill(xml_results)
+        add_sub_elt(xml_job, 'uws:errorSummary', self.error)
         xml_jobinfo = ETree.SubElement(xml_job, 'uws:jobInfo')
         ETree.SubElement(xml_jobinfo, 'process_id').text = str(self.process_id)
         return ETree.tostring(xml_job)
