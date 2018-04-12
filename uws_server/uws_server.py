@@ -528,17 +528,20 @@ def get_result_file(jobid, rname):  # , rfname):
             rfname = result_details[rname]
         else:
             rfname = job.get_result_filename(rname)
+        if rname in ['stdout', 'stderr']:
+            return static_file(rfname, root='{}/{}'.format(JOBDATA_PATH, job.jobid),
+                               mimetype='text')
         #response.content_type = 'text/plain; charset=UTF-8'
         #return str(job.results[result]['url'])
         content_type = job.results[rname]['content_type']
         logger.debug('{} {} {} {} {} [{}]'.format(job.jobname, jobid, rname, rfname, content_type, user))
         response.set_header('Content-type', content_type)
         if any(x in content_type for x in ['text', 'xml', 'json', 'image/png', 'image/jpeg']):
-            return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid),
+            return static_file(rfname, root='{}/{}'.format(RESULTS_PATH, job.jobid),
                                mimetype=content_type)
         else:
             response.set_header('Content-Disposition', 'attachment; filename="{}"'.format(rfname))
-            return static_file(rfname, root='{}/{}/results'.format(JOBDATA_PATH, job.jobid),
+            return static_file(rfname, root='{}/{}'.format(RESULTS_PATH, job.jobid),
                                mimetype=content_type, download=True)
     except JobAccessDenied as e:
         abort_403(e.message)

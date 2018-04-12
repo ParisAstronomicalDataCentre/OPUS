@@ -425,6 +425,8 @@ class Job(object):
         self._parameters_to_xml_fill(xml_params)
         xml_results = ETree.SubElement(xml_job, 'uws:results')
         self._results_to_xml_fill(xml_results)
+        xml_jobinfo = ETree.SubElement(xml_job, 'uws:jobInfo')
+        ETree.SubElement(xml_jobinfo, 'process_id').text = str(self.pid)
         return ETree.tostring(xml_job)
 
 
@@ -444,7 +446,7 @@ class Job(object):
         # Check results and all links to db (maybe not all results listed in JDL have been created)
         for rname, r in self.jdl.content['generated'].iteritems():
             rfname = self.get_result_filename(rname)
-            rfpath = '{}/{}/results/{}'.format(JOBDATA_PATH, self.jobid, rfname)
+            rfpath = '{}/{}/{}'.format(RESULTS_PATH, self.jobid, rfname)
             if os.path.isfile(rfpath):
                 # TODO: check if entity exist (though it should be a new result ?)
                 # TODO: get hash and entity_id (new or existant)
@@ -454,7 +456,7 @@ class Job(object):
 
     def add_logs(self):
         # Link job logs stdout and stderr (added as a result)
-        rfdir = '{}/{}/results/'.format(JOBDATA_PATH, self.jobid)
+        rfdir = '{}/{}/'.format(JOBDATA_PATH, self.jobid)
         for rname in ['stdout', 'stderr']:
             rfname = rname + '.log'
             if os.path.isfile(rfdir + rfname):
@@ -465,7 +467,7 @@ class Job(object):
     def add_provenance(self):
         # Create PROV files (added as a result)
         if GENERATE_PROV:
-            rfdir = '{}/{}/results/'.format(JOBDATA_PATH, self.jobid)
+            rfdir = '{}/{}/'.format(RESULTS_PATH, self.jobid)
             ptypes = ['json', 'xml', 'svg']
             content_types = {
                 'json': 'application/json',
@@ -596,7 +598,7 @@ class Job(object):
             # Set end_time
             if new_phase in ['COMPLETED', 'ABORTED', 'ERROR']:
                 self.manager.get_jobdata(self)
-                # Add results, logs, provenance (if they exist...)
+                # Add results, logs, provenance (if they exist...) to job control db
                 self.add_results()
                 self.add_logs()
             if new_phase in ['ERROR', 'ABORTED']:
