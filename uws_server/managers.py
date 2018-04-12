@@ -68,6 +68,17 @@ class Manager(object):
         # Error/Suspend/Term handler (send signals to server with curl)
         batch.extend([
             #'set -e ',
+            'job_event() {',
+            '    if [ -z "$2" ]',
+            '    then',
+            '        curl -k -s -o $jd/curl_$1_signal.log'
+            ' -d "jobid=$JOBID" -d "phase=$1" {}/handler/job_event'.format(BASE_URL),
+            '    else',
+            '        echo "$1 $2"',
+            '        curl -k -s -o $jd/curl_$1_signal.log'
+            ' -d "jobid=$JOBID" -d "phase=$1" --data-urlencode "error_msg=$2" {}/handler/job_event'.format(BASE_URL),
+            '    fi',
+            '}',
             'error_handler() {',
             '    touch $jd/error',
             '    copy_results',
@@ -80,28 +91,17 @@ class Manager(object):
             'term_handler() {',
             '    touch $jd/error',
             '    copy_results',
-            '    msg="Early termination in ${BASH_SOURCE[1]##*/} running command: $BASH_COMMAND"',
+            '    msg="Early termination in ${BASH_SOURCE[1]##*/} (signal $1 received)"',
             '    job_event "ERROR" "$msg"',
             '    rm -rf $wd',
             '    trap - SIGHUP SIGINT SIGQUIT SIGTERM ERR',
             '    exit 1',
             '}',
+            'for sig in SIGHUP SIGINT SIGQUIT SIGTERM; do',
+            '     trap "term_handler $sig" $sig',
+            ' done',
             'trap "error_handler" ERR',
-            'trap "term_handler" SIGHUP SIGINT SIGQUIT SIGTERM',
-        ])
-        # Useful functions
-        batch.extend([
-            'job_event() {',
-            '    if [ -z "$2" ]',
-            '    then',
-            '        curl -k -s -o $jd/curl_$1_signal.log'
-            ' -d "jobid=$JOBID" -d "phase=$1" {}/handler/job_event'.format(BASE_URL),
-            '    else',
-            '        echo "$1 $2"',
-            '        curl -k -s -o $jd/curl_$1_signal.log'
-            ' -d "jobid=$JOBID" -d "phase=$1" --data-urlencode "error_msg=$2" {}/handler/job_event'.format(BASE_URL),
-            '    fi',
-            '}',
+            #'trap "term_handler" SIGHUP SIGINT SIGQUIT SIGTERM',
         ])
         # Function to copy results from wd to jd
         cp_results = [
