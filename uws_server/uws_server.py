@@ -325,10 +325,10 @@ def get_jobnames():
         # jobnames = ['copy', 'ctbin']
         # List jdl files (=available jobs)
         jdl = uws_jdl.__dict__[JDL]()
-        flist = glob.glob('{}/*.sh'.format(jdl.scripts_path))
+        flist = glob.glob('{}/*{}'.format(jdl.jdl_path, jdl.extension))
         # Check if JDL file exists on server?
-        jobnames_sh = [os.path.splitext(os.path.basename(f))[0] for f in flist]
-        jobnames = [j for j in jobnames_sh if os.path.isfile(jdl._get_filename(j))]
+        jobnames_jdl = [f.split('/')[-1].split(jdl.extension)[0] for f in flist]
+        jobnames = [j for j in jobnames_jdl if os.path.isfile('{}/{}.sh'.format(jdl.scripts_path, j))]
         jobnames.sort()
         jobnames_json = {'jobnames': jobnames}
         return jobnames_json
@@ -361,6 +361,23 @@ def create_new_job_definition():
     response.content_type = 'text/plain; charset=UTF-8'
     return 'New job created: new/{}'.format(jobname)
     # redirect('/client/job_definition?jobname=new/{}&msg=new'.format(jobname), 303)
+
+
+@app.get('/jdl/<jobname:path>/convert')
+def convert_jdl(jobname):
+    """
+    Get json description file for jobname
+    :param jobname:
+    :return: json description
+    """
+    try:
+        #logger.info(jobname)
+        uws_jdl.update_vot(jobname)
+    except UserWarning as e:
+        abort_404(e.args[0])
+    except:
+        abort_500_except()
+    return 'JDL converted for {}'.format(jobname)
 
 
 @app.get('/jdl/<jobname:path>/json')
