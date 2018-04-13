@@ -153,7 +153,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
         myDateTime = DateTime().with_variant(String(19), 'sqlite')
         myBoolean = Boolean().with_variant(String(5), 'sqlite')
 
-        class Jobs(self.Base):
+        class Job(self.Base):
             __tablename__ = 'jobs'
             jobid = Column(String(80), primary_key=True)  # uuid: max=36
             jobname = Column(String(255))
@@ -171,7 +171,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
             run_id = Column(String(64), nullable=True)
             process_id = Column(BigInteger(), nullable=True)
 
-        class Parameters(self.Base):
+        class Parameter(self.Base):
             __tablename__ = 'job_parameters'
             jobid = Column(String(80), ForeignKey("jobs.jobid"), primary_key=True)  # uuid: max=36
             name = Column(String(255), primary_key=True)
@@ -180,7 +180,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
             # is_entity = Column(myBoolean, default=False, nullable=True)
             # entity_id = Column(String(255), ForeignKey("entities.id"), nullable=True)
 
-        class Results(self.Base):
+        class Result(self.Base):
             __tablename__ = 'job_results'
             jobid = Column(String(80), ForeignKey("jobs.jobid"), primary_key=True)  # uuid: max=36
             name = Column(String(255), primary_key=True)
@@ -188,27 +188,30 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
             content_type = Column(String(64), nullable=True)
             # entity_id = Column(String(255), ForeignKey("entities.id"), nullable=True)
 
-        class Users(self.Base):
+        class User(self.Base):
             __tablename__ = 'users'
             name = Column(String(80), primary_key=True)
             pid = Column(String(255))
             roles = Column(String(255), nullable=True)
 
-        class Entities(self.Base):
+        class Entity(self.Base):
             __tablename__ = 'entities'
-            id = Column(String(80), primary_key=True)
+            id = Column(String(80), primary_key=True, default=uuid.uuid4)
+            jobid = Column(String(80), ForeignKey("jobs.jobid"))  # uuid: max=36
+            result_name = Column(String(255))
+            file_name = Column(String(255))
             hash = Column(String(255))
-            filename = Column(String(255), nullable=True)
-            path = Column(String(255), nullable=True)
-
+            creation_time = Column(myDateTime)
+            access_url = Column(String(255))
+            owner = Column(String(64), nullable=True)
 
         # self.Base.prepare(self.engine, reflect=True)
         self.Base.metadata.create_all(self.engine)
-        self.Jobs = Jobs  # self.Base.classes.jobs
-        self.Parameters = Parameters  # self.Base.classes.job_parameters
-        self.Results = Results  # self.Base.classes.job_results
-        self.Users = Users
-        self.Entities = Entities
+        self.Job = Job  # self.Base.classes.jobs
+        self.Parameter = Parameter  # self.Base.classes.job_parameters
+        self.Result = Result  # self.Base.classes.job_results
+        self.User = User
+        self.Entity = Entity
         self.Session = sessionmaker(bind=self.engine)
         self.session = self.Session()
 
@@ -232,12 +235,12 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
 
     def remove_user(self, name, pid):
         """Remove user from storage"""
-        self.session.query(self.Users).filter_by(name=name, pid=pid).delete()
+        self.session.query(self.User).filter_by(name=name, pid=pid).delete()
         self.session.commit()
 
     def add_role(self, name, pid, role=''):
         """Add role to user, i.e. access to a job"""
-        row = self.session.query(self.Users).filter_by(name=name, pid=pid).first()
+        row = self.session.query(self.User).filter_by(name=name, pid=pid).first()
         roles = row.roles.split(',')
         if not role in roles:
             roles.append(role)
@@ -249,7 +252,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
 
     def remove_role(self, name, pid, role=''):
         """Get job list from storage, i.e. access to a job"""
-        row = self.session.query(self.Users).filter_by(name=name, pid=pid).first()
+        row = self.session.query(self.User).filter_by(name=name, pid=pid).first()
         roles = row.roles.split(',')
         if role in roles:
             roles.pop(role)
@@ -260,7 +263,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
             logger.debug('Role {} not found for user {}:{}'.format(role, name, pid))
 
     def has_role(self, name, pid, role=''):
-        row = self.session.query(self.Users).filter_by(name=name, pid=pid).first()
+        row = self.session.query(self.User).filter_by(name=name, pid=pid).first()
         if row:
             roles = row.roles.split(',')
             if ('all' in roles) or (role in roles):
@@ -286,7 +289,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
             'value': job.parameters[pname]['value'],
             'byref': job.parameters[pname]['byref']
         }
-        p = self.Parameters(**d)
+        p = self.Parameter(**d)
         self.session.merge(p)
 
     def _save_result(self, job, rname):
@@ -297,7 +300,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
             'url': job.results[rname]['url'],
             'content_type': job.results[rname]['content_type']
         }
-        r = self.Results(**d)
+        r = self.Result(**d)
         self.session.merge(r)
 
     def save(self, job, save_attributes=True, save_parameters=True, save_results=True):
@@ -305,7 +308,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
         if save_attributes:
             # Save job description to db
             d = {col: job.__dict__[col] for col in JOB_ATTRIBUTES}
-            j = self.Jobs(**d)
+            j = self.Job(**d)
             self.session.merge(j)
             self.session.commit()
         if save_parameters:
@@ -331,13 +334,13 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
         if get_attributes:
             if from_process_id:
                 # Query db for jobname and jobid using process_id
-                row = self.session.query(self.Jobs).filter_by(process_id=job.process_id).first()
+                row = self.session.query(self.Job).filter_by(process_id=job.process_id).first()
                 if not row:
                     raise NotFoundWarning('Job with process_id={} NOT FOUND'.format(job.process_id))
                 # job.jobname = row.jobname
                 # job.jobid = row.jobid
             else:
-                row = self.session.query(self.Jobs).filter_by(jobid=job.jobid).first()
+                row = self.session.query(self.Job).filter_by(jobid=job.jobid).first()
                 if not row:
                     raise NotFoundWarning('Job "{}" NOT FOUND'.format(job.jobid))
             for k in JOB_ATTRIBUTES:
@@ -345,7 +348,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
                     job.__dict__[k] = row.__dict__[k]
         if get_parameters:
             # Query db for job parameters
-            params = self.session.query(self.Parameters).filter_by(jobid=job.jobid).all()
+            params = self.session.query(self.Parameter).filter_by(jobid=job.jobid).all()
             # Format results to a parameter dict
             params_dict = {
                 row.name: {
@@ -359,7 +362,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
             job.parameters = {}
         if get_results:
             # Query db for job results
-            results = self.session.query(self.Results).filter_by(jobid=job.jobid).all()
+            results = self.session.query(self.Result).filter_by(jobid=job.jobid).all()
             results_dict = {
                 row.name: {
                     'url': row.url,
@@ -373,22 +376,22 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
 
     def delete(self, job):
         """Delete job information from storage"""
-        self.session.query(self.Jobs).filter_by(jobid=job.jobid).delete()
-        self.session.query(self.Parameters).filter_by(jobid=job.jobid).delete()
-        self.session.query(self.Results).filter_by(jobid=job.jobid).delete()
+        self.session.query(self.Job).filter_by(jobid=job.jobid).delete()
+        self.session.query(self.Parameter).filter_by(jobid=job.jobid).delete()
+        self.session.query(self.Result).filter_by(jobid=job.jobid).delete()
         self.session.commit()
 
     def get_list(self, joblist, phase=None, after=None, last=None, where_owner=True):
         """Get job list from storage"""
-        query = self.session.query(self.Jobs).filter_by(jobname=joblist.jobname)
+        query = self.session.query(self.Job).filter_by(jobname=joblist.jobname)
         if phase:
-            query = query.filter(self.Jobs.phase.in_(phase))
+            query = query.filter(self.Job.phase.in_(phase))
         if after:
-            query = query.filter(self.Jobs.creation_time >= after)
+            query = query.filter(self.Job.creation_time >= after)
         if where_owner:
             query = query.filter_by(owner=joblist.user.name)
             query = query.filter_by(owner_pid=joblist.user.pid)
-        query = query.order_by(self.Jobs.creation_time.asc())
+        query = query.order_by(self.Job.creation_time.asc())
         if last:
             query = query.limit(last)
         jobs = query.all()
