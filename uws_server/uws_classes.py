@@ -10,6 +10,7 @@ import shutil
 import urllib
 import datetime as dt
 import xml.etree.ElementTree as ETree
+import yaml
 from blinker import signal
 import uws_jdl
 import storage
@@ -447,10 +448,16 @@ class Job(object):
 
     def add_results(self):
         # Read results.yml to know generated results
-        # TODO: store results in local archive (if ARCHIVE='Local', i.e. RESULTS_PATH/{jobid})
-        # TODO: store results as entities (entity_id, job_id, filename, hash, path, access_url, owner)
+        rf_name = os.path.join(JOBDATA_PATH, self.jobid, 'results.yml')
+        if os.path.isfile(rf_name):
+            with open(rf_name, 'r') as rf:
+                result_list = yaml.load(rf)
+
+        # TODO: store results in local archive (if ARCHIVE='Local', i.e. keep it in RESULTS_PATH/{jobid} ?)
+        # TODO: store results as entities (entity_id, job_id, result_id, filename, creation_date, hash, path, access_url, owner)
         # access_url computed for UWS server (retrieve endpoint with entity_id)
         #                     or distant server (url given with $ID to replace by entity_id)
+
         # Get JDL to know expected job results
         if not self.jdl.content:
             self.jdl.read(self.jobname)
