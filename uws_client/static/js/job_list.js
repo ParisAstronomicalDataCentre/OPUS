@@ -38,10 +38,11 @@
 
     function load_job_list() {
         var jobname = $('select[name=jobname]').val();
-        // write new url in browser bar
-        history.pushState({ jobname: jobname }, '', "/client/job_list/" + jobname);
         // init UWS Client
         uws_client.initClient(server_url, [jobname]);
+        // write new url in browser bar
+        history.pushState({ jobname: jobname }, '', uws_client.client_job_form_url + "/" + jobname);
+        // Prepare job list
         uws_client.getJobList();
         if ( $( "#job_id" ).length ) {
             uws_client.selectJob($( "#jobid" ).attr('value'));
@@ -73,7 +74,7 @@
         $('#create_new_job').click( function() {
             var jobname = $('select[name=jobname]').val();
             if (jobname) {
-                window.location.href =  "/client/job_form/" + jobname;
+                window.location.href =  uws_client.client_job_form_url + "/" + jobname;
             }
         });
 

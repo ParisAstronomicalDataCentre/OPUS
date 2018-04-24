@@ -446,9 +446,9 @@ def home():
     return render_template('home.html')
 
 
-@app.route('/job_list', defaults={'jobname': ''})
-@app.route('/job_list/', defaults={'jobname': ''})
-@app.route('/job_list/<jobname>')
+@app.route('/jobs', defaults={'jobname': ''})
+@app.route('/jobs/', defaults={'jobname': ''})
+@app.route('/jobs/<jobname>')
 #@login_required
 def job_list(jobname):
     """Job list page"""
