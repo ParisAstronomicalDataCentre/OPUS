@@ -75,6 +75,18 @@ def check_permissions(job):
     #    logger.debug('Permissions not checked for job {}/{}'.format(job.jobname, job.jobid))
 
 
+def check_owner(job):
+    """Check if user has rights to create/edit such a job, else raise JobAccessDenied"""
+    if CHECK_OWNER:
+        if job.user == User(job.owner, job.owner_pid):
+            pass
+        else:
+            if job.user in special_users:
+                pass
+            else:
+                raise JobAccessDenied('User {} is not the owner of the job'.format(job.user.name))
+
+
 # ---------
 # Job class
 
@@ -98,7 +110,7 @@ class Job(object):
     def __init__(self, jobname, jobid, user,
                  get_attributes=False, get_parameters=False, get_results=False,
                  from_post=None, from_process_id=False,
-                 check_owner=True):
+                 run_check_owner=True):
         """Initialize from storage or from POST
 
         from_post should contain the request object if not None
@@ -132,14 +144,8 @@ class Job(object):
                               get_results=get_results,
                               from_process_id=from_process_id)
             # Check if the user is the owner of the job, else raise JobAccessDenied
-            if check_owner:
-                if self.user == User(self.owner, self.owner_pid):
-                    pass
-                else:
-                    if self.user in special_users:
-                        pass
-                    else:
-                        raise JobAccessDenied('User {} is not the owner of the job'.format(user.name))
+            if run_check_owner:
+                check_owner(self)
         elif from_post:
             # Create a new PENDING job and save to storage
             now = dt.datetime.now()
@@ -418,7 +424,7 @@ class Job(object):
         }
         xml_job = ETree.Element('uws:job', attrib=xmlns_uris)
         add_sub_elt(xml_job, 'uws:jobId', self.jobid)
-        add_sub_elt(xml_job, 'uws:runId', self.owner)
+        add_sub_elt(xml_job, 'uws:runId', self.run_id)
         add_sub_elt(xml_job, 'uws:ownerId', self.owner)
         add_sub_elt(xml_job, 'uws:phase', self.phase)
         add_sub_elt(xml_job, 'uws:creationTime', self.creation_time)
@@ -433,7 +439,8 @@ class Job(object):
         self._results_to_xml_fill(xml_results)
         add_sub_elt(xml_job, 'uws:errorSummary', self.error)
         xml_jobinfo = ETree.SubElement(xml_job, 'uws:jobInfo')
-        ETree.SubElement(xml_jobinfo, 'process_id').text = str(self.process_id)
+        # ETree.SubElement(xml_jobinfo, 'process_id').text = str(self.process_id)
+        add_sub_elt(xml_jobinfo, 'process_id', str(self.process_id))
         return ETree.tostring(xml_job)
 
 

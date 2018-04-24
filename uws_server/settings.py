@@ -44,7 +44,8 @@ ADMIN_EMAIL = 'mathieu.servillat@obspm.fr'
 JOB_EVENT_PID = 'c18de332'  # PID for special user job_event, used internally
 MAINTENANCE_PID = '419cb761'  # PID for special user maintenant, used internally
 ALLOW_ANONYMOUS = True
-CHECK_PERMISSIONS = True
+CHECK_PERMISSIONS = False
+CHECK_OWNER = False
 
 # Identifiers will be generated with the following UUID_GEN function
 UUID_LENGTH = 6   # length of uuid identifiers from the right, max=36
