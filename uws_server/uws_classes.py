@@ -66,7 +66,8 @@ def check_permissions(job):
     """Check if user has rights to create/edit such a job, else raise JobAccessDenied"""
     if CHECK_PERMISSIONS:
         if job.user in special_users:
-           logger.debug('Permission granted for special user {} (job {}/{})'.format(job.user.name, job.jobname, job.jobid))
+            logger.debug('Permission granted for special user {} (job {}/{})'.format(job.user.name, job.jobname, job.jobid))
+            pass
         else:
             if job.jobname:
                 if not job.storage.has_access(job.user, job):
@@ -78,10 +79,10 @@ def check_permissions(job):
 def check_owner(job):
     """Check if user has rights to create/edit such a job, else raise JobAccessDenied"""
     if CHECK_OWNER:
-        if job.user == User(job.owner, job.owner_pid):
+        if job.user in special_users:
             pass
         else:
-            if job.user in special_users:
+            if job.user == User(job.owner, job.owner_pid):
                 pass
             else:
                 raise JobAccessDenied('User {} is not the owner of the job'.format(job.user.name))
@@ -126,15 +127,18 @@ class Job(object):
             self.process_id = None
         self.user = user
         # Link to the storage, e.g. SQLite, see settings.py
-        self.storage = storage.__dict__[STORAGE + 'JobStorage']()
+        # self.storage = storage.__dict__[STORAGE + 'JobStorage']()
+        self.storage = getattr(storage, STORAGE + 'JobStorage')()
 
         # Check if user has rights to create/edit such a job, else raise JobAccessDenied
         check_permissions(self)
 
         # Link to the job manager, e.g. SLURM, see settings.py
-        self.manager = managers.__dict__[MANAGER + 'Manager']()
+        # self.manager = managers.__dict__[MANAGER + 'Manager']()
+        self.manager = getattr(managers, MANAGER + 'Manager')()
         # Prepare jdl attribute, see settings.py
-        self.jdl = uws_jdl.__dict__[JDL]()
+        # self.jdl = uws_jdl.__dict__[JDL]()
+        self.jdl = getattr(uws_jdl, JDL)()
         # Fill job attributes
         if get_attributes or get_parameters or get_results:
             # Get from storage
@@ -150,9 +154,9 @@ class Job(object):
             # Create a new PENDING job and save to storage
             now = dt.datetime.now()
             destruction = dt.timedelta(DESTRUCTION_INTERVAL)  # default interval for UWS server
-            duration = dt.timedelta(0, 60)  # default duration of 60s, from jdl ?
+            duration = dt.timedelta(0, EXECUTION_DURATION_DEF)  # default duration of 60s, from jdl ?
             self.phase = 'PENDING'
-            self.quote = None
+            self.quote = duration.total_seconds()
             self.execution_duration = duration.total_seconds()
             self.error = None
             self.creation_time = now.strftime(DT_FMT)
@@ -220,10 +224,15 @@ class Job(object):
         # Read JDL
         if not self.jdl.content:
             self.jdl.read(self.jobname)
-        # Pop UWS attributes keywords from POST or JDL
-        self.execution_duration = int(post.pop('executionDuration', self.jdl.content.get('executionDuration', EXECUTION_DURATION_DEF)))
-        self.quote = int(post.pop('uws:quote', self.jdl.content.get('quote', self.execution_duration)))
-        # TODO:
+        # Pop UWS attributes keywords from POST or set from JDL
+        self.execution_duration = self.jdl.content.get('executionDuration', EXECUTION_DURATION_DEF)
+        # self.execution_duration = int(post.pop('executionDuration', self.jdl.content.get('executionDuration', EXECUTION_DURATION_DEF)))
+        # self.quote = int(post.pop('uws:quote', self.jdl.content.get('quote', self.execution_duration)))
+        for pname in UWS_PARAMETERS:
+            value = post.pop(pname)
+            pname = pname.split('uws:')[-1]  # remove the prefix uws:
+            #self.parameters[pname] = {'value': value, 'byref': False}
+            setattr(self, pname, value)
         # Search inputs in POST/files
         upload_dir = '{}/{}'.format(UPLOADS_PATH, self.jobid)
         for pname in self.jdl.content['used']:
@@ -241,7 +250,7 @@ class Job(object):
                 }
                 logger.info('Input {} is a file and was downloaded ({})'.format(pname, f.filename))
             elif pname in post:
-                value = post[pname]
+                value = post.pop(pname)
                 logger.info('Input {} is a value (identifier) : {}'.format(pname, value))
                 # TODO: use url in jdl.used if set (replace $ID with value)
             else:
@@ -258,10 +267,12 @@ class Job(object):
                 else:
                     byref = False
                 if pname in post:
-                    value = post[pname]
+                    value = post.pop(pname)
                 else:
                     value = self.jdl.content['parameters'][pname]['default']
                 self.parameters[pname] = {'value': value, 'byref': byref}
+        # Other POST parameters
+
         # Upload files for multipart/form-data
         #for fname, f in files.iteritems():
         # Save to storage
@@ -275,9 +286,10 @@ class Job(object):
 
     def set_attribute(self, attr, value):
         """Set job attribute and save to storage"""
-        if attr in self.__dict__:
-            self.__dict__[attr] = value
-            #self.save_description()
+        if hasattr(self, attr):
+            # self.__dict__[attr] = value
+            setattr(self, attr, value)
+            # self.save_description()
             self.storage.save(self)
         else:
             raise KeyError(attr)
@@ -385,7 +397,7 @@ class Job(object):
     def _results_to_xml_fill(self, xml_results):
         for rname, r in self.results.iteritems():
             if r['url']:
-                attrib={
+                attrib = {
                     'id': rname,
                     'xlink:href': r['url'],
                     'mime-type': r['content_type'],
@@ -454,7 +466,7 @@ class Job(object):
         logger.info('add {} file to results'.format(rfname))
 
     def add_results(self):
-        # Read results.yml to know generated results
+        # Read results.yml to know generated results (those that are located in the results directory)
         rf_name = os.path.join(JOBDATA_PATH, self.jobid, 'results.yml')
         if os.path.isfile(rf_name):
             with open(rf_name, 'r') as rf:
@@ -462,10 +474,11 @@ class Job(object):
 
         # TODO: store results in local archive (if ARCHIVE='Local', i.e. keep it in RESULTS_PATH/{jobid} ?)
         # TODO: store results as entities (entity_id, job_id, result_id, filename, creation_date, hash, path, access_url, owner)
+
         # access_url computed for UWS server (retrieve endpoint with entity_id)
         #                     or distant server (url given with $ID to replace by entity_id)
 
-        # Get JDL to know expected job results
+        # Get JDL to know expected job results (but already done in copy_results() from Manager)
         if not self.jdl.content:
             self.jdl.read(self.jobname)
         # Check results and all links to db (maybe not all results listed in JDL have been created)
@@ -623,7 +636,6 @@ class Job(object):
             if new_phase in ['COMPLETED', 'ABORTED', 'ERROR']:
                 self.manager.get_jobdata(self)
                 # Add results, logs, provenance (if they exist...) to job control db
-                # TODO: store results as entities (entity_id, job_id, filename, hash, path, access_url, owner)
                 self.add_results()
                 self.add_logs()
             if new_phase in ['ERROR', 'ABORTED']:
@@ -642,7 +654,7 @@ class Job(object):
             if new_phase in ['COMPLETED']:
                 self.add_provenance()
             # Update phase
-            previous_phase = self.phase
+            # previous_phase = self.phase
             self.phase = new_phase
             # Save job description
             self.storage.save(self)
@@ -667,7 +679,7 @@ class JobList(object):
         self.jobid = 'joblist'
         self.user = user
         # Link to the storage, e.g. SQLiteStorage, see settings.py
-        self.storage = storage.__dict__[STORAGE + 'JobStorage']()
+        self.storage = getattr(storage, STORAGE + 'JobStorage')()
 
         # Check if user has rights to create/edit such a job, else raise JobAccessDenied
         check_permissions(self)
@@ -716,7 +728,6 @@ class JobList(object):
             ETree.SubElement(xml_job, 'uws:creationTime').text = job['creation_time']
         return ETree.tostring(xml_jobs)
 
-
     def to_html(self):
         """Returns the HTML representation of jobs"""
         html = ''
@@ -726,7 +737,7 @@ class JobList(object):
             job = Job(self.jobname, jobid, self.user, get_attributes=True, get_parameters=True, get_results=True)
             html += '<h3>Job ' + jobid + '</h3>'
             for k in JOB_ATTRIBUTES:
-                html += k + ' = ' + str(job.__dict__[k]) + '<br>'
+                html += k + ' = ' + str(getattr(job, k)) + '<br>'
             # Parameters
             html += '<strong>Parameters:</strong><br>'
             for pname, p in job.parameters.iteritems():

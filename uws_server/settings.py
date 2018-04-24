@@ -147,15 +147,23 @@ PHASE_CONVERT = {
 }
 
 # Parameters allowed at Job creation for job control
-JOB_CONTROL_PARAMETERS = [
-    'uws:execution_duration',
-    'uws:quote',
-    'slurm:mem',
-    'slurm:nodes',
-    'slurm:ntasks-per-node',
-    'slurm:partition',
-    'slurm:account',
-]
+# either the direct name of the UWS attribute, or prefixed with 'uws:'
+UWS_PARAMETERS = {
+    'executionDuration': '',
+    'uws:executionDuration': '',
+    'uws:quote': '',
+}
+
+# Parameters allowed for SLURM sbatch header, prefixed with 'slurm:'
+SLURM_PARAMETERS = {
+    'slurm:mem': '',
+    'slurm:nodes': '',
+    'slurm:ntasks-per-node': '',
+    'slurm:partition': '',
+    'slurm:account': '',
+}
+
+POST_PARAMETERS = dict( UWS_PARAMETERS.items() + SLURM_PARAMETERS.items() )
 
 # Default destruction interval
 DESTRUCTION_INTERVAL = 30  # in days
