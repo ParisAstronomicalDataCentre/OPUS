@@ -30,7 +30,7 @@ VAR_PATH = '/var/www/opus'
 # /uploads'
 # /temp'
 
-# suffix to the log file (may be set by test.py of settings_local.py)
+# suffix to the log file (may be set by test.py or settings_local.py)
 LOG_FILE_SUFFIX = ''
 
 # URL an IP of the web server
@@ -95,7 +95,7 @@ PGSQL_USER = 'opus'
 PGSQL_PASSWORD = 'opus'
 
 # Archive for results
-# Local: store results in the local directory VAR_PATH/archive or specific path on the UWS server (if given in ARCHIVE_PATH)
+# Local: store results in the local directory RESULTS_PATH or specific path on the UWS server (if given in ARCHIVE_PATH)
 # SLURM: specific path accessible from the SLURM work cluster / nodes (given in ARCHIVE_PATH, need also the base access URL)
 # FTP: not implemented
 # VOSpace: not implemented
@@ -152,6 +152,8 @@ UWS_PARAMETERS = {
     'executionDuration': '',
     'uws:executionDuration': '',
     'uws:quote': '',
+    'destruction': '',
+    'uws:destruction': '',
 }
 
 # Parameters allowed for SLURM sbatch header, prefixed with 'slurm:'
@@ -163,6 +165,7 @@ SLURM_PARAMETERS = {
     'slurm:account': '',
 }
 
+# Additional parameters allowed in a form fot job creation
 POST_PARAMETERS = dict( UWS_PARAMETERS.items() + SLURM_PARAMETERS.items() )
 
 # Default destruction interval
@@ -248,6 +251,8 @@ JOB_ATTRIBUTES = [
     'jobid',
     'jobname',
     'run_id',
+    'owner',
+    'owner_pid',
     'phase',
     'creation_time',
     'start_time',
@@ -256,8 +261,6 @@ JOB_ATTRIBUTES = [
     'execution_duration',
     'quote',
     'error',
-    'owner',
-    'owner_pid',
     'process_id',
 ]
 JOB_PARAMETERS_ATTR = [
