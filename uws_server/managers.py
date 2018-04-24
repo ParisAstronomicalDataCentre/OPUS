@@ -114,7 +114,7 @@ class Manager(object):
             line = [
                 '    if [ -f $wd/{fname} ]; then',
                 "        hash=`shasum $wd/{fname} | awk '{{print $1}}'`",
-                '        echo {rname} >> $jd/results.yml',
+                '        echo {rname}: >> $jd/results.yml',
                 '        echo "  jobid: {jobid}" >> $jd/results.yml',
                 '        echo "  file_name: {fname}" >> $jd/results.yml',
                 '        echo "  hash: "$hash >> $jd/results.yml',
