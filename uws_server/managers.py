@@ -42,6 +42,7 @@ class Manager(object):
     jobdata_path = '.'
     scripts_path = '.'
     workdir_path = '.'
+    results_path = '.'
 
     def _make_batch(self, job, jobid_var='$$'):
         """Make batch file to run the job and signal status to the UWS server directly
@@ -49,8 +50,8 @@ class Manager(object):
         Returns:
             batch file content as a string
         """
-        wd = '{}/{}'.format(self.workdir_path, job.jobid)
         jd = '{}/{}'.format(self.jobdata_path, job.jobid)
+        wd = '{}/{}'.format(self.workdir_path, job.jobid)
         rs = '{}/{}'.format(self.results_path, job.jobid)
         # Need JDL for results description
         if not job.jdl.content:
@@ -141,15 +142,14 @@ class Manager(object):
             'wd={}'.format(wd),
             'rs={}'.format(rs),
             'cp {}/{}.sh $jd'.format(self.scripts_path, job.jobname),
-            'mkdir -p $wd',
             'mkdir -p $rs',
             'cd $wd',
             # 'echo "User is `id`"',
             # 'echo "Working dir is $wd"',
             # 'echo "JobData dir is $jd"',
             # Move uploaded files to working directory if they exist
-            'echo "[`timestamp`] Prepare input files"',
-            'for filename in $jd/input/*; do [ -f "$filename" ] && cp $filename $wd; done',
+            #'echo "[`timestamp`] Prepare input files"',
+            #'for filename in $up/*; do [ -f "$filename" ] && cp $filename $wd; done',
         ])
         # Execution
         batch.extend([
@@ -233,8 +233,8 @@ class LocalManager(Manager):
         # PATHs
         self.scripts_path = SCRIPTS_PATH
         self.jobdata_path = JOBDATA_PATH
-        self.results_path = RESULTS_PATH
         self.workdir_path = LOCAL_WORKDIR_PATH
+        self.results_path = RESULTS_PATH
 
     def _send_signal(self, process_id, phase, error_msg=''):
         data = {'jobid': process_id, 'phase': phase}
@@ -303,10 +303,11 @@ class LocalManager(Manager):
         """
         # Make directories if needed
         jd = '{}/{}'.format(self.jobdata_path, job.jobid)
-        # wd = '{}/{}'.format(self.workdir_path, job.jobid)
+        wd = '{}/{}'.format(self.workdir_path, job.jobid)
         if not os.path.isdir(jd):
-            os.makedirs('{}/{}'.format(jd, 'input'))
-            os.makedirs('{}/{}'.format(jd, 'results'))
+            os.makedirs(jd)
+        if not os.path.isdir(wd):
+            os.makedirs(wd)
         # Create parameter file
         param_file = '{}/parameters.sh'.format(jd)
         with open(param_file, 'w') as f:
@@ -318,12 +319,12 @@ class LocalManager(Manager):
         # TODO: delete files
         for fname in files['form']:
             shutil.copy(
-                '{}/{}/{}'.format(UPLOAD_PATH, job.jobid, fname),
-                '{}/input/{}'.format(jd, fname))
+                '{}/{}/{}'.format(UPLOADS_PATH, job.jobid, fname),
+                '{}/{}'.format(wd, fname))
         for furl in files['URI']:
             fname = furl.split('/')[-1]
             response = requests.get(furl, stream=True)
-            with open('{}/input/{}'.format(jd, fname), 'wb') as out_file:
+            with open('{}/{}'.format(wd, fname), 'wb') as out_file:
                 shutil.copyfileobj(response.raw, out_file)
             del response
         # Create batch file
@@ -394,8 +395,8 @@ class SLURMManager(Manager):
         # PATHs
         self.scripts_path = SLURM_SCRIPTS_PATH
         self.jobdata_path = SLURM_JOBDATA_PATH
-        self.results_path = SLURM_RESULTS_PATH
         self.workdir_path = SLURM_WORKDIR_PATH
+        self.results_path = SLURM_RESULTS_PATH
 
     def _make_sbatch(self, job):
         """Make sbatch file content for given job
@@ -442,10 +443,11 @@ class SLURMManager(Manager):
         Returns:
             process_id on SLURM server
         """
-        # Create jobdata dir (to upload the scripts, parameters and input files)
+        # Create jobdata and workdir (to upload the scripts, parameters and input files)
         jd = '{}/{}'.format(self.jobdata_path, job.jobid)
+        wd = '{}/{}'.format(self.workdir_path, job.jobid)
         cmd = ['ssh', self.ssh_arg,
-               'mkdir -p {}/{{input,results}}'.format(jd)]
+               'mkdir -p {{{jd},{wd}}}'.format(jd=jd, wd=wd)]
         # logger.debug(' '.join(cmd))
         try:
             sp.check_output(cmd, stderr=sp.STDOUT)
@@ -472,14 +474,14 @@ class SLURMManager(Manager):
         # TODO: delete files
         for fname in files['form']:
             cmd = ['scp',
-                   '{}/{}/{}'.format(UPLOAD_PATH, job.jobid, fname),
-                   '{}:{}/input/{}'.format(self.ssh_arg, jd, fname)]
+                   '{}/{}/{}'.format(UPLOADS_PATH, job.jobid, fname),
+                   '{}:{}/{}'.format(self.ssh_arg, wd, fname)]
             # logger.debug(' '.join(cmd))
             sp.check_output(cmd, stderr=sp.STDOUT)
         for furl in files['URI']:
             fname = furl.split('/')[-1]
             cmd = ['ssh', self.ssh_arg,
-                   'wget -q {} -O {}/input/{}'.format(furl, jd, fname)]
+                   'wget -q {} -O {}/{}'.format(furl, wd, fname)]
             # logger.debug(' '.join(cmd))
             sp.check_output(cmd, stderr=sp.STDOUT)
         # Create sbatch file

@@ -219,7 +219,7 @@ class Job(object):
         self.quote = int(post.pop('uws:quote', self.jdl.content.get('quote', self.execution_duration)))
         # TODO:
         # Search inputs in POST/files
-        upload_dir = '{}/{}'.format(UPLOAD_PATH, self.jobid)
+        upload_dir = '{}/{}'.format(UPLOADS_PATH, self.jobid)
         for pname in self.jdl.content['used']:
             if pname in files.keys():
                 if not os.path.isdir(upload_dir):
@@ -568,7 +568,7 @@ class Job(object):
             # Send command to manager
             self.manager.delete(self)
         # Remove uploaded files corresponding to jobid if needed
-        upload_dir = '{}/{}'.format(UPLOAD_PATH, self.jobid)
+        upload_dir = '{}/{}'.format(UPLOADS_PATH, self.jobid)
         if os.path.isdir(upload_dir):
             shutil.rmtree(upload_dir)
         # Remove jobdata files corresponding to jobid if needed

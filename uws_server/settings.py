@@ -117,8 +117,9 @@ SLURM_URL = 'tycho.obspm.fr'  # 'quadri12.obspm.fr'  #
 SLURM_USER = 'vouws'  # need to add the web server ssh key (e.g. user www) in .ssh/authorized_hosts
 SLURM_MAIL_USER = ADMIN_EMAIL
 SLURM_SCRIPTS_PATH = '/obs/vouws/scripts'
-SLURM_WORKDIR_PATH = '/scratch/vouws'
 SLURM_JOBDATA_PATH = '/poubelle/vouws/jobdata'
+SLURM_UPLOADS_PATH = '/poubelle/vouws/uploads'
+SLURM_WORKDIR_PATH = '/scratch/vouws'
 SLURM_RESULTS_PATH = '/poubelle/vouws/results'
 SLURM_SBATCH_DEFAULT = {
     'mem': '200mb',
@@ -305,7 +306,7 @@ SCRIPTS_PATH = VAR_PATH + '/jdl/scripts'
 JOBDATA_PATH = VAR_PATH + '/jobdata'
 RESULTS_PATH = VAR_PATH + '/results'
 # If POST contains files they are uploaded on the UWS server
-UPLOAD_PATH = VAR_PATH + '/uploads'
+UPLOADS_PATH = VAR_PATH + '/uploads'
 # Path for e.g. SLURM sbatch files created by SLURMManager
 TEMP_PATH = VAR_PATH + '/temp'
 #--- Set all _PATH based on APP_PATH or VAR_PATH -----------------------------------------------------------------------
