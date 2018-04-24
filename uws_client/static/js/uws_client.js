@@ -1068,7 +1068,11 @@ var uws_client = (function($) {
         createJob: createJob,
         createTestJob: createTestJob,
         displaySingleJob: displaySingleJob,
-        displayParamForm: displayParamForm
+        displayParamForm: displayParamForm,
+        client_job_list_url: client_job_list_url,
+        client_job_edit_url: client_job_edit_url,
+        client_job_form_url: client_job_form_url,
+        client_proxy_url: client_proxy_url,
     }
 
 })(jQuery);
