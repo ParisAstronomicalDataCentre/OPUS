@@ -69,7 +69,10 @@ class JDLFile(object):
     Manage job description. This class defines required functions executed
     by the UWS server: save(), read().
     """
-    content = {}
+    content = dict(
+        control_parameters=CONTROL_PARAMETERS,
+        control_parameters_keys=CONTROL_PARAMETERS_KEYS,
+    )
     extension = ''
     jdl_path = '.'
     scripts_path = '.'
@@ -170,7 +173,7 @@ class JDLFile(object):
                 }
             iresult += 1
         # Create job.content structure
-        self.content = {
+        self.content.update({
             'name': jobname,
             'annotation': post.get('annotation', jobname),
             #'description': post.get('description'),
@@ -188,7 +191,7 @@ class JDLFile(object):
             'executionDuration': post.get('executionDuration'),
             'quote': post.get('quote'),
             'script': post.get('script'),
-        }
+        })
 
 
 class JSONFile(JDLFile):
@@ -213,7 +216,7 @@ class JSONFile(JDLFile):
         fname = self._get_filename(jobname)
         with open(fname, 'r') as f:
             #self.content = json.load(f)
-            self.content = yaml.safe_load(f)
+            self.content.update(yaml.safe_load(f))
 
 
 class VOTFile(JDLFile):
@@ -662,7 +665,7 @@ class VOTFile(JDLFile):
             logger.error('{}'.format(e))
             raise
             # return {}
-        self.content = job_def
+        self.content.update(job_def)
 
     def read_old(self, jobname):
         """Read job description from VOTable file"""
@@ -812,7 +815,7 @@ class VOTFile(JDLFile):
             logger.error('{}'.format(e))
             raise
             # return {}
-        self.content = job_def
+        self.content.update(job_def)
 
 
 class WADLFile(JDLFile):
@@ -989,7 +992,7 @@ class WADLFile(JDLFile):
             logger.debug('WADL not found for job {}'.format(jobname))
             raise UserWarning('WADL not found for job {}'.format(jobname))
             # return {}
-        self.content = job_def
+        self.content.update(job_def)
 
 
 # ----------

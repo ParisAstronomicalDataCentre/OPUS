@@ -408,6 +408,15 @@ var uws_client = (function($) {
                 </div>\
             </div>';
         $('#job_params').append(row);
+        if (p.control == 'true') {
+            $('#id_'+pname).wrap('<div class="input-group"></div>');
+            // Add Update buttons (possible to update params when pĥase is PENDING in UWS 1.0 - but not yet implemented)
+            $('#id_'+pname).parent().append('<span class="input-group-btn"><button id="button_'+pname+'" class="btn btn-default" type="button">X</button></span>');
+            // Add event
+            $('#button_'+pname).click( function() {
+                $('#div_'+pname).parent().remove();
+            });
+        };
     };
     var displayParamFormInputType = function(pname, p){
         if (p.datatype == 'file') {
@@ -460,9 +469,10 @@ var uws_client = (function($) {
     var displayParamFormOk = function(jobName, init_params){
         // Run displayParamForm before to check that jdl is defined
         var jdl = clients[jobName].jdl;
-        // Create form fields from WADL/JDL
+        // Create form fields from JDL
         for (var pkey in jdl.used_keys) {
             var pname = jdl.used_keys[pkey];
+            // Add form input if pname is not a parameter already
             if ($.inArray(pname, Object.keys(jdl.parameters)) == -1) {
                 var p = jdl.used[pname];
                 displayParamFormInput(pname, p)
@@ -478,9 +488,14 @@ var uws_client = (function($) {
         // Fill with init_params
         for(var pname in init_params){
             if (init_params.hasOwnProperty(pname)){
-                var pvalue=init_params[pname];
+                var pvalue = init_params[pname];
                 // work with key and value
                 pvalue = decodeURIComponent(pvalue).replace(/[+]/g, " ");
+                // Add control parameter (it does not exist previously)
+                if ($('#id_' + pname).length == 0) {
+                    var pdesc = jdl.control_parameters[pname];
+                    displayParamFormInput(pname, {'default': '', 'annotation': pdesc, 'control': 'true'})
+                }
                 // Update form fields
                 $('#id_' + pname).attr('value', pvalue);
             }
@@ -488,13 +503,32 @@ var uws_client = (function($) {
         // Add buttons
         var elt = '\
             <div id="form-buttons" class="form-group">\n\
-                <div class="col-md-offset-2 col-md-5">\n\
+                <div class="col-md-offset-2 col-md-10">\n\
                     <button type="submit" class="btn btn-primary">Submit</button>\n\
                     <button type="reset" class="btn btn-default">Reset</button>\n\
                     <button id="showopt" type="button" class="btn btn-default">Show optional parameters</button>\n\
+                    <span>&nbsp;&nbsp;Control parameters:</span>\n\
+                    <select id="control_parameters" name="control_parameters" class="selectpicker" title="Chose parameter">\n\
+                        <option data-hidden="true"></option>\n\
+                    </select>\n\
                 </div>\n\
             </div>\n';
         $('#job_params').append(elt);
+        // Add option to control parameters dropdown
+        for (var pkey in jdl.control_parameters_keys) {
+            var pname = jdl.control_parameters_keys[pkey];
+            $('#control_parameters').append('<option value="' + pname + '">' + pname + '</option>');
+        };
+        $('.selectpicker').selectpicker('refresh');
+        // Event to add control parameter
+        $('#control_parameters').on('changed.bs.select', function(){
+            var pname = $('#control_parameters').val();
+            if ($('#div_' + pname).length == 0) {
+                var pdesc = jdl.control_parameters[pname];
+                displayParamFormInput(pname, {'default': '', 'annotation': pdesc, 'control': 'true'})
+            };
+        });
+        // Event to show optional parameters
         $('#showopt').click( function() {
             var btext = $('#showopt').html();
             if (btext.indexOf('Show') > -1) {
@@ -537,7 +571,7 @@ var uws_client = (function($) {
                 };
             }
         };
-        // list remaining parameters
+        // list remaining parameters from JDL
         for (var pkey in jdl.parameters_keys) {
             var pname = jdl.parameters_keys[pkey];
             var p = jdl.parameters[pname];
@@ -563,6 +597,15 @@ var uws_client = (function($) {
                 $('button[data-id=id_'+pname+']').attr('style','border-bottom-right-radius: 0px; border-top-right-radius: 0px; opacity: 1;');
             };
         };
+        // Add control parameters if they are set
+        for (var pkey in jdl.control_parameters_keys) {
+            var pname = jdl.control_parameters_keys[pkey];
+            if (pname in job['parameters']) {
+                var pdesc = jdl.control_parameters[pname];
+                displayParamFormInput(pname, {'default': '', 'annotation': pdesc})
+                $('#id_'+pname).attr('disabled','disabled');
+            }
+        }
         // Disable button if job is not PENDING
         if (job['phase'] != 'PENDING') {
             //$('#id_'+pname).removeAttr('readonly');
@@ -1069,6 +1112,7 @@ var uws_client = (function($) {
         createTestJob: createTestJob,
         displaySingleJob: displaySingleJob,
         displayParamForm: displayParamForm,
+        displayParamFormInput: displayParamFormInput,
         client_job_list_url: client_job_list_url,
         client_job_edit_url: client_job_edit_url,
         client_job_form_url: client_job_form_url,

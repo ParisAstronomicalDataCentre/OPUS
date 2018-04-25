@@ -88,6 +88,10 @@ def check_owner(job):
                 raise JobAccessDenied('User {} is not the owner of the job'.format(job.user.name))
 
 
+def upper2underscore(inputstring):
+    return ''.join('_' + char.lower() if char.isupper() else char for char in inputstring).lstrip('_')
+
+
 # ---------
 # Job class
 
@@ -229,10 +233,12 @@ class Job(object):
         # self.execution_duration = int(post.pop('executionDuration', self.jdl.content.get('executionDuration', EXECUTION_DURATION_DEF)))
         # self.quote = int(post.pop('uws:quote', self.jdl.content.get('quote', self.execution_duration)))
         for pname in UWS_PARAMETERS:
-            value = post.pop(pname)
-            pname = pname.split('uws:')[-1]  # remove the prefix uws:
-            #self.parameters[pname] = {'value': value, 'byref': False}
-            setattr(self, pname, value)
+            if pname in post:
+                value = post.pop(pname)
+                self.parameters[pname] = {'value': value, 'byref': False}
+                pname = upper2underscore(pname.split('uws_')[-1])  # remove the prefix uws_ to update the class attribute
+                #self.parameters[pname] = {'value': value, 'byref': False}
+                setattr(self, pname, value)
         # Search inputs in POST/files
         upload_dir = '{}/{}'.format(UPLOADS_PATH, self.jobid)
         for pname in self.jdl.content['used']:
@@ -244,10 +250,7 @@ class Job(object):
                 # Parameter value is set to the file name on server
                 value = 'file://' + f.filename
                 # value = f.filename
-                self.parameters[pname] = {
-                    'value': value,
-                    'byref': True
-                }
+                self.parameters[pname] = {'value': value, 'byref': True}
                 logger.info('Input {} is a file and was downloaded ({})'.format(pname, f.filename))
             elif pname in post:
                 value = post.pop(pname)
