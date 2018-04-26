@@ -108,6 +108,7 @@ var uws_client = (function($) {
             <thead>\
                 <tr>\
                     <th class="text-center">Type</th>\
+                    <th class="text-center">runId</th>\
                     <th class="text-center">Creation Time</th>\
                     <th class="text-center">Phase</th>\
                     <th class="text-center">Details</th>\
@@ -266,6 +267,7 @@ var uws_client = (function($) {
         var row = '\
             <tr id='+ job.jobId +' jobname='+ job.jobName +'>\
                 <td class="text-center" style="vertical-align: middle;" title="' + param_list + '">' + job.jobName + '</td>\
+                <td class="text-center" style="vertical-align: middle;">' + job.runId + '</td>\
                 <td class="text-center" style="vertical-align: middle;" title="' + times + '">' + creation_time + '</td>\
                 <td class="text-center" style="vertical-align: middle;">\
                     <button type="button" class="phase btn btn-default">PHASE...</button>\
@@ -399,11 +401,11 @@ var uws_client = (function($) {
         };
         var row = '\
             <div class="' + pclass + '"' + phide + '>\
-                <label class="col-md-2 control-label">' + pname + '</label>\
+                <label class="col-md-3 control-label">' + pname + '</label>\
                 <div id="div_' + pname + '" class="col-md-5 controls">\
                     <input class="form-control" id="id_' + pname + '" name="' + pname + '" type="text" value="' + p.default + '"/>\
                 </div>\
-                <div class="col-md-5 help-block">\
+                <div class="col-md-4 help-block">\
                     ' + p.annotation + '\
                 </div>\
             </div>';
@@ -469,6 +471,10 @@ var uws_client = (function($) {
     var displayParamFormOk = function(jobName, init_params){
         // Run displayParamForm before to check that jdl is defined
         var jdl = clients[jobName].jdl;
+        // First field is the runId
+        if (jdl.control_parameters_keys.indexOf('runId') > -1) {
+            displayParamFormInput('runId', {'default': jobName, 'annotation': 'User specific identifier for the job', 'control': 'true'});
+        };
         // Create form fields from JDL
         for (var pkey in jdl.used_keys) {
             var pname = jdl.used_keys[pkey];
@@ -503,18 +509,22 @@ var uws_client = (function($) {
         // Add buttons
         var elt = '\
             <div id="form-buttons" class="form-group">\n\
-                <div class="col-md-offset-2 col-md-10">\n\
+                <div class="col-md-offset-3 col-md-9">\n\
                     <button type="submit" class="btn btn-primary">Submit</button>\n\
                     <button type="reset" class="btn btn-default">Reset</button>\n\
                     <button id="showopt" type="button" class="btn btn-default">Show optional parameters</button>\n\
-                    <span>&nbsp;&nbsp;Control parameters:</span>\n\
-                    <select id="control_parameters" name="control_parameters" class="selectpicker" title="Chose parameter">\n\
+                </div>\n\
+            </div>\n\
+            <div class="form-group">\n\
+                <label class="col-md-3 control-label">Add control parameters</label>\n\
+                <div id="div_' + pname + '" class="col-md-5 controls">\n\
+                    <select id="control_parameters" name="control_parameters" class="selectpicker" title="Chose parameter" data-width="100%">\n\
                         <option data-hidden="true"></option>\n\
                     </select>\n\
                 </div>\n\
             </div>\n';
         $('#job_params').append(elt);
-        // Add option to control parameters dropdown
+        // Add options to control parameters dropdown
         for (var pkey in jdl.control_parameters_keys) {
             var pname = jdl.control_parameters_keys[pkey];
             $('#control_parameters').append('<option value="' + pname + '">' + pname + '</option>');
@@ -526,6 +536,8 @@ var uws_client = (function($) {
             if ($('#div_' + pname).length == 0) {
                 var pdesc = jdl.control_parameters[pname];
                 displayParamFormInput(pname, {'default': '', 'annotation': pdesc, 'control': 'true'})
+            } else {
+                $('#id_' + pname).focus();
             };
         });
         // Event to show optional parameters

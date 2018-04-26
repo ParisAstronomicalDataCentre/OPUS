@@ -33,33 +33,33 @@ class JobAccessDenied(Exception):
 
 
 class User(object):
-    """A user is defined by a name and a persistent ID (PID) or token
-    The PID remains constant for a given user using a given client.
-    Ideally it is a more general PID set during the authentication (e.g with eduGain/Shibboleth).
-    The user name/pid can be sent via Basic access authentication
+    """A user is defined by a name and a persistent ID (TOKEN) or token
+    The TOKEN remains constant for a given user using a given client.
+    Ideally it is a more general TOKEN set during the authentication (e.g with eduGain/Shibboleth).
+    The user name/token can be sent via Basic access authentication
     """
 
-    def __init__(self, name='anonymous', pid='anonymous'):
+    def __init__(self, name='anonymous', token='anonymous'):
         self.name = name
-        self.pid = pid
+        self.token = token
 
     def __str__(self):
         return self.name
 
     def __eq__(self, other):
         """Override the default Equals behavior"""
-        return self.name == other.name and self.pid == other.pid
+        return self.name == other.name and self.token == other.token
 
 
 special_users = [
-    User(ADMIN_NAME, ADMIN_PID),
-    User('job_event', JOB_EVENT_PID),
-    User('maintenance', MAINTENANCE_PID)
+    User(ADMIN_NAME, ADMIN_TOKEN),
+    User('job_event', JOB_EVENT_TOKEN),
+    User('maintenance', MAINTENANCE_TOKEN)
 ]
 
 
 def check_admin(user):
-    return user == User(ADMIN_NAME, ADMIN_PID)
+    return user == User(ADMIN_NAME, ADMIN_TOKEN)
 
 
 def check_permissions(job):
@@ -82,7 +82,7 @@ def check_owner(job):
         if job.user in special_users:
             pass
         else:
-            if job.user == User(job.owner, job.owner_pid):
+            if job.user == User(job.owner, job.owner_token):
                 pass
             else:
                 raise JobAccessDenied('User {} is not the owner of the job'.format(job.user.name))
@@ -168,7 +168,7 @@ class Job(object):
             self.end_time = None  # (now + duration).strftime(DT_FMT)
             self.destruction_time = (now + destruction).strftime(DT_FMT)
             self.owner = user.name
-            self.owner_pid = user.pid
+            self.owner_token = user.token
             self.run_id = None
             self.parameters = {}
             self.results = {}
@@ -186,7 +186,7 @@ class Job(object):
             self.end_time = None
             self.destruction_time = None
             self.owner = None
-            self.owner_pid = None
+            self.owner_token = None
             self.run_id = None
             self.parameters = {}
             self.results = {}
@@ -228,17 +228,16 @@ class Job(object):
         # Read JDL
         if not self.jdl.content:
             self.jdl.read(self.jobname)
-        # Pop UWS attributes keywords from POST or set from JDL
+        # Pop UWS attributes keywords from POST or set by default
         self.execution_duration = self.jdl.content.get('executionDuration', EXECUTION_DURATION_DEF)
-        # self.execution_duration = int(post.pop('executionDuration', self.jdl.content.get('executionDuration', EXECUTION_DURATION_DEF)))
-        # self.quote = int(post.pop('uws:quote', self.jdl.content.get('quote', self.execution_duration)))
-        for pname in UWS_PARAMETERS:
+        for pname in CONTROL_PARAMETERS_KEYS:
             if pname in post:
                 value = post.pop(pname)
                 self.parameters[pname] = {'value': value, 'byref': False}
-                pname = upper2underscore(pname.split('uws_')[-1])  # remove the prefix uws_ to update the class attribute
-                #self.parameters[pname] = {'value': value, 'byref': False}
-                setattr(self, pname, value)
+                if pname in UWS_PARAMETERS:
+                    pname = upper2underscore(pname.split('uws_')[-1])  # remove the prefix uws_ to update the class attribute
+                    #self.parameters[pname] = {'value': value, 'byref': False}
+                    setattr(self, pname, value)
         # Search inputs in POST/files
         upload_dir = '{}/{}'.format(UPLOADS_PATH, self.jobid)
         for pname in self.jdl.content['used']:

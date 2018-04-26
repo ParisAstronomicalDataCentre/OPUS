@@ -39,10 +39,10 @@ BASE_IP = '127.0.0.1'
 
 # Admin name+pid has access to user database changes (i.e. set permissions)
 ADMIN_NAME = 'admin'
-ADMIN_PID = 'e85d2a4e-27ea-5202-8b5c-241e82f5871a'
+ADMIN_TOKEN = 'e85d2a4e-27ea-5202-8b5c-241e82f5871a'
 ADMIN_EMAIL = 'mathieu.servillat@obspm.fr'
-JOB_EVENT_PID = 'c18de332'  # PID for special user job_event, used internally
-MAINTENANCE_PID = '419cb761'  # PID for special user maintenant, used internally
+JOB_EVENT_TOKEN = 'c18de332'  # TOKEN for special user job_event, used internally
+MAINTENANCE_TOKEN = '419cb761'  # TOKEN for special user maintenant, used internally
 ALLOW_ANONYMOUS = True
 CHECK_PERMISSIONS = False
 CHECK_OWNER = False
@@ -149,6 +149,7 @@ PHASE_CONVERT = {
 # Parameters allowed at Job creation for job control
 # either the direct name of the UWS attribute, or prefixed with 'uws:'
 UWS_PARAMETERS = {
+    'runId': 'User specific identifier for the job',  # this parameter will appear first in the form, helpful for a user to find their jobs
     'executionDuration': 'Required execution duration in seconds',
     'uws_executionDuration': 'Required execution duration in seconds',
     'uws_quote': 'Estimation of the duration of the job',
@@ -169,11 +170,12 @@ SLURM_PARAMETERS = {
 CONTROL_PARAMETERS = dict( UWS_PARAMETERS.items() )
 # Order for the control parameters
 CONTROL_PARAMETERS_KEYS = [
+    'runId',
     'executionDuration',
-    'uws_executionDuration',
-    'uws_quote',
+    #'uws_executionDuration',
     'destruction',
-    'uws_destruction',
+    'uws_quote',
+    #'uws_destruction',
 ]
 if MANAGER == 'Local':  # SLURM':
     CONTROL_PARAMETERS.update(SLURM_PARAMETERS)
@@ -269,7 +271,7 @@ JOB_ATTRIBUTES = [
     'jobname',
     'run_id',
     'owner',
-    'owner_pid',
+    'owner_token',
     'phase',
     'creation_time',
     'start_time',

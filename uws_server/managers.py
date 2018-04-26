@@ -348,7 +348,7 @@ class LocalManager(Manager):
         # poll popen regularly
         self._poll_process(popen)
         # Return process_id
-        return popen.pid
+        return popen.token
 
     def abort(self, job):
         """Abort/Cancel job"""
@@ -411,7 +411,7 @@ class SLURMManager(Manager):
         # Create sbatch
         sbatch = [
             '#!/bin/bash -l',
-            '### INIT SLURMManager',
+            '### INIT SLURM',
             '#SBATCH --job-name={}'.format(job.jobname),
             '#SBATCH --error={}/stderr.log'.format(jd),
             '#SBATCH --output={}/stdout.log'.format(jd),
@@ -420,10 +420,16 @@ class SLURMManager(Manager):
             '#SBATCH --no-requeue',
             '#SBATCH --time={}'.format(duration_str),
         ]
-        # Insert server specific sbatch commands
-        for k, v in SLURM_SBATCH_DEFAULT.iteritems():
-            sbline = '#SBATCH --{}={}'.format(k, v)
-            sbatch.append(sbline)
+        # Insert server/job specific sbatch commands
+        for k in SLURM_SBATCH_DEFAULT:
+            # Check if parameter is given in job.parameters or use default
+            v = job.parameters.get('slurm_'+k, SLURM_SBATCH_DEFAULT[k])
+            sbatch.append('#SBATCH --{}={}'.format(k, v))
+        for k in SLURM_PARAMETERS:
+            if k not in SLURM_SBATCH_DEFAULT:
+                if 'slurm_'+k in job.parameters:
+                    v = job.parameters.get('slurm_'+k, SLURM_SBATCH_DEFAULT[k])
+                    sbatch.append('#SBATCH --{}={}'.format(k, v))
         # Script init and execution
         sbatch.extend(
             self._make_batch(job, jobid_var='$SLURM_JOBID')

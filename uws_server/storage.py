@@ -74,26 +74,26 @@ class UserStorage(object):
     """
 
     def get_users(self):
-        """Get list of users with their pid and roles"""
+        """Get list of users with their token and roles"""
         pass
 
-    def add_user(self, name, pid, roles=''):
+    def add_user(self, name, token, roles=''):
         """Add user"""
         pass
 
-    def remove_user(self, name, pid):
+    def remove_user(self, name, token):
         """Remove user from storage"""
         pass
 
-    def add_role(self, name, pid, role=''):
+    def add_role(self, name, token, role=''):
         """Add role to user, i.e. access to a job"""
         pass
 
-    def remove_role(self, name, pid, role=''):
+    def remove_role(self, name, token, role=''):
         """Get job list from storage, i.e. access to a job"""
         pass
 
-    def has_role(self, name, pid, role=''):
+    def has_role(self, name, token, role=''):
         """Check if user has role"""
         pass
 
@@ -122,11 +122,11 @@ class EntityStorage(object):
                 sha1.update(data)
         return sha1.hexdigest()
 
-    def register_entity(self, jobid, name, path, owner='anonymous', owner_pid='anonymous'):
+    def register_entity(self, jobid, name, path, owner='anonymous', owner_token='anonymous'):
         """Add entity, store hash and properties, return id"""
         pass
 
-    def remove_entity(self, jobid, name, path, owner='anonymous', owner_pid='anonymous'):
+    def remove_entity(self, jobid, name, path, owner='anonymous', owner_token='anonymous'):
         """Add entity, store hash and properties, return id"""
         pass
 
@@ -167,7 +167,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
             end_time = Column(myDateTime, nullable=True)
             destruction_time = Column(myDateTime, nullable=True)
             owner = Column(String(64), nullable=True)
-            owner_pid = Column(String(128), nullable=True)
+            owner_token = Column(String(128), nullable=True)
             run_id = Column(String(64), nullable=True)
             process_id = Column(BigInteger(), nullable=True)
 
@@ -191,7 +191,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
         class User(self.Base):
             __tablename__ = 'users'
             name = Column(String(80), primary_key=True)
-            pid = Column(String(255))
+            token = Column(String(255))
             roles = Column(String(255), nullable=True)
 
         class Entity(self.Base):
@@ -219,64 +219,64 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
     # UserStorage methods
 
     def get_users(self):
-        """Get list of users with their pid and roles"""
+        """Get list of users with their token and roles"""
         pass
 
-    def add_user(self, name, pid, roles=''):
+    def add_user(self, name, token, roles=''):
         """Add user"""
         d = {
             'name': name,
-            'pid': pid,
+            'token': token,
             'roles': roles
         }
         u = self.User(**d)
         self.session.merge(u)
         self.session.commit()
 
-    def remove_user(self, name, pid):
+    def remove_user(self, name, token):
         """Remove user from storage"""
-        self.session.query(self.User).filter_by(name=name, pid=pid).delete()
+        self.session.query(self.User).filter_by(name=name, token=token).delete()
         self.session.commit()
 
-    def add_role(self, name, pid, role=''):
+    def add_role(self, name, token, role=''):
         """Add role to user, i.e. access to a job"""
-        row = self.session.query(self.User).filter_by(name=name, pid=pid).first()
+        row = self.session.query(self.User).filter_by(name=name, token=token).first()
         roles = row.roles.split(',')
         if not role in roles:
             roles.append(role)
             self.session.merge(row)
             self.session.commit()
-            logger.debug('Role {} added for user {}:{}'.format(role, name, pid))
+            logger.debug('Role {} added for user {}:{}'.format(role, name, token))
         else:
-            logger.debug('Role {} already set for user {}:{}'.format(role, name, pid))
+            logger.debug('Role {} already set for user {}:{}'.format(role, name, token))
 
-    def remove_role(self, name, pid, role=''):
+    def remove_role(self, name, token, role=''):
         """Get job list from storage, i.e. access to a job"""
-        row = self.session.query(self.User).filter_by(name=name, pid=pid).first()
+        row = self.session.query(self.User).filter_by(name=name, token=token).first()
         roles = row.roles.split(',')
         if role in roles:
             roles.pop(role)
             self.session.merge(row)
             self.session.commit()
-            logger.debug('Role {} removed for user {}:{}'.format(role, name, pid))
+            logger.debug('Role {} removed for user {}:{}'.format(role, name, token))
         else:
-            logger.debug('Role {} not found for user {}:{}'.format(role, name, pid))
+            logger.debug('Role {} not found for user {}:{}'.format(role, name, token))
 
-    def has_role(self, name, pid, role=''):
-        row = self.session.query(self.User).filter_by(name=name, pid=pid).first()
+    def has_role(self, name, token, role=''):
+        row = self.session.query(self.User).filter_by(name=name, token=token).first()
         if row:
             roles = row.roles.split(',')
             if ('all' in roles) or (role in roles):
-                # logger.debug('Role \"{}\" ok for user {}:{}'.format(role, name, pid))
+                # logger.debug('Role \"{}\" ok for user {}:{}'.format(role, name, token))
                 return True
             else:
-                logger.debug('Role \"{}\" not found for user {}:{}'.format(role, name, pid))
+                logger.debug('Role \"{}\" not found for user {}:{}'.format(role, name, token))
                 return False
 
 
     def has_access(self, user, job):
         """Check if user has access to the job"""
-        return self.has_role(user.name, user.pid, role=job.jobname)
+        return self.has_role(user.name, user.token, role=job.jobname)
 
     # ----------
     # JobStorage methods
@@ -390,7 +390,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
             query = query.filter(self.Job.creation_time >= after)
         if where_owner:
             query = query.filter_by(owner=joblist.user.name)
-            query = query.filter_by(owner_pid=joblist.user.pid)
+            query = query.filter_by(owner_token=joblist.user.token)
         query = query.order_by(self.Job.creation_time.asc())
         if last:
             query = query.limit(last)
@@ -475,7 +475,7 @@ class SQLJobStorage(SQLStorage, JobStorage):
     # noinspection PyTypeChecker
     def read(self, job, get_attributes=True, get_parameters=False, get_results=False, from_process_id=False):
         """Read job from storage"""
-        # TODO: add owner and owner_pid to all SELECT (except if... admin?)
+        # TODO: add owner and owner_token to all SELECT (except if... admin?)
         if from_process_id:
             # Query db for jobname and jobid using process_id
             query = "SELECT jobname, jobid FROM jobs WHERE process_id='{}';".format(job.process_id)
@@ -504,7 +504,7 @@ class SQLJobStorage(SQLStorage, JobStorage):
             job.end_time = row['end_time']  # end_time.strftime(DT_FMT)
             job.destruction_time = row['destruction_time']  # destruction_time.strftime(DT_FMT)
             job.owner = row['owner']
-            job.owner_pid = row['owner_pid']
+            job.owner_token = row['owner_token']
             job.run_id = row['run_id']
             job.process_id = row['process_id']
         if get_parameters:
@@ -558,7 +558,7 @@ class SQLJobStorage(SQLStorage, JobStorage):
             where.append('({})'.format(" OR ".join(where_phase)))
         if where_owner:
             where.append("owner='{}'".format(joblist.user.name))
-            where.append("owner_pid='{}'".format(joblist.user.pid))
+            where.append("owner_token='{}'".format(joblist.user.token))
         query += " WHERE " + " AND ".join(where)
         query += " ORDER BY destruction_time ASC"
         logger.debug('query = {}'.format(query))

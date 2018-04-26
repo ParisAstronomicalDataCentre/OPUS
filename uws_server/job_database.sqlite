@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     end_time           timestamp,
     destruction_time   timestamp,
     owner              varchar(64),
-    owner_pid          varchar(128),
+    owner_token          varchar(128),
     run_id             varchar(64),
     process_id                int,
     PRIMARY KEY (jobid)

@@ -54,26 +54,26 @@ def set_user():
     """Set user from request header"""
     # Use anonymous as default
     user_name = 'anonymous'
-    user_pid = 'anonymous'
+    user_token = 'anonymous'
     # Check if REMOTE_USER is set by web server or use Basic Auth from header
     if request.auth:
-        user_name, user_pid = request.auth
-        if not user_pid:
-            user_pid = 'remote_user'
-        # logger.debug('{}:{}'.format(user_name, user_pid))
+        user_name, user_token = request.auth
+        if not user_token:
+            user_token = 'remote_user'
+        # logger.debug('{}:{}'.format(user_name, user_token))
     # # Set user from GET
     # if 'user' in request.GET:
     #     user_name = request.GET['user']
-    #     if 'user_pid' in request.GET:
-    #         user_pid = request.GET['user_pid']
+    #     if 'user_token' in request.GET:
+    #         user_token = request.GET['user_token']
     #     else:
-    #         user_pid = request.GET['user']
-    #     logger.debug('user information from GET ({}:{})'.format(user_name, user_pid))
+    #         user_token = request.GET['user']
+    #     logger.debug('user information from GET ({}:{})'.format(user_name, user_token))
     # # Set user from REMOTE_USER if not empty
     # remote_user = request.environ.get('REMOTE_USER', '')
     # if remote_user:
     #     user_name = remote_user
-    #     user_pid = remote_user
+    #     user_token = remote_user
     #     logger.debug('REMOTE_USER is set: {}'.format(user_name))
     # # Use Basic access authentication
     # auth = request.headers.get('Authorization')
@@ -82,10 +82,10 @@ def set_user():
     #     auth = request.headers.get('HTTP_AUTHORIZATION')
     # if auth:
     #     logger.debug('Authorization: {}'.format(auth))
-    #     user_name, user_pid = parse_auth(auth)
-    #     logger.debug('Authorization: {}:{}'.format(user_name, user_pid))
+    #     user_name, user_token = parse_auth(auth)
+    #     logger.debug('Authorization: {}:{}'.format(user_name, user_token))
     # Create user object
-    user = User(user_name, user_pid)
+    user = User(user_name, user_token)
     # Add user name at the end of each log entry
     #logger = CustomAdapter(logger_init, {'username': user_name})
     if user == User('anonymous', 'anonymous') and ALLOW_ANONYMOUS == False:
@@ -610,7 +610,7 @@ def maintenance(jobname):
     if not is_localhost():
         abort_403()
     try:
-        user = User('maintenance', MAINTENANCE_PID)
+        user = User('maintenance', MAINTENANCE_TOKEN)
         logger = logger_init
         logger.info('Maintenance checks for {}'.format(jobname))
         # Get joblist
@@ -668,7 +668,7 @@ def job_event():
     if not is_job_server(ip):
         abort_403()
     try:
-        user = User('job_event', JOB_EVENT_PID)
+        user = User('job_event', JOB_EVENT_TOKEN)
         logger = logger_init
         logger.info('from {} with POST={}'.format(ip, str(request.POST.dict)))
         if 'jobid' in request.POST:
