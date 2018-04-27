@@ -79,7 +79,7 @@ var uwsLib = (function() {
 				SuccessCallback(jobs);
 			},
 			error : function(xhr, status, exception) {
-				ErrorCallback(exception);
+				ErrorCallback(xhr, status, exception);
 			}
 		});
 	};
@@ -96,7 +96,7 @@ var uwsLib = (function() {
 				SuccessCallback(job);
 			},
 			error : function(xhr, status, exception) {
-				ErrorCallback(exception);
+				ErrorCallback(xhr, status, exception);
 			},
 			processData: false,  // tell jQuery not to process the data
 			contentType: false   // tell jQuery not to set contentType
@@ -115,7 +115,7 @@ var uwsLib = (function() {
 				successCallback(id, jobs);
 			},
 			error : function(xhr, status, exception) {
-				errorCallback(id, exception);
+				errorCallback(id, xhr, status, exception);
 			},
 		});
 		
@@ -131,7 +131,7 @@ var uwsLib = (function() {
 				successCallback(id);
 			},
 			error : function(xhr, status, exception) {
-				errorCallback(id, exception);
+				errorCallback(id, xhr, status, exception);
 			},
 		});
 		
@@ -147,7 +147,7 @@ var uwsLib = (function() {
 				successCallback(id);
 			},
 			error : function(xhr, status, exception) {
-				errorCallback(id, exception);
+				errorCallback(id, xhr, status, exception);
 			},
 		});
 		
@@ -164,7 +164,7 @@ var uwsLib = (function() {
 				successCallback(job);
 			},
 			error : function(xhr, status, exception) {
-				errorCallback(id, exception);
+				errorCallback(id, xhr, status, exception);
 			},
 		});
 	};
@@ -178,7 +178,7 @@ var uwsLib = (function() {
 				successCallback(id, results);
 			},
 			error : function(xhr, status, exception) {
-				errorCallback(id, exception);
+				errorCallback(id, xhr, status, exception);
 			},
 		});
 	};
@@ -191,7 +191,7 @@ var uwsLib = (function() {
 				successCallback(id, xhr);
 			},
 			error : function(xhr, status, exception) {
-				errorCallback(id, exception);
+				errorCallback(id, xhr, status, exception);
 			},
 		});
 	};
@@ -207,7 +207,7 @@ var uwsLib = (function() {
 				successCallback(jobList);
 			},
 			error : function(xhr, status, exception) {
-				errorCallback(exception);
+				errorCallback(xhr, status, exception);
 			},
 		});
 	}
@@ -282,7 +282,7 @@ var uwsLib = (function() {
                 jobList.push(job);
             },
 			error : function(xhr, status, exception) {
-				errorCallback(exception);
+				errorCallback(xhr, status, exception);
 			},
             complete: function() {
                 currentIndex++;

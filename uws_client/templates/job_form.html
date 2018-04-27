@@ -15,7 +15,10 @@
                 <span class="pull-left" style="padding-top: 4px;">
                     <span class="panel-title">Create new {{ jobname }} job</span>
                 </span>
-                <a id="to_job_list" type="button" class="btn btn-default btn-sm pull-right" href="{{ url_for('job_list', jobname=jobname) }}">Back to job list</a>
+                <a id="to_job_list" type="button" class="btn btn-default btn-sm pull-right" href="{{ url_for('job_list', jobname=jobname) }}">
+                    <span class="glyphicon glyphicon-arrow-left"></span>
+                    Back to job list
+                </a>
             </div>
             <div id="parameters_panel" class="panel-body">
                 <p></p>

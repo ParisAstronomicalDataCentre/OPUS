@@ -67,7 +67,7 @@
         $('#create_test_job').click( function() {
             var jobname = $('select[name=jobname]').val();
             var formData = new FormData();
-            formData.append('inobs', 'http://voplus.obspm.fr/cta/events.fits');
+            //formData.append('inobs', 'http://voplus.obspm.fr/cta/events.fits');
             //formData.append('PHASE', 'RUN');
             uws_client.createTestJob(jobname, formData);
         });

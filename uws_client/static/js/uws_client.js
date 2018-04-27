@@ -879,7 +879,7 @@ var uws_client = (function($) {
             scrollToAnchor('results');
         });
     };
-    var displaySingleJobError = function(jobId, exception){
+    var displaySingleJobError = function(jobId, xhr, status, exception){
         $("#div_job").hide();
         var msg = '<strong>Job does not exist</strong>: ' + jobId + ', going back to job list'
         global.showMessage(msg, 'warning');
@@ -902,8 +902,10 @@ var uws_client = (function($) {
         displayProps(job);
         logger('DEBUG', 'Properties refreshed');
     };
-    var refreshPropsError = function(jobId, exception){
+    var refreshPropsError = function(jobId, xhr, status, exception){
         logger('ERROR', 'refreshProps '+ jobId, exception);
+        var msg = 'Cannot refresh properties of job ' + jobId;
+        global.showMessage(msg, 'danger');
     };
 
 
@@ -918,8 +920,10 @@ var uws_client = (function($) {
         displayResults(job);
         logger('DEBUG', 'Results refreshed');
     };
-    var refreshResultsError = function(jobId, exception){
+    var refreshResultsError = function(jobId, xhr, status, exception){
         logger('ERROR', 'refreshResults '+ jobId, exception);
+        var msg = 'Cannot refresh results of job ' + jobId;
+        global.showMessage(msg, 'danger');
     };
 
 
@@ -1006,8 +1010,10 @@ var uws_client = (function($) {
         //refreshPhaseTimeout[jobId] = setTimeout(getJobPhase, refreshPhaseTimeoutDelay[jobId], jobId);
 
     };
-    var getJobPhaseError = function(jobId, exception){
+    var getJobPhaseError = function(jobId, xhr, status, exception){
         logger('ERROR', 'getJobPhase '+ jobId, exception);
+        var msg = 'Cannot get phase of job ' + jobId;
+        global.showMessage(msg, 'danger');
     };
 
 
@@ -1021,8 +1027,10 @@ var uws_client = (function($) {
     var getJobInfosSuccess = function(job){
         alert(JSON.stringify(job, null, 4));
     };
-    var getJobInfosError = function(jobId, exception){
+    var getJobInfosError = function(jobId, xhr, status, exception){
         logger('ERROR', 'getJobInfos '+ jobId, exception);
+        var msg = 'Cannot get info of job ' + jobId;
+        global.showMessage(msg, 'danger');
     };
 
 
@@ -1036,8 +1044,10 @@ var uws_client = (function($) {
     var getJobResultsSuccess = function(jobId, results){
         alert('Results for job '+ jobId + ' :\n' + JSON.stringify(results, null, 4));
     };
-    var getJobResultsError = function(jobId, exception){
+    var getJobResultsError = function(jobId, xhr, status, exception){
         logger('ERROR', 'getJobResults '+ jobId, exception);
+        var msg = 'Cannot get job results for job' + jobId;
+        global.showMessage(msg, 'danger');
     };
 
 
@@ -1058,8 +1068,10 @@ var uws_client = (function($) {
         // redirect to URL + job_id
         window.location.href = client_job_edit_url + "/" + job.jobName + "/" + job.jobId;
     };
-    var createJobError = function(exception){
+    var createJobError = function(xhr, status, exception){
         logger('ERROR', 'createJob', exception);
+        var msg = 'Cannot create job.';
+        global.showMessage(msg, 'danger');
     };
 
 
@@ -1067,14 +1079,11 @@ var uws_client = (function($) {
     // CREATE TEST JOB
 
     var createTestJob = function(jobName, jobParams) {
-        clients[jobName].createJob(jobParams, createTestJobSuccess, createTestJobError);
+        clients[jobName].createJob(jobParams, createTestJobSuccess, createJobError);
     };
     var createTestJobSuccess = function(job) {
         logger('INFO', 'Test job created with id='+job.jobId+' jobname='+job.jobName);
         displayJob(job);
-    };
-    var createTestJobError = function(exception){
-        logger('ERROR', 'createTestJob', exception);
     };
 
 
@@ -1089,8 +1098,12 @@ var uws_client = (function($) {
         logger('INFO', 'Job started '+jobId);
         getJobPhase(jobId);
     };
-    var startJobError = function(jobId, exception){
+    var startJobError = function(jobId, xhr, status, exception){
         logger('ERROR', 'startJob '+jobId, exception);
+        var xhr_parts = xhr.responseText.match(/<pre>.*?<\/pre>/ims)[0].replace(/<\/?pre>/g,'').split('\n');
+        var xhr_text = '<pre>' + xhr_parts[xhr_parts.length-2] + '</pre>';
+        var msg = 'Cannot start job ' + jobId + ': ' + xhr_text;
+        global.showMessage(msg, 'danger');
     };
 
 
@@ -1106,8 +1119,10 @@ var uws_client = (function($) {
         logger('INFO', 'Job aborted '+jobId);
         getJobPhase(jobId);
     };
-    var abortJobError = function(jobId, exception){
+    var abortJobError = function(jobId, xhr, status, exception){
         logger('ERROR', 'abortJob '+ jobId, exception);
+        var msg = 'Cannot abort job ' + jobId;
+        global.showMessage(msg, 'danger');
     };
 
 
@@ -1129,8 +1144,10 @@ var uws_client = (function($) {
             logger('ERROR', 'destroyJobSuccess failed '+jobId, e);
         }
     };
-    var destroyJobError = function(jobId, exception){
+    var destroyJobError = function(jobId, xhr, status, exception){
         logger('ERROR', 'destroyJob '+jobId, exception);
+        var msg = 'Cannot delete job ' + jobId;
+        global.showMessage(msg, 'danger');
     };
 
     //----------
