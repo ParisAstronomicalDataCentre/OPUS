@@ -32,9 +32,9 @@
         {% if messages %}
         {% for category, message in messages %}
             {% if category != "message" %}
-            <div class="alert alert-{{ category }} text-center"> {{ message }} </div>
+            <div class="fadeOut alert alert-{{ category }} text-center"> {{ message }} </div>
             {% else %}
-            <div class="alert alert-info text-center"> {{ message }} </div>
+            <div class="fadeOut alert alert-info text-center"> {{ message }} </div>
             {% endif %}
         {% endfor %}
         {% endif %}
