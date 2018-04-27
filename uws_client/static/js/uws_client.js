@@ -38,6 +38,28 @@ var uws_client = (function($) {
     var timeoutDelays = [2000,3000,4000,6000,11000]; // delays in ms
     var selectedJobId;
 
+    if (!('global' in window)) {
+        // console.log('Redefine global');
+        var global = {};
+    } else {
+        //console.log('Use window.global');
+        var global = window.global;
+    };
+    if (!('showMessage' in global)) {
+        // console.log('Redefine global functions');
+        var fadeOutAll = function () {
+            $('.fadeOut').delay(3000).fadeOut(2000);
+        };
+        global.fadeOutAll = fadeOutAll;
+        var showMessage = function (msg, category) {
+            if (category.length == 0) {
+                category = 'info';
+            }
+            $("#messages").append('<div class="fadeOut alert alert-' + category + ' text-center">' + msg + '</div>');
+            fadeOutAll();
+        };
+        global.showMessage = showMessage;
+    }
 
     //----------
     // LOGGER (show info in console or other logger)
@@ -860,7 +882,7 @@ var uws_client = (function($) {
     var displaySingleJobError = function(jobId, exception){
         $("#div_job").hide();
         var msg = '<strong>Job does not exist</strong>: ' + jobId + ', going back to job list'
-        $("#messages").append('<div class="fadeOut alert alert-info text-center">' + msg + '</div>');
+        global.showMessage(msg, 'warning');
         logger('WARNING', 'displaySingleJob '+ jobId, exception);
         setTimeout(function(){
             window.location.href = client_job_list_url;  // + "?msg=missing&jobid=" + jobId;
@@ -946,8 +968,7 @@ var uws_client = (function($) {
         var msg = xhr.responseText.match(/<pre>(.*?)<\/pre>/g)[0].replace(/<\/?pre>/g,'');
         logger('ERROR', 'getJobList', msg);
         $('#div_loading').hide();
-        $("#messages").append('<div class="fadeOut alert alert-danger text-center">' + msg + '</div>');
-        // $('#messages div').delay(3000).fadeOut(3000, function() { $(this).remove(); });
+        global.showMessage(msg, 'danger');
     };
 
 
@@ -1100,7 +1121,7 @@ var uws_client = (function($) {
     var destroyJobSuccess = function(jobId, jobs){
         try {
             var msg = '<strong>Job deleted</strong>: '+jobId+', going back to job list';
-            $("#messages").append('<div class="fadeOut alert alert-success text-center">' + msg + '</div>');
+            global.showMessage(msg, 'info');
             clearTimeout(refreshPhaseTimeout[jobId]);
             logger('INFO', 'Job deleted '+jobId);
             $('#'+jobId).remove();

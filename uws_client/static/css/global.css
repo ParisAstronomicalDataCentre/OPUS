@@ -7,25 +7,6 @@
     border-radius: 4px;
 }
 
-/* Fade Out element */
-
-.fadeOut {
-    -webkit-animation-name: fadeOut;
-    animation-name: fadeOut;
-    -webkit-animation-duration: 5s;
-    animation-duration: 5s;
-}
-
-@-webkit-keyframes fadeOut {
-    40% {opacity: 1;}
-    100% {opacity: 0; height: 0; margin: 0;}
-}
-
-@keyframes fadeOut {
-    40% {opacity: 1;}
-    100% {opacity: 0; height: 0; margin: 0;}
-}
-
 /* animate a refresh glyphicon */
 .glyphicon-refresh-animate {
     animation: spin 1s infinite linear;
