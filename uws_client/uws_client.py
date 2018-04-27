@@ -156,13 +156,13 @@ class Job(db.Model, RoleMixin):
         return '{} (on {})'.format(self.name, self.server_url)
 
 
-def gen_pid(context):
+def gen_token(context):
     try:
         email = context.current_parameters.get('email')
-        pid = uuid.uuid5(uuid.NAMESPACE_X500, app.config['APP_PATH'] + email)
+        token = uuid.uuid5(uuid.NAMESPACE_X500, app.config['APP_PATH'] + email)
     except:
-        pid = uuid.uuid4()
-    return str(pid)
+        token = uuid.uuid4()
+    return str(token)
 
 
 class User(db.Model, UserMixin):
@@ -170,7 +170,7 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(255), unique=True)
     # username = db.Column(db.String(255), unique=True, index=True)
     password = db.Column(db.String(255))
-    pid = db.Column(db.String(255), default=gen_pid)
+    token = db.Column(db.String(255), default=gen_token)
     active = db.Column(db.Boolean())
     confirmed_at = db.Column(db.DateTime(), default=datetime.datetime.now)
     roles = db.relationship('Role', secondary=roles_users, backref=db.backref('users', lazy='dynamic'))
@@ -367,7 +367,7 @@ admin.add_view(JobView(Job, db.session))
 def on_user_logged_in(sender, user):
     logger.info(user.email)
     #session['server_url'] = app.config['UWS_SERVER_URL_JS']
-    session['auth'] = base64.b64encode(current_user.email + ':' + str(current_user.pid))
+    session['auth'] = base64.b64encode(current_user.email + ':' + str(current_user.token))
     flash('"{}" is now logged in'.format(user.email), 'info')
 
 
@@ -381,7 +381,7 @@ def on_user_logged_out(sender, user):
 @login_required
 def profile():
     logger.debug(current_user.__dict__)
-    order = ['email', 'pid']
+    order = ['email', 'token']
     profile = {
         'email': {
             'value': current_user.email,
@@ -389,24 +389,24 @@ def profile():
             'description': '',
             'disabled': True
         },
-        'pid': {
-            'value': current_user.pid,
-            'label': 'PID',
+        'token': {
+            'value': current_user.token,
+            'label': 'Token',
             'description': 'Persistent ID of the user on the UWS server',
         }
 
     }
     if request.method == 'POST':
-        pid = request.form.get('pid')
-        if pid:
-            if pid != current_user.pid:
-                current_user.pid = pid
+        token = request.form.get('token')
+        if token:
+            if token != current_user.token:
+                current_user.token = token
                 user_datastore.put(current_user)
                 user_datastore.commit()
                 logger.debug(current_user.__dict__)
-                flash('PID of user {} has been updated'.format(current_user.email))
+                flash('Token of user {} has been updated'.format(current_user.email))
         else:
-            flash('No PID found in form')
+            flash('No token found in form')
         return redirect(url_for('profile'), 303)
     return render_template('profile.html', order=order, profile=profile)
 
@@ -553,7 +553,7 @@ def uws_server_request(uri, method='GET', init_request=None):
     auth = None
     if app.config['UWS_AUTH'] == 'Basic':
         if current_user.is_authenticated:
-            auth = HTTPBasicAuth(current_user.email, current_user.pid)
+            auth = HTTPBasicAuth(current_user.email, current_user.token)
         else:
             auth = HTTPBasicAuth('anonymous', 'anonymous')
     # Send request

@@ -115,11 +115,10 @@ class Manager(object):
                 '    if [ -f $wd/{fname} ]; then',
                 "        hash=`shasum $wd/{fname} | awk '{{print $1}}'`",
                 '        echo {rname}: >> $jd/results.yml',
-                '        echo "  jobid: {jobid}" >> $jd/results.yml',
-                '        echo "  file_name: {fname}" >> $jd/results.yml',
+                '        echo "  file_name: {jobid}_{fname}" >> $jd/results.yml',
                 '        echo "  hash: "$hash >> $jd/results.yml',
                 '        echo "Found and copied: {rname}={fname}";',
-                '        cp $wd/{fname} $rs;',
+                '        cp $wd/{fname} $rs/{jobid}_{fname};',
                 '    else',
                 '        echo "NOT FOUND: {rname}={fname}"',
                 '    fi',
@@ -348,7 +347,7 @@ class LocalManager(Manager):
         # poll popen regularly
         self._poll_process(popen)
         # Return process_id
-        return popen.token
+        return popen.pid
 
     def abort(self, job):
         """Abort/Cancel job"""
