@@ -568,30 +568,6 @@ def get_result_file(jobid, rname):  # , rfname):
         abort_500_except()
 
 
-@app.get('/prov/<jobid>')
-def get_prov(jobid):
-    """
-    Get list of available jobs on server
-    :return: list of job names in json
-    """
-    try:
-        user = set_user()
-        # Get job properties from DB
-        job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True)
-        logger.info('{} {} [{}]'.format(job.jobname, jobid, user))
-        # Get JDL
-        job.jdl.read(job.jobname)
-        # Return job provenance
-        pdoc = provenance.job2prov(job)
-        svg_content = provenance.prov2svg_content(pdoc)
-        response.content_type = 'text/xml; charset=UTF-8'
-        return svg_content
-    except storage.NotFoundWarning as e:
-        abort_404(e.message)
-    except:
-        abort_500_except()
-
-
 # ----------
 # Server maintenance
 # ----------
@@ -1347,6 +1323,117 @@ def get_result(jobname, jobid, rname):
         abort_500_except()
 
 
+@app.route('/rest/<jobname>/<jobid>/stdout')
+def get_stdout(jobname, jobid):
+    """Get stdout for job <jobid>
+
+    Returns:
+        200 OK: file (on success)
+        404 Not Found: Job not found (on NotFoundWarning)
+        404 Not Found: Result not found (on NotFoundWarning)
+        500 Internal Server Error (on error)
+    """
+    try:
+        user = set_user()
+        # Get job properties from DB
+        job = Job(jobname, jobid, user, get_attributes=True, get_parameters=False, get_results=False)
+        logname = 'stdout'
+        logroot = '{}/{}'.format(JOBDATA_PATH, job.jobid)
+        if not os.path.isfile(os.path.join(logroot, logname + '.log')):
+            raise storage.NotFoundWarning('Log "{}" NOT FOUND for job "{}"'.format(logname, jobid))
+        # Return file
+        return static_file(logname + '.log', root=logroot, mimetype='text')
+    except JobAccessDenied as e:
+        abort_403(e.message)
+    except storage.NotFoundWarning as e:
+        abort_404(e.message)
+    except:
+        abort_500_except()
+
+
+@app.route('/rest/<jobname>/<jobid>/stderr')
+def get_prov(jobname, jobid):
+    """Get stderr for job <jobid>
+
+    Returns:
+        200 OK: file (on success)
+        404 Not Found: Job not found (on NotFoundWarning)
+        404 Not Found: Result not found (on NotFoundWarning)
+        500 Internal Server Error (on error)
+    """
+    try:
+        user = set_user()
+        # Get job properties from DB
+        job = Job(jobname, jobid, user, get_attributes=True, get_parameters=False, get_results=False)
+        logname = 'stderr'
+        logroot = '{}/{}'.format(JOBDATA_PATH, job.jobid)
+        if not os.path.isfile(os.path.join(logroot, logname + '.log')):
+            raise storage.NotFoundWarning('Log "{}" NOT FOUND for job "{}"'.format(logname, jobid))
+        # Return file
+        return static_file(logname + '.log', root=logroot, mimetype='text')
+    except JobAccessDenied as e:
+        abort_403(e.message)
+    except storage.NotFoundWarning as e:
+        abort_404(e.message)
+    except:
+        abort_500_except()
+
+
+@app.route('/rest/<jobname>/<jobid>/prov<provtype>')
+def get_stderr(jobname, jobid, provtype):
+    """Get stderr for job <jobid>
+
+    Returns:
+        200 OK: file (on success)
+        404 Not Found: Job not found (on NotFoundWarning)
+        404 Not Found: Result not found (on NotFoundWarning)
+        500 Internal Server Error (on error)
+    """
+    try:
+        user = set_user()
+        # Get job properties from DB
+        job = Job(jobname, jobid, user, get_attributes=True, get_parameters=False, get_results=False)
+        provname = 'provenance.' + provtype
+        provroot = '{}/{}'.format(JOBDATA_PATH, job.jobid)
+        if not os.path.isfile(os.path.join(provroot, provname)):
+            raise storage.NotFoundWarning('Prov file "{}" NOT FOUND for job "{}"'.format(provname, jobid))
+        # Return file
+        content_types = {
+            'json': 'application/json',
+            'xml': 'text/xml',
+            'svg': 'image/svg+xml',
+        }
+        return static_file(provname, root=provroot, mimetype=content_types[provtype])
+    except JobAccessDenied as e:
+        abort_403(e.message)
+    except storage.NotFoundWarning as e:
+        abort_404(e.message)
+    except:
+        abort_500_except()
+
+
+@app.get('/prov/<jobid>')
+def get_prov(jobid):
+    """
+    Get list of available jobs on server
+    :return: list of job names in json
+    """
+    try:
+        user = set_user()
+        # Get job properties from DB
+        job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True)
+        logger.info('{} {} [{}]'.format(job.jobname, jobid, user))
+        # Get JDL
+        job.jdl.read(job.jobname)
+        # Return job provenance
+        pdoc = provenance.job2prov(job)
+        svg_content = provenance.prov2svg_content(pdoc)
+        response.content_type = 'text/xml; charset=UTF-8'
+        return svg_content
+    except storage.NotFoundWarning as e:
+        abort_404(e.message)
+    except:
+        abort_500_except()
 
 # ----------
 # /<jobname>/<jobid>/owner

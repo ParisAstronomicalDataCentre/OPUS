@@ -505,12 +505,13 @@ class Job(object):
     def add_provenance(self):
         # Create PROV files (added as a result)
         if GENERATE_PROV:
-            rfdir = '{}/{}/'.format(RESULTS_PATH, self.jobid)
+            rfdir = '{}/{}/'.format(JOBDATA_PATH, self.jobid)
             ptypes = ['json', 'xml', 'svg']
             content_types = {
                 'json': 'application/json',
                 'xml': 'text/xml',
-                'svg': 'image/svg+xml'}
+                'svg': 'image/svg+xml',
+            }
             try:
                 # TODO: check input entities and retrieve their provenance...
                 pdoc = provenance.job2prov(self)
