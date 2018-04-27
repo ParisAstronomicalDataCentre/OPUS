@@ -48,12 +48,15 @@ CHECK_PERMISSIONS = False
 CHECK_OWNER = False
 
 # Identifiers will be generated with the following UUID_GEN function
-UUID_LENGTH = 6   # length of uuid identifiers from the right, max=36
-def UUID_GEN():
+JOB_UUID_LENGTH = 6   # length of uuid identifiers from the right, max=36
+def JOB_UUID_GEN():
     # uuid example: ea5caa9f-0a76-42f5-a1a7-43752df755f0
     # uuid[-12:]: 43752df755f0
     # uuid[-6:]: f755f0
     return str(uuid.uuid4())[-UUID_LENGTH:]
+
+def ENTITY_UUID_GEN():
+    return str(uuid.uuid4())
 
 # Those servers can have access to /job_event/<jobid_manager> to change the phase or report an error
 # The IP can be truncated to allow to refer to a set of IPs

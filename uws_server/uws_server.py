@@ -8,7 +8,6 @@
 import traceback
 import glob
 import re
-import uuid
 import threading
 from subprocess import CalledProcessError
 from bottle import Bottle, request, response, abort, redirect, run, static_file
@@ -739,7 +738,7 @@ def create_job(jobname):
         500 Internal Server Error (on error)
     """
     # Create new jobid for new job
-    jobid = UUID_GEN()
+    jobid = JOB_UUID_GEN()
     try:
         user = set_user()
         # TODO: Check if form submitted correctly, detect file size overflow?

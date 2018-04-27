@@ -122,16 +122,24 @@ class EntityStorage(object):
                 sha1.update(data)
         return sha1.hexdigest()
 
-    def register_entity(self, jobid, name, path, owner='anonymous', owner_token='anonymous'):
-        """Add entity, store hash and properties, return id"""
+    def register_entity(self, jobid, file_name, file_url, file_path=None, hash=None, owner='anonymous', owner_token='anonymous'):
+        """Add entity, store hash and properties, return entity_id"""
+        # if hash is none, then compute hash (look for file in file_path or default path)
+
+        # Generate UUID for the entity
+        entity_id = ENTITY_UUID_GEN()
+
+        # Store info in DB
+
+        # Return entity_id
+        return entity_id
+
+    def remove_entity(self, entity_id, owner='anonymous', owner_token='anonymous'):
+        """Remove entity"""
         pass
 
-    def remove_entity(self, jobid, name, path, owner='anonymous', owner_token='anonymous'):
-        """Add entity, store hash and properties, return id"""
-        pass
-
-    def search_entity(self, path):
-        """Search entity, store hash and properties, return id or False"""
+    def search_entity(self, entity_id=None, jobid=None, file_name=None, hash=None):
+        """Search entity, return all entity attributes, maybe for several entities"""
         pass
 
 
@@ -196,14 +204,15 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
 
         class Entity(self.Base):
             __tablename__ = 'entities'
-            id = Column(String(80), primary_key=True, default=uuid.uuid4)
+            entity_id = Column(String(80), primary_key=True, default=uuid.uuid4)
             jobid = Column(String(80), ForeignKey("jobs.jobid"))  # uuid: max=36
             result_name = Column(String(255))
-            file_name = Column(String(255))
             hash = Column(String(255))
             creation_time = Column(myDateTime)
-            access_url = Column(String(255))
-            owner = Column(String(64), nullable=True)
+            file_name = Column(String(255))
+            file_path = Column(String(255), nullable=True)
+            access_url = Column(String(255), nullable=True)
+            owner = Column(String(64))
 
         # self.Base.prepare(self.engine, reflect=True)
         self.Base.metadata.create_all(self.engine)
@@ -400,7 +409,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
 
 
 # ----------
-
+# TO BE REMOVED...
 
 # ----------
 # SQL
