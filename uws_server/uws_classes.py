@@ -274,7 +274,11 @@ class Job(object):
                     value = self.jdl.content['parameters'][pname]['default']
                 self.parameters[pname] = {'value': value, 'byref': byref}
         # Other POST parameters
-
+        for pname in post:
+            # Those parameters won't be used for job control, or stored as used entities, but they will be loaded
+            # in the environment during execution
+            value = post.pop(pname)
+            self.parameters[pname] = {'value': value, 'byref': False}
         # Upload files for multipart/form-data
         #for fname, f in files.iteritems():
         # Save to storage
