@@ -113,7 +113,7 @@ class Manager(object):
             fname = job.get_result_filename(rname)
             line = [
                 '    if [ -f $wd/{fname} ]; then',
-                "        hash=`shasum $wd/{fname} | awk '{{print $1}}'`",
+                "        hash=`shasum -a " + SHA_ALGO + "$wd/{fname} | awk '{{print $1}}'`",
                 '        echo {rname}: >> $jd/results.yml',
                 '        echo "  file_name: {jobid}_{fname}" >> $jd/results.yml',
                 '        echo "  hash: "$hash >> $jd/results.yml',
