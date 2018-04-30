@@ -738,19 +738,18 @@ def create_job(jobname):
         500 Internal Server Error (on error)
     """
     # Create new jobid for new job
-    jobid = JOB_UUID_GEN()
     try:
         user = set_user()
         # TODO: Check if form submitted correctly, detect file size overflow?
         # TODO: add attributes: execution_duration, mem, nodes, ntasks-per-node
         # Set new job description from POSTed parameters
-        job = Job(jobname, jobid, user, from_post=request)
-        logger.info('{} {} CREATED [{}]'.format(jobname, jobid, user))
+        job = Job(jobname, '', user, from_post=request)
+        logger.info('{} {} CREATED [{}]'.format(jobname, job.jobid, user))
         # If PHASE=RUN, start job
         if request.forms.get('PHASE') == 'RUN':
             job.start()
             logger.info('{} {} QUEUED with process_id={} [{}]'
-                        ''.format(jobname, jobid, str(job.process_id), user))
+                        ''.format(jobname, job.jobid, str(job.process_id), user))
     except UserWarning as e:
         abort_500(e.args[0])
     except CalledProcessError as e:

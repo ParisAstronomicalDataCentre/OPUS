@@ -122,10 +122,14 @@ class Job(object):
         """
         # Job description
         if from_process_id:
+            # use process_id to restore jobname and jobid
             self.jobname = jobname
             self.jobid = jobid
             self.process_id = jobid
         else:
+            if not jobid:
+                # Create new jobid
+                jobid = JOB_ID_GEN()
             self.jobname = jobname
             self.jobid = jobid
             self.process_id = None
