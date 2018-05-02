@@ -67,7 +67,6 @@ class JobStorage(object):
         pass
 
 
-
 class UserStorage(object):
     """
     Manage user information storage.
@@ -404,11 +403,11 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
     # ----------
     # EntityStorage methods
 
-    def register_entity(self, jobid, result_name, file_name, access_url=None, file_path=None, hash=None, owner='anonymous', owner_token='anonymous'):
+    def register_entity(self, jobid, result_name, file_name, file_path=None, access_url=None, hash=None, owner='anonymous', owner_token='anonymous'):
         """Add entity, store hash and properties, return entity_id"""
         # if hash is none, then compute hash (look for file in file_path or default path)
         if ARCHIVE == 'Local':
-            file_path = RESULTS_PATH
+            file_path = os.path.join(RESULTS_PATH, jobid)
         if not hash:
             hash = self.get_hash(os.path.join(file_path, file_name))
         # Collect entity attributes

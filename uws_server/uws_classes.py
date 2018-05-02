@@ -281,8 +281,9 @@ class Job(object):
         for pname in post:
             # Those parameters won't be used for job control, or stored as used entities, but they will be loaded
             # in the environment during execution
-            value = post.pop(pname)
-            self.parameters[pname] = {'value': value, 'byref': False}
+            if pname not in ['PHASE']:
+                value = post[pname]
+                self.parameters[pname] = {'value': value, 'byref': False}
         # Upload files for multipart/form-data
         #for fname, f in files.iteritems():
         # Save to storage
@@ -481,9 +482,10 @@ class Job(object):
         if os.path.isfile(rf_name):
             with open(rf_name, 'r') as rf:
                 result_list = yaml.load(rf)
-
-        # TODO: store results in local archive (if ARCHIVE='Local', i.e. keep it in RESULTS_PATH/{jobid} ?)
-        # TODO: store results as entities (entity_id, job_id, result_id, filename, creation_date, hash, path, access_url, owner)
+        for rname in result_list:
+            pass
+            # TODO: store results in local archive (if ARCHIVE='Local', i.e. keep it in RESULTS_PATH/{jobid} ?)
+            # TODO: store results as entities (entity_id, job_id, result_id, filename, creation_date, hash, path, access_url, owner)
 
         # access_url computed for UWS server (retrieve endpoint with entity_id)
         #                     or distant server (url given with $ID to replace by entity_id)
@@ -599,13 +601,17 @@ class Job(object):
             # Send command to manager
             self.manager.delete(self)
         # Remove uploaded files corresponding to jobid if needed
-        upload_dir = '{}/{}'.format(UPLOADS_PATH, self.jobid)
-        if os.path.isdir(upload_dir):
-            shutil.rmtree(upload_dir)
+        uploads_dir = '{}/{}'.format(UPLOADS_PATH, self.jobid)
+        if os.path.isdir(uploads_dir):
+            shutil.rmtree(uploads_dir)
         # Remove jobdata files corresponding to jobid if needed
         jobdata_dir = '{}/{}'.format(JOBDATA_PATH, self.jobid)
         if os.path.isdir(jobdata_dir):
             shutil.rmtree(jobdata_dir)
+        # Remove results files corresponding to jobid if needed
+        results_dir = '{}/{}'.format(RESULTS_PATH, self.jobid)
+        if os.path.isdir(results_dir):
+            shutil.rmtree(results_dir)
         # Remove job from storage
         self.storage.delete(self)
 

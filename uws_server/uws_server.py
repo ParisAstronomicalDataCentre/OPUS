@@ -757,7 +757,7 @@ def create_job(jobname):
     except:
         abort_500_except()
     # Response
-    redirect('/rest/' + jobname + '/' + jobid, 303)
+    redirect('/rest/' + jobname + '/' + job.jobid, 303)
 
 
 # ----------

@@ -113,12 +113,12 @@ class Manager(object):
             fname = job.get_result_filename(rname)
             line = [
                 '    if [ -f $wd/{fname} ]; then',
-                "        hash=`shasum -a " + SHA_ALGO + "$wd/{fname} | awk '{{print $1}}'`",
+                "        hash=`shasum -a " + SHA_ALGO + " $wd/{fname} | awk '{{print $1}}'`",
                 '        echo {rname}: >> $jd/results.yml',
                 '        echo "  file_name: {jobid}_{fname}" >> $jd/results.yml',
                 '        echo "  hash: "$hash >> $jd/results.yml',
                 '        echo "Found and copied: {rname}={fname}";',
-                '        cp $wd/{fname} $rs/{jobid}_{fname};',
+                '        cp $wd/{fname} $rs/{fname};',
                 '    else',
                 '        echo "NOT FOUND: {rname}={fname}"',
                 '    fi',
