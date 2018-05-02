@@ -104,51 +104,46 @@ class UserStorage(object):
 
 class EntityStorage(object):
     """
-    Manage user information storage.
+    Manage Entity storage.
     """
 
     def get_hash(self, path):
-        """Generate SHA1 hash for given file
+        """Generate SHA hash for given file
         :param fname:
         :return: hax hash
         """
         BUF_SIZE = 65536  # lets read stuff in 64kb chunks!
-        sha1 = hashlib.sha1()
+        sha = getattr(hashlib, 'sha' + SHA_ALGO)()
         with open(path, 'rb') as f:
             while True:
                 data = f.read(BUF_SIZE)
                 if not data:
                     break
-                sha1.update(data)
-        return sha1.hexdigest()
+                sha.update(data)
+        return sha.hexdigest()
 
     def register_entity(self, jobid, file_name, file_url, file_path=None, hash=None, owner='anonymous', owner_token='anonymous'):
         """Add entity, store hash and properties, return entity_id"""
-        # if hash is none, then compute hash (look for file in file_path or default path)
-
-        # Generate UUID for the entity
-        entity_id = ENTITY_UUID_GEN()
-
-        # Store info in DB
-
-        # Return entity_id
-        return entity_id
+        pass
 
     def remove_entity(self, entity_id, owner='anonymous', owner_token='anonymous'):
         """Remove entity"""
         pass
 
-    def search_entity(self, entity_id=None, jobid=None, file_name=None, hash=None):
-        """Search entity, return all entity attributes, maybe for several entities"""
+    def get_entity(self, entity_id):
+        """Return all entity attributes"""
         pass
 
+    def search_entity(self, entity_id=None, jobid=None, result_name=None, file_name=None, hash=None, owner='anonymous', owner_token='anonymous'):
+        """Search entity, return all entity attributes, maybe for several entities"""
+        pass
 
 
 # ----------
 # SQLAlchemy
 
 
-class SQLAlchemyJobStorage(JobStorage, UserStorage):
+class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
 
     def __init__(self, db_string=SQLALCHEMY_DB):
         self.engine = create_engine(db_string)
@@ -204,7 +199,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
 
         class Entity(self.Base):
             __tablename__ = 'entities'
-            entity_id = Column(String(80), primary_key=True, default=uuid.uuid4)
+            entity_id = Column(String(80), primary_key=True, default=ENTITY_ID_GEN())
             jobid = Column(String(80), ForeignKey("jobs.jobid"))  # uuid: max=36
             result_name = Column(String(255))
             hash = Column(String(255))
@@ -281,7 +276,6 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
             else:
                 logger.debug('Role \"{}\" not found for user {}:{}'.format(role, name, token))
                 return False
-
 
     def has_access(self, user, job):
         """Check if user has access to the job"""
@@ -406,6 +400,65 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage):
         jobs = query.all()
         djobs = [job.__dict__ for job in jobs]
         return djobs
+
+    # ----------
+    # EntityStorage methods
+
+    def register_entity(self, jobid, result_name, file_name, access_url=None, file_path=None, hash=None, owner='anonymous', owner_token='anonymous'):
+        """Add entity, store hash and properties, return entity_id"""
+        # if hash is none, then compute hash (look for file in file_path or default path)
+        if ARCHIVE == 'Local':
+            file_path = RESULTS_PATH
+        if not hash:
+            hash = self.get_hash(os.path.join(file_path, file_name))
+        # Collect entity attributes
+        d = dict(
+            jobid = jobid,
+            result_name = result_name,
+            hash = hash,
+            creation_time = '',
+            file_name = file_name,
+            file_path = file_path,
+            access_url = access_url,
+            owner = owner,
+        )
+        # Generate unique identifier for the entity
+        # For a UWS system: entity_id = jobid + result name
+        # ! hash may not be unique
+        entity_id = ENTITY_ID_GEN(**d)
+        d['entity_id'] = entity_id
+        if not access_url:
+            d['access_url'] = '{}/get/result?id={}'.format(BASE_URL, entity_id)
+        # Store info in DB
+        e = self.Entity(**d)
+        self.session.merge(e)
+        self.session.commit()
+        # Return entity_id
+        return entity_id
+
+    def remove_entity(self, entity_id, owner='anonymous', owner_token='anonymous'):
+        """Remove entity"""
+        self.session.query(self.Entity).filter_by(entity_id=entity_id).delete()
+        self.session.commit()
+
+    def get_entity(self, entity_id):
+        """Return all entity attributes"""
+        query = self.session.query(self.Entity).filter_by(entity_id=entity_id)
+        entity = query.first()
+        return entity
+
+    def search_entity(self, entity_id=None, jobid=None, result_name=None, file_name=None, hash=None, owner='anonymous', owner_token='anonymous'):
+        """Search entity, return all entity attributes, maybe for several entities"""
+        if entity_id:
+            pass
+        elif jobid and result_name:
+            pass
+        elif file_name and hash:
+            pass
+        else:
+            pass
+        pass
+
 
 
 # ----------

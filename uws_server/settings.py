@@ -57,8 +57,11 @@ def JOB_ID_GEN():
 
 SHA_ALGO = '1'  # 1 (default), 224, 256, 384, 512
 
-def ENTITY_ID_GEN():
-    return str(uuid.uuid4())
+def ENTITY_ID_GEN(**kwargs):
+    # kwargs contains all the attributes of an entity
+    # For a UWS system: entity_id = jobid + result_name should be unique...
+    # return str(uuid.uuid4())
+    return '_'.join(kwargs['jobid'], kwargs['result_name'])
 
 # Those servers can have access to /job_event/<jobid_manager> to change the phase or report an error
 # The IP can be truncated to allow to refer to a set of IPs
@@ -100,13 +103,13 @@ PGSQL_USER = 'opus'
 PGSQL_PASSWORD = 'opus'
 
 # Archive for results
-# Local: store results in the local directory RESULTS_PATH or specific path on the UWS server (if given in ARCHIVE_PATH)
+# Local: store results in the local directory RESULTS_PATH
 # SLURM: specific path accessible from the SLURM work cluster / nodes (given in ARCHIVE_PATH, need also the base access URL)
 # FTP: not implemented
 # VOSpace: not implemented
 ARCHIVE = 'Local'
 ARCHIVE_PATH = ''
-ARCHIVE_URL = ''
+ARCHIVE_URL = ''  # use $ID for the identifier of the result
 
 # Copy back results
 COPY_RESULTS = True  # copy results from Manager to UWS server (may be irrelevant if Manager = Local)
