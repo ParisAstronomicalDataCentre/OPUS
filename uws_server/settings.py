@@ -53,7 +53,7 @@ def JOB_ID_GEN():
     # uuid example: ea5caa9f-0a76-42f5-a1a7-43752df755f0
     # uuid[-12:]: 43752df755f0
     # uuid[-6:]: f755f0
-    return str(uuid.uuid4())[-ID_LENGTH:]
+    return str(uuid.uuid4())[-JOB_ID_LENGTH:]
 
 SHA_ALGO = '1'  # 1 (default), 224, 256, 384, 512
 
