@@ -431,8 +431,12 @@ var uws_client = (function($) {
                     ' + p.annotation + '\
                 </div>\
             </div>';
-        $('#job_params').append(row);
         if (p.control == 'true') {
+            if ($('#add_control').length) {
+                $('#add_control').before(row);
+            } else {
+                $('#job_params').append(row);
+            };
             $('#id_'+pname).wrap('<div class="input-group"></div>');
             // Add Update buttons (possible to update params when pĥase is PENDING in UWS 1.0 - but not yet implemented)
             $('#id_'+pname).parent().append('<span class="input-group-btn"><button id="button_'+pname+'" class="btn btn-default" type="button">X</button></span>');
@@ -440,7 +444,9 @@ var uws_client = (function($) {
             $('#button_'+pname).click( function() {
                 $('#div_'+pname).parent().remove();
             });
-        };
+        } else {
+            $('#job_params').append(row);
+        }
     };
     var displayParamFormInputType = function(pname, p){
         if (p.datatype == 'file') {
@@ -530,19 +536,19 @@ var uws_client = (function($) {
         }
         // Add buttons
         var elt = '\
+            <div id="add_control" class=" form-group">\n\
+                <label class="col-md-3 control-label">Add control parameters</label>\n\
+                <div class="col-md-5 controls">\n\
+                    <select id="control_parameters" name="control_parameters" class="selectpicker" title="Chose parameter" data-width="100%">\n\
+                        <option data-hidden="true"></option>\n\
+                    </select>\n\
+                </div>\n\
+            </div>\n\
             <div id="form-buttons" class="form-group">\n\
                 <div class="col-md-offset-3 col-md-9">\n\
                     <button type="submit" class="btn btn-primary">Submit</button>\n\
                     <button type="reset" class="btn btn-default">Reset</button>\n\
                     <button id="showopt" type="button" class="btn btn-default">Show optional parameters</button>\n\
-                </div>\n\
-            </div>\n\
-            <div class="form-group">\n\
-                <label class="col-md-3 control-label">Add control parameters</label>\n\
-                <div id="div_' + pname + '" class="col-md-5 controls">\n\
-                    <select id="control_parameters" name="control_parameters" class="selectpicker" title="Chose parameter" data-width="100%">\n\
-                        <option data-hidden="true"></option>\n\
-                    </select>\n\
                 </div>\n\
             </div>\n';
         $('#job_params').append(elt);
