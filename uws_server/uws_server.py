@@ -1411,7 +1411,7 @@ def get_prov(jobname, jobid, provtype):
 
 
 @app.get('/prov/<jobid>')
-def get_prov(jobid):
+def get_provsvg(jobid):
     """
     Get list of available jobs on server
     :return: list of job names in json
