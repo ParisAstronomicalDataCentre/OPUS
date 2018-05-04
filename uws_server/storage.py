@@ -121,7 +121,7 @@ class EntityStorage(object):
                 sha.update(data)
         return sha.hexdigest()
 
-    def register_entity(self, jobid, file_name, file_url, file_path=None, hash=None, owner='anonymous', owner_token='anonymous'):
+    def register_entity(self, jobid, file_name, file_url, file_dir=None, hash=None, owner='anonymous', owner_token='anonymous'):
         """Add entity, store hash and properties, return entity_id"""
         pass
 
@@ -204,7 +204,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             hash = Column(String(255))
             creation_time = Column(myDateTime)
             file_name = Column(String(255))
-            file_path = Column(String(255), nullable=True)
+            file_dir = Column(String(255), nullable=True)
             access_url = Column(String(255), nullable=True)
             owner = Column(String(64))
 
@@ -403,13 +403,13 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
     # ----------
     # EntityStorage methods
 
-    def register_entity(self, jobid, result_name, file_name, file_path=None, access_url=None, hash=None, owner='anonymous', owner_token='anonymous'):
+    def register_entity(self, jobid, result_name, file_name, file_dir=None, access_url=None, hash=None, owner='anonymous', owner_token='anonymous'):
         """Add entity, store hash and properties, return entity_id"""
-        # if hash is none, then compute hash (look for file in file_path or default path)
+        # if hash is none, then compute hash (look for file in file_dir or default path)
         if ARCHIVE == 'Local':
-            file_path = os.path.join(RESULTS_PATH, jobid)
+            file_dir = os.path.join(RESULTS_PATH, jobid)
         if not hash:
-            hash = self.get_hash(os.path.join(file_path, file_name))
+            hash = self.get_hash(os.path.join(file_dir, file_name))
         # Collect entity attributes
         d = dict(
             jobid = jobid,
@@ -417,7 +417,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             hash = hash,
             creation_time = '',
             file_name = file_name,
-            file_path = file_path,
+            file_dir = file_dir,
             access_url = access_url,
             owner = owner,
         )
@@ -433,7 +433,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         self.session.merge(e)
         self.session.commit()
         # Return entity_id
-        return entity_id
+        return d
 
     def remove_entity(self, entity_id, owner='anonymous', owner_token='anonymous'):
         """Remove entity"""
