@@ -483,7 +483,10 @@ class Job(object):
             with open(rf_name, 'r') as rf:
                 result_list = yaml.load(rf)
         for rname in result_list:
-            pass
+            rinfo = result_list[rname]
+            entity = self.storage.register_entity(self.jobid, rname, rinfo['file_name'], hash=rinfo['hash'], owner=self.owner)
+            logger.info('New entity defined: {}'.format(str(entity)))
+
             # TODO: store results in local archive (if ARCHIVE='Local', i.e. keep it in RESULTS_PATH/{jobid} ?)
             # TODO: store results as entities (entity_id, job_id, result_id, filename, creation_date, hash, path, access_url, owner)
 

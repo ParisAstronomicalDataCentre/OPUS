@@ -1350,7 +1350,7 @@ def get_stdout(jobname, jobid):
 
 
 @app.route('/rest/<jobname>/<jobid>/stderr')
-def get_prov(jobname, jobid):
+def get_stderr(jobname, jobid):
     """Get stderr for job <jobid>
 
     Returns:
@@ -1378,7 +1378,7 @@ def get_prov(jobname, jobid):
 
 
 @app.route('/rest/<jobname>/<jobid>/prov<provtype>')
-def get_stderr(jobname, jobid, provtype):
+def get_prov(jobname, jobid, provtype):
     """Get stderr for job <jobid>
 
     Returns:
