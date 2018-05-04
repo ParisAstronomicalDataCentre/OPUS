@@ -407,9 +407,10 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
     def register_entity(self, **kwargs):
         # jobid, result_name, file_name, file_dir=None, access_url=None, hash=None, content_type=None, owner='anonymous', owner_token='anonymous'):
         """Add entity, store hash and properties, return entity_id"""
+        # Check for required attributes in kwargs
         for k in ['jobid', 'result_name', 'file_name', 'owner']:
             if not k in kwargs:
-                raise UserWarning('attribute {} is missing to register a new entity'.format(k))
+                raise UserWarning('Attribute {} is missing to register a new entity'.format(k))
         # Redefine file_dir if ARCHIVE is Local (the file has been copied to RESULTS_PATH)
         if ARCHIVE == 'Local':
             kwargs['file_dir'] = os.path.join(RESULTS_PATH, kwargs['jobid'])
@@ -433,11 +434,15 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         self.session.merge(e)
         self.session.commit()
         # Return entity_id
+        logger.info('New entity registered: {}'.format(str(kwargs)))
         return kwargs
 
-    def remove_entity(self, entity_id, owner='anonymous', owner_token='anonymous'):
+    def remove_entity(self, entity_id=None, jobid=None, owner='anonymous'):
         """Remove entity"""
-        self.session.query(self.Entity).filter_by(entity_id=entity_id).delete()
+        if entity_id:
+            self.session.query(self.Entity).filter_by(entity_id=entity_id).delete()
+        elif jobid:
+            self.session.query(self.Entity).filter_by(jobid=jobid).delete()
         self.session.commit()
 
     def get_entity(self, entity_id):

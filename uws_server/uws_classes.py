@@ -471,14 +471,14 @@ class Job(object):
     # Metadata management
     # ----------
 
-    def add_result_entry(self, rname, rfname, content_type):
-        url = '{}/get/result/{}/{}'.format(BASE_URL, self.jobid, rname)  # , rfname)
+    def add_result_entry(self, rname, url, content_type):
         self.results[rname] = {'url': url, 'content_type': content_type}
-        logger.info('add {} file to results'.format(rfname))
+        logger.info('Add {} to results'.format(rname))
 
     def add_results(self):
         # Read results.yml to know generated results (those that are located in the results directory)
         rf_name = os.path.join(JOBDATA_PATH, self.jobid, 'results.yml')
+        result_list = {}
         if os.path.isfile(rf_name):
             with open(rf_name, 'r') as rf:
                 result_list = yaml.load(rf)
@@ -491,36 +491,33 @@ class Job(object):
                 content_type = rinfo['content_type'],
                 file_name = rinfo['file_name'],
                 file_dir = rinfo['file_dir'],
-                access_url = None,
                 owner = self.owner,
             )
-            logger.info('New entity defined: {}'.format(str(entity)))
-
-            # TODO: store results in local archive (if ARCHIVE='Local', i.e. keep it in RESULTS_PATH/{jobid} ?)
-            # TODO: store results as entities (entity_id, job_id, result_id, filename, creation_date, hash, path, access_url, owner)
+            self.add_result_entry(entity['result_name'], entity['access_url'], entity['content_type'])
 
         # access_url computed for UWS server (retrieve endpoint with entity_id)
         #                     or distant server (url given with $ID to replace by entity_id)
 
-        # Get JDL to know expected job results (but already done in copy_results() from Manager)
-        if not self.jdl.content:
-            self.jdl.read(self.jobname)
-        # Check results and all links to db (maybe not all results listed in JDL have been created)
-        for rname, r in self.jdl.content['generated'].iteritems():
-            rfname = self.get_result_filename(rname)
-            rfpath = '{}/{}/{}'.format(RESULTS_PATH, self.jobid, rfname)
-            if os.path.isfile(rfpath):
-                self.add_result_entry(rname, rfname, r['content_type'])
-            else:
-                logger.info('No result for {}'.format(rname))
+        # # Get JDL to know expected job results (but already done in copy_results() from Manager)
+        # if not self.jdl.content:
+        #     self.jdl.read(self.jobname)
+        # # Check results and all links to db (maybe not all results listed in JDL have been created)
+        # for rname, r in self.jdl.content['generated'].iteritems():
+        #     rfname = self.get_result_filename(rname)
+        #     rfpath = '{}/{}/{}'.format(RESULTS_PATH, self.jobid, rfname)
+        #     if os.path.isfile(rfpath):
+        #         self.add_result_entry(rname, rfname, r['content_type'])
+        #     else:
+        #         logger.info('No result for {}'.format(rname))
 
     def add_logs(self):
         # Link job logs stdout and stderr (added as a result)
         rfdir = '{}/{}/'.format(JOBDATA_PATH, self.jobid)
         for rname in ['stdout', 'stderr']:
             rfname = rname + '.log'
+            url = '{}/get/result/{}/{}'.format(BASE_URL, self.jobid, rname)  # , rfname)
             if os.path.isfile(rfdir + rfname):
-                self.add_result_entry(rname, rfname, 'text/plain')
+                self.add_result_entry(rname, url, 'text/plain')
             else:
                 logger.warning('File {} missing'.format(rfname))
 
@@ -547,8 +544,9 @@ class Job(object):
                 # PROV JSON
                 rname = 'prov' + ptype
                 rfname = 'provenance.' + ptype
+                url = '{}/get/result/{}/{}'.format(BASE_URL, self.jobid, rname)  # , rfname)
                 if os.path.isfile(rfdir + rfname):
-                    self.add_result_entry(rname, rfname, content_types[ptype])
+                    self.add_result_entry(rname, url, content_types[ptype])
                 else:
                     logger.warning('File {} missing'.format(rfname))
 
@@ -624,7 +622,8 @@ class Job(object):
         results_dir = '{}/{}'.format(RESULTS_PATH, self.jobid)
         if os.path.isdir(results_dir):
             shutil.rmtree(results_dir)
-        # Remove job from storage
+        # Remove job and entities from storage
+        self.storage.remove_entity(jobid=self.jobid)
         self.storage.delete(self)
 
     def get_status(self):
