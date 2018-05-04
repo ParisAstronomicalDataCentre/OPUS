@@ -433,7 +433,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         self.session.merge(e)
         self.session.commit()
         # Return entity_id
-        return d
+        return kwargs
 
     def remove_entity(self, entity_id, owner='anonymous', owner_token='anonymous'):
         """Remove entity"""
