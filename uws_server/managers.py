@@ -115,7 +115,7 @@ class Manager(object):
                 '    if [ -f $wd/{fname} ]; then',
                 "        hash=`shasum -a " + SHA_ALGO + " $wd/{fname} | awk '{{print $1}}'`",
                 '        echo {rname}: >> $jd/results.yml',
-                '        echo "  file_name: {jobid}_{fname}" >> $jd/results.yml',
+                '        echo "  file_name: {fname}" >> $jd/results.yml',
                 '        echo "  hash: "$hash >> $jd/results.yml',
                 '        echo "Found and copied: {rname}={fname}";',
                 '        cp $wd/{fname} $rs/{fname};',
@@ -246,7 +246,7 @@ class LocalManager(Manager):
             logger.error(response.content)
         del response
 
-    def _poll_process(self, popen):
+    def _poll_process(self, popen, job):
         rcode = popen.poll()
         process_id = popen.pid
         # Actions depending on rcode value
@@ -255,6 +255,8 @@ class LocalManager(Manager):
                 p = psutil.Process(process_id)
             except psutil.NoSuchProcess as e:
                 logger.info('process {} ended (NoSuchProcess)'.format(process_id))
+                if job.phase == 'EXECUTING':
+                    self._send_signal(process_id, 'ERROR', error_msg='Process terminated with errors')
                 return
             # TODO: Handle sleeping, idle, suspended processes?...
             # Handle stopped processes
@@ -279,12 +281,12 @@ class LocalManager(Manager):
                         self.suspended_processes.remove(process_id)
                     logger.info('process {} continued'.format(process_id))
                 # Rerun _poll_process after some time
-                threading.Timer(self.poll_interval, self._poll_process, [popen]).start()
+                threading.Timer(self.poll_interval, self._poll_process, [popen, job]).start()
             else:
                 # Let the process run
                 logger.info('process {} running'.format(process_id))
                 # Rerun _poll_process after some time
-                threading.Timer(self.poll_interval, self._poll_process, [popen]).start()
+                threading.Timer(self.poll_interval, self._poll_process, [popen, job]).start()
         # Handle killed processes
         elif rcode == -9:
             logger.info('process {} killed during execution'.format(process_id))
@@ -292,9 +294,12 @@ class LocalManager(Manager):
         # Handle processes terminated with errors
         elif rcode <= -1:
             logger.info('process {} terminated with errors'.format(process_id))
+            self._send_signal(process_id, 'ERROR', error_msg='Process terminated with errors')
         # Otherwise process has terminated
         else:
             logger.info('process {} terminated (rcode=0)'.format(process_id))
+            if job.phase == 'EXECUTING':
+                self._send_signal(process_id, 'ERROR', error_msg='Process terminated (rcode=0)')
 
     def start(self, job):
         """Start job locally
@@ -345,7 +350,7 @@ class LocalManager(Manager):
         # logger.debug(' '.join(cmd))
         popen = sp.Popen(cmd)
         # poll popen regularly
-        self._poll_process(popen)
+        self._poll_process(popen, job)
         # Return process_id
         return popen.pid
 
