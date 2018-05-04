@@ -116,6 +116,8 @@ class Manager(object):
                 "        hash=`shasum -a " + SHA_ALGO + " $wd/{fname} | awk '{{print $1}}'`",
                 '        echo {rname}: >> $jd/results.yml',
                 '        echo "  file_name: {fname}" >> $jd/results.yml',
+                '        echo "  file_dir: $rs" >> $jd/results.yml',
+                '        echo "  content_type: {rtype}" >> $jd/results.yml',
                 '        echo "  hash: "$hash >> $jd/results.yml',
                 '        echo "Found and copied: {rname}={fname}";',
                 '        cp $wd/{fname} $rs/{fname};',
@@ -123,7 +125,7 @@ class Manager(object):
                 '        echo "NOT FOUND: {rname}={fname}"',
                 '    fi',
             ]
-            cp_results.append('\n'.join(line).format(rname=rname, fname=fname, jobid=job.jobid))
+            cp_results.append('\n'.join(line).format(rname=rname, fname=fname, rtype=r['content_type']))
             # cp_results.append(
             #     '    [ -f $wd/{fname} ]'
             #     ' && {{ cp $wd/{fname} $rs; echo "Found and copied: {rname}={fname}"; }}'

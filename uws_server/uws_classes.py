@@ -484,7 +484,16 @@ class Job(object):
                 result_list = yaml.load(rf)
         for rname in result_list:
             rinfo = result_list[rname]
-            entity = self.storage.register_entity(self.jobid, rname, rinfo['file_name'], hash=rinfo['hash'], owner=self.owner)
+            entity = self.storage.register_entity(
+                jobid = self.jobid,
+                result_name = rname,
+                hash = rinfo['hash'],
+                content_type = rinfo['content_type'],
+                file_name = rinfo['file_name'],
+                file_dir = rinfo['file_dir'],
+                access_url = None,
+                owner = self.owner,
+            )
             logger.info('New entity defined: {}'.format(str(entity)))
 
             # TODO: store results in local archive (if ARCHIVE='Local', i.e. keep it in RESULTS_PATH/{jobid} ?)

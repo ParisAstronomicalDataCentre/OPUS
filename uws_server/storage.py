@@ -202,6 +202,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             jobid = Column(String(80), ForeignKey("jobs.jobid"))  # uuid: max=36
             result_name = Column(String(255))
             hash = Column(String(255))
+            content_type = Column(String(255), nullable=True)
             creation_time = Column(myDateTime)
             file_name = Column(String(255))
             file_dir = Column(String(255), nullable=True)
@@ -403,33 +404,32 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
     # ----------
     # EntityStorage methods
 
-    def register_entity(self, jobid, result_name, file_name, file_dir=None, access_url=None, hash=None, owner='anonymous', owner_token='anonymous'):
+    def register_entity(self, **kwargs):
+        # jobid, result_name, file_name, file_dir=None, access_url=None, hash=None, content_type=None, owner='anonymous', owner_token='anonymous'):
         """Add entity, store hash and properties, return entity_id"""
-        # if hash is none, then compute hash (look for file in file_dir or default path)
+        for k in ['jobid', 'result_name', 'file_name', 'owner']:
+            if not k in kwargs:
+                raise UserWarning('attribute {} is missing to register a new entity'.format(k))
+        # Redefine file_dir if ARCHIVE is Local (the file has been copied to RESULTS_PATH)
         if ARCHIVE == 'Local':
-            file_dir = os.path.join(RESULTS_PATH, jobid)
-        if not hash:
-            hash = self.get_hash(os.path.join(file_dir, file_name))
-        # Collect entity attributes
-        d = dict(
-            jobid = jobid,
-            result_name = result_name,
-            hash = hash,
-            creation_time = '',
-            file_name = file_name,
-            file_dir = file_dir,
-            access_url = access_url,
-            owner = owner,
-        )
+            kwargs['file_dir'] = os.path.join(RESULTS_PATH, kwargs['jobid'])
+        # Compute hash if not given (look for file in file_dir)
+        if not 'hash' in kwargs:
+            kwargs['hash'] = self.get_hash(os.path.join(kwargs['file_dir'], kwargs['file_name']))
+        # Set creation_time if not given
+        if not 'creation_time' in kwargs:
+            now = dt.datetime.now()
+            kwargs['creation_time'] = now.strftime(DT_FMT)
         # Generate unique identifier for the entity
         # For a UWS system: entity_id = jobid + result name
         # ! hash may not be unique
-        entity_id = ENTITY_ID_GEN(**d)
-        d['entity_id'] = entity_id
-        if not access_url:
-            d['access_url'] = '{}/get/result?id={}'.format(BASE_URL, entity_id)
+        entity_id = ENTITY_ID_GEN(**kwargs)
+        kwargs['entity_id'] = entity_id
+        # Define access_url if not given
+        if not 'access_url' in kwargs:
+            kwargs['access_url'] = '{}/get/result?id={}'.format(BASE_URL, entity_id)
         # Store info in DB
-        e = self.Entity(**d)
+        e = self.Entity(**kwargs)
         self.session.merge(e)
         self.session.commit()
         # Return entity_id
