@@ -12,4 +12,6 @@ flask-sqlalchemy
 flask-security
 flask-admin
 bcrypt
-
+graphviz
+pydot
+pydotplus
