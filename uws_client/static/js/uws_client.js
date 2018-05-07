@@ -792,9 +792,9 @@ var uws_client = (function($) {
             // if r is in job['results']
             if ($.inArray(r, Object.keys(job['results'])) !== -1) {
                 var r_url = job['results'][r];
-                var r_url_auth = r_url.split(job.jobId).pop();
+                var r_url_auth = r_url.split('?').pop();
                 if (r_url_auth != r_url) {
-                    r_url_auth = client_proxy_url + server_result_url + job.jobId + r_url_auth
+                    r_url_auth = client_proxy_url + server_result_url + '?' + r_url_auth
                 };
                 var r_type = jdl.generated[r]['content_type']; //r_name.split('.').pop();
                 displayResult('result_list', r, r_type, r_url, r_url_auth);
@@ -818,7 +818,9 @@ var uws_client = (function($) {
                     r_type = 'image/svg+xml'
                     break;
             };
-            displayResult('details_list', r, r_type, r_url, r_url_auth);
+            if (job.phase == 'COMPLETED') {
+                displayResult('details_list', r, r_type, r_url, r_url_auth);
+            };
         };
     };
     var displayResults = function(job){
@@ -840,7 +842,7 @@ var uws_client = (function($) {
         // Display parameters in id_* fields
         displayParams(job);
         // Display results as panels in div results
-        displayResults(job);
+        displayResultsOk(job);
         // Show div_job
         $("#div_job").show();
         // Slide to
