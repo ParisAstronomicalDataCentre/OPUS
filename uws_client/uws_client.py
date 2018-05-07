@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2016 by Mathieu Servillat
 # Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
@@ -276,7 +276,7 @@ def create_db():
         logger.debug('Database created')
     except Exception as e:
         db.session.rollback()
-        logger.warning(e.message)
+        logger.warning(str(e))
     add_server_jobs_to_db()
 
 
@@ -295,7 +295,7 @@ def add_jobs_to_db(jobnames, server_url):
         db.session.commit()
     except Exception as e:
         db.session.rollback()
-        logger.warning(e.message)
+        logger.warning(str(e))
 
 
 def add_server_jobs_to_db():
@@ -305,7 +305,7 @@ def add_server_jobs_to_db():
         add_jobs_to_db(json_data['jobnames'], app.config['UWS_SERVER_URL'])
     except Exception as e:
         db.session.rollback()
-        logger.warning(e.message)
+        logger.warning(str(e))
 
 
 def add_job_to_user(username, ajob, commit=True):
@@ -367,7 +367,7 @@ admin.add_view(JobView(Job, db.session))
 def on_user_logged_in(sender, user):
     logger.info(user.email)
     #session['server_url'] = app.config['UWS_SERVER_URL_JS']
-    session['auth'] = base64.b64encode(current_user.email + ':' + str(current_user.token))
+    session['auth'] = base64.b64encode((current_user.email + ':' + str(current_user.token)).encode())
     flash('"{}" is now logged in'.format(user.email), 'info')
 
 
@@ -417,7 +417,7 @@ def profile():
 def preferences():
     if request.method == 'POST':
         logger.debug('Modify editable config')
-        for key, value in request.form.iteritems():
+        for key, value in request.form.items():
             if key in EDITABLE_CONFIG:
                 app.config[key] = str(value)
         save_config()
@@ -562,7 +562,7 @@ def uws_server_request(uri, method='GET', init_request=None):
     elif method == 'POST':
         logger.debug(request.form.to_dict())
         post={}
-        for key in init_request.form.keys():
+        for key in list(init_request.form.keys()):
             value = init_request.form.getlist(key)
             if len(value) == 1:
                 post[key] = value[0]
@@ -572,7 +572,7 @@ def uws_server_request(uri, method='GET', init_request=None):
         files = {}
         if init_request.files:
             logger.debug('POST has files')
-            for fname in init_request.files.keys():
+            for fname in list(init_request.files.keys()):
                 logger.debug('file: ' + fname)
                 fp = init_request.files[fname]
                 files[fname] = (fp.filename, fp.stream, fp.content_type, fp.headers)

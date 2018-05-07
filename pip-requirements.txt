@@ -5,11 +5,11 @@ blinker
 requests
 lxml
 webtest
+pyyaml
 prov
-pydot
-pydotplus
 flask
 flask-sqlalchemy
 flask-security
 flask-admin
-pyyaml
+bcrypt
+

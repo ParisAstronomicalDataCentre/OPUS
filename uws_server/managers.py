@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2016 by Mathieu Servillat
 # Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
@@ -18,7 +18,7 @@ Specific functions are expected for those classes:
 
 import datetime as dt
 import subprocess as sp
-from settings import *
+from .settings import *
 
 if MANAGER == 'Local':
     import shutil
@@ -108,7 +108,7 @@ class Manager(object):
         cp_results = [
             'copy_results() {',
         ]
-        for rname, r in job.jdl.content['generated'].iteritems():
+        for rname, r in job.jdl.content.get('generated', {}).items():
             # TODO: copy directly to archive directory (?)
             fname = job.get_result_filename(rname)
             line = [

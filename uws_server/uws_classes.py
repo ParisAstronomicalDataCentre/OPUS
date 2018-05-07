@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2016 by Mathieu Servillat
 # Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
@@ -7,16 +7,16 @@ Defines classes for UWS objects job and job_list
 """
 
 import shutil
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import datetime as dt
 import xml.etree.ElementTree as ETree
 import yaml
 from blinker import signal
-import uws_jdl
-import storage
-import managers
-import provenance
-from settings import *
+from . import uws_jdl
+from . import storage
+from . import managers
+from . import provenance
+from .settings import *
 
 
 # ---------
@@ -249,8 +249,8 @@ class Job(object):
                     setattr(self, pname, value)
         # Search inputs in POST/files
         upload_dir = '{}/{}'.format(UPLOADS_PATH, self.jobid)
-        for pname in self.jdl.content['used']:
-            if pname in files.keys():
+        for pname in self.jdl.content.get('used', {}):
+            if pname in list(files.keys()):
                 if not os.path.isdir(upload_dir):
                     os.makedirs(upload_dir)
                 f = files[pname]
@@ -269,7 +269,7 @@ class Job(object):
                 logger.info('Input {} set by default'.format(pname))
             self.parameters[pname] = {'value': value, 'byref': False}
         # Search parameters in POST
-        for pname in self.jdl.content['parameters']:
+        for pname in self.jdl.content.get('parameters', {}):
             if pname not in self.parameters:
                 # TODO: use JDL to check if value is valid
                 ptype = self.jdl.content['parameters'][pname]['datatype']
@@ -334,7 +334,7 @@ class Job(object):
         params = ['# Required parameters']
         files = {'URI': [], 'form': []}
         # Job parameters
-        for pname, pdict in self.parameters.iteritems():
+        for pname, pdict in self.parameters.items():
             pvalue = pdict['value']
             if get_files:
                 # Prepare file upload and convert param value for files
@@ -349,7 +349,7 @@ class Job(object):
             params.append(pname + '=\"' + pvalue + '\"')
         # Used
         params.append('# Used')
-        for pname, pdict in self.jdl.content['used'].iteritems():
+        for pname, pdict in self.jdl.content.get('used', {}).items():
             if not pname in self.parameters:
                 pvalue = pdict['default']
                 if get_files:
@@ -363,13 +363,13 @@ class Job(object):
                 params.append(pname + '=\"' + pvalue + '\"')
         # Results
         params.append('# Results')
-        for rname, rdict in self.jdl.content['generated'].iteritems():
+        for rname, rdict in self.jdl.content.get('generated', {}).items():
             if not rname in self.parameters:
                 rvalue = rdict['default']
                 params.append(rname + '=\"' + rvalue + '\"')
         # Other parameters
         params.append('# Other parameters')
-        for pname, pdict in self.jdl.content['parameters'].iteritems():
+        for pname, pdict in self.jdl.content.get('parameters', {}).items():
             if (pname not in self.parameters) and (pname not in self.results):
                 params.append(pname + '=\"' + pdict['default'] + '\"')
         # Return list of bash variables
@@ -385,15 +385,15 @@ class Job(object):
             parameter list as a string
         """
         params = []
-        for pname, pdict in self.parameters.iteritems():
+        for pname, pdict in self.parameters.items():
             params.append('"{}": "{}"'.format(pname, pdict['value']))
         return '{' + ', '.join(params) + '}'
 
     def _parameters_to_xml_fill(self, xml_params):
         # Add each parameter that has a value
-        for pname, p in self.parameters.iteritems():
+        for pname, p in self.parameters.items():
             if p['value']:
-                value = urllib.quote_plus(urllib.unquote_plus(p['value']))
+                value = urllib.parse.quote_plus(urllib.parse.unquote_plus(p['value']))
                 by_ref = str(p['byref']).lower()
                 ETree.SubElement(xml_params, 'uws:parameter', attrib={'id': pname, 'byReference': by_ref}).text = value
 
@@ -411,7 +411,7 @@ class Job(object):
         return ETree.tostring(xml_params)
 
     def _results_to_xml_fill(self, xml_results):
-        for rname, r in self.results.iteritems():
+        for rname, r in self.results.items():
             if r['url']:
                 attrib = {
                     'id': rname,
@@ -543,7 +543,7 @@ class Job(object):
                 provenance.prov2xml(pdoc, rfdir + 'provenance.xml')
                 provenance.prov2svg(pdoc, rfdir + 'provenance.svg')
             except Exception as e:
-                logger.warning('ERROR in provenance files creation: ' + e.message)
+                logger.warning('ERROR in provenance files creation: ' + str(e))
                 raise
             for ptype in ptypes:
                 # PROV JSON
@@ -660,17 +660,19 @@ class Job(object):
             # destruction = dt.timedelta(DESTRUCTION_INTERVAL)
             if new_phase not in ['QUEUED', 'HELD', 'SUSPENDED', 'EXECUTING', 'COMPLETED', 'ABORTED', 'ERROR']:
                 raise UserWarning('Phase change not allowed: {} --> {}'.format(self.phase, new_phase))
-            # Run case
-            # cases[new_phase](self, error)
             # Set start_time
             if new_phase in ['QUEUED']:
                 self.start_time = now.strftime(DT_FMT)
-            # Set end_time
+            # Get results, logs
             if new_phase in ['COMPLETED', 'ABORTED', 'ERROR']:
                 self.manager.get_jobdata(self)
                 # Add results, logs, provenance (if they exist...) to job control db
                 self.add_results()
                 self.add_logs()
+            # Add provenance files
+            if new_phase in ['COMPLETED']:
+                self.add_provenance()
+            # increment error message is needed
             if new_phase in ['ERROR', 'ABORTED']:
                 # Set job.error or add
                 if self.error:
@@ -680,14 +682,13 @@ class Job(object):
                 # If phase is already ABORTED, keep it
                 if self.phase == 'ABORTED':
                     new_phase = 'ABORTED'
+            # Set end_time
             if new_phase in ['COMPLETED', 'ABORTED']:
                 self.end_time = now.strftime(DT_FMT)
             if new_phase == 'ERROR' and self.phase != 'ERROR':
                 self.end_time = now.strftime(DT_FMT)
-            if new_phase in ['COMPLETED']:
-                self.add_provenance()
             # Update phase
-            # previous_phase = self.phase
+            previous_phase = self.phase
             self.phase = new_phase
             # Save job description
             self.storage.save(self)
@@ -773,10 +774,10 @@ class JobList(object):
                 html += k + ' = ' + str(getattr(job, k)) + '<br>'
             # Parameters
             html += '<strong>Parameters:</strong><br>'
-            for pname, p in job.parameters.iteritems():
+            for pname, p in job.parameters.items():
                 html += pname + ' = ' + p['value'] + '<br>'
             # Results
             html += '<strong>Results</strong><br>'
-            for rname, r in job.results.iteritems():
+            for rname, r in job.results.items():
                 html += '{} ({}): {} <br>'.format(str(rname), r['content_type'], r['url'])
         return html

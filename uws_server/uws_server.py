@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2016 by Mathieu Servillat
 # Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
@@ -11,7 +11,7 @@ import re
 import threading
 from subprocess import CalledProcessError
 from bottle import Bottle, request, response, abort, redirect, run, static_file
-from uws_classes import *
+from .uws_classes import *
 
 
 # Create a new application
@@ -542,9 +542,9 @@ def get_entity():
             return static_file(entity['file_name'], root=entity['file_dir'], mimetype=entity['content_type'],
                                download=True)
     except JobAccessDenied as e:
-        abort_403(e.message)
+        abort_403(str(e))
     except storage.NotFoundWarning as e:
-        abort_404(e.message)
+        abort_404(str(e))
     except UserWarning as e:
         abort_500(e.args[0])
     except:
@@ -597,9 +597,9 @@ def get_result_file(jobid, rname):  # , rfname):
             return static_file(rfname, root='{}/{}'.format(RESULTS_PATH, job.jobid),
                                mimetype=content_type, download=True)
     except JobAccessDenied as e:
-        abort_403(e.message)
+        abort_403(str(e))
     except storage.NotFoundWarning as e:
-        abort_404(e.message)
+        abort_404(str(e))
     except:
         abort_500_except()
 
@@ -649,7 +649,7 @@ def maintenance(jobname):
                 logger.warning('Job should be deleted/archived: {} {}'.format(jobname, job.jobid))
         pass
     except JobAccessDenied as e:
-        abort_403(e.message)
+        abort_403(str(e))
     except:
         abort_500_except()
     # Response
@@ -718,9 +718,9 @@ def job_event():
         else:
             raise UserWarning('jobid is not defined in POST')
     except JobAccessDenied as e:
-        abort_403(e.message)
+        abort_403(str(e))
     except storage.NotFoundWarning as e:
-        abort_404(e.message)
+        abort_404(str(e))
     except UserWarning as e:
         abort_500(e.args[0])
     except:
@@ -761,7 +761,7 @@ def get_joblist(jobname):
         response.content_type = 'text/xml; charset=UTF-8'
         return xml_out
     except JobAccessDenied as e:
-        abort_403(e.message)
+        abort_403(str(e))
     except:
         abort_500_except()
 
@@ -854,9 +854,9 @@ def get_job(jobname, jobid):
         response.content_type = 'text/xml; charset=UTF-8'
         return xml_out
     except JobAccessDenied as e:
-        abort_403(e.message)
+        abort_403(str(e))
     except storage.NotFoundWarning as e:
-        abort_404(e.message)
+        abort_404(str(e))
     except:
         abort_500_except()
 
@@ -879,9 +879,9 @@ def delete_job(jobname, jobid):
         job.delete()
         logger.info('{} {} DELETED [{}]'.format(jobname, jobid, user))
     except JobAccessDenied as e:
-        abort_403(e.message)
+        abort_403(str(e))
     except storage.NotFoundWarning as e:
-        abort_404(e.message)
+        abort_404(str(e))
     except CalledProcessError as e:
         abort_500_except('STDERR output:\n' + e.output)
     except:
@@ -905,9 +905,9 @@ def post_job(jobname, jobid):
         else:
             raise UserWarning('ACTION=DELETE is not specified in POST')
     except JobAccessDenied as e:
-        abort_403(e.message)
+        abort_403(str(e))
     except storage.NotFoundWarning as e:
-        abort_404(e.message)
+        abort_404(str(e))
     except UserWarning as e:
         abort_500(e.args[0])
     except CalledProcessError as e:
@@ -940,9 +940,9 @@ def get_phase(jobname, jobid):
         response.content_type = 'text/plain; charset=UTF-8'
         return job.phase
     except JobAccessDenied as e:
-        abort_403(e.message)
+        abort_403(str(e))
     except storage.NotFoundWarning as e:
-        abort_404(e.message)
+        abort_404(str(e))
     except:
         abort_500_except()
 
@@ -982,9 +982,9 @@ def post_phase(jobname, jobid):
         else:
             raise UserWarning('PHASE keyword is not specified in POST')
     except JobAccessDenied as e:
-        abort_403(e.message)
+        abort_403(str(e))
     except storage.NotFoundWarning as e:
-        abort_404(e.message)
+        abort_404(str(e))
     except UserWarning as e:
         abort_500(e.args[0])
     except CalledProcessError as e:
@@ -1018,9 +1018,9 @@ def get_executionduration(jobname, jobid):
         response.content_type = 'text/plain; charset=UTF-8'
         return str(job.execution_duration)
     except JobAccessDenied as e:
-        abort_403(e.message)
+        abort_403(str(e))
     except storage.NotFoundWarning as e:
-        abort_404(e.message)
+        abort_404(str(e))
     except:
         abort_500_except()
 
@@ -1054,9 +1054,9 @@ def post_executionduration(jobname, jobid):
         job.set_attribute('execution_duration', new_value)
         logger.info('{} {} set execution_duration= [{}]'.format(jobname, jobid, str(new_value), user))
     except JobAccessDenied as e:
-        abort_403(e.message)
+        abort_403(str(e))
     except storage.NotFoundWarning as e:
-        abort_404(e.message)
+        abort_404(str(e))
     except UserWarning as e:
         abort_500(e.args[0])
     except:
@@ -1088,9 +1088,9 @@ def get_destruction(jobname, jobid):
         response.content_type = 'text/plain; charset=UTF-8'
         return job.destruction_time
     except JobAccessDenied as e:
-        abort_403(e.message)
+        abort_403(str(e))
     except storage.NotFoundWarning as e:
-        abort_404(e.message)
+        abort_404(str(e))
     except:
         abort_500_except()
 
@@ -1118,7 +1118,7 @@ def post_destruction(jobname, jobid):
             if len(e.args) > 0 and e.args[0].startswith('unconverted data remains:'):
                 new_value = new_value[:19]
             else:
-                raise UserWarning('Destruction time must be in ISO8601 format ({})'.format(e.message))
+                raise UserWarning('Destruction time must be in ISO8601 format ({})'.format(str(e)))
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_attributes=True)
         # Change value
@@ -1126,9 +1126,9 @@ def post_destruction(jobname, jobid):
         job.set_attribute('destruction_time', new_value)
         logger.info('{} {} set destruction_time={} [{}]'.format(jobname, jobid, new_value, user))
     except JobAccessDenied as e:
-        abort_403(e.message)
+        abort_403(str(e))
     except storage.NotFoundWarning as e:
-        abort_404(e.message)
+        abort_404(str(e))
     except UserWarning as e:
         abort_500(e.args[0])
     except:
@@ -1161,9 +1161,9 @@ def get_error(jobname, jobid):
         response.content_type = 'text/plain; charset=UTF-8'
         return job.error
     except JobAccessDenied as e:
-        abort_403(e.message)
+        abort_403(str(e))
     except storage.NotFoundWarning as e:
-        abort_404(e.message)
+        abort_404(str(e))
     except:
         abort_500_except()
 
@@ -1191,9 +1191,9 @@ def get_quote(jobname, jobid):
         response.content_type = 'text/plain; charset=UTF-8'
         return str(job.quote)
     except JobAccessDenied as e:
-        abort_403(e.message)
+        abort_403(str(e))
     except storage.NotFoundWarning as e:
-        abort_404(e.message)
+        abort_404(str(e))
     except:
         abort_500_except()
 
@@ -1223,9 +1223,9 @@ def get_parameters(jobname, jobid):
         response.content_type = 'text/xml; charset=UTF-8'
         return xml_out
     except JobAccessDenied as e:
-        abort_403(e.message)
+        abort_403(str(e))
     except storage.NotFoundWarning as e:
-        abort_404(e.message)
+        abort_404(str(e))
     except:
         abort_500_except()
 
@@ -1252,9 +1252,9 @@ def get_parameter(jobname, jobid, pname):
         response.content_type = 'text/plain; charset=UTF-8'
         return str(job.parameters[pname]['value'])
     except JobAccessDenied as e:
-        abort_403(e.message)
+        abort_403(str(e))
     except storage.NotFoundWarning as e:
-        abort_404(e.message)
+        abort_404(str(e))
     except:
         abort_500_except()
 
@@ -1286,9 +1286,9 @@ def post_parameter(jobname, jobid, pname):
             raise UserWarning('Job "{}" must be in PENDING state (currently {}) to change parameter'
                               ''.format(jobid, job.phase))
     except JobAccessDenied as e:
-        abort_403(e.message)
+        abort_403(str(e))
     except storage.NotFoundWarning as e:
-        abort_404(e.message)
+        abort_404(str(e))
     except UserWarning as e:
         abort_500(e.args[0])
     except:
@@ -1322,9 +1322,9 @@ def get_results(jobname, jobid):
         response.content_type = 'text/xml; charset=UTF-8'
         return xml_out
     except JobAccessDenied as e:
-        abort_403(e.message)
+        abort_403(str(e))
     except storage.NotFoundWarning as e:
-        abort_404(e.message)
+        abort_404(str(e))
     except:
         abort_500_except()
 
@@ -1351,9 +1351,9 @@ def get_result(jobname, jobid, rname):
         response.content_type = 'text/plain; charset=UTF-8'
         return str(job.results[rname]['url'])
     except JobAccessDenied as e:
-        abort_403(e.message)
+        abort_403(str(e))
     except storage.NotFoundWarning as e:
-        abort_404(e.message)
+        abort_404(str(e))
     except:
         abort_500_except()
 
@@ -1379,9 +1379,9 @@ def get_stdout(jobname, jobid):
         # Return file
         return static_file(logname + '.log', root=logroot, mimetype='text')
     except JobAccessDenied as e:
-        abort_403(e.message)
+        abort_403(str(e))
     except storage.NotFoundWarning as e:
-        abort_404(e.message)
+        abort_404(str(e))
     except:
         abort_500_except()
 
@@ -1407,9 +1407,9 @@ def get_stderr(jobname, jobid):
         # Return file
         return static_file(logname + '.log', root=logroot, mimetype='text')
     except JobAccessDenied as e:
-        abort_403(e.message)
+        abort_403(str(e))
     except storage.NotFoundWarning as e:
-        abort_404(e.message)
+        abort_404(str(e))
     except:
         abort_500_except()
 
@@ -1440,9 +1440,9 @@ def get_prov(jobname, jobid, provtype):
         }
         return static_file(provname, root=provroot, mimetype=content_types[provtype])
     except JobAccessDenied as e:
-        abort_403(e.message)
+        abort_403(str(e))
     except storage.NotFoundWarning as e:
-        abort_404(e.message)
+        abort_404(str(e))
     except:
         abort_500_except()
 
@@ -1466,7 +1466,7 @@ def get_provsvg(jobid):
         response.content_type = 'text/xml; charset=UTF-8'
         return svg_content
     except storage.NotFoundWarning as e:
-        abort_404(e.message)
+        abort_404(str(e))
     except:
         abort_500_except()
 
@@ -1493,9 +1493,9 @@ def get_owner(jobname, jobid):
         response.content_type = 'text/plain; charset=UTF-8'
         return job.owner
     except JobAccessDenied as e:
-        abort_403(e.message)
+        abort_403(str(e))
     except storage.NotFoundWarning as e:
-        abort_404(e.message)
+        abort_404(str(e))
     except:
         abort_500_except()
 

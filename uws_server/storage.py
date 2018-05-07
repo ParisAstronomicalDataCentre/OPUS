@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2016 by Mathieu Servillat
 # Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
@@ -20,7 +20,7 @@ the number of database access (in the case of a relational database)
 import datetime as dt
 #from entity_store import *
 import hashlib
-from settings import *
+from .settings import *
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -322,12 +322,12 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                 self.session.commit()
             else:
                 # Save all job parameters to db
-                for pname in job.parameters.keys():
+                for pname in list(job.parameters.keys()):
                     self._save_parameter(job, pname)
                 self.session.commit()
         if save_results:
             # Save job results to db
-            for rname in job.results.keys():
+            for rname in list(job.results.keys()):
                 self._save_result(job, rname)
             self.session.commit()
 
@@ -347,7 +347,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                 if not row:
                     raise NotFoundWarning('Job "{}" NOT FOUND'.format(job.jobid))
             for k in JOB_ATTRIBUTES:
-                if k in row.__dict__.keys():
+                if k in list(row.__dict__.keys()):
                     job.__dict__[k] = row.__dict__[k]
         if get_parameters:
             # Query db for job parameters
@@ -487,7 +487,7 @@ class SQLStorage(object):
 
     def _save_query(self, table_name, d):
         query = "INSERT OR REPLACE INTO {} ({}) VALUES ('{}')" \
-                "".format(table_name, ", ".join(d.keys()), "', '".join(map(str, d.values())))
+                "".format(table_name, ", ".join(list(d.keys())), "', '".join(map(str, list(d.values()))))
         query = query.replace("'None'", "NULL")
         self.cursor.execute(query)
         self.conn.commit()
@@ -533,11 +533,11 @@ class SQLJobStorage(SQLStorage, JobStorage):
                 self._save_parameter(job, pname)
             else:
                 # Save all job parameters to db
-                for pname in job.parameters.keys():
+                for pname in list(job.parameters.keys()):
                     self._save_parameter(job, pname)
         if save_results:
             # Save job results to db
-            for rname in job.results.keys():
+            for rname in list(job.results.keys()):
                 self._save_result(job, rname)
 
     # noinspection PyTypeChecker

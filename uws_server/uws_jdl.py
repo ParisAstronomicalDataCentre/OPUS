@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2016 by Mathieu Servillat
 # Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
@@ -12,7 +12,7 @@ import copy
 import json
 import yaml
 import lxml.etree as ETree
-from settings import *
+from .settings import *
 
 
 # ---------
@@ -108,7 +108,7 @@ class JDLFile(object):
 
     def set_from_post(self, post):
         # Read form
-        keys = post.keys()
+        keys = list(post.keys())
         jobname = post.get('name').split('/')[-1]
         # Create parameters dict
         params = collections.OrderedDict()
@@ -275,7 +275,7 @@ class VOTFile(JDLFile):
         })
         # Job attributes
         if self.content['annotation']:
-            ETree.SubElement(resource, 'DESCRIPTION').text = self.content['annotation'].decode()
+            ETree.SubElement(resource, 'DESCRIPTION').text = self.content['annotation']  # .decode()
         # TODO: automatic list of attributes from jdl.content
         job_attr = []
         for key in ['type', 'subtype', 'annotation', 'version', 'doculink']:
@@ -307,7 +307,7 @@ class VOTFile(JDLFile):
         })
         # Prepare InputParams group
         if 'parameters' in self.content:
-            for pname, p in self.content['parameters'].iteritems():
+            for pname, p in self.content['parameters'].items():
                 param_attrib = {
                     'ID': pname,
                     'name': pname,
@@ -342,7 +342,7 @@ class VOTFile(JDLFile):
                 group_params.append(param)
         # Prepare used block
         if 'used' in self.content:
-            for pname, p in self.content['used'].iteritems():
+            for pname, p in self.content['used'].items():
                 attrib={
                     'name': pname,
                     'datatype': 'char',
@@ -363,7 +363,7 @@ class VOTFile(JDLFile):
                 group_used.append(used)
         # Prepare results block
         if 'generated' in self.content:
-            for rname, r in self.content['generated'].iteritems():
+            for rname, r in self.content['generated'].items():
                 attrib={
                     'name': rname,
                     'datatype': 'char',
@@ -403,7 +403,7 @@ class VOTFile(JDLFile):
         })
         # Job attributes
         if self.content['annotation']:
-            ETree.SubElement(resource, 'DESCRIPTION').text = self.content['annotation'].decode()
+            ETree.SubElement(resource, 'DESCRIPTION').text = self.content['annotation']  # .decode() # not needed in Python 3
         # TODO: automatic list of attributes from jdl.content
         job_attr = []
         for key in ['type', 'subtype', 'annotation', 'version', 'doculink']:
@@ -435,7 +435,7 @@ class VOTFile(JDLFile):
         })
         # Prepare InputParams group
         if 'parameters' in self.content:
-            for pname, p in self.content['parameters'].iteritems():
+            for pname, p in self.content['parameters'].items():
                 param_attrib = {
                     'ID': pname,
                     'name': pname,
@@ -474,7 +474,7 @@ class VOTFile(JDLFile):
             'content_type': 'voprov:EntityDescription.content_type',
         }
         if 'used' in self.content:
-            for pname, p in self.content['used'].iteritems():
+            for pname, p in self.content['used'].items():
                 attrib={
                     'name': pname,
                     'utype': 'voprov:EntityDescription',
@@ -500,7 +500,7 @@ class VOTFile(JDLFile):
             'content_type': 'voprov:EntityDescription.content_type',
         }
         if 'generated' in self.content:
-            for rname, r in self.content['generated'].iteritems():
+            for rname, r in self.content['generated'].items():
                 attrib={
                     'name': rname,
                     'utype': 'voprov:EntityDescription',
@@ -521,7 +521,7 @@ class VOTFile(JDLFile):
         # Write file
         jdl_content = ETree.tostring(jdl_tree, pretty_print=True)
         jdl_fname = self._get_filename(jobname)
-        with open(jdl_fname, 'w') as f:
+        with open(jdl_fname, 'wb') as f:
             f.write(jdl_content)
             logger.info('JDL saved as VOTable: ' + jdl_fname)
 
@@ -841,7 +841,7 @@ class WADLFile(JDLFile):
         # Prepare parameter blocks
         jdl_params = []
         jdl_popts = []
-        for pname, p in self.content['parameters'].iteritems():
+        for pname, p in self.content['parameters'].items():
             # pline = '<param style="query" name="{}" type="{}" required="{}" default="{}"><doc>{}</doc></param>' \
             #        ''.format(pname, p['type'], p['required'], p['default'], p.get('annotation', ''))
             pelt_attrib = {
@@ -864,7 +864,7 @@ class WADLFile(JDLFile):
             jdl_popts.append(poelt)
         # Prepare result block
         jdl_ropts = []
-        for rname, r in self.content['generated'].iteritems():
+        for rname, r in self.content['generated'].items():
             # rline = '<option value="{}" content_type="{}" default="{}"><doc>{}</doc></option>' \
             #         ''.format(rname, r['content_type'], r['default'], r.get('annotation', ''))
             roelt = ETree.Element('option', attrib={
@@ -889,7 +889,7 @@ class WADLFile(JDLFile):
         joblist_block.set('contact_email', self.content['contact_email'])
         # Insert job description
         job_list_description_block = jdl_tree.find(".//{}doc[@title='description']".format(xmlns))
-        job_list_description_block.text = self.content['annotation'].decode()
+        job_list_description_block.text = self.content['annotation']  # .decode()
         # Insert parameters
         params_block = {}
         for block in ['create_job_parameters', 'control_job_parameters', 'set_job_parameters']:

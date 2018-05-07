@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2016 by Mathieu Servillat
 # Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
@@ -30,7 +30,7 @@ VAR_PATH = '/var/www/opus'
 # /uploads'
 # /temp'
 
-# suffix to the log file (may be set by test.py or settings_local.py)
+# suffix to the log file (may be set by test_server.py or settings_local.py)
 LOG_FILE_SUFFIX = ''
 
 # URL an IP of the web server
@@ -175,7 +175,7 @@ SLURM_PARAMETERS = {
 }
 
 # Control parameters allowed in a form for job creation
-CONTROL_PARAMETERS = dict( UWS_PARAMETERS.items() )
+CONTROL_PARAMETERS = dict( list(UWS_PARAMETERS.items()) )
 # Order for the control parameters
 CONTROL_PARAMETERS_KEYS = [
     'runId',
@@ -315,9 +315,9 @@ if os.path.exists(APP_PATH + '/uws_server/settings_local.py'):
 #--- Include host-specific settings ------------------------------------------------------------------------------------
 
 
-#--- If imported from test.py, redefine settings -----------------------------------------------------------------------
+#--- If imported from test_server.py, redefine settings -----------------------------------------------------------------------
 main_dict = sys.modules['__main__'].__dict__
-if 'test.py' in main_dict.get('__file__', ''):
+if 'test_server.py' in main_dict.get('__file__', ''):
     print('\nPerforming tests')
     if 'LOG_FILE_SUFFIX' in main_dict:
         LOG_FILE_SUFFIX = main_dict['LOG_FILE_SUFFIX']
@@ -327,7 +327,7 @@ if 'test.py' in main_dict.get('__file__', ''):
         SQLITE_FILE_NAME = main_dict['SQLITE_FILE_NAME']
     if 'MANAGER' in main_dict:
         MANAGER = main_dict['MANAGER']
-#--- If imported from test.py, redefine settings -----------------------------------------------------------------------
+#--- If imported from test_server.py, redefine settings -----------------------------------------------------------------------
 
 
 #--- Set all _PATH based on APP_PATH or VAR_PATH -----------------------------------------------------------------------

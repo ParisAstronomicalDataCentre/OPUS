@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2016 by Mathieu Servillat
 # Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
@@ -71,7 +71,7 @@ def job2prov(job):
     e_in = []
     act_attr = {}
     # Used entities
-    for pname, pdict in job.jdl.content['used'].iteritems():
+    for pname, pdict in job.jdl.content.get('used', {}).items():
         pqn = ns_uws_jdl + ':' + pname
         e_in.append(pdoc.entity(pqn))
         # TODO: use publisher_did? add prov attributes, add voprov attributes?
@@ -83,7 +83,7 @@ def job2prov(job):
         })
         act.used(e_in[-1])
     # Parameters as Activity attributes
-    for pname, pdict in job.jdl.content['parameters'].iteritems():
+    for pname, pdict in job.jdl.content.get('parameters', {}).items():
         pqn = ns_uws_jdl + ':' + pname
         # Add some UWS parameters as input Entities
         #if pname.startswith('in'):
@@ -169,7 +169,7 @@ def prov2svg(prov_doc, fname):
 <path style="stroke: none; fill: #323296;" d="M 10,0 L 30.5,0 39.875,17.5 30.5,33.6667 10,33.6667 L 0,17.5 L 10,0 z"/>
 </svg>
 '''
-    with open(fname, "w") as f:
+    with open(fname, "wb") as f:
         f.write(svg_content)
 
 

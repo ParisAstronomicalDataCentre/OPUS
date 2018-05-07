@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2017 by Mathieu Servillat
 # Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
@@ -7,8 +7,8 @@ Defines class to store and keep track of entities
 """
 
 import hashlib
-from storage import *
-from settings import *
+from .storage import *
+from .settings import *
 
 
 class EntityStore(object):

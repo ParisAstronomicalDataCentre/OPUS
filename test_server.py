@@ -14,7 +14,7 @@ SQLITE_FILE_NAME = 'job_database_test.db'
 LOG_FILE_SUFFIX = '_test'
 MANAGER = ''
 
-import uws_server
+from uws_server import uws_server
 
 test_app = TestApp(uws_server.app)  # , extra_environ=dict(REMOTE_USER='test'))
 
@@ -41,7 +41,7 @@ class TestGet(unittest.TestCase):
         # Initialize db, must be localhost
         response = test_app.get('/db/test', extra_environ=dict(REMOTE_ADDR='127.0.0.1'))
         self.assertEqual(response.status_int, 303)
-        self.assertRegexpMatches(response.location, '/db/show')
+        self.assertRegex(response.location, '/db/show')
         print('DB initialized')
         # Test GET with job 22222222-e656-b924-c14a-fbd02f9ebaa9
         jobid = '22222222-e656-b924-c14a-fbd02f9ebaa9'
@@ -105,7 +105,7 @@ class TestJobUpdate(unittest.TestCase):
         response = test_app.get('/db/test', extra_environ=dict(REMOTE_ADDR='127.0.0.1'))
         print('DB initialized')
         self.assertEqual(response.status_int, 303)
-        self.assertRegexpMatches(response.location, '/db/show')
+        self.assertRegex(response.location, '/db/show')
         # Update execution duration
         jobid = '00000000-dbf3-6b04-b1e7-28d47ad32794'
         url = '/rest/' + jobname + '/' + jobid + '/executionduration'
@@ -127,7 +127,7 @@ class TestJobUpdate(unittest.TestCase):
         print(' --> ' + response.status)
         print(' --> ' + response.location)
         self.assertEqual(response.status_int, 303)
-        self.assertRegexpMatches(response.location, '/' + jobname + '/' + jobid)
+        self.assertRegex(response.location, '/' + jobname + '/' + jobid)
         self.assert_job_attribute(jobid, 'executionduration', '120')
         # Update destruction time
         jobid = '00000000-dbf3-6b04-b1e7-28d47ad32794'
@@ -156,7 +156,7 @@ class TestJobUpdate(unittest.TestCase):
         print(' --> ' + response.status)
         print(' --> ' + response.location)
         self.assertEqual(response.status_int, 303)
-        self.assertRegexpMatches(response.location, '/' + jobname + '/' + jobid)
+        self.assertRegex(response.location, '/' + jobname + '/' + jobid)
         self.assert_job_attribute(jobid, 'destruction', '2016-01-01T00:00:00')
         post = {'DESTRUCTION': '2016-01-01T00:00:00.55555'}
         response = test_app.post(url, post)
@@ -164,7 +164,7 @@ class TestJobUpdate(unittest.TestCase):
         print(' --> ' + response.status)
         print(' --> ' + response.location)
         self.assertEqual(response.status_int, 303)
-        self.assertRegexpMatches(response.location, '/' + jobname + '/' + jobid)
+        self.assertRegex(response.location, '/' + jobname + '/' + jobid)
         self.assert_job_attribute(jobid, 'destruction', '2016-01-01T00:00:00')
 
 
@@ -184,7 +184,7 @@ class TestJobUpdateParam(unittest.TestCase):
         response = test_app.get('/db/test', extra_environ=dict(REMOTE_ADDR='127.0.0.1'))
         print('DB initialized')
         self.assertEqual(response.status_int, 303)
-        self.assertRegexpMatches(response.location, '/db/show')
+        self.assertRegex(response.location, '/db/show')
         # Change parameter
         jobid = '00000000-dbf3-6b04-b1e7-28d47ad32794'
         url = '/rest/' + jobname + '/' + jobid + '/parameters/input'
@@ -201,7 +201,7 @@ class TestJobUpdateParam(unittest.TestCase):
         print(' --> ' + response.status)
         print(' --> ' + response.location)
         self.assertEqual(response.status_int, 303)
-        self.assertRegexpMatches(response.location, '/' + jobname + '/' + jobid)
+        self.assertRegex(response.location, '/' + jobname + '/' + jobid)
         self.assert_job_attribute(jobid, 'parameters/input', 'Testing')
         # Change parameter of COMPLETED job
         jobid = '22222222-e656-b924-c14a-fbd02f9ebaa9'
@@ -231,7 +231,7 @@ class TestJobAbort(unittest.TestCase):
         response = test_app.get('/db/test', extra_environ=dict(REMOTE_ADDR='127.0.0.1'))
         print('DB initialized')
         self.assertEqual(response.status_int, 303)
-        self.assertRegexpMatches(response.location, '/db/show')
+        self.assertRegex(response.location, '/db/show')
         # Abort PENDING job
         jobid = '00000000-dbf3-6b04-b1e7-28d47ad32794'
         url = '/rest/' + jobname + '/' + jobid + '/phase'
@@ -241,7 +241,7 @@ class TestJobAbort(unittest.TestCase):
         print(' --> ' + response.status)
         print(' --> ' + response.location)
         self.assertEqual(response.status_int, 303)
-        self.assertRegexpMatches(response.location, '/' + jobname + '/' + jobid)
+        self.assertRegex(response.location, '/' + jobname + '/' + jobid)
         self.assert_job_phase(jobid, 'ABORTED')
         # Abort EXECUTING job
         jobid = '11111111-9c85-4873-a4b1-8d7e5e91ed57'
@@ -252,7 +252,7 @@ class TestJobAbort(unittest.TestCase):
         print(' --> ' + response.status)
         print(' --> ' + response.location)
         self.assertEqual(response.status_int, 303)
-        self.assertRegexpMatches(response.location, '/' + jobname + '/' + jobid)
+        self.assertRegex(response.location, '/' + jobname + '/' + jobid)
         self.assert_job_phase(jobid, 'ABORTED')
         # Abort COMPLETED job (should return HTTP Error 500)
         jobid = '22222222-e656-b924-c14a-fbd02f9ebaa9'
@@ -277,7 +277,7 @@ class TestJobDelete(unittest.TestCase):
         response = test_app.get('/db/test', extra_environ=dict(REMOTE_ADDR='127.0.0.1'))
         print('DB initialized')
         self.assertEqual(response.status_int, 303)
-        self.assertRegexpMatches(response.location, '/db/show')
+        self.assertRegex(response.location, '/db/show')
         # Delete PENDING job
         jobid = '00000000-dbf3-6b04-b1e7-28d47ad32794'
         url = '/rest/' + jobname + '/' + jobid
@@ -299,7 +299,7 @@ class TestJobDelete(unittest.TestCase):
         print(' --> ' + response.status)
         print(' --> ' + response.location)
         self.assertEqual(response.status_int, 303)
-        self.assertRegexpMatches(response.location, '/' + jobname)
+        self.assertRegex(response.location, '/' + jobname)
         # Delete EXECUTING job
         jobid = '11111111-9c85-4873-a4b1-8d7e5e91ed57'
         url = '/rest/' + jobname + '/' + jobid
@@ -308,7 +308,7 @@ class TestJobDelete(unittest.TestCase):
         print(' --> ' + response.status)
         print(' --> ' + response.location)
         self.assertEqual(response.status_int, 303)
-        self.assertRegexpMatches(response.location, '/' + jobname)
+        self.assertRegex(response.location, '/' + jobname)
         # Delete COMPLETED job
         jobid = '22222222-e656-b924-c14a-fbd02f9ebaa9'
         url = '/rest/' + jobname + '/' + jobid
@@ -317,7 +317,7 @@ class TestJobDelete(unittest.TestCase):
         print(' --> ' + response.status)
         print(' --> ' + response.location)
         self.assertEqual(response.status_int, 303)
-        self.assertRegexpMatches(response.location, '/' + jobname)
+        self.assertRegex(response.location, '/' + jobname)
 
 
 class TestJobSequence(unittest.TestCase):
@@ -336,7 +336,7 @@ class TestJobSequence(unittest.TestCase):
         response = test_app.get('/db/test', extra_environ=dict(REMOTE_ADDR='127.0.0.1'))
         print('DB initialized')
         self.assertEqual(response.status_int, 303)
-        self.assertRegexpMatches(response.location, '/db/show')
+        self.assertRegex(response.location, '/db/show')
         # Create job
         url = '/rest/' + jobname + ''
         post = {'input': 'Testing'}
@@ -345,7 +345,7 @@ class TestJobSequence(unittest.TestCase):
         print(' --> ' + response.status)
         print(' --> ' + response.location)
         self.assertEqual(response.status_int, 303)
-        self.assertRegexpMatches(response.location, '/' + jobname + '/')
+        self.assertRegex(response.location, '/' + jobname + '/')
         jobid = response.location.split('/')[-1]
         self.assert_job_phase(jobid, 'PENDING')
         # Start job
@@ -370,7 +370,7 @@ class TestJobSequence(unittest.TestCase):
         print(' --> ' + response.status)
         print(' --> ' + response.location)
         self.assertEqual(response.status_int, 303)
-        self.assertRegexpMatches(response.location, '/rest/' + jobname + '/' + jobid)
+        self.assertRegex(response.location, '/rest/' + jobname + '/' + jobid)
         self.assert_job_phase(jobid, 'QUEUED')
         # job_event EXECUTING
         url = '/handler/job_event'
