@@ -62,7 +62,7 @@ class JobStorage(object):
         """Delete job information from storage"""
         pass
 
-    def get_list(self, joblist, phase=None, check_owner=True):
+    def get_list(self, joblist, phase=None, where_owner=True):
         """Get job list from storage"""
         pass
 
@@ -449,7 +449,9 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         """Return all entity attributes"""
         query = self.session.query(self.Entity).filter_by(entity_id=entity_id)
         entity = query.first()
-        return entity
+        if not entity:
+            raise NotFoundWarning('Result "{}" NOT FOUND'.format(entity_id))
+        return entity.__dict__
 
     def search_entity(self, entity_id=None, jobid=None, result_name=None, file_name=None, hash=None, owner='anonymous', owner_token='anonymous'):
         """Search entity, return all entity attributes, maybe for several entities"""

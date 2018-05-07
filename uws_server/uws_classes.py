@@ -28,6 +28,11 @@ class JobAccessDenied(Exception):
     pass
 
 
+class EntityAccessDenied(Exception):
+    """User has no right to access job"""
+    pass
+
+
 # ---------
 # User class
 
@@ -515,7 +520,7 @@ class Job(object):
         rfdir = '{}/{}/'.format(JOBDATA_PATH, self.jobid)
         for rname in ['stdout', 'stderr']:
             rfname = rname + '.log'
-            url = '{}/get/result/{}/{}'.format(BASE_URL, self.jobid, rname)  # , rfname)
+            url = '{}//rest/{}/{}/{}'.format(BASE_URL, self.jobname, self.jobid, rname)
             if os.path.isfile(rfdir + rfname):
                 self.add_result_entry(rname, url, 'text/plain')
             else:
@@ -544,7 +549,7 @@ class Job(object):
                 # PROV JSON
                 rname = 'prov' + ptype
                 rfname = 'provenance.' + ptype
-                url = '{}/get/result/{}/{}'.format(BASE_URL, self.jobid, rname)  # , rfname)
+                url = '{}//rest/{}/{}/prov{}'.format(BASE_URL, self.jobname, self.jobid, ptype)
                 if os.path.isfile(rfdir + rfname):
                     self.add_result_entry(rname, url, content_types[ptype])
                 else:
