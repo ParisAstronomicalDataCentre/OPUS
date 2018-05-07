@@ -8,5 +8,8 @@ webtest
 prov
 pydot
 pydotplus
-wsgiproxy2
-psutil
+flask
+flask-sqlalchemy
+flask-security
+flask-admin
+pyyaml
