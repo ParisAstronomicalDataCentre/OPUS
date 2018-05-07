@@ -515,6 +515,43 @@ def cp_script(jobname):
 # ----------
 
 
+@app.route('/get/result')
+def get_entity():
+    try:
+        user = set_user()
+        if not 'id' in request.query:
+            raise UserWarning('"id" is not specified in request')
+        job_storage = getattr(storage, STORAGE + 'JobStorage')()
+        entity = job_storage.get_entity(request.query['id'])
+
+        if CHECK_OWNER:
+            if user in special_users:
+                pass
+            else:
+                if entity['owner'] == user.name:
+                    pass
+                else:
+                    raise EntityAccessDenied('User {} is not the owner of the entity'.format(user.name))
+
+        logger.debug('{} [{}]'.format(str(entity), user))
+        response.set_header('Content-type', entity['content_type'])
+        if any(x in entity['content_type'] for x in ['text', 'xml', 'json', 'image/png', 'image/jpeg']):
+            return static_file(entity['file_name'], root=entity['file_dir'], mimetype=entity['content_type'])
+        else:
+            response.set_header('Content-Disposition', 'attachment; filename="{}"'.format(entity['file_name']))
+            return static_file(entity['file_name'], root=entity['file_dir'], mimetype=entity['content_type'],
+                               download=True)
+    except JobAccessDenied as e:
+        abort_403(e.message)
+    except storage.NotFoundWarning as e:
+        abort_404(e.message)
+    except UserWarning as e:
+        abort_500(e.args[0])
+    except:
+        abort_500_except()
+
+
+# TODO: function will be deprecated (replaced by /get/result)
 @app.route('/get/result/<jobid>/<rname>')  # /<rfname>')
 def get_result_file(jobid, rname):  # , rfname):
     """Get result file <rname> for job <jobid>
