@@ -459,18 +459,7 @@ class SLURMManager(Manager):
         jd = '{}/{}'.format(self.jobdata_path, job.jobid)
         wd = '{}/{}'.format(self.workdir_path, job.jobid)
         cmd = ['ssh', self.ssh_arg,
-               'mkdir -p {jd}'.format(jd=jd)]
-        # logger.debug(' '.join(cmd))
-        try:
-            sp.check_output(cmd, stderr=sp.STDOUT)
-        except sp.CalledProcessError as e:
-            logger.warning('{}: {}'.format(e.cmd, e.output))
-            if 'File exists' in str(e.output):
-                logger.warning('force start {} {} (directories exist)'.format(job.jobname, job.jobid))
-            else:
-                raise
-        cmd = ['ssh', self.ssh_arg,
-               'mkdir -p {wd}'.format(wd=wd)]
+               'mkdir -p {{{jd},{wd}}}'.format(jd=jd, wd=wd)]
         # logger.debug(' '.join(cmd))
         try:
             sp.check_output(cmd, stderr=sp.STDOUT)
