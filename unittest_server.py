@@ -10,7 +10,7 @@ import unittest
 from webtest import TestApp
 
 # Redefine LOG_FILE, SQLITE_FILE, MANAGER
-# SQLITE_FILE_NAME = 'job_database_test.db'
+SQLITE_FILE_NAME = 'job_database_test.db'
 LOG_FILE_SUFFIX = '_test'
 MANAGER = ''
 
@@ -18,7 +18,7 @@ from uws_server import uws_server
 
 test_app = TestApp(uws_server.app)  # , extra_environ=dict(REMOTE_USER='test'))
 
-jobname = 'dummy'
+jobname = 'ctbin'
 
 
 class TestGet(unittest.TestCase):

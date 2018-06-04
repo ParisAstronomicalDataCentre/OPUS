@@ -15,3 +15,4 @@ bcrypt
 graphviz
 pydot
 pydotplus
+pytest
