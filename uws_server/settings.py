@@ -30,7 +30,7 @@ VAR_PATH = '/var/www/opus'
 # /uploads'
 # /temp'
 
-# suffix to the log file (may be set by test_server.py or settings_local.py)
+# suffix to the log file (may be set by unittest_server.py or settings_local.py)
 LOG_FILE_SUFFIX = ''
 
 # URL an IP of the web server
@@ -311,13 +311,13 @@ JOB_RESULTS_ATTR = [
 
 #--- Include host-specific settings ------------------------------------------------------------------------------------
 if os.path.exists(APP_PATH + '/uws_server/settings_local.py'):
-    from settings_local import *
+    from .settings_local import *
 #--- Include host-specific settings ------------------------------------------------------------------------------------
 
 
-#--- If imported from test_server.py, redefine settings -----------------------------------------------------------------------
+#--- If imported from unittest_server.py, redefine settings -----------------------------------------------------------------------
 main_dict = sys.modules['__main__'].__dict__
-if 'test_server.py' in main_dict.get('__file__', ''):
+if 'test_' in main_dict.get('__file__', ''):
     print('\nPerforming tests')
     if 'LOG_FILE_SUFFIX' in main_dict:
         LOG_FILE_SUFFIX = main_dict['LOG_FILE_SUFFIX']
@@ -327,7 +327,7 @@ if 'test_server.py' in main_dict.get('__file__', ''):
         SQLITE_FILE_NAME = main_dict['SQLITE_FILE_NAME']
     if 'MANAGER' in main_dict:
         MANAGER = main_dict['MANAGER']
-#--- If imported from test_server.py, redefine settings -----------------------------------------------------------------------
+#--- If imported from unittest_server.py, redefine settings -----------------------------------------------------------------------
 
 
 #--- Set all _PATH based on APP_PATH or VAR_PATH -----------------------------------------------------------------------
