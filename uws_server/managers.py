@@ -465,7 +465,7 @@ class SLURMManager(Manager):
             sp.check_output(cmd, stderr=sp.STDOUT)
         except sp.CalledProcessError as e:
             logger.warning('{}: {}'.format(e.cmd, e.output))
-            if 'File exists' in e.output:
+            if 'File exists' in str(e.output):
                 logger.warning('force start {} {} (directories exist)'.format(job.jobname, job.jobid))
             else:
                 raise
