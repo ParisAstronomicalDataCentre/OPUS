@@ -463,7 +463,7 @@ class SLURMManager(Manager):
         #       'mkdir -p {{{jd},{wd}}}'.format(jd=jd, wd=wd)]
         # logger.debug(' '.join(cmd))
         try:
-            sp.check_output(cmd, stderr=sp.STDOUT, shell=True)
+            sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
         except sp.CalledProcessError as e:
             logger.warning('{}: {}'.format(e.cmd, e.output))
             if 'File exists' in str(e.output):
