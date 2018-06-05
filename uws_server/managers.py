@@ -459,8 +459,7 @@ class SLURMManager(Manager):
         jd = '{}/{}'.format(self.jobdata_path, job.jobid)
         wd = '{}/{}'.format(self.workdir_path, job.jobid)
         cmd = ['ssh', '-v', self.ssh_arg,
-               'echo "Hello" > /tmp/testssh.txt']
-        #       'mkdir -p {{{jd},{wd}}}'.format(jd=jd, wd=wd)]
+               'mkdir -p {{{jd},{wd}}}'.format(jd=jd, wd=wd)]
         # logger.debug(' '.join(cmd))
         try:
             sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
