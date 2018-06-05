@@ -703,7 +703,7 @@ def job_event():
                         if new_phase in PHASE_CONVERT:
                             new_msg = PHASE_CONVERT[new_phase]['msg']
                             new_phase = PHASE_CONVERT[new_phase]['phase']
-                            if new_phase == 'ERROR':
+                            if new_phase in ['ERROR', 'ABORTED']:
                                 msg = new_msg
                         else:
                             raise UserWarning('Unknown new phase ' + new_phase + ' for job ' + job.jobid)
