@@ -598,7 +598,10 @@ class SLURMManager(Manager):
                    '{}:{}/{}'.format(self.ssh_arg, self.results_path, job.jobid),
                    RESULTS_PATH]
             logger.debug(' '.join(cmd))
-            sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
+            try:
+                sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
+            except Exception as e:
+                logger.debug('Cannot get results for job {}'.format(job.jobid))
 
     def cp_script(self, jobname):
         """Copy job script to SLURM server"""
