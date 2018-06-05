@@ -424,7 +424,7 @@ class VOTFile(JDLFile):
             })
         for key in ['executionDuration', 'quote']:
             ETree.SubElement(resource, 'PARAM', attrib={
-                'name': 'contact_{}'.format(key),
+                'name': key,
                 'value': self.content.get(key, 1),
                 'datatype': "int",
                 'utype': 'uws:Job.{}'.format(key),
