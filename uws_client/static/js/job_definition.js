@@ -126,7 +126,7 @@
                                 </span>\
                             </div>\
                             <div style="height: 1px;"></div>\
-                            <div class="input-group input-group-sm col-md-12">\
+                            <div class="input-group input-group-sm col-md-12" style="width:100%">\
                                 <span class="input-group-addon" style="width:70px" title="Description">Desc.</span>\
                                 <input class="used_annotation form-control" name="used_annotation_' + ii + '" type="text" placeholder="Description" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" />\
                             </div>\
