@@ -128,7 +128,7 @@ SLURM_MAIL_USER = ADMIN_EMAIL
 SLURM_SCRIPTS_PATH = '/obs/vouws/scripts'
 SLURM_JOBDATA_PATH = '/poubelle/vouws/jobdata'
 SLURM_UPLOADS_PATH = '/poubelle/vouws/uploads'
-SLURM_WORKDIR_PATH = '/scratch/vouws'
+SLURM_WORKDIR_PATH = '/scratch/vouws/workdir'
 SLURM_RESULTS_PATH = '/poubelle/vouws/results'
 SLURM_SBATCH_DEFAULT = {
     'mem': '200mb',
