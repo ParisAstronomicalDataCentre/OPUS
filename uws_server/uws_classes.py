@@ -665,10 +665,23 @@ class Job(object):
                 self.start_time = now.strftime(DT_FMT)
             # Get results, logs
             if new_phase in ['COMPLETED', 'ABORTED', 'ERROR']:
-                self.manager.get_jobdata(self)
-                # Add results, logs, provenance (if they exist...) to job control db
-                self.add_results()
-                self.add_logs()
+                try:
+                    self.manager.get_jobdata(self)
+                    # Add results, logs, provenance (if they exist...) to job control db
+                    self.add_results()
+                    self.add_logs()
+                except Exception as e:
+                    self.phase = 'ERROR'
+                    error = 'Cannot get jobdata (or update db) for job {}'.format(self.jobid)
+                    if self.error:
+                        self.error += '. ' + error
+                    else:
+                        self.error = error
+                    self.end_time = now.strftime(DT_FMT)
+                    self.storage.save(self)
+                    change_status_signal = signal('job_status')
+                    result = change_status_signal.send('change_status', sig_jobid=self.jobid, sig_phase=self.phase)
+                    raise
             # Add provenance files
             if new_phase in ['COMPLETED']:
                 self.add_provenance()
