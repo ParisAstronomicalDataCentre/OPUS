@@ -405,14 +405,14 @@ class VOTFile(JDLFile):
         if self.content['annotation']:
             ETree.SubElement(resource, 'DESCRIPTION').text = self.content['annotation']  # .decode() # not needed in Python 3
         # TODO: automatic list of attributes from jdl.content
-        for key in ['type', 'subtype', 'annotation', 'version', 'doculink']:
+        for key in ['type', 'subtype', 'version', 'doculink']:
             #'<PARAM name="{key}" datatype="char" arraysize="*" value="{value}" utype="voprov:ActivityDescription.{key}"/>'.format(key=key, value=self.content.get(key, '')))
             ETree.SubElement(resource, 'PARAM', attrib={
-                #'name': key,
-                #'value': self.content.get(key, ''),
-                #'arraysize': "*",
-                #'datatype': "char",
-                #'utype': str('voprov:ActivityDescription.{}'.format(key)),
+                'name': key,
+                'value': str(self.content.get(key, '')),
+                'arraysize': "*",
+                'datatype': "char",
+                'utype': 'voprov:ActivityDescription.{}'.format(key),
             })
         for key in ['name', 'email']:
             ETree.SubElement(resource, 'PARAM', attrib={
@@ -435,11 +435,9 @@ class VOTFile(JDLFile):
         })
         group_used = ETree.SubElement(resource, 'GROUP', attrib={
             'name': "Used",
-            'utype': "voprov:UsedDescription",
         })
         group_generated = ETree.SubElement(resource, 'GROUP', attrib={
             'name': "Generated",
-            'utype': "voprov:WasGeneratedBy",
         })
         # Prepare InputParams group
         if 'parameters' in self.content:
