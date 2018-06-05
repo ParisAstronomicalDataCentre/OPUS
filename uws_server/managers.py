@@ -481,7 +481,7 @@ class SLURMManager(Manager):
                param_file_local,
                '{}:{}'.format(self.ssh_arg, param_file_distant)]
         # logger.debug(' '.join(cmd))
-        sp.check_output(cmd, stderr=sp.STDOUT)
+        sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
         # Copy input files to workdir_path (scp if uploaded from form, or wget if given as a URI)
         # TODO: delete files
         for fname in files['form']:
@@ -489,13 +489,13 @@ class SLURMManager(Manager):
                    '{}/{}/{}'.format(UPLOADS_PATH, job.jobid, fname),
                    '{}:{}/{}'.format(self.ssh_arg, wd, fname)]
             # logger.debug(' '.join(cmd))
-            sp.check_output(cmd, stderr=sp.STDOUT)
+            sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
         for furl in files['URI']:
             fname = furl.split('/')[-1]
             cmd = ['ssh', self.ssh_arg,
                    'wget -q {} -O {}/{}'.format(furl, wd, fname)]
             # logger.debug(' '.join(cmd))
-            sp.check_output(cmd, stderr=sp.STDOUT)
+            sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
         # Create sbatch file
         sbatch_file_local = '{}/{}_sbatch.sh'.format(TEMP_PATH, job.jobid)
         sbatch_file_distant = '{}/sbatch.sh'.format(jd)
@@ -507,12 +507,12 @@ class SLURMManager(Manager):
                sbatch_file_local,
                '{}:{}'.format(self.ssh_arg, sbatch_file_distant)]
         # logger.debug(' '.join(cmd))
-        sp.check_output(cmd, stderr=sp.STDOUT)
+        sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
         # Start job using sbatch
         cmd = ['ssh', self.ssh_arg,
                'sbatch {}'.format(sbatch_file_distant)]
         # logger.debug(' '.join(cmd))
-        process_id = str(sp.check_output(cmd, stderr=sp.STDOUT))
+        process_id = str(sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True))
         # Get process_id from output (e.g. "Submitted batch job 9421")
         return process_id.split(' ')[-1]
 
