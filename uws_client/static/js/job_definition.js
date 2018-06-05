@@ -88,8 +88,8 @@
                             </div>\
                             <div style="height: 1px;"></div>\
                             <div class="row col-md-12">\
-                                <div class="input-group input-group-sm">\
-                                   <span class="input-group-addon" style="width:70px" title="Options">Options</span>\
+                                <div class="input-group input-group-sm" style="width:100%">\
+                                    <span class="input-group-addon" style="width:70px" title="Options">Options</span>\
                                     <input class="param_options form-control" name="param_options_' + ii + '" type="text" placeholder="List of possible choices (comma-separated values)" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" />\
                                 </div>\
                             </div>\

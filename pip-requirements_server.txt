@@ -1,5 +1,7 @@
 sqlalchemy
-prov
-pydotplus
 flask_sqlalchemy
 flask_security
+prov
+pydot
+pydotplus
+pycrypto
