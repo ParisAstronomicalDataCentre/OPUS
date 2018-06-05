@@ -406,7 +406,7 @@
                 console.log(json['jobnames']);
                 $('input[name=name]').typeahead({
                     source: json['jobnames'],
-                    //autoSelect: false,
+                    autoSelect: false,
                 });
             },
             error : function(xhr, status, exception) {
