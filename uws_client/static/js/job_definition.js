@@ -404,9 +404,10 @@
             dataType: "json",
             success : function(json) {
                 console.log(json['jobnames']);
-                $('input[name=name]').typeahead({
+                $.typeahead({
+                    input: '.name_typeahead',
                     source: json['jobnames'],
-                    autoSelect: false,
+                    //autoSelect: false,
                 });
             },
             error : function(xhr, status, exception) {
