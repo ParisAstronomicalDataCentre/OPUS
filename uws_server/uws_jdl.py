@@ -412,22 +412,22 @@ class VOTFile(JDLFile):
                 'value': self.content.get(key, ''),
                 'arraysize': "*",
                 'datatype': "char",
-                'utype': 'voprov:ActivityDescription.' + key,
+                'utype': 'voprov:ActivityDescription.{}'.format(key),
             })
         for key in ['name', 'email']:
             ETree.SubElement(resource, 'PARAM', attrib={
                 'name': 'contact_' + key,
-                'value': self.content.get('contact_' + key, ''),
+                'value': self.content.get('contact_{}'.format(key), ''),
                 'arraysize': "*",
                 'datatype': "char",
-                'utype': 'voprov:Agent.' + key,
+                'utype': 'voprov:Agent.{}'.format(key),
             })
         for key in ['executionDuration', 'quote']:
             ETree.SubElement(resource, 'PARAM', attrib={
-                'name': 'contact_' + key,
+                'name': 'contact_{}'.format(key),
                 'value': self.content.get(key, 1),
                 'datatype': "int",
-                'utype': 'uws:Job.' + key,
+                'utype': 'uws:Job.{}'.format(key),
             })
         # Insert groups
         group_params = ETree.SubElement(resource, 'GROUP', attrib={
