@@ -666,6 +666,7 @@ class Job(object):
             try:
                 # Get results, logs
                 if new_phase in ['COMPLETED', 'ABORTED', 'ERROR']:
+                    self.end_time = now.strftime(DT_FMT)
                     self.manager.get_jobdata(self)
                     # Add results, logs, provenance (if they exist...) to job control db
                     self.add_results()
