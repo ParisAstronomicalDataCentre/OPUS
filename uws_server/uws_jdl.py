@@ -408,10 +408,10 @@ class VOTFile(JDLFile):
         for key in ['type', 'subtype', 'annotation', 'version', 'doculink']:
             #'<PARAM name="{key}" datatype="char" arraysize="*" value="{value}" utype="voprov:ActivityDescription.{key}"/>'.format(key=key, value=self.content.get(key, '')))
             ETree.SubElement(resource, 'PARAM', attrib={
-                'name': key,
-                'value': self.content.get(key, ''),
-                'arraysize': "*",
-                'datatype': "char",
+                #'name': key,
+                #'value': self.content.get(key, ''),
+                #'arraysize': "*",
+                #'datatype': "char",
                 #'utype': str('voprov:ActivityDescription.{}'.format(key)),
             })
         for key in ['name', 'email']:
