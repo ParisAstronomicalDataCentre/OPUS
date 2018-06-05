@@ -458,7 +458,7 @@ class SLURMManager(Manager):
         # Create jobdata and workdir (to upload the scripts, parameters and input files)
         jd = '{}/{}'.format(self.jobdata_path, job.jobid)
         wd = '{}/{}'.format(self.workdir_path, job.jobid)
-        cmd = ['ssh' + self.ssh_arg,
+        cmd = ['ssh ' + self.ssh_arg,
                'echo "Hello" > /tmp/testssh.txt}']
         #       'mkdir -p {{{jd},{wd}}}'.format(jd=jd, wd=wd)]
         # logger.debug(' '.join(cmd))
