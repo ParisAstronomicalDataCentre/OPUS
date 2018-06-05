@@ -144,6 +144,7 @@ class Manager(object):
             'rs={}'.format(rs),
             'cp {}/{}.sh $jd'.format(self.scripts_path, job.jobname),
             'mkdir -p $rs',
+            'mkdir -p $wd',
             'cd $wd',
             # 'echo "User is `id`"',
             # 'echo "Working dir is $wd"',
@@ -458,7 +459,7 @@ class SLURMManager(Manager):
         # Create jobdata and workdir (to upload the scripts, parameters and input files)
         jd = '{}/{}'.format(self.jobdata_path, job.jobid)
         wd = '{}/{}'.format(self.workdir_path, job.jobid)
-        cmd = ['ssh', '-v', self.ssh_arg,
+        cmd = ['ssh', self.ssh_arg,
                'mkdir -p {{{jd},{wd}}}'.format(jd=jd, wd=wd)]
         # logger.debug(' '.join(cmd))
         try:
@@ -520,7 +521,7 @@ class SLURMManager(Manager):
         """Abort job on SLURM server"""
         cmd = ['ssh', self.ssh_arg,
                'scancel {}'.format(job.process_id)]
-        sp.check_output(cmd, stderr=sp.STDOUT)
+        sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
 
     def delete(self, job):
         """Delete job on SLURM server"""
@@ -528,7 +529,7 @@ class SLURMManager(Manager):
             cmd = ['ssh', self.ssh_arg,
                    'scancel {}'.format(job.process_id)]
             try:
-                sp.check_output(cmd, stderr=sp.STDOUT)
+                sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
             except sp.CalledProcessError as e:
                 logger.warning('{}: {}'.format(e.cmd, e.output))
                 if 'Invalid job id specified' in e.output:
@@ -538,15 +539,15 @@ class SLURMManager(Manager):
         # Delete workdir_path
         cmd = ['ssh', self.ssh_arg,
                'rm -rf {}/{}'.format(self.workdir_path, job.jobid)]
-        sp.check_output(cmd, stderr=sp.STDOUT)
+        sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
         # Delete jobdata_path
         cmd = ['ssh', self.ssh_arg,
                'rm -rf {}/{}'.format(self.jobdata_path, job.jobid)]
-        sp.check_output(cmd, stderr=sp.STDOUT)
+        sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
         # Delete results_path
         cmd = ['ssh', self.ssh_arg,
                'rm -rf {}/{}'.format(self.results_path, job.jobid)]
-        sp.check_output(cmd, stderr=sp.STDOUT)
+        sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
 
     def get_status(self, job):
         """Get job status (phase) from SLURM server
@@ -557,7 +558,7 @@ class SLURMManager(Manager):
         cmd = ['ssh', self.ssh_arg,
                'sacct -j {}'.format(job.process_id),
                '-o state -P -n']
-        phase = sp.check_output(cmd, stderr=sp.STDOUT)
+        phase = sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
         # Take first line: there is a trailing \n in output, and possibly several lines
         phase = phase.split('\n')[0]
         if phase in PHASE_CONVERT:
@@ -575,7 +576,7 @@ class SLURMManager(Manager):
                'sacct -j {}'.format(job.process_id),
                '-o jobid,start,end,elapsed,state -P -n']
         logger.debug(' '.join(cmd))
-        info = sp.check_output(cmd, stderr=sp.STDOUT)
+        info = sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
         info_dict = info.split('|')
         return info_dict
 
@@ -590,14 +591,14 @@ class SLURMManager(Manager):
                '{}:{}/{}'.format(self.ssh_arg, self.jobdata_path, job.jobid),
                JOBDATA_PATH]
         logger.debug(' '.join(cmd))
-        sp.check_output(cmd, stderr=sp.STDOUT)
+        sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
         # Retrieve results
         if COPY_RESULTS:
             cmd = ['scp', '-rp',
                    '{}:{}/{}'.format(self.ssh_arg, self.results_path, job.jobid),
                    RESULTS_PATH]
             logger.debug(' '.join(cmd))
-            sp.check_output(cmd, stderr=sp.STDOUT)
+            sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
 
     def cp_script(self, jobname):
         """Copy job script to SLURM server"""
@@ -605,4 +606,4 @@ class SLURMManager(Manager):
                '{}/{}.sh'.format(SCRIPTS_PATH, jobname),
                '{}:{}/{}.sh'.format(self.ssh_arg, self.scripts_path, jobname)]
         logger.debug(' '.join(cmd))
-        sp.check_output(cmd, stderr=sp.STDOUT)
+        sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
