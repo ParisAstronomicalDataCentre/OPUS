@@ -80,11 +80,9 @@
                                 </span>\
                             </div>\
                             <div style="height: 1px;"></div>\
-                            <div class="row col-md-12">\
-                                <div class="input-group input-group-sm">\
-                                    <span class="input-group-addon" style="width:70px" title="Description">Desc.</span>\
-                                    <input class="param_annotation form-control" name="param_annotation_' + ii + '" type="text" placeholder="Description" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" />\
-                                </div>\
+                            <div class="input-group input-group-sm col-md-12" style="width:100%">\
+                                <span class="input-group-addon" style="width:70px" title="Description">Desc.</span>\
+                                <input class="param_annotation form-control" name="param_annotation_' + ii + '" type="text" placeholder="Description" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" />\
                             </div>\
                             <div style="height: 1px;"></div>\
                             <div class="row col-md-12">\
@@ -95,7 +93,7 @@
                             </div>\
                             <div style="height: 1px;"></div>\
                            <div class="row col-md-12">\
-                                <div class="input-group input-group-sm">\
+                                <div class="input-group input-group-sm" style="width:100%">\
                                     <span class="input-group-addon" style="width:70px" title="Attributes">Attr.</span>\
                                     <input class="param_attributes form-control" name="param_attributes_' + ii + '" type="text" placeholder="unit=... ucd=... utype=... min=... max=..." style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" />\
                                 </div>\
