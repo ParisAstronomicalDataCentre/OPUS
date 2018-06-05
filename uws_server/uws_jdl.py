@@ -405,25 +405,33 @@ class VOTFile(JDLFile):
         if self.content['annotation']:
             ETree.SubElement(resource, 'DESCRIPTION').text = self.content['annotation']  # .decode() # not needed in Python 3
         # TODO: automatic list of attributes from jdl.content
-        job_attr = []
         for key in ['type', 'subtype', 'annotation', 'version', 'doculink']:
-            job_attr.append('<PARAM name="{key}" datatype="char" arraysize="*" value="{value}" utype="voprov:ActivityDescription.{key}"/>'.format(key=key, value=self.content.get(key, '')))
-        #     ,
-        #     '<PARAM name="subtype" datatype="char" arraysize="*" value="{}" utype="voprov:ActivityDescription.subtype"/>'.format(self.content.get('job_subtype', '')),
-        #     '<PARAM name="annotation" datatype="char" arraysize="*" value="{}" utype="voprov:ActivityDescription.annotation"/>'.format(self.content.get('annotation', raw_jobname)),
-        #     '<PARAM name="version" datatype="float" value="{}" utype="voprov:ActivityDescription.version"/>'.format(self.content.get('version', '')),
-        #     '<PARAM name="doculink" datatype="float" value="{}" utype="voprov:ActivityDescription.doculink"/>'.format(self.content.get('doculink', '')),
-        job_attr.append('<PARAM name="contact_name" datatype="char" arraysize="*" value="{}" utype="voprov:Agent.name"/>'.format(self.content.get('contact_name', '')))
-        job_attr.append('<PARAM name="contact_email" datatype="char" arraysize="*" value="{}" utype="voprov:Agent.email"/>'.format(self.content.get('contact_email', '')))
-        job_attr.append('<PARAM name="executionDuration" datatype="int" value="{}" utype="uws:Job.executionDuration"/>'.format(self.content.get('executionDuration', '1')))
-        job_attr.append('<PARAM name="quote" datatype="int" value="{}" utype="uws:Job.quote"/>'.format(self.content.get('quote', '1')))
-
-        for attr in job_attr:
-            resource.append(ETree.fromstring(attr))
+            #'<PARAM name="{key}" datatype="char" arraysize="*" value="{value}" utype="voprov:ActivityDescription.{key}"/>'.format(key=key, value=self.content.get(key, '')))
+            ETree.SubElement(resource, 'PARAM', attrib={
+                'name': key,
+                'value': self.content.get(key, ''),
+                'arraysize': "*",
+                'datatype': "char",
+                'utype': 'voprov:ActivityDescription.' + key,
+            })
+        for key in ['name', 'email']:
+            ETree.SubElement(resource, 'PARAM', attrib={
+                'name': 'contact_' + key,
+                'value': self.content.get('contact_' + key, ''),
+                'arraysize': "*",
+                'datatype': "char",
+                'utype': 'voprov:Agent.' + key,
+            })
+        for key in ['executionDuration', 'quote']:
+            ETree.SubElement(resource, 'PARAM', attrib={
+                'name': 'contact_' + key,
+                'value': self.content.get(key, 1),
+                'datatype': "int",
+                'utype': 'uws:Job.' + key,
+            })
         # Insert groups
         group_params = ETree.SubElement(resource, 'GROUP', attrib={
             'name': "InputParams",
-            'utype': "voprov:Parameter",
         })
         group_used = ETree.SubElement(resource, 'GROUP', attrib={
             'name': "Used",
@@ -477,7 +485,7 @@ class VOTFile(JDLFile):
             for pname, p in self.content['used'].items():
                 attrib={
                     'name': pname,
-                    'utype': 'voprov:EntityDescription',
+                    'utype': 'voprov:UsedDescription',
                 }
                 if pname in self.content['parameters']:
                     attrib['ref'] = pname
@@ -503,7 +511,7 @@ class VOTFile(JDLFile):
             for rname, r in self.content['generated'].items():
                 attrib={
                     'name': rname,
-                    'utype': 'voprov:EntityDescription',
+                    'utype': 'voprov:WasGeneratedBy',
                 }
                 if rname in self.content['parameters']:
                     attrib['ref'] = rname
