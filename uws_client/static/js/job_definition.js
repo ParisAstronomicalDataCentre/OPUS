@@ -477,7 +477,7 @@
             if (event.keyCode == 13) {
                 //$('.ui-autocomplete').hide();
                 event.preventDefault();
-                load_jdl();
+                setTimeout(function(){load_jdl();}, 200);
             }
         });
 	}); // end ready
