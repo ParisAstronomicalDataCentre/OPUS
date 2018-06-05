@@ -412,7 +412,7 @@ class VOTFile(JDLFile):
                 'value': self.content.get(key, ''),
                 'arraysize': "*",
                 'datatype': "char",
-                'utype': 'voprov:ActivityDescription.{}'.format(str(key)),
+                'utype': str('voprov:ActivityDescription.{}'.format(key)),
             })
         for key in ['name', 'email']:
             ETree.SubElement(resource, 'PARAM', attrib={
