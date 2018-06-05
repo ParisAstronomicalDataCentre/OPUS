@@ -512,7 +512,7 @@ class SLURMManager(Manager):
         cmd = ['ssh', self.ssh_arg,
                'sbatch {}'.format(sbatch_file_distant)]
         # logger.debug(' '.join(cmd))
-        process_id = sp.check_output(cmd, stderr=sp.STDOUT)
+        process_id = str(sp.check_output(cmd, stderr=sp.STDOUT))
         # Get process_id from output (e.g. "Submitted batch job 9421")
         return process_id.split(' ')[-1]
 
