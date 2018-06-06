@@ -68,21 +68,21 @@ def job2prov(job):
     })
     pdoc.wasAssociatedWith(act, agent)
     # Entities, in and out with relations
-    e_in = []
-    act_attr = {}
     # Used entities
+    e_in = []
     for pname, pdict in job.jdl.content.get('used', {}).items():
         pqn = ns_uws_jdl + ':' + pname
         e_in.append(pdoc.entity(pqn))
         # TODO: use publisher_did? add prov attributes, add voprov attributes?
         e_in[-1].add_attributes({
             'prov:label': pname,
-            'prov:value': job.parameters[pname]['value'],
+            'prov:value': job.used[pname]['value'],
             'prov:type': pdict['datatype'],
             #'prov:location': ns_uws_job + ':parameters/' + pname
         })
         act.used(e_in[-1])
     # Parameters as Activity attributes
+    act_attr = {}
     for pname, pdict in job.jdl.content.get('parameters', {}).items():
         pqn = ns_uws_jdl + ':' + pname
         # Add some UWS parameters as input Entities
@@ -103,6 +103,7 @@ def job2prov(job):
                 act_attr[pqn] = pdict['default']
     if len(act_attr) > 0:
         act.add_attributes(act_attr)
+    # Generated entities
     e_out = []
     for rname in job.results:
         if rname not in ['stdout', 'stderr', 'provjson', 'provxml', 'provsvg']:
