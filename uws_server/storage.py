@@ -533,6 +533,7 @@ class SQLJobStorage(SQLStorage, JobStorage):
                 self._save_parameter(job, pname)
             else:
                 # Save all job parameters to db
+                logger.info(str(job.parameters.keys()))
                 for pname in list(job.parameters.keys()):
                     self._save_parameter(job, pname)
         if save_results:
