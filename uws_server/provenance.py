@@ -76,7 +76,7 @@ def job2prov(job):
         # TODO: use publisher_did? add prov attributes, add voprov attributes?
         e_in[-1].add_attributes({
             'prov:label': pname,
-            'prov:value': job.used[pname]['value'],
+            'prov:value': job.parameters.get(pname, {}).get('value', ''),
             'prov:type': pdict['datatype'],
             #'prov:location': ns_uws_job + ':parameters/' + pname
         })

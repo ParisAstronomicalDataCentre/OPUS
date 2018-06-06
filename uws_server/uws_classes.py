@@ -258,7 +258,6 @@ class Job(object):
                 # Parameter value is set to the file name on server
                 value = 'file://' + f.filename
                 # value = f.filename
-                self.parameters[pname] = {'value': value, 'byref': True}
                 logger.info('Input {} is a file and was downloaded ({})'.format(pname, f.filename))
             elif pname in post:
                 value = post.pop(pname)
@@ -267,7 +266,7 @@ class Job(object):
             else:
                 value = self.jdl.content['used'][pname]['default']
                 logger.info('Input {} set by default'.format(pname))
-            self.parameters[pname] = {'value': value, 'byref': False}
+            self.parameters[pname] = {'value': value, 'byref': True}
         # Search parameters in POST
         for pname in self.jdl.content.get('parameters', {}):
             if pname not in self.parameters:
