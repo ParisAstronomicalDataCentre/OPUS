@@ -11,8 +11,8 @@ import re
 import threading
 from subprocess import CalledProcessError
 from bottle import Bottle, request, response, abort, redirect, run, static_file
-from .uws_classes import *
 
+from .uws_classes import *
 
 # Create a new application
 app = Bottle()
@@ -533,14 +533,16 @@ def get_entity():
                 else:
                     raise EntityAccessDenied('User {} is not the owner of the entity'.format(user.name))
 
+        download = entity['entity_id'] + os.path.splitext(entity['file_name'])[1]
         logger.debug('{} [{}]'.format(str(entity), user))
         response.set_header('Content-type', entity['content_type'])
         if any(x in entity['content_type'] for x in ['text', 'xml', 'json', 'image/png', 'image/jpeg']):
-            return static_file(entity['file_name'], root=entity['file_dir'], mimetype=entity['content_type'])
+            return static_file(entity['file_name'], root=entity['file_dir'], mimetype=entity['content_type'],
+                               download=download)
         else:
             response.set_header('Content-Disposition', 'attachment; filename="{}"'.format(entity['file_name']))
             return static_file(entity['file_name'], root=entity['file_dir'], mimetype=entity['content_type'],
-                               download=True)
+                               download=download)
     except JobAccessDenied as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:

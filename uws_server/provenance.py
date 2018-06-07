@@ -6,9 +6,13 @@
 Export UWS job description to a ProvDocument following the W3C PROV standard
 """
 
+import os
+import copy
 from prov.model import ProvDocument
 from prov.dot import prov_to_dot
 from pydotplus.graphviz import InvocationException
+
+from .settings import *
 
 # examples:
 # http://prov.readthedocs.org/en/latest/usage.html#simple-prov-document
@@ -42,17 +46,20 @@ def job2prov(job):
     # }
 
     pdoc = ProvDocument()
+    other_pdocs = []
 
     # Declaring namespaces for various prefixes used in the example
-    pdoc.set_default_namespace('https://voparis-uws-test.obspm.fr/jdl/' + job.jobname + '/votable#')
+    pdoc.set_default_namespace(BASE_URL + '/jdl/' + job.jobname + '/votable#')
     pdoc.add_namespace('prov', 'http://www.w3.org/ns/prov#')
     pdoc.add_namespace('foaf', 'http://xmlns.com/foaf/0.1/')
     pdoc.add_namespace('voprov', 'http://www.ivoa.net/documents/dm/provdm/voprov#')
-    pdoc.add_namespace('opus', 'https://voparis-uws-test.obspm.fr/user/')
+    pdoc.add_namespace('opus', BASE_URL + '/user/')
     ns_jdl = job.jobname
-    pdoc.add_namespace(ns_jdl, 'https://voparis-uws-test.obspm.fr/jdl/' + job.jobname + '/votable#')
+    pdoc.add_namespace(ns_jdl, BASE_URL + '/jdl/' + job.jobname + '/votable#')
     ns_job = job.jobname + '/' + job.jobid
-    pdoc.add_namespace(ns_job, 'https://voparis-uws-test.obspm.fr/jdl/' + job.jobname + '/votable#')
+    pdoc.add_namespace(ns_job, BASE_URL + '/jdl/' + job.jobname + '/votable#')
+    ns_result = 'opus_store'
+    pdoc.add_namespace(ns_result, BASE_URL + '/get/result/?id=')
 
     # Activity
     act = pdoc.activity(ns_jdl + ':' + job.jobid, job.start_time, job.end_time)
@@ -89,18 +96,34 @@ def job2prov(job):
     e_in = []
     act_attr = {}
     for pname, pdict in job.jdl.content.get('used', {}).items():
-        pqn = ns_jdl + ':' + pname
+        # TODO: get unique id for entity
+        value = job.parameters.get(pname, {}).get('value', '')
+        entity_id = os.path.splitext(os.path.basename(value))[0]
+        entity = {}
+        try:
+            pqn = ns_result + ':' + entity_id
+            entity = job.storage.get_entity(entity_id)
+            logger.debug('Input entity found: {}'.format(entity))
+        except:
+            entity_id = job.jobid + '_' + pname
+            pqn = ns_result + ':' + entity_id
+            logger.debug('No previous record for input entity {}'.format(entity_id))
         e_in.append(pdoc.entity(pqn))
         # TODO: use publisher_did? add prov attributes, add voprov attributes?
-        value = job.parameters.get(pname, {}).get('value', '')
         e_in[-1].add_attributes({
-            'prov:label': pname,
-            'prov:value': value,
-            'prov:type': pdict['datatype'],
-            #'prov:location': ns_job + ':parameters/' + pname
+            'prov:label': entity_id,
+            'prov:location': value,
+            # 'prov:type': pdict['datatype'],
+            # 'prov:location': ns_job + ':parameters/' + pname
         })
-        act_attr[pqn] = value
+        act_attr[ns_job + ':' + pname] = value
         act.used(e_in[-1])
+        # TODO: search entity_store for records (and iterate to include provenance)
+        if entity:
+            other_job = copy.copy(job)
+            other_job.jobid = entity['jobid']
+            other_job.storage.read(other_job, get_attributes=True, get_parameters=True, get_results=True)
+            other_pdocs.append(job2prov(other_job))
 
     # Parameters as Activity attributes
     for pname, pdict in job.jdl.content.get('parameters', {}).items():
@@ -129,17 +152,22 @@ def job2prov(job):
     for rname in job.results:
         if rname not in ['stdout', 'stderr', 'provjson', 'provxml', 'provsvg']:
             rdict = job.jdl.content['generated'][rname]
-            rqn = ns_jdl + ':' + rname
+            entity_id = job.jobid + '_' + rname
+            rqn = ns_result + ':' + entity_id
             e_out.append(pdoc.entity(rqn))
             # TODO: use publisher_did? add prov attributes, add voprov attributes?
             e_out[-1].add_attributes({
-                'prov:label': rname,
-                'prov:type': rdict['content_type'],
+                'prov:label': entity_id,
+                'voprov:content_type': rdict['content_type'],
                 #'prov:location': ns_job + ':results/' + rname
             })
             e_out[-1].wasGeneratedBy(act)
             #for e in e_in:
             #    e_out[-1].wasDerivedFrom(e)
+
+    for opdoc in other_pdocs:
+        logger.debug(opdoc.serialize())
+        pdoc.update(opdoc)
 
     return pdoc
 

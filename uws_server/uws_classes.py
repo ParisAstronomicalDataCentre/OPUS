@@ -253,6 +253,7 @@ class Job(object):
             if pname in list(files.keys()):
                 if not os.path.isdir(upload_dir):
                     os.makedirs(upload_dir)
+                post_p = post.pop(pname)
                 f = files[pname]
                 f.save(upload_dir + '/' + f.filename)
                 # Parameter value is set to the file name on server
@@ -672,6 +673,7 @@ class Job(object):
                     self.add_logs()
                 # Add provenance files
                 if new_phase in ['COMPLETED']:
+                    self.storage.read(self, get_parameters=True, get_results=True)
                     self.add_provenance()
             except Exception as e:
                 self.phase = 'ERROR'
