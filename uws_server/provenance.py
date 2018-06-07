@@ -74,7 +74,9 @@ def job2prov(job):
     owner.add_attributes({
         'prov:label': job.owner,
     })
-    act.wasAssociatedWith(owner, attributes={'prov:role': 'owner'})
+    act.wasAssociatedWith(owner, attributes={
+        'prov:role': 'owner'
+    })
 
     # Agent: contact for the job
     contact_name = job.jdl.content.get('contact_name')
@@ -84,13 +86,15 @@ def job2prov(job):
     if contact_name:
         contact = pdoc.agent('opus:{}_contact'.format(job.jobname))
         contact.add_attributes({
-            'prov:label': contact_name,
+            'foaf:name': contact_name,
         })
         if contact_email:
             contact.add_attributes({
                 'foaf:mbox': "<mailto:{}>".format(contact_email)
             })
-        act.wasAssociatedWith(contact, attributes={'prov:role': 'contact'})
+        act.wasAssociatedWith(contact, attributes={
+            'prov:role': 'contact'
+        })
 
     # Used entities
     e_in = []
