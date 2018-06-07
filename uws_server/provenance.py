@@ -19,7 +19,7 @@ from .settings import *
 # http://lists.g-vo.org/pipermail/prov-adhoc/2015-June/000025.html
 
 
-def job2prov(job):
+def job2prov(job, show_parameters=False):
     """
     Create ProvDocument based on job description
     :param job: UWS job
@@ -71,9 +71,9 @@ def job2prov(job):
 
     # Agent: owner of the job
     owner = pdoc.agent('opus:' + job.owner)
-    owner.add_attributes({
-        'prov:label': job.owner,
-    })
+    # owner.add_attributes({
+    #     'foaf:name': job.owner,
+    # })
     act.wasAssociatedWith(owner, attributes={
         'prov:role': 'owner'
     })
@@ -84,10 +84,10 @@ def job2prov(job):
     if not contact_name:
         contact_name = contact_email
     if contact_name:
-        contact = pdoc.agent('opus:{}_contact'.format(job.jobname))
-        contact.add_attributes({
-            'foaf:name': contact_name,
-        })
+        contact = pdoc.agent(contact_name)
+        # contact.add_attributes({
+        #     'foaf:name': contact_name,
+        # })
         if contact_email:
             contact.add_attributes({
                 'foaf:mbox': "<mailto:{}>".format(contact_email)
@@ -115,41 +115,47 @@ def job2prov(job):
         e_in.append(pdoc.entity(pqn))
         # TODO: use publisher_did? add prov attributes, add voprov attributes?
         e_in[-1].add_attributes({
-            'prov:label': entity_id,
             'prov:value': value,
+            'prov:location': ns_result + ':' + entity_id,
             # 'prov:type': pdict['datatype'],
             # 'prov:location': ns_job + ':parameters/' + pname
         })
-        act_attr[ns_job + ':' + pname] = value
+        if show_parameters:
+            act_attr[ns_job + ':' + pname] = value
         act.used(e_in[-1])
-        # TODO: search entity_store for records (and iterate to include provenance)
         if entity:
+            e_in[-1].add_attributes({
+                'voprov:result_name': entity['result_name'],
+                'voprov:file_name': entity['file_name'],
+                'voprov:content_type': entity['content_type'],
+            })
             other_job = copy.copy(job)
             other_job.jobid = entity['jobid']
             other_job.storage.read(other_job, get_attributes=True, get_parameters=True, get_results=True)
             other_pdocs.append(job2prov(other_job))
 
     # Parameters as Activity attributes
-    for pname, pdict in job.jdl.content.get('parameters', {}).items():
-        pqn = ns_jdl + ':' + pname
-        # Add some UWS parameters as input Entities
-        #if pname.startswith('in'):
-        if any(x in pdict['datatype'] for x in ['file', 'xs:anyURI']):
-            e_in.append(pdoc.entity(pqn))
-            # TODO: use publisher_did? add prov attributes, add voprov attributes?
-            e_in[-1].add_attributes({
-                'prov:type': pdict['datatype'],
-                #'prov:location': job.parameters[pname]['value']
-            })
-            act.used(e_in[-1])
-        else:
-            # Otherwise add UWS parameters as attributes to the Activity
-            if pname in job.parameters:
-                act_attr[pqn] = job.parameters[pname]['value']
+    if show_parameters:
+        for pname, pdict in job.jdl.content.get('parameters', {}).items():
+            pqn = ns_jdl + ':' + pname
+            # Add some UWS parameters as input Entities
+            #if pname.startswith('in'):
+            if any(x in pdict['datatype'] for x in ['file', 'xs:anyURI']):
+                e_in.append(pdoc.entity(pqn))
+                # TODO: use publisher_did? add prov attributes, add voprov attributes?
+                e_in[-1].add_attributes({
+                    'prov:type': pdict['datatype'],
+                    #'prov:location': job.parameters[pname]['value']
+                })
+                act.used(e_in[-1])
             else:
-                act_attr[pqn] = pdict['default']
-    if len(act_attr) > 0:
-        act.add_attributes(act_attr)
+                # Otherwise add UWS parameters as attributes to the Activity
+                if pname in job.parameters:
+                    act_attr[pqn] = job.parameters[pname]['value']
+                else:
+                    act_attr[pqn] = pdict['default']
+        if len(act_attr) > 0:
+            act.add_attributes(act_attr)
 
     # Generated entities
     e_out = []
@@ -157,15 +163,17 @@ def job2prov(job):
         if rname not in ['stdout', 'stderr', 'provjson', 'provxml', 'provsvg']:
             rdict = job.jdl.content['generated'][rname]
             entity_id = job.jobid + '_' + rname
+            entity = job.storage.get_entity(entity_id)
             rqn = ns_result + ':' + entity_id
             e_out.append(pdoc.entity(rqn))
             # TODO: use publisher_did? add prov attributes, add voprov attributes?
             e_out[-1].add_attributes({
-                'prov:label': entity_id,
-                'voprov:content_type': rdict['content_type'],
-                #'prov:location': ns_job + ':results/' + rname
+                'prov:location': ns_result + ':' + entity_id,
+                'voprov:result_name': entity['result_name'],
+                'voprov:file_name': entity['file_name'],
+                'voprov:content_type': entity['content_type'],
             })
-            e_out[-1].wasGeneratedBy(act)
+            e_out[-1].wasGeneratedBy(act, entity['creation_time'])
             #for e in e_in:
             #    e_out[-1].wasDerivedFrom(e)
 
