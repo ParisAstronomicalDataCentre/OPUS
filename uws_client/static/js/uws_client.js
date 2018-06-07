@@ -452,6 +452,9 @@ var uws_client = (function($) {
         if (p.datatype == 'file') {
             $('#id_'+pname).attr('type', 'file');
         };
+        if (p.url == 'file://$ID') {
+            $('#id_'+pname).attr('type', 'file');
+        };
         if ((p.datatype.indexOf('long') > -1)
             || (p.datatype.indexOf('int') > -1)
             || (p.datatype.indexOf('float') > -1)
@@ -589,7 +592,7 @@ var uws_client = (function($) {
             if ($.inArray(pname, Object.keys(jdl.parameters)) == -1) {
                 var p = jdl.used[pname];
                 displayParamFormInput(pname, p);
-                if (p.datatype != 'file') {
+                if (p.url == 'file') {
                     $('#id_'+pname).wrap('<div class="input-group"></div>');
                     // Add Update buttons (possible to update params when pĥase is PENDING in UWS 1.0 - but not yet implemented)
                     $('#id_'+pname).parent().append('<span class="input-group-btn"><button id="button_'+pname+'" class="btn btn-default" type="button">Update</button></span>');
