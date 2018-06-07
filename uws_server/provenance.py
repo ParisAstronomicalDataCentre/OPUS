@@ -112,7 +112,7 @@ def job2prov(job):
         # TODO: use publisher_did? add prov attributes, add voprov attributes?
         e_in[-1].add_attributes({
             'prov:label': entity_id,
-            'prov:location': value,
+            'prov:value': value,
             # 'prov:type': pdict['datatype'],
             # 'prov:location': ns_job + ':parameters/' + pname
         })
@@ -198,7 +198,7 @@ def prov2dot(prov_doc):
     :param prov_doc:
     :return:
     """
-    dot = prov_to_dot(prov_doc, use_labels=True)
+    dot = prov_to_dot(prov_doc, use_labels=False, show_element_attributes=True, show_relation_attributes=True)
     return dot
 
 
