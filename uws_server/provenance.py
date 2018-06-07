@@ -42,49 +42,69 @@ def job2prov(job):
     # }
 
     pdoc = ProvDocument()
+
     # Declaring namespaces for various prefixes used in the example
     pdoc.set_default_namespace('https://voparis-uws-test.obspm.fr/jdl/' + job.jobname + '/votable#')
     pdoc.add_namespace('prov', 'http://www.w3.org/ns/prov#')
+    pdoc.add_namespace('foaf', 'http://xmlns.com/foaf/0.1/')
     pdoc.add_namespace('voprov', 'http://www.ivoa.net/documents/dm/provdm/voprov#')
     pdoc.add_namespace('opus', 'https://voparis-uws-test.obspm.fr/user/')
-    ns_uws_jdl = job.jobname
-    pdoc.add_namespace(ns_uws_jdl, 'https://voparis-uws-test.obspm.fr/jdl/' + job.jobname + '/votable#')
-    ns_uws_job = job.jobname + '/' + job.jobid
-    pdoc.add_namespace(ns_uws_job, 'https://voparis-uws-test.obspm.fr/jdl/' + job.jobname + '/votable#')
+    ns_jdl = job.jobname
+    pdoc.add_namespace(ns_jdl, 'https://voparis-uws-test.obspm.fr/jdl/' + job.jobname + '/votable#')
+    ns_job = job.jobname + '/' + job.jobid
+    pdoc.add_namespace(ns_job, 'https://voparis-uws-test.obspm.fr/jdl/' + job.jobname + '/votable#')
+
     # Activity
-    act = pdoc.activity(ns_uws_jdl + ':' + job.jobid, job.start_time, job.end_time)
+    act = pdoc.activity(ns_jdl + ':' + job.jobid, job.start_time, job.end_time)
     # TODO: add job description, version, url, ...
     act.add_attributes({
         'prov:label': job.jobname,
         'voprov:doculink': job.jdl.content.get('url'),
-        'voprov:contact_name': job.jdl.content.get('contact_name'),
-        'voprov:contact_email': job.jdl.content.get('contact_email'),
     })
+
     # Agent: owner of the job
-    agent = pdoc.agent('opus:' + job.owner)
-    agent.add_attributes({
+    owner = pdoc.agent('opus:' + job.owner)
+    owner.add_attributes({
         'prov:label': job.owner,
-        #'prov:type': 'Organization',
     })
-    pdoc.wasAssociatedWith(act, agent)
-    # Entities, in and out with relations
+    act.wasAssociatedWith(owner, attributes={'prov:role': 'owner'})
+
+    # Agent: contact for the job
+    contact_name = job.jdl.content.get('contact_name')
+    contact_email = job.jdl.content.get('contact_email')
+    if not contact_name:
+        contact_name = contact_email
+    if contact_name:
+        contact = pdoc.agent('opus:{}_contact'.format(job.jobname))
+        contact.add_attributes({
+            'prov:label': contact_name,
+        })
+        if contact_email:
+            contact.add_attributes({
+                'foaf:mbox': "<mailto:{}>".format(contact_email)
+            })
+        act.wasAssociatedWith(contact, attributes={'prov:role': 'contact'})
+
     # Used entities
     e_in = []
+    act_attr = {}
     for pname, pdict in job.jdl.content.get('used', {}).items():
-        pqn = ns_uws_jdl + ':' + pname
+        pqn = ns_jdl + ':' + pname
         e_in.append(pdoc.entity(pqn))
         # TODO: use publisher_did? add prov attributes, add voprov attributes?
+        value = job.parameters.get(pname, {}).get('value', '')
         e_in[-1].add_attributes({
             'prov:label': pname,
-            'prov:value': job.parameters.get(pname, {}).get('value', ''),
+            'prov:value': value,
             'prov:type': pdict['datatype'],
-            #'prov:location': ns_uws_job + ':parameters/' + pname
+            #'prov:location': ns_job + ':parameters/' + pname
         })
+        act_attr[pqn] = value
         act.used(e_in[-1])
+
     # Parameters as Activity attributes
-    act_attr = {}
     for pname, pdict in job.jdl.content.get('parameters', {}).items():
-        pqn = ns_uws_jdl + ':' + pname
+        pqn = ns_jdl + ':' + pname
         # Add some UWS parameters as input Entities
         #if pname.startswith('in'):
         if any(x in pdict['datatype'] for x in ['file', 'xs:anyURI']):
@@ -103,22 +123,24 @@ def job2prov(job):
                 act_attr[pqn] = pdict['default']
     if len(act_attr) > 0:
         act.add_attributes(act_attr)
+
     # Generated entities
     e_out = []
     for rname in job.results:
         if rname not in ['stdout', 'stderr', 'provjson', 'provxml', 'provsvg']:
             rdict = job.jdl.content['generated'][rname]
-            rqn = ns_uws_jdl + ':' + rname
+            rqn = ns_jdl + ':' + rname
             e_out.append(pdoc.entity(rqn))
             # TODO: use publisher_did? add prov attributes, add voprov attributes?
             e_out[-1].add_attributes({
                 'prov:label': rname,
                 'prov:type': rdict['content_type'],
-                #'prov:location': ns_uws_job + ':results/' + rname
+                #'prov:location': ns_job + ':results/' + rname
             })
             e_out[-1].wasGeneratedBy(act)
             #for e in e_in:
             #    e_out[-1].wasDerivedFrom(e)
+
     return pdoc
 
 
