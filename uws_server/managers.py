@@ -146,6 +146,8 @@ class Manager(object):
             'mkdir -p $rs',
             'mkdir -p $wd',
             'cd $wd',
+            'echo "[`timestamp`] List files in workdir"',
+            'ls -oht',
             # 'echo "User is `id`"',
             # 'echo "Working dir is $wd"',
             # 'echo "JobData dir is $jd"',
