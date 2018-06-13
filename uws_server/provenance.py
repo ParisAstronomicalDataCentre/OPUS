@@ -50,17 +50,17 @@ def job2prov(job, show_parameters=True):
     other_pdocs = []
 
     # Declaring namespaces for various prefixes used in the example
-    pdoc.set_default_namespace(BASE_URL + '/jdl/' + job.jobname + '/votable#')
+    pdoc.set_default_namespace('http://uws-server.readthedocs.io#')  # point to OPUS doc
     pdoc.add_namespace('prov', 'http://www.w3.org/ns/prov#')
     pdoc.add_namespace('foaf', 'http://xmlns.com/foaf/0.1/')
     pdoc.add_namespace('voprov', 'http://www.ivoa.net/documents/dm/provdm/voprov#')
-    pdoc.add_namespace('opus', BASE_URL + '/user/')
     ns_jdl = job.jobname
     pdoc.add_namespace(ns_jdl, BASE_URL + '/jdl/' + job.jobname + '/votable#')
     ns_job = job.jobname + '/' + job.jobid
     pdoc.add_namespace(ns_job, BASE_URL + '/jdl/' + job.jobname + '/votable#')
     ns_result = 'opus_store'
-    pdoc.add_namespace(ns_result, BASE_URL + '/get/result/?id=')
+    pdoc.add_namespace('opus_store', BASE_URL + '/get/result/?ID=')
+    pdoc.add_namespace('opus_user', BASE_URL + '/user/')
 
     # Activity
     act = pdoc.activity(ns_jdl + ':' + job.jobid, job.start_time, job.end_time)
@@ -71,7 +71,7 @@ def job2prov(job, show_parameters=True):
     })
 
     # Agent: owner of the job
-    owner = pdoc.agent('opus:' + job.owner)
+    owner = pdoc.agent('opus_user:' + job.owner)
     # owner.add_attributes({
     #     'foaf:name': job.owner,
     # })
@@ -101,7 +101,6 @@ def job2prov(job, show_parameters=True):
     e_in = []
     act_attr = {}
     for pname, pdict in job.jdl.content.get('used', {}).items():
-        # TODO: get unique id for entity
         value = job.parameters.get(pname, {}).get('value', '')
         entity_id = os.path.splitext(os.path.basename(value))[0]
         entity = {}
@@ -116,10 +115,9 @@ def job2prov(job, show_parameters=True):
         e_in.append(pdoc.entity(pqn))
         # TODO: use publisher_did? add prov attributes, add voprov attributes?
         e_in[-1].add_attributes({
-            'prov:value': value,
-            'prov:location': ns_result + ':' + entity_id,
+            # 'prov:value': value,
+            'prov:location': value,
             # 'prov:type': pdict['datatype'],
-            # 'prov:location': ns_job + ':parameters/' + pname
         })
         if show_parameters:
             act_attr[ns_job + ':' + pname] = value
@@ -140,22 +138,10 @@ def job2prov(job, show_parameters=True):
     if show_parameters:
         for pname, pdict in job.jdl.content.get('parameters', {}).items():
             pqn = ns_jdl + ':' + pname
-            # Add some UWS parameters as input Entities
-            #if pname.startswith('in'):
-            if any(x in pdict['datatype'] for x in ['file', 'xs:anyURI']):
-                e_in.append(pdoc.entity(pqn))
-                # TODO: use publisher_did? add prov attributes, add voprov attributes?
-                e_in[-1].add_attributes({
-                    'prov:type': pdict['datatype'],
-                    #'prov:location': job.parameters[pname]['value']
-                })
-                act.used(e_in[-1])
+            if pname in job.parameters:
+                act_attr[pqn] = job.parameters[pname]['value']
             else:
-                # Otherwise add UWS parameters as attributes to the Activity
-                if pname in job.parameters:
-                    act_attr[pqn] = job.parameters[pname]['value']
-                else:
-                    act_attr[pqn] = pdict['default']
+                act_attr[pqn] = pdict['default']
         if len(act_attr) > 0:
             act.add_attributes(act_attr)
 
@@ -170,7 +156,7 @@ def job2prov(job, show_parameters=True):
             e_out.append(pdoc.entity(rqn))
             # TODO: use publisher_did? add prov attributes, add voprov attributes?
             e_out[-1].add_attributes({
-                'prov:location': ns_result + ':' + entity_id,
+                'prov:location': job.results[rname]['url'],
                 'voprov:result_name': entity['result_name'],
                 'voprov:file_name': entity['file_name'],
                 'voprov:content_type': entity['content_type'],
