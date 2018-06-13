@@ -9,46 +9,59 @@
     var editor;  // to use codemirror
     var server_url;
 
+    var content_types = [
+        'text/plain',
+        'text/xml',
+        'text/x-votable+xml',
+        'application/json',
+        'application/pdf',
+        'image/jpeg',
+        'image/png',
+        'image/fits',
+        'video/mp4',
+    ]
     var type_options = {
         'param': [
             'xs:string',
             'xs:anyURI',
-            'file',
             'xs:float',
             'xs:double',
             'xs:int',
             'xs:long',
             'xs:boolean',
         ],
-        'generated': [
-            'text/plain',
-            'text/xml',
-            'text/x-votable+xml',
-            'application/json',
-            'application/pdf',
-            'image/jpeg',
-            'image/png',
-            'image/fits',
-            'video/mp4',
-        ],
-        'used': [
-            'text/plain',
-            'text/xml',
-            'text/x-votable+xml',
-            'application/json',
-            'application/pdf',
-            'image/jpeg',
-            'image/png',
-            'image/fits',
-            'video/mp4',
-        ],
+        'generated': content_types,
+        'used': content_types,
     };
+    var job_fields = [
+        'annotation',
+        'doculink',
+        'type',
+        'subtype',
+        'contact_name',
+        'contact_email',
+        'executionDuration',
+        'quote',
+    ]
+    var param_fields = [
+        'name',
+        'datatype',
+        'type',
+        'default',
+        'required',
+        'annotation',
+        'options',
+        'attributes',
+        'isfile',
+        'url',
+    ]
 
     // ----------
     // Item list numbered
 
 	function item_row(type, ii) {
 	    switch (type) {
+
             // Parameters
             case 'param':
                 var options = '<option>' + type_options[type].join('</option><option>') + '</option>';
@@ -98,6 +111,7 @@
                         </td>\
                     </tr>';
                 break;
+
             // Used
 	        case 'used':
                 var options = '<option>' + type_options[type].join('</option><option>') + '</option>';
@@ -105,25 +119,38 @@
                     <tr id="used_' + ii + '">\
                         <td>\
                             <div class="input-group input-group-sm col-md-12">\
-                                <input class="used_name form-control" style="font-weight: bold;" name="used_name_' + ii + '" type="text" placeholder="Name" />\
-                                <span class="input-group-addon">=</span>\
-                                <input class="used_default form-control" name="used_default_' + ii + '" type="text" placeholder="Default value" />\
-                                <span class="input-group-btn">\
-                                    <select name="used_type_' + ii + '" class="used_type select-small selectpicker" multiple>\
-                                        ' + options + '\
-                                    </select>\
-                                </span>\
-                                <span class="input-group-btn">\
-                                    <button id="moveup_used_' + ii + '" class="moveup_used btn btn-default" type="button" >\
-                                        <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>\
-                                    </button>\
-                                    <button id="movedown_used_' + ii + '" class="movedown_used btn btn-default" type="button" >\
-                                        <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span>\
-                                    </button>\
-                                    <button id="remove_used_' + ii + '" class="remove_used btn btn-default" type="button" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" >\
-                                        <span class="glyphicon glyphicon-remove"></span>\
-                                    </button>\
-                                </span>\
+                                <div class="input-group-sm col-xs-2 nopadding">\
+                                    <input class="used_name form-control" style="font-weight: bold;" name="used_name_' + ii + '" type="text" placeholder="Name" />\
+                                </div>\
+                                <div class="input-group-sm col-xs-1 nopadding">\
+                                    <div class="input-group-addon">=</div>\
+                                </div>\
+                                <div class="input-group-sm col-xs-2 nopadding">\
+                                    <input class="used_default form-control" name="used_default_' + ii + '" type="text" placeholder="Default value" />\
+                                </div>\
+                                <div class="input-group-sm col-xs-1 nopadding">\
+                                    <div class="input-group-addon">Mult. </div>\
+                                </div>\
+                                <div class="input-group-sm col-xs-1 nopadding">\
+                                    <input class="used_multiplicity form-control" name="used_multiplicity_' + ii + '" type="text" title="Multiplicity" maxlength="2" />\
+                                </div>\
+                                <div class="input-group-sm col-xs-5 nopadding">\
+                                    <div class="input-group-addon nopadding"></div>\
+                                    <div class="input-group-btn">\
+                                        <select name="used_type_' + ii + '" class="used_type select-small selectpicker" multiple>\
+                                            ' + options + '\
+                                        </select>\
+                                        <button id="moveup_used_' + ii + '" class="moveup_used btn btn-default" type="button" >\
+                                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>\
+                                        </button>\
+                                        <button id="movedown_used_' + ii + '" class="movedown_used btn btn-default" type="button" >\
+                                            <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span>\
+                                        </button>\
+                                        <button id="remove_used_' + ii + '" class="remove_used btn btn-default" type="button" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" >\
+                                            <span class="glyphicon glyphicon-remove"></span>\
+                                        </button>\
+                                    </div>\
+                                </div>\
                             </div>\
                             <div style="height: 1px;"></div>\
                             <div class="input-group input-group-sm col-md-12" style="width:100%">\
@@ -144,6 +171,7 @@
                         </td>\
                     </tr>';
                 break;
+
             // Results
 	        case 'generated':
                 var options = '<option>' + type_options[type].join('</option><option>') + '</option>';
@@ -222,20 +250,23 @@
         list_table.children().each( function(i) {
             i++;
             if ($(this).attr('id') != type + '_' + i) {
+                $(this).attr('id', type + '_' + i);
                 $(this).find('.remove_' + type).attr('id', 'remove_' + type + '_' + i);
                 $(this).find('.moveup_' + type).attr('id', 'moveup_' + type + '_' + i);
                 $(this).find('.movedown_' + type).attr('id', 'movedown_' + type + '_' + i);
-                $(this).find('.' + type + '_name').attr('name', type + '_name_' + i);
-                $(this).find('.' + type + '_type').attr('name', type + '_type_' + i);
-                $(this).find('.' + type + '_default').attr('name', type + '_default_' + i);
-                $(this).find('.' + type + '_required').attr('name', type + '_required_' + i);
-                $(this).find('.' + type + '_datatype').attr('name', type + '_datatype_' + i);
-                $(this).find('.' + type + '_annotation').attr('name', type + '_annotation_' + i);
-                $(this).find('.' + type + '_options').attr('name', type + '_options_' + i);
-                $(this).find('.' + type + '_attributes').attr('name', type + '_attributes_' + i);
-                $(this).find('.' + type + '_isfile').attr('name', type + '_isfile_' + i);
-                $(this).find('.' + type + '_url').attr('name', type + '_url_' + i);
-                $(this).attr('id', type + '_' + i);
+                for (var attr in param_fields) {
+                    $(this).find('.' + type + '_' + pattr).attr(pattr, type + '_' + pattr + '_' + i);
+                };
+//                $(this).find('.' + type + '_name').attr('name', type + '_name_' + i);
+//                $(this).find('.' + type + '_type').attr('name', type + '_type_' + i);
+//                $(this).find('.' + type + '_default').attr('name', type + '_default_' + i);
+//                $(this).find('.' + type + '_required').attr('name', type + '_required_' + i);
+//                $(this).find('.' + type + '_datatype').attr('name', type + '_datatype_' + i);
+//                $(this).find('.' + type + '_annotation').attr('name', type + '_annotation_' + i);
+//                $(this).find('.' + type + '_options').attr('name', type + '_options_' + i);
+//                $(this).find('.' + type + '_attributes').attr('name', type + '_attributes_' + i);
+//                $(this).find('.' + type + '_isfile').attr('name', type + '_isfile_' + i);
+//                $(this).find('.' + type + '_url').attr('name', type + '_url_' + i);
             }
         });
         $('.selectpicker').selectpicker('refresh');
@@ -282,13 +313,16 @@
 			success : function(jdl) {
                 $('#load_msg').attr('class', 'text-info');
                 $('#load_msg').text('JDL loaded.');
-                $('#load_msg').show().delay(2000).fadeOut();
-				$('input[name=doculink]').val(jdl.doculink);
-				$('input[name=contact_name]').val(jdl.contact_name);
-				$('input[name=contact_email]').val(jdl.contact_email);
-				$('input[name=executionDuration]').val(jdl.executionDuration);
-				$('input[name=quote]').val(jdl.quote);
-				$('textarea[name=annotation]').val(jdl.annotation);
+                $('#load_msg').show().delay(3000).fadeOut();
+                for (var attr in job_fields) {
+                    attr = job_fields[attr];
+    				$('[name=' + attr + ']').val(jdl[attr]);
+    			};
+				// $('[name=contact_name]').val(jdl.contact_name);
+				// $('[name=contact_email]').val(jdl['contact_email']);
+				// $('[name=executionDuration]').val(jdl.executionDuration);
+				// $('[name=quote]').val(jdl.quote);
+				// $('[name=annotation]').val(jdl.annotation);
 				// Fill param_list table
 				remove_all_items('param');
 				var i = 0;
@@ -304,13 +338,24 @@
 				            attributes = attributes.concat(att[j] + '=' + new String(attv) + " ");
 				        }
 				    }
-				    $('input[name=param_name_' + i + ']').val(param);
-				    $('select[name=param_datatype_' + i + ']').val(jdl.parameters[param]['datatype']);
-				    $('input[name=param_default_' + i + ']').val(jdl.parameters[param]['default']);
+				    var attr_mapping = {
+				        'name': param,
+				        'datatype': jdl.parameters[param]['datatype'],
+				        'default': jdl.parameters[param]['default'],
+				        'annotation': jdl.parameters[param]['annotation'],
+				        'options': jdl.parameters[param]['options'],
+				        'attributes': attributes,
+				    };
+                    for (var attr in attr_mapping) {
+                        $('input[name=param_' + attr + '_' + i + ']').val(attr_mapping[attr]);
+                    }
 				    $('input[name=param_required_' + i + ']').prop("checked", jdl.parameters[param]['required'].toString().toLowerCase() == "true");
-				    $('input[name=param_annotation_' + i + ']').val(jdl.parameters[param]['annotation']);
-				    $('input[name=param_options_' + i + ']').val(jdl.parameters[param]['options']);
-				    $('input[name=param_attributes_' + i + ']').val(attributes);
+//				    $('input[name=param_name_' + i + ']').val(param);
+//				    $('select[name=param_datatype_' + i + ']').val(jdl.parameters[param]['datatype']);
+//				    $('input[name=param_default_' + i + ']').val(jdl.parameters[param]['default']);
+//				    $('input[name=param_annotation_' + i + ']').val(jdl.parameters[param]['annotation']);
+//				    $('input[name=param_options_' + i + ']').val(jdl.parameters[param]['options']);
+//				    $('input[name=param_attributes_' + i + ']').val(attributes);
 				};
 				// Fill used_list table
 				remove_all_items('used');
@@ -319,11 +364,20 @@
 				    used = jdl.used_keys[used];
                     add_item('used');
 				    i++;
-				    $('input[name=used_name_' + i + ']').val(used);
-				    $('select[name=used_type_' + i + ']').val(jdl.used[used]['content_type']);
+				    var attr_mapping = {
+				        'name': used,
+				        'type': jdl.used[used]['type'],
+				        'default': jdl.used[used]['default'],
+				        'annotation': jdl.used[used]['annotation'],
+				    };
+                    for (var attr in attr_mapping) {
+                        $('[name=used_' + attr + '_' + i + ']').val(attr_mapping[attr]);
+                    }
 				    // TODO: used_type_ is an array of values (comma separated)
-				    $('input[name=used_default_' + i + ']').val(jdl.used[used]['default']);
-				    $('input[name=used_annotation_' + i + ']').val(jdl.used[used]['annotation']);
+//				    $('input[name=used_name_' + i + ']').val(used);
+//				    $('select[name=used_type_' + i + ']').val(jdl.used[used]['content_type']);
+//				    $('input[name=used_default_' + i + ']').val(jdl.used[used]['default']);
+//				    $('input[name=used_annotation_' + i + ']').val(jdl.used[used]['annotation']);
 				    if (jdl.used[used]['url'].indexOf('file://') == -1) {
     				    $('input[name=used_isfile_' + i + '][value=ID]').prop("checked", true);
                         $('input[name=used_url_' + i + ']').val(jdl.used[used]['url']);
@@ -337,10 +391,19 @@
 				    result = jdl.generated_keys[result];
                     add_item('generated');
 				    i++;
-				    $('input[name=generated_name_' + i + ']').val(result);
-				    $('select[name=generated_type_' + i + ']').val(jdl.generated[result]['content_type']);
-				    $('input[name=generated_default_' + i + ']').val(jdl.generated[result]['default']);
-				    $('input[name=generated_annotation_' + i + ']').val(jdl.generated[result]['annotation']);
+				    var attr_mapping = {
+				        'name': result,
+				        'type': jdl.generated[result]['type'],
+				        'default': jdl.generated[result]['default'],
+				        'annotation': jdl.generated[result]['annotation'],
+				    };
+                    for (var attr in attr_mapping) {
+                        $('[name=generated_' + attr + '_' + i + ']').val(attr_mapping[attr]);
+                    }
+//				    $('input[name=generated_name_' + i + ']').val(result);
+//				    $('select[name=generated_type_' + i + ']').val(jdl.generated[result]['content_type']);
+//				    $('input[name=generated_default_' + i + ']').val(jdl.generated[result]['default']);
+//				    $('input[name=generated_annotation_' + i + ']').val(jdl.generated[result]['annotation']);
 				};
                 $('.selectpicker').selectpicker('refresh');
                 // ajax command to get_script from UWS server

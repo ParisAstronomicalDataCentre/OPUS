@@ -34,7 +34,7 @@
                     <div class="row">
                         <div class="col-md-12 form-group">
                             <label class="col-md-2 control-label">Name</label>
-                            <div class="col-md-7 controls">
+                            <div class="col-md-6 controls">
                                 <div class="input-group">
                                     <input class="form-control name_typeahead" name="name" type="text" placeholder="Enter job name" value="" autocomplete="off"/>
                                     <span class="input-group-btn">
@@ -43,47 +43,69 @@
                                     </span>
                                 </div>
                             </div>
-                            <div class="col-md-3 help-block">Job name. <span id="load_msg" class="text-danger" style="display: none;">Message!</span></div>
+                            <div class="col-md-4 help-block">Job name. <span id="load_msg" class="text-danger" style="display: none;">Message!</span></div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-12 form-group">
                             <label class="col-md-2 control-label">Description</label>
-                            <div class="col-md-7 controls">
+                            <div class="col-md-6 controls">
                                 <textarea class="form-control" name="annotation" rows="6"></textarea>
                             </div>
-                            <div class="col-md-3 help-block">Job description.</div>
+                            <div class="col-md-4 help-block">Job description.</div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-12 form-group">
-                            <label class="col-md-2 control-label">URL</label>
-                            <div class="col-md-7 controls">
-                                <input class="form-control" name="doculink" type="text" value="" />
+                            <label class="col-md-2 control-label">Web page</label>
+                            <div class="col-md-6 controls">
+                                <input class="form-control" name="doculink" type="url" value="" />
                             </div>
-                            <div class="col-md-3 help-block">
+                            <div class="col-md-4 help-block">
                                 URL to a more complete description of the job.
                             </div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-12 form-group">
+                            <label class="col-md-2 control-label">Type</label>
+                            <div class="col-md-6 controls">
+                                <input class="form-control" name="type" type="text" value="" />
+                            </div>
+                            <div class="col-md-4 help-block">
+                                Type of job (calibration, reduction, analysis...)
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                    <div class="col-md-12 form-group">
+                            <label class="col-md-2 control-label">Subtype</label>
+                            <div class="col-md-6 controls">
+                                <input class="form-control" name="type" type="text" value="" />
+                            </div>
+                            <div class="col-md-4 help-block">
+                                Subtype of job (bias subtraction, fit...)
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 form-group">
                             <label class="col-md-2 control-label">Contact name</label>
-                            <div class="col-md-7 controls">
+                            <div class="col-md-6 controls">
                                 <input class="form-control" name="contact_name" type="text" value="" />
                             </div>
-                            <div class="col-md-3 help-block">
-                                Name of the person/organization responsible for this job.
+                            <div class="col-md-4 help-block">
+                                Person/organization responsible for this job.
                             </div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-12 form-group">
                             <label class="col-md-2 control-label">Contact email</label>
-                            <div class="col-md-7 controls">
+                            <div class="col-md-6 controls">
                                 <input class="form-control" name="contact_email" type="text" value="" />
                             </div>
-                            <div class="col-md-3 help-block">
+                            <div class="col-md-4 help-block">
                                 Email of the contact person/organization.
                             </div>
                         </div>
@@ -91,7 +113,7 @@
                     <div class="row">
                         <div class="col-md-12 form-group">
                             <label class="col-md-2 control-label">Parameters</label>
-                            <div class="col-md-7 controls">
+                            <div class="col-md-6 controls">
                                 <div style="height: 2px;"></div>
                                 <table id="param_list" width="100%">
                                     <tbody>
@@ -108,10 +130,10 @@
                                     </tbody>
                                 </table>
                             </div>
-                            <div class="col-md-3 help-block">
+                            <div class="col-md-4 help-block">
                                 List of parameters, with name, default value, type and description.<br>
-                                Specify if the parameter is required by checking the box (if not, the parameters won't be shown by the client and the default value will always be used).<br>
-                                A list of options can be specified (comma-separated values).<br>
+                                Specify if the parameter is required by checking the box.<br>
+                                A restricted list of options can be specified (comma-separated values).<br>
                                 Additional attributes can be defined (unit, ucd, utype, min, max).
                             </div>
                         </div>
@@ -119,7 +141,7 @@
                     <div class="row">
                         <div class="col-md-12 form-group">
                             <label class="col-md-2 control-label">Used</label>
-                            <div class="col-md-7 controls">
+                            <div class="col-md-6 controls">
                                 <div style="height: 2px;"></div>
                                 <table id="used_list" width="100%">
                                     <tbody>
@@ -136,19 +158,17 @@
                                     </tbody>
                                 </table>
                             </div>
-                            <div class="col-md-3 help-block">
-                                List of input entities (e.g. files) used with their name and content type.<br>
+                            <div class="col-md-4 help-block">
+                                List of input entities (e.g. files) with their name and content type.<br>
                                 The input is a File or an ID, possibly with a URL to resolve the ID and download the file (use $ID in the URL template).
                                 If no URL is specified, the script itself should be able to resolve the ID and get the file.<br>
-                                Note that an input can refer to a parameter (if it has the same name),
-                                e.g. the name of an input file used in the script.
                             </div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-12 form-group">
                             <label class="col-md-2 control-label">Generated</label>
-                            <div class="col-md-7 controls">
+                            <div class="col-md-6 controls">
                                 <div style="height: 2px;"></div>
                                 <table id="generated_list" width="100%">
                                     <tbody>
@@ -165,20 +185,18 @@
                                     </tbody>
                                 </table>
                             </div>
-                            <div class="col-md-3 help-block">
-                                List of possible results with their name and content type. A default name can be provided.<br>
-                                Note that a result can refer to a parameter (if it has the same name),
-                                e.g. the name of an output file generated by the script.
+                            <div class="col-md-4 help-block">
+                                List of possible results with their name and content type.<br>
                             </div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-12 form-group">
                             <label class="col-md-2 control-label">Execution duration</label>
-                            <div class="col-md-7 controls">
+                            <div class="col-md-6 controls">
                                 <input class="form-control" name="executionDuration" type="number" value="60" step="1" min="0" />
                             </div>
-                            <div class="col-md-3 help-block">
+                            <div class="col-md-4 help-block">
                                 Duration in seconds that will be allocated to the job.
                             </div>
                         </div>
@@ -186,10 +204,10 @@
                     <div class="row">
                         <div class="col-md-12 form-group">
                             <label class="col-md-2 control-label">Default quote</label>
-                            <div class="col-md-7 controls">
+                            <div class="col-md-6 controls">
                                 <input class="form-control" name="quote" type="number" value="10" step="1" min="0" />
                             </div>
-                            <div class="col-md-3 help-block">
+                            <div class="col-md-4 help-block">
                                 Default quote in seconds corresponding to the expected duration of the job.
                             </div>
                         </div>
@@ -197,18 +215,19 @@
                     <div class="row">
                         <div class="col-md-12 form-group">
                             <label class="col-md-2 control-label">Bash script</label>
-                            <div class="col-md-7 controls">
+                            <div class="col-md-6 controls">
                                 <textarea class="form-control" name="script" rows="10" style="font-family: monospace"></textarea>
                             </div>
-                            <div class="col-md-3 help-block">
+                            <div class="col-md-4 help-block">
                                 Job as a bash script. Parameters are available as bash variables, e.g. ${parameter_name}.
+                                Input entities and results also have a bash variable pointing to the file or containing the corresponding ID/value.
                             </div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-12 form-group">
                             <label class="col-md-2 control-label">&nbsp;</label>
-                            <div class="col-md-7 controls">
+                            <div class="col-md-6 controls">
                                 <input value="Create JDL and script" type="submit" class="btn btn-primary" />
                             </div>
                         </div>
