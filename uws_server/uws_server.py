@@ -521,8 +521,10 @@ def get_entity():
         user = set_user()
         if not 'id' in request.query:
             raise UserWarning('"id" is not specified in request')
+        entity_id = request.query['id']
+        logger.debug('Init storage for entity {}'.format(entity_id))
         job_storage = getattr(storage, STORAGE + 'JobStorage')()
-        entity = job_storage.get_entity(request.query['id'])
+        entity = job_storage.get_entity(entity_id)
 
         if CHECK_OWNER:
             if user in special_users:
@@ -567,7 +569,7 @@ def get_result_file(jobid, rname):  # , rfname):
     try:
         user = set_user()
         # Get job properties from DB
-        job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True)
+        job = Job('', jobid, user, get_attributes=False, get_results=True)
         # Check if result exists
         if rname not in job.results:
             raise storage.NotFoundWarning('Result "{}" NOT FOUND for job "{}"'.format(rname, jobid))
@@ -633,7 +635,7 @@ def maintenance(jobname):
             # For each job:
             now = dt.datetime.now()
             job = Job(jobname, j['jobid'], user,
-                      get_attributes=True, get_parameters=False, get_results=False)
+                      get_attributes=True, get_parameters=True, get_results=True)
             # TODO: Check consistency of dates (destruction_time > end_time > start_time > creation_time)
             if not job.start_time and job.phase not in ['PENDING', 'QUEUED']:
                 logger.warning('Start time not set for {} {}'.format(jobname, job.jobid))
@@ -688,7 +690,9 @@ def job_event():
         if 'jobid' in request.POST:
             process_id = request.POST['jobid']
             # Get job properties from DB based on process_id
-            job = Job('', process_id, user, get_attributes=True, from_process_id=True)
+            job = Job('', process_id, user,
+                      get_attributes=True, get_parameters=True, get_results=True,
+                      from_process_id=True)
             # Update job
             if 'phase' in request.POST:
                 cur_phase = job.phase
@@ -876,7 +880,7 @@ def delete_job(jobname, jobid):
         user = set_user()
         logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True)
+        job = Job(jobname, jobid, user)
         # Delete job
         job.delete()
         logger.info('{} {} DELETED [{}]'.format(jobname, jobid, user))
@@ -900,7 +904,7 @@ def post_job(jobname, jobid):
         logger.info('deleting {} {} [{}]'.format(jobname, jobid, user))
         if request.forms.get('ACTION') == 'DELETE':
             # Get job properties from DB
-            job = Job(jobname, jobid, user, get_attributes=True)
+            job = Job(jobname, jobid, user)
             # Delete job
             job.delete()
             logger.info('{} {} DELETED [{}]'.format(jobname, jobid, user))
@@ -937,7 +941,7 @@ def get_phase(jobname, jobid):
         user = set_user()
         # logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True)
+        job = Job(jobname, jobid, user)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return job.phase
@@ -975,7 +979,7 @@ def post_phase(jobname, jobid):
                             ''.format(jobname, jobid, str(job.process_id), user))
             elif new_phase == 'ABORT':
                 # Get job properties from DB
-                job = Job(jobname, jobid, user, get_attributes=True)
+                job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True, get_results=True)
                 # Abort job
                 job.abort()
                 logger.info('{} {} ABORTED [{}]'.format(jobname, jobid, user))
@@ -1015,7 +1019,7 @@ def get_executionduration(jobname, jobid):
         user = set_user()
         logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True)
+        job = Job(jobname, jobid, user)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return str(job.execution_duration)
@@ -1049,7 +1053,7 @@ def post_executionduration(jobname, jobid):
         except ValueError:
             raise UserWarning('Execution duration must be an integer or a float')
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True)
+        job = Job(jobname, jobid, user)
         # TODO: check phase?
 
         # Change value
@@ -1085,7 +1089,7 @@ def get_destruction(jobname, jobid):
         user = set_user()
         logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True)
+        job = Job(jobname, jobid, user)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return job.destruction_time
@@ -1122,7 +1126,7 @@ def post_destruction(jobname, jobid):
             else:
                 raise UserWarning('Destruction time must be in ISO8601 format ({})'.format(str(e)))
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True)
+        job = Job(jobname, jobid, user)
         # Change value
         # job.set_destruction_time(new_value)
         job.set_attribute('destruction_time', new_value)
@@ -1158,7 +1162,7 @@ def get_error(jobname, jobid):
         user = set_user()
         logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True)
+        job = Job(jobname, jobid, user)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return job.error
@@ -1188,7 +1192,7 @@ def get_quote(jobname, jobid):
         user = set_user()
         logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True)
+        job = Job(jobname, jobid, user)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return str(job.quote)
@@ -1278,7 +1282,7 @@ def post_parameter(jobname, jobid, pname):
             raise UserWarning('VALUE keyword required')
         new_value = request.forms.get('VALUE')
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True)
+        job = Job(jobname, jobid, user, get_parameters=True)
         # TODO: Check if new_value format is correct (from JDL?)
         # Change value
         if job.phase == 'PENDING':
@@ -1373,9 +1377,9 @@ def get_stdout(jobname, jobid):
     try:
         user = set_user()
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True, get_parameters=False, get_results=False)
+        # job = Job(jobname, jobid, user, get_results=True)
         logname = 'stdout'
-        logroot = '{}/{}'.format(JOBDATA_PATH, job.jobid)
+        logroot = '{}/{}'.format(JOBDATA_PATH, jobid)
         if not os.path.isfile(os.path.join(logroot, logname + '.log')):
             raise storage.NotFoundWarning('Log "{}" NOT FOUND for job "{}"'.format(logname, jobid))
         # Return file
@@ -1401,9 +1405,9 @@ def get_stderr(jobname, jobid):
     try:
         user = set_user()
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True, get_parameters=False, get_results=False)
+        # job = Job(jobname, jobid, user, get_results=True)
         logname = 'stderr'
-        logroot = '{}/{}'.format(JOBDATA_PATH, job.jobid)
+        logroot = '{}/{}'.format(JOBDATA_PATH, jobid)
         if not os.path.isfile(os.path.join(logroot, logname + '.log')):
             raise storage.NotFoundWarning('Log "{}" NOT FOUND for job "{}"'.format(logname, jobid))
         # Return file
@@ -1429,9 +1433,9 @@ def get_prov(jobname, jobid, provtype):
     try:
         user = set_user()
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True, get_parameters=False, get_results=False)
+        # job = Job(jobname, jobid, user, get_results=True)
         provname = 'provenance.' + provtype
-        provroot = '{}/{}'.format(JOBDATA_PATH, job.jobid)
+        provroot = '{}/{}'.format(JOBDATA_PATH, jobid)
         if not os.path.isfile(os.path.join(provroot, provname)):
             raise storage.NotFoundWarning('Prov file "{}" NOT FOUND for job "{}"'.format(provname, jobid))
         # Return file
@@ -1490,7 +1494,7 @@ def get_owner(jobname, jobid):
         user = set_user()
         logger.info('{} {} [{}]'.format(jobname, jobid, user))
         # Get job properties from DB
-        job = Job(jobname, jobid, user, get_attributes=True)
+        job = Job(jobname, jobid, user)
         # Return value
         response.content_type = 'text/plain; charset=UTF-8'
         return job.owner

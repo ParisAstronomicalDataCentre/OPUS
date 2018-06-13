@@ -118,7 +118,7 @@ class Job(object):
     # as separate object.
 
     def __init__(self, jobname, jobid, user,
-                 get_attributes=False, get_parameters=False, get_results=False,
+                 get_attributes=True, get_parameters=False, get_results=False,
                  from_post=None, from_process_id=False,
                  run_check_owner=True):
         """Initialize from storage or from POST
@@ -141,6 +141,7 @@ class Job(object):
         self.user = user
         # Link to the storage, e.g. SQLite, see settings.py
         # self.storage = storage.__dict__[STORAGE + 'JobStorage']()
+        logger.debug('Init storage for job {}'.format(self.jobid))
         self.storage = getattr(storage, STORAGE + 'JobStorage')()
 
         # Check if user has rights to create/edit such a job, else raise JobAccessDenied
@@ -153,17 +154,7 @@ class Job(object):
         # self.jdl = uws_jdl.__dict__[JDL]()
         self.jdl = getattr(uws_jdl, JDL)()
         # Fill job attributes
-        if get_attributes or get_parameters or get_results:
-            # Get from storage
-            self.storage.read(self,
-                              get_attributes=get_attributes,
-                              get_parameters=get_parameters,
-                              get_results=get_results,
-                              from_process_id=from_process_id)
-            # Check if the user is the owner of the job, else raise JobAccessDenied
-            if run_check_owner:
-                check_owner(self)
-        elif from_post:
+        if from_post:
             # Create a new PENDING job and save to storage
             now = dt.datetime.now()
             destruction = dt.timedelta(DESTRUCTION_INTERVAL)  # default interval for UWS server
@@ -183,6 +174,16 @@ class Job(object):
             self.results = {}
             # Set parameters from POSTed info
             self.set_from_post(from_post.POST, from_post.files)
+        elif get_attributes or get_parameters or get_results:
+            # Get from storage
+            self.storage.read(self,
+                              get_attributes=get_attributes,
+                              get_parameters=get_parameters,
+                              get_results=get_results,
+                              from_process_id=from_process_id)
+            # Check if the user is the owner of the job, else raise JobAccessDenied
+            if run_check_owner:
+                check_owner(self)
         else:
             # Create blank job with None values, do not save to storage
             now = dt.datetime.now()
@@ -306,7 +307,7 @@ class Job(object):
             # self.__dict__[attr] = value
             setattr(self, attr, value)
             # self.save_description()
-            self.storage.save(self)
+            self.storage.save(self, save_attributes=True, save_parameters=False, save_results=False)
         else:
             raise KeyError(attr)
 
@@ -314,7 +315,7 @@ class Job(object):
         """Set job attribute and save to storage"""
         self.parameters[pname]['value'] = value
         #self.save_description()
-        self.storage.save(self, save_attributes=False, save_parameters=pname)
+        self.storage.save(self, save_attributes=False, save_parameters=pname, save_results=False)
 
 
     # ----------
@@ -478,7 +479,7 @@ class Job(object):
 
     def add_result_entry(self, rname, url, content_type):
         self.results[rname] = {'url': url, 'content_type': content_type}
-        logger.info('Add {} to results'.format(rname))
+        logger.info('Add {} to results db'.format(rname))
 
     def add_results(self):
         # Read results.yml to know generated results (those that are located in the results directory)
@@ -628,6 +629,7 @@ class Job(object):
         if os.path.isdir(results_dir):
             shutil.rmtree(results_dir)
         # Remove job and entities from storage
+        # TODO: remove or keep entities ? may break the provenance...
         self.storage.remove_entity(jobid=self.jobid)
         self.storage.delete(self)
 
@@ -673,7 +675,7 @@ class Job(object):
                     self.add_logs()
                 # Add provenance files
                 if new_phase in ['COMPLETED']:
-                    self.storage.read(self, get_parameters=True, get_results=True)
+                    # self.storage.read(self, get_parameters=True, get_results=True)
                     self.add_provenance()
             except Exception as e:
                 self.phase = 'ERROR'
@@ -728,6 +730,7 @@ class JobList(object):
         self.jobid = 'joblist'
         self.user = user
         # Link to the storage, e.g. SQLiteStorage, see settings.py
+        logger.debug('Init storage for joblist')
         self.storage = getattr(storage, STORAGE + 'JobStorage')()
 
         # Check if user has rights to create/edit such a job, else raise JobAccessDenied

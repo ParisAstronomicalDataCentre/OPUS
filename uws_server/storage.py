@@ -145,7 +145,7 @@ class EntityStorage(object):
 class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
 
     def __init__(self, db_string=SQLALCHEMY_DB):
-        self.engine = create_engine(db_string)
+        self.engine = create_engine(db_string)  # , connect_args={'check_same_thread': False})
         self.Base = declarative_base()
         # self.Base = automap_base()
         # dt_format = u'%(year)04d/%(month)02d/%(day)02dT%(hour)02d:%(min)02d:%(second)02d'

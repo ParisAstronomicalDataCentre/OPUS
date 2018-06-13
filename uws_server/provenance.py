@@ -13,13 +13,14 @@ from prov.dot import prov_to_dot
 from pydotplus.graphviz import InvocationException
 
 from .settings import *
+#from . import storage
 
 # examples:
 # http://prov.readthedocs.org/en/latest/usage.html#simple-prov-document
 # http://lists.g-vo.org/pipermail/prov-adhoc/2015-June/000025.html
 
 
-def job2prov(job, show_parameters=False):
+def job2prov(job, show_parameters=True):
     """
     Create ProvDocument based on job description
     :param job: UWS job
@@ -131,6 +132,7 @@ def job2prov(job, show_parameters=False):
             })
             other_job = copy.copy(job)
             other_job.jobid = entity['jobid']
+            other_job.storage = job.storage  # getattr(storage, STORAGE + 'JobStorage')()
             other_job.storage.read(other_job, get_attributes=True, get_parameters=True, get_results=True)
             other_pdocs.append(job2prov(other_job))
 
