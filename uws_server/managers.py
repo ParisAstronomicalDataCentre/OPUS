@@ -489,7 +489,7 @@ class SLURMManager(Manager):
             cmd = ['scp',
                    '{}/{}/{}'.format(UPLOADS_PATH, job.jobid, fname),
                    '{}:{}/{}'.format(self.ssh_arg, wd, fname)]
-            # logger.debug(' '.join(cmd))
+            logger.debug(' '.join(cmd))
             sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
         for furl in files['URI']:
             fname = furl.split('/')[-1]
