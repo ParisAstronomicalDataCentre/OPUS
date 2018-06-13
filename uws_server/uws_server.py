@@ -8,6 +8,7 @@
 import traceback
 import glob
 import re
+import io
 import threading
 from subprocess import CalledProcessError
 from bottle import Bottle, request, response, abort, redirect, run, static_file
@@ -1453,24 +1454,45 @@ def get_prov(jobname, jobid, provtype):
         abort_500_except()
 
 
-@app.get('/prov/<jobid>')
-def get_provsvg(jobid):
+@app.get('/provsap')
+def provsap():
     """
     Get list of available jobs on server
     :return: list of job names in json
     """
     try:
         user = set_user()
+        if not 'ID' in request.query:
+            raise UserWarning('"ID" is not specified in request')
+        # Assuming ID is a jobid (coud be an entity_id...)
+        jobid = request.query['ID']
+        depth = request.query.get('DEPTH', 1)
+        if depth == 'ALL':
+            depth = -1
+        else:
+            depth = int(depth)
+        format = request.query.get('RESPONSEFORMAT', 'PROV-SVG')
         # Get job properties from DB
         job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True)
         logger.info('{} {} [{}]'.format(job.jobname, jobid, user))
-        # Get JDL
-        job.jdl.read(job.jobname)
         # Return job provenance
-        pdoc = provenance.job2prov(job)
-        svg_content = provenance.prov2svg_content(pdoc)
-        response.content_type = 'text/xml; charset=UTF-8'
-        return svg_content
+        pdoc = provenance.job2prov(job, depth=depth)
+        if format == 'PROV-SVG':
+            svg_content = provenance.prov2svg_content(pdoc)
+            response.content_type = 'text/xml; charset=UTF-8'
+            return svg_content
+        elif format == 'PROV-XML':
+            result = io.BytesIO()
+            pdoc.serialize(result, format='xml')
+            result.seek(0)
+            response.content_type = 'text/xml; charset=UTF-8'
+            return b'\n'.join(result.readlines())
+        else:  # return PROV-JSON as default
+            result = io.BytesIO()
+            pdoc.serialize(result, format='json')
+            result.seek(0)
+            response.content_type = 'application/json; charset=UTF-8'
+            return b'\n'.join(result.readlines())
     except storage.NotFoundWarning as e:
         abort_404(str(e))
     except:

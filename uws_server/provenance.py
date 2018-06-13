@@ -13,14 +13,14 @@ from prov.dot import prov_to_dot
 from pydotplus.graphviz import InvocationException
 
 from .settings import *
-#from . import storage
+from . import storage
 
 # examples:
 # http://prov.readthedocs.org/en/latest/usage.html#simple-prov-document
 # http://lists.g-vo.org/pipermail/prov-adhoc/2015-June/000025.html
 
 
-def job2prov(job, show_parameters=True):
+def job2prov(job, show_parameters=True, depth=1, recursive=False):
     """
     Create ProvDocument based on job description
     :param job: UWS job
@@ -46,21 +46,26 @@ def job2prov(job, show_parameters=True):
     #     'description': list(r)[0].text,
     # }
 
+    # Init
     pdoc = ProvDocument()
     other_pdocs = []
+    # Get new storage instance
+    job.storage = getattr(storage, STORAGE + 'JobStorage')()
+    # Update JDL content
+    job.jdl.read(job.jobname)
 
     # Declaring namespaces for various prefixes used in the example
     pdoc.set_default_namespace('http://uws-server.readthedocs.io#')  # point to OPUS doc
     pdoc.add_namespace('prov', 'http://www.w3.org/ns/prov#')
     pdoc.add_namespace('foaf', 'http://xmlns.com/foaf/0.1/')
     pdoc.add_namespace('voprov', 'http://www.ivoa.net/documents/dm/provdm/voprov#')
-    ns_jdl = job.jobname
-    pdoc.add_namespace(ns_jdl, BASE_URL + '/jdl/' + job.jobname + '/votable#')
-    ns_job = job.jobname + '/' + job.jobid
-    pdoc.add_namespace(ns_job, BASE_URL + '/jdl/' + job.jobname + '/votable#')
+    pdoc.add_namespace('opus_user', BASE_URL + '/user/')
     ns_result = 'opus_store'
     pdoc.add_namespace('opus_store', BASE_URL + '/get/result/?ID=')
-    pdoc.add_namespace('opus_user', BASE_URL + '/user/')
+    ns_jdl = job.jobname
+    pdoc.add_namespace(ns_jdl, BASE_URL + '/jdl/' + job.jobname + '/votable#')
+    # ns_job = job.jobname + '/' + job.jobid
+    # pdoc.add_namespace(ns_job, BASE_URL + '/jdl/' + job.jobname + '/votable#')
 
     # Activity
     act = pdoc.activity(ns_jdl + ':' + job.jobid, job.start_time, job.end_time)
@@ -101,38 +106,46 @@ def job2prov(job, show_parameters=True):
     e_in = []
     act_attr = {}
     for pname, pdict in job.jdl.content.get('used', {}).items():
+        # Assuming that used entity is a file or a URL (not a value or an ID)
         value = job.parameters.get(pname, {}).get('value', '')
         entity_id = os.path.splitext(os.path.basename(value))[0]
         entity = {}
         try:
             pqn = ns_result + ':' + entity_id
             entity = job.storage.get_entity(entity_id)
+            location = entity['access_url']
             logger.debug('Input entity found: {}'.format(entity))
         except:
             entity_id = job.jobid + '_' + pname
             pqn = ns_result + ':' + entity_id
+            location = value
             logger.debug('No previous record for input entity {}'.format(entity_id))
-        e_in.append(pdoc.entity(pqn))
-        # TODO: use publisher_did? add prov attributes, add voprov attributes?
-        e_in[-1].add_attributes({
-            # 'prov:value': value,
-            'prov:location': value,
-            # 'prov:type': pdict['datatype'],
-        })
         if show_parameters:
-            act_attr[ns_job + ':' + pname] = value
-        act.used(e_in[-1])
-        if entity:
+            act_attr[ns_jdl + ':' + pname] = value
+
+        # Explore used entities for the activity if depth > 0
+        if depth != 0:
+            e_in.append(pdoc.entity(pqn))
+            # TODO: use publisher_did? add prov attributes, add voprov attributes?
             e_in[-1].add_attributes({
-                'voprov:result_name': entity['result_name'],
-                'voprov:file_name': entity['file_name'],
-                'voprov:content_type': entity['content_type'],
+                # 'prov:value': value,
+                'prov:location': location,
+                # 'prov:type': pdict['datatype'],
             })
-            other_job = copy.copy(job)
-            other_job.jobid = entity['jobid']
-            other_job.storage = job.storage  # getattr(storage, STORAGE + 'JobStorage')()
-            other_job.storage.read(other_job, get_attributes=True, get_parameters=True, get_results=True)
-            other_pdocs.append(job2prov(other_job))
+            act.used(e_in[-1])
+            if entity:
+                e_in[-1].add_attributes({
+                    'voprov:result_name': entity['result_name'],
+                    'voprov:file_name': entity['file_name'],
+                    'voprov:content_type': entity['content_type'],
+                })
+
+                # Explores entity origin if depth > 1
+                if depth != 1:
+                    other_job = copy.copy(job)
+                    other_job.jobid = entity['jobid']
+                    job.storage.read(other_job, get_attributes=True, get_parameters=True, get_results=True)
+                    other_pdocs.append(job2prov(other_job, depth=depth-2, recursive=True))
 
     # Parameters as Activity attributes
     if show_parameters:
@@ -145,26 +158,28 @@ def job2prov(job, show_parameters=True):
         if len(act_attr) > 0:
             act.add_attributes(act_attr)
 
-    # Generated entities
-    e_out = []
-    for rname in job.results:
-        if rname not in ['stdout', 'stderr', 'provjson', 'provxml', 'provsvg']:
-            rdict = job.jdl.content['generated'][rname]
-            entity_id = job.jobid + '_' + rname
-            entity = job.storage.get_entity(entity_id)
-            rqn = ns_result + ':' + entity_id
-            e_out.append(pdoc.entity(rqn))
-            # TODO: use publisher_did? add prov attributes, add voprov attributes?
-            e_out[-1].add_attributes({
-                'prov:location': job.results[rname]['url'],
-                'voprov:result_name': entity['result_name'],
-                'voprov:file_name': entity['file_name'],
-                'voprov:content_type': entity['content_type'],
-            })
-            e_out[-1].wasGeneratedBy(act, entity['creation_time'])
-            #for e in e_in:
-            #    e_out[-1].wasDerivedFrom(e)
+    # Generated entities (if depth > 0)
+    if depth != 0 or recursive:
+        e_out = []
+        for rname in job.results:
+            if rname not in ['stdout', 'stderr', 'provjson', 'provxml', 'provsvg']:
+                rdict = job.jdl.content['generated'][rname]
+                entity_id = job.jobid + '_' + rname
+                entity = job.storage.get_entity(entity_id)
+                rqn = ns_result + ':' + entity_id
+                e_out.append(pdoc.entity(rqn))
+                # TODO: use publisher_did? add prov attributes, add voprov attributes?
+                e_out[-1].add_attributes({
+                    'prov:location': job.results[rname]['url'],
+                    'voprov:result_name': entity['result_name'],
+                    'voprov:file_name': entity['file_name'],
+                    'voprov:content_type': entity['content_type'],
+                })
+                e_out[-1].wasGeneratedBy(act, entity['creation_time'])
+                #for e in e_in:
+                #    e_out[-1].wasDerivedFrom(e)
 
+    # Merge all prov documents
     for opdoc in other_pdocs:
         logger.debug(opdoc.serialize())
         pdoc.update(opdoc)
