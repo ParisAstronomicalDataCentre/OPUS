@@ -35,7 +35,7 @@ var uws_client = (function($) {
     var clients = {};
     var refreshPhaseTimeout = {}; // stores setInterval functions for phase refresh
     var refreshPhaseTimeoutDelay = {}; //
-    var timeoutDelays = [2000,3000,4000,6000,11000]; // delays in ms
+    var timeoutDelays = [2000,2000,3000,4000,5000]; // delays in ms
     var selectedJobId;
 
     if (!('global' in window)) {
