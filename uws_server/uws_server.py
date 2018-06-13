@@ -519,9 +519,9 @@ def cp_script(jobname):
 def get_entity():
     try:
         user = set_user()
-        if not 'id' in request.query:
-            raise UserWarning('"id" is not specified in request')
-        entity_id = request.query['id']
+        if not 'ID' in request.query:
+            raise UserWarning('"ID" is not specified in request')
+        entity_id = request.query['ID']
         logger.debug('Init storage for entity {}'.format(entity_id))
         job_storage = getattr(storage, STORAGE + 'JobStorage')()
         entity = job_storage.get_entity(entity_id)
