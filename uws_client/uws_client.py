@@ -259,7 +259,7 @@ def create_db():
         # Create admin user
         if not user_datastore.get_user('admin'):
             user_datastore.create_user(
-                email='admin',
+                email='opus-admin',
                 password='OPUS4dm1n',
                 active=True,
                 roles=['admin','job_definition','job_list'],
