@@ -114,22 +114,22 @@ class JDLFile(object):
         params = collections.OrderedDict()
         iparam = 1
         while 'param_name_' + str(iparam) in keys:
-            pname = post.get('param_name_' + str(iparam))
+            pname = post.get('param_name_' + str(iparam), '')
             if pname:
-                ptype = post.get('param_datatype_' + str(iparam))
-                pdefault = post.get('param_default_' + str(iparam))
-                preq = post.get('param_required_' + str(iparam))
-                pdesc = post.get('param_annotation_' + str(iparam))
+                ptype = post.get('param_datatype_' + str(iparam), '')
+                pdefault = post.get('param_default_' + str(iparam), '')
+                preq = post.get('param_required_' + str(iparam), '')
+                pdesc = post.get('param_annotation_' + str(iparam), '')
                 params[pname] = {
                     'datatype': ptype,
                     'default': pdefault,
                     'required': (preq == 'on'),
                     'annotation': pdesc,
                 }
-                poptions = post.get('param_options_' + str(iparam))
+                poptions = post.get('param_options_' + str(iparam), '')
                 if poptions:
                     params[pname]['options'] = poptions
-                patts = post.get('param_attributes_' + str(iparam))
+                patts = post.get('param_attributes_' + str(iparam), '')
                 if patts:
                     for patt in patts.split(' '):
                         if '=' in patt:
@@ -140,18 +140,20 @@ class JDLFile(object):
         used = collections.OrderedDict()
         iused = 1
         while 'used_name_' + str(iused) in keys:
-            pname = post.get('used_name_' + str(iused))
+            pname = post.get('used_name_' + str(iused), '')
             if pname:
-                ptype = post.get('used_type_' + str(iused))
+                ptype = post.get('used_type_' + str(iused), '')
                 # TODO: do a getall for all options
-                pdefault = post.get('used_default_' + str(iused))
-                pdesc = post.get('used_annotation_' + str(iused))
-                pisfile = post.get('used_isfile_' + str(iused))
-                purl = post.get('used_url_' + str(iused))
+                pmult = post.get('used_multiplicity_' + str(iused), '')
+                pdefault = post.get('used_default_' + str(iused), '')
+                pdesc = post.get('used_annotation_' + str(iused), '')
+                pisfile = post.get('used_isfile_' + str(iused), '')
+                purl = post.get('used_url_' + str(iused), '')
                 if pisfile == 'File':
                     purl = 'file://$ID'.format(pname)
                 used[pname] = {
                     'content_type': ptype,  # ', '.join(ptype),
+                    'multiplicity': pmult,
                     'default': pdefault,
                     'annotation': pdesc,
                     'url': purl,
@@ -161,13 +163,15 @@ class JDLFile(object):
         results = collections.OrderedDict()
         iresult = 1
         while 'generated_name_' + str(iresult) in keys:
-            rname = post.get('generated_name_' + str(iresult))
+            rname = post.get('generated_name_' + str(iresult), '')
             if rname:
-                rtype = post.get('generated_type_' + str(iresult))
-                rdefault = post.get('generated_default_' + str(iresult))
-                rdesc = post.get('generated_annotation_' + str(iresult))
+                rtype = post.get('generated_type_' + str(iresult), '')
+                rdefault = post.get('generated_default_' + str(iresult), '')
+                rmult = post.get('used_multiplicity_' + str(iresult), '')
+                rdesc = post.get('generated_annotation_' + str(iresult), '')
                 results[rname] = {
                     'content_type': rtype,
+                    'multiplicity': rmult,
                     'default': rdefault,
                     'annotation': rdesc,
                 }
@@ -177,20 +181,20 @@ class JDLFile(object):
             'name': jobname,
             'annotation': post.get('annotation', jobname),
             #'description': post.get('description'),
-            'version': post.get('version'),
-            'group': post.get('group'),
-            'type': post.get('type'),
-            'subtype': post.get('subtype'),
-            'doculink': post.get('doculink'),
-            'url': post.get('url'),
-            'contact_name': post.get('contact_name'),
-            'contact_email': post.get('contact_email'),
+            'version': post.get('version', ''),
+            'group': post.get('group', ''),
+            'type': post.get('type', ''),
+            'subtype': post.get('subtype', ''),
+            'doculink': post.get('doculink', ''),
+            'url': post.get('url', ''),
+            'contact_name': post.get('contact_name', ''),
+            'contact_email': post.get('contact_email', ''),
             'parameters': params,
             'generated': results,
             'used': used,
-            'executionDuration': post.get('executionDuration'),
-            'quote': post.get('quote'),
-            'script': post.get('script'),
+            'executionDuration': post.get('executionDuration', EXECUTION_DURATION_DEF),
+            'quote': post.get('quote', ''),
+            'script': post.get('script', ''),
         })
 
 
@@ -255,134 +259,6 @@ class VOTFile(JDLFile):
             'xsi:schemaLocation':
                 'http://www.ivoa.net/xml/VOTable/v1.3 http://www.ivoa.net/xml/VOTable/v1.3',
         }
-
-    def save_old(self, jobname):
-        """Save job description to VOTable file"""
-        raw_jobname = jobname.split('/')[-1]  # remove new/ prefix
-        # VOTable root
-        xmlns = self.xmlns_uris['xmlns']
-        xsi = self.xmlns_uris['xmlns:xsi']
-        jdl_tree = ETree.Element('VOTABLE', attrib={
-            'version': '1.3',
-            '{' + xsi + '}schemaLocation':
-                'http://www.ivoa.net/xml/VOTable/v1.3 http://www.ivoa.net/xml/VOTable/v1.3',
-        }, nsmap={'xsi': xsi, None: xmlns})
-        resource = ETree.SubElement(jdl_tree, 'RESOURCE', attrib={
-            'ID': raw_jobname,
-            'name': raw_jobname,
-            'type': "meta",
-            'utype': "voprov:ActivityDescription"
-        })
-        # Job attributes
-        if self.content['annotation']:
-            ETree.SubElement(resource, 'DESCRIPTION').text = self.content['annotation']  # .decode()
-        # TODO: automatic list of attributes from jdl.content
-        job_attr = []
-        for key in ['type', 'subtype', 'annotation', 'version', 'doculink']:
-            job_attr.append('<PARAM name="{key}" datatype="char" arraysize="*" value="{value}" utype="voprov:ActivityDescription.{key}"/>'.format(key=key, value=self.content.get(key, '')))
-        #     ,
-        #     '<PARAM name="subtype" datatype="char" arraysize="*" value="{}" utype="voprov:ActivityDescription.subtype"/>'.format(self.content.get('job_subtype', '')),
-        #     '<PARAM name="annotation" datatype="char" arraysize="*" value="{}" utype="voprov:ActivityDescription.annotation"/>'.format(self.content.get('annotation', raw_jobname)),
-        #     '<PARAM name="version" datatype="float" value="{}" utype="voprov:ActivityDescription.version"/>'.format(self.content.get('version', '')),
-        #     '<PARAM name="doculink" datatype="float" value="{}" utype="voprov:ActivityDescription.doculink"/>'.format(self.content.get('doculink', '')),
-        job_attr.append('<PARAM name="contact_name" datatype="char" arraysize="*" value="{}" utype="voprov:Agent.name"/>'.format(self.content.get('contact_name', '')))
-        job_attr.append('<PARAM name="contact_email" datatype="char" arraysize="*" value="{}" utype="voprov:Agent.email"/>'.format(self.content.get('contact_email', '')))
-        job_attr.append('<PARAM name="executionduration" datatype="int" value="{}" utype="uws:Job.executionduration"/>'.format(self.content.get('executionduration', '1')))
-        job_attr.append('<PARAM name="quote" datatype="int" value="{}" utype="uws:Job.quote"/>'.format(self.content.get('quote', '1')))
-
-        for attr in job_attr:
-            resource.append(ETree.fromstring(attr))
-        # Insert groups
-        group_params = ETree.SubElement(resource, 'GROUP', attrib={
-            'name': "InputParams",
-            'utype': "voprov:Parameter",
-        })
-        group_used = ETree.SubElement(resource, 'GROUP', attrib={
-            'name': "Used",
-            'utype': "voprov:Used",
-        })
-        group_generated = ETree.SubElement(resource, 'GROUP', attrib={
-            'name': "Generated",
-            'utype': "voprov:WasGeneratedBy",
-        })
-        # Prepare InputParams group
-        if 'parameters' in self.content:
-            for pname, p in self.content['parameters'].items():
-                param_attrib = {
-                    'ID': pname,
-                    'name': pname,
-                    'datatype': self.datatype_xs2vo[p['datatype']],
-                    'value': p.get('default'),
-                }
-                if param_attrib['datatype'] == 'file':
-                    param_attrib['xtype'] = 'application/octet-stream'
-                    param_attrib['datatype'] = 'char'
-                if param_attrib['datatype'] == 'char':
-                    param_attrib['arraysize'] = '*'
-                if str(p['required']).lower() == 'false' :
-                    param_attrib['type'] = 'no_query'
-    #                'required': str(p['required']),
-    #                'content_type': 'text/plain'
-                param = ETree.Element('PARAM', attrib=param_attrib)
-                pdesc = p.get('annotation', '')
-                  # .encode(encoding='utf-8', errors='ignore')
-                #pdesc_clean = ''.join(c for c in pdesc if self.valid_xml_char_ordinal(c))
-                #logger.debug(pdesc)
-                #logger.debug(pdesc_clean)
-                ETree.SubElement(param, 'DESCRIPTION').text = pdesc
-                if p.get('min', False) or p.get('max', False) or p.get('options', False):
-                    values = ETree.SubElement(param, 'VALUES')
-                    if p.get('min', False):
-                        ETree.SubElement(values, 'MIN', attrib={'value': p['min']})
-                    if p.get('max', False):
-                        ETree.SubElement(values, 'MAX', attrib={'value': p['max']})
-                    if p.get('options', False):
-                        for o in p['options'].split(','):
-                            ETree.SubElement(values, 'OPTION', attrib={'value': o})
-                group_params.append(param)
-        # Prepare used block
-        if 'used' in self.content:
-            for pname, p in self.content['used'].items():
-                attrib={
-                    'name': pname,
-                    'datatype': 'char',
-                    'arraysize': '*',
-                    'value': p.get('default'),
-                    'xtype': p.get('content_type'),
-                    'utype': 'voprov:Entity',
-                }
-                if pname in self.content['parameters']:
-                    attrib['ref'] = pname
-                used = ETree.Element('PARAM', attrib=attrib)
-                url_attrib = {
-                    'content-role': 'location',
-                    'href': p.get('url'),
-                }
-                ETree.SubElement(used, 'LINK', attrib=url_attrib)
-                ETree.SubElement(used, 'DESCRIPTION').text = p.get('annotation', '')
-                group_used.append(used)
-        # Prepare results block
-        if 'generated' in self.content:
-            for rname, r in self.content['generated'].items():
-                attrib={
-                    'name': rname,
-                    'datatype': 'char',
-                    'arraysize': '*',
-                    'value': r['default'],
-                    'xtype': r['content_type'],
-                    'utype': 'voprov:Entity',
-                }
-                if rname in self.content['parameters']:
-                    attrib['ref'] = rname
-                result = ETree.Element('PARAM', attrib=attrib)
-                ETree.SubElement(result, 'DESCRIPTION').text = r.get('annotation', '')
-                group_generated.append(result)
-        # Write file
-        jdl_content = ETree.tostring(jdl_tree, pretty_print=True)
-        jdl_fname = self._get_filename(jobname)
-        with open(jdl_fname, 'w') as f:
-            f.write(jdl_content)
-            logger.info('JDL saved as VOTable: ' + jdl_fname)
 
     def save(self, jobname):
         """Save job description to VOTable file"""
@@ -473,14 +349,22 @@ class VOTFile(JDLFile):
                             ETree.SubElement(values, 'OPTION', attrib={'value': o})
                 group_params.append(param)
         # Prepare used block
+        used_attr = [
+            'role',
+            'multiplicity',
+            'default',
+            'content_type',
+            'url',
+        ]
         used_utypes = {
-            'default': 'voprov:Entity.id',
             'role': 'voprov:UsedDescription.role',
-            'url': 'voprov:EntityDescription.url',
+            'multiplicity': 'voprov:UsedDescription.multiplicity',
+            'default': 'voprov:Entity.id',
             'content_type': 'voprov:EntityDescription.content_type',
+            'url': 'voprov:EntityDescription.url',
         }
         if 'used' in self.content:
-            for pname, p in self.content['used'].items():
+            for pname, pdict in self.content['used'].items():
                 attrib={
                     'name': pname,
                     'utype': 'voprov:UsedDescription',
@@ -488,25 +372,32 @@ class VOTFile(JDLFile):
                 if pname in self.content['parameters']:
                     attrib['ref'] = pname
                 used = ETree.Element('GROUP', attrib=attrib)
-                ETree.SubElement(used, 'DESCRIPTION').text = p.get('annotation', '')
-                for edattr in ['role', 'default', 'url', 'content_type']:
+                ETree.SubElement(used, 'DESCRIPTION').text = pdict.get('annotation', '')
+                for edattr in used_attr:
                     ETree.SubElement(used, 'PARAM', attrib={
                         'name': edattr,
-                        'value': p.get(edattr, ''),
+                        'value': pdict.get(edattr, ''),
                         'arraysize': "*",
                         'datatype': "char",
-                        'utype': used_utypes[edattr],
+                        'utype': used_utypes.get(edattr, ''),
                     })
                 group_used.append(used)
         # Prepare results block
+        gen_attr = [
+            'role',
+            'multiplicity',
+            'default',
+            'content_type'
+        ]
         gen_utypes = {
-            'default': 'voprov:Entity.id',
             'role': 'voprov:WasGeneratedByDescription.role',
-            'url': 'voprov:EntityDescription.url',
+            'multiplicity': 'voprov:WasGeneratedByDescription.multiplicity',
+            'default': 'voprov:Entity.id',
             'content_type': 'voprov:EntityDescription.content_type',
+            'url': 'voprov:EntityDescription.url',
         }
         if 'generated' in self.content:
-            for rname, r in self.content['generated'].items():
+            for rname, rdict in self.content['generated'].items():
                 attrib={
                     'name': rname,
                     'utype': 'voprov:WasGeneratedBy',
@@ -514,14 +405,15 @@ class VOTFile(JDLFile):
                 if rname in self.content['parameters']:
                     attrib['ref'] = rname
                 result = ETree.Element('GROUP', attrib=attrib)
-                ETree.SubElement(result, 'DESCRIPTION').text = r.get('annotation', '')
-                for edattr in ['role', 'default', 'content_type']:
+                ETree.SubElement(result, 'DESCRIPTION').text = rdict.get('annotation', '')
+                for edattr in gen_attr:
+                    logger.debug(edattr)
                     ETree.SubElement(result, 'PARAM', attrib={
                         'name': edattr,
-                        'value': r.get(edattr, ''),
+                        'value': rdict.get(edattr, ''),
                         'arraysize': "*",
                         'datatype': "char",
-                        'utype': gen_utypes[edattr],
+                        'utype': gen_utypes.get(edattr, ''),
                     })
                 group_generated.append(result)
         # Write file
@@ -672,6 +564,134 @@ class VOTFile(JDLFile):
             raise
             # return {}
         self.content.update(job_def)
+
+    def save_old(self, jobname):
+        """Save job description to VOTable file"""
+        raw_jobname = jobname.split('/')[-1]  # remove new/ prefix
+        # VOTable root
+        xmlns = self.xmlns_uris['xmlns']
+        xsi = self.xmlns_uris['xmlns:xsi']
+        jdl_tree = ETree.Element('VOTABLE', attrib={
+            'version': '1.3',
+            '{' + xsi + '}schemaLocation':
+                'http://www.ivoa.net/xml/VOTable/v1.3 http://www.ivoa.net/xml/VOTable/v1.3',
+        }, nsmap={'xsi': xsi, None: xmlns})
+        resource = ETree.SubElement(jdl_tree, 'RESOURCE', attrib={
+            'ID': raw_jobname,
+            'name': raw_jobname,
+            'type': "meta",
+            'utype': "voprov:ActivityDescription"
+        })
+        # Job attributes
+        if self.content['annotation']:
+            ETree.SubElement(resource, 'DESCRIPTION').text = self.content['annotation']  # .decode()
+        # TODO: automatic list of attributes from jdl.content
+        job_attr = []
+        for key in ['type', 'subtype', 'annotation', 'version', 'doculink']:
+            job_attr.append('<PARAM name="{key}" datatype="char" arraysize="*" value="{value}" utype="voprov:ActivityDescription.{key}"/>'.format(key=key, value=self.content.get(key, '')))
+        #     ,
+        #     '<PARAM name="subtype" datatype="char" arraysize="*" value="{}" utype="voprov:ActivityDescription.subtype"/>'.format(self.content.get('job_subtype', '')),
+        #     '<PARAM name="annotation" datatype="char" arraysize="*" value="{}" utype="voprov:ActivityDescription.annotation"/>'.format(self.content.get('annotation', raw_jobname)),
+        #     '<PARAM name="version" datatype="float" value="{}" utype="voprov:ActivityDescription.version"/>'.format(self.content.get('version', '')),
+        #     '<PARAM name="doculink" datatype="float" value="{}" utype="voprov:ActivityDescription.doculink"/>'.format(self.content.get('doculink', '')),
+        job_attr.append('<PARAM name="contact_name" datatype="char" arraysize="*" value="{}" utype="voprov:Agent.name"/>'.format(self.content.get('contact_name', '')))
+        job_attr.append('<PARAM name="contact_email" datatype="char" arraysize="*" value="{}" utype="voprov:Agent.email"/>'.format(self.content.get('contact_email', '')))
+        job_attr.append('<PARAM name="executionduration" datatype="int" value="{}" utype="uws:Job.executionduration"/>'.format(self.content.get('executionduration', '1')))
+        job_attr.append('<PARAM name="quote" datatype="int" value="{}" utype="uws:Job.quote"/>'.format(self.content.get('quote', '1')))
+
+        for attr in job_attr:
+            resource.append(ETree.fromstring(attr))
+        # Insert groups
+        group_params = ETree.SubElement(resource, 'GROUP', attrib={
+            'name': "InputParams",
+            'utype': "voprov:Parameter",
+        })
+        group_used = ETree.SubElement(resource, 'GROUP', attrib={
+            'name': "Used",
+            'utype': "voprov:Used",
+        })
+        group_generated = ETree.SubElement(resource, 'GROUP', attrib={
+            'name': "Generated",
+            'utype': "voprov:WasGeneratedBy",
+        })
+        # Prepare InputParams group
+        if 'parameters' in self.content:
+            for pname, p in self.content['parameters'].items():
+                param_attrib = {
+                    'ID': pname,
+                    'name': pname,
+                    'datatype': self.datatype_xs2vo[p['datatype']],
+                    'value': p.get('default'),
+                }
+                if param_attrib['datatype'] == 'file':
+                    param_attrib['xtype'] = 'application/octet-stream'
+                    param_attrib['datatype'] = 'char'
+                if param_attrib['datatype'] == 'char':
+                    param_attrib['arraysize'] = '*'
+                if str(p['required']).lower() == 'false' :
+                    param_attrib['type'] = 'no_query'
+    #                'required': str(p['required']),
+    #                'content_type': 'text/plain'
+                param = ETree.Element('PARAM', attrib=param_attrib)
+                pdesc = p.get('annotation', '')
+                  # .encode(encoding='utf-8', errors='ignore')
+                #pdesc_clean = ''.join(c for c in pdesc if self.valid_xml_char_ordinal(c))
+                #logger.debug(pdesc)
+                #logger.debug(pdesc_clean)
+                ETree.SubElement(param, 'DESCRIPTION').text = pdesc
+                if p.get('min', False) or p.get('max', False) or p.get('options', False):
+                    values = ETree.SubElement(param, 'VALUES')
+                    if p.get('min', False):
+                        ETree.SubElement(values, 'MIN', attrib={'value': p['min']})
+                    if p.get('max', False):
+                        ETree.SubElement(values, 'MAX', attrib={'value': p['max']})
+                    if p.get('options', False):
+                        for o in p['options'].split(','):
+                            ETree.SubElement(values, 'OPTION', attrib={'value': o})
+                group_params.append(param)
+        # Prepare used block
+        if 'used' in self.content:
+            for pname, p in self.content['used'].items():
+                attrib={
+                    'name': pname,
+                    'datatype': 'char',
+                    'arraysize': '*',
+                    'value': p.get('default'),
+                    'xtype': p.get('content_type'),
+                    'utype': 'voprov:Entity',
+                }
+                if pname in self.content['parameters']:
+                    attrib['ref'] = pname
+                used = ETree.Element('PARAM', attrib=attrib)
+                url_attrib = {
+                    'content-role': 'location',
+                    'href': p.get('url'),
+                }
+                ETree.SubElement(used, 'LINK', attrib=url_attrib)
+                ETree.SubElement(used, 'DESCRIPTION').text = p.get('annotation', '')
+                group_used.append(used)
+        # Prepare results block
+        if 'generated' in self.content:
+            for rname, r in self.content['generated'].items():
+                attrib={
+                    'name': rname,
+                    'datatype': 'char',
+                    'arraysize': '*',
+                    'value': r['default'],
+                    'xtype': r['content_type'],
+                    'utype': 'voprov:Entity',
+                }
+                if rname in self.content['parameters']:
+                    attrib['ref'] = rname
+                result = ETree.Element('PARAM', attrib=attrib)
+                ETree.SubElement(result, 'DESCRIPTION').text = r.get('annotation', '')
+                group_generated.append(result)
+        # Write file
+        jdl_content = ETree.tostring(jdl_tree, pretty_print=True)
+        jdl_fname = self._get_filename(jobname)
+        with open(jdl_fname, 'w') as f:
+            f.write(jdl_content)
+            logger.info('JDL saved as VOTable: ' + jdl_fname)
 
     def read_old(self, jobname):
         """Read job description from VOTable file"""
