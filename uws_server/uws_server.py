@@ -212,6 +212,11 @@ def favicon():
     return static_file('favicon.ico', root=APP_PATH)
 
 
+@app.route('/user/<username>')
+def get_user(username):
+    return username
+
+
 # ----------
 # Database testing
 # ----------
