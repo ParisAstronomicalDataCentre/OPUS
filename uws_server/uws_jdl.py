@@ -82,7 +82,7 @@ class JDLFile(object):
         if jobid:
             fn_jobid = '{}/{}/{}{}'.format(JOBDATA_PATH, jobid, jobname, self.extension)
             if os.path.isfile(fn_jobid):
-                logger.info('Loadin JDL attached to {} job {}'.format(jobname, jobid))
+                logger.info('Loading JDL attached to job: {} {}'.format(jobname, jobid))
                 fn = fn_jobid
         # logger.info('JDL filename: ' + fn)
         return fn
