@@ -38,7 +38,7 @@ BASE_IP = '127.0.0.1'
 LOCAL_USER = 'www'
 
 # Admin name+pid has access to user database changes (i.e. set permissions)
-ADMIN_NAME = 'admin'
+ADMIN_NAME = 'opus-admin'
 ADMIN_TOKEN = 'e85d2a4e-27ea-5202-8b5c-241e82f5871a'
 ADMIN_EMAIL = 'mathieu.servillat@obspm.fr'
 JOB_EVENT_TOKEN = 'c18de332'  # TOKEN for special user job_event, used internally
