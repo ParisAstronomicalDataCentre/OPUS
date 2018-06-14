@@ -44,7 +44,7 @@ class Manager(object):
     workdir_path = '.'
     results_path = '.'
 
-    def _make_batch(self, job, jobid_var='$$'):
+    def _make_batch(self, job, jobid_var='$$', get_input_files=[]):
         """Make batch file to run the job and signal status to the UWS server directly
 
         Returns:
@@ -100,7 +100,7 @@ class Manager(object):
             '}',
             'for sig in SIGHUP SIGINT SIGQUIT SIGTERM; do',
             '     trap "term_handler $sig" $sig',
-            ' done',
+            'done',
             'trap "error_handler" ERR',
             #'trap "term_handler" SIGHUP SIGINT SIGQUIT SIGTERM',
         ])
@@ -144,10 +144,8 @@ class Manager(object):
             'rs={}'.format(rs),
             'cp {}/{}.sh $jd'.format(self.scripts_path, job.jobname),
             'mkdir -p $rs',
-            'mkdir -p $wd',
+            #'mkdir -p $wd',
             'cd $wd',
-            'echo "[`timestamp`] List files in workdir"',
-            'ls -oht',
             # 'echo "User is `id`"',
             # 'echo "Working dir is $wd"',
             # 'echo "JobData dir is $jd"',
@@ -155,6 +153,16 @@ class Manager(object):
             #'echo "[`timestamp`] Prepare input files"',
             #'for filename in $up/*; do [ -f "$filename" ] && cp $filename $wd; done',
         ])
+        # Move/Get input files
+        if get_input_files:
+            batch.extend([
+                '### PREPARE INPUT FILES',
+                'echo "[`timestamp`] Get input files"',
+            ])
+            batch.extend(get_input_files)
+            batch.extend([
+                'ls -lthd *',
+            ])
         # Execution
         batch.extend([
             '### EXECUTION',
@@ -166,9 +174,8 @@ class Manager(object):
             # Run script in the current environment
             '. $jd/{}.sh'.format(job.jobname),
             '### COPY RESULTS',
-            'echo "[`timestamp`] List files in workdir"',
-            'ls -oht',
             'echo "[`timestamp`] Copy results"',
+            'ls -lthd *',
             'copy_results',
             '### CLEAN',
             'rm -rf $wd',
@@ -326,16 +333,21 @@ class LocalManager(Manager):
         os.chmod(param_file, 0o744)
         # Copy input files to workdir_path (scp if uploaded from form, or wget if given as a URI)
         # TODO: delete files
+        get_input_files = []
         for fname in files['form']:
-            shutil.copy(
-                '{}/{}/{}'.format(UPLOADS_PATH, job.jobid, fname),
-                '{}/{}'.format(wd, fname))
+            # shutil.copy(
+            #     '{}/{}/{}'.format(UPLOADS_PATH, job.jobid, fname),
+            #     '{}/{}'.format(wd, fname))
+            get_input_files.append('cp -p {up}/{jobid}/{fname} {wd}/{fname}'.format(
+                up=UPLOADS_PATH, jobid=job.jobid, fname=fname, wd=wd
+            ))
         for furl in files['URI']:
             fname = furl.split('/')[-1]
-            response = requests.get(furl, stream=True)
-            with open('{}/{}'.format(wd, fname), 'wb') as out_file:
-                shutil.copyfileobj(response.raw, out_file)
-            del response
+            # response = requests.get(furl, stream=True)
+            # with open('{}/{}'.format(wd, fname), 'wb') as out_file:
+            #     shutil.copyfileobj(response.raw, out_file)
+            # del response
+            get_input_files.append('curl -OJ {url}'.format(url=furl))
         # Create batch file
         batch = [
             '#!/bin/bash -l',
@@ -344,7 +356,7 @@ class LocalManager(Manager):
             'exec >{jd}/stdout.log 2>{jd}/stderr.log'.format(jd=jd),
         ]
         batch.extend(
-            self._make_batch(job)
+            self._make_batch(job, get_input_files=get_input_files)
         )
         batch_file = '{}/batch.sh'.format(jd)
         with open(batch_file, 'w') as f:
@@ -401,13 +413,14 @@ class SLURMManager(Manager):
         self.user = SLURM_USER
         self.mail = SLURM_MAIL_USER
         self.ssh_arg = self.user + '@' + self.host
+        self.ssh_arg_uws = LOCAL_USER + '@' + BASE_URL.split('://')[-1]
         # PATHs
         self.scripts_path = SLURM_SCRIPTS_PATH
         self.jobdata_path = SLURM_JOBDATA_PATH
         self.workdir_path = SLURM_WORKDIR_PATH
         self.results_path = SLURM_RESULTS_PATH
 
-    def _make_sbatch(self, job):
+    def _make_sbatch(self, job, get_input_files=[]):
         """Make sbatch file content for given job
 
         Returns:
@@ -441,7 +454,7 @@ class SLURMManager(Manager):
                     sbatch.append('#SBATCH --{}={}'.format(k, v))
         # Script init and execution
         sbatch.extend(
-            self._make_batch(job, jobid_var='$SLURM_JOBID')
+            self._make_batch(job, jobid_var='$SLURM_JOBID', get_input_files=get_input_files)
         )
         # On completion, SLURM executes the script /usr/local/sbin/completion_script.sh
         # """
@@ -472,6 +485,7 @@ class SLURMManager(Manager):
                 logger.warning('force start {} {} (directories exist)'.format(job.jobname, job.jobid))
             else:
                 raise
+        get_input_files = []
         # Create parameter file
         param_file_local = '{}/{}_parameters.sh'.format(TEMP_PATH, job.jobid)
         param_file_distant = '{}/parameters.sh'.format(jd)
@@ -480,30 +494,35 @@ class SLURMManager(Manager):
             params, files = job.parameters_to_bash(get_files=True)
             f.write(params)
         # Copy parameter file to jobdata_path
-        cmd = ['scp',
-               param_file_local,
-               '{}:{}'.format(self.ssh_arg, param_file_distant)]
-        # logger.debug(' '.join(cmd))
-        sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
+        # cmd = ['scp',
+        #        param_file_local,
+        #        '{}:{}'.format(self.ssh_arg, param_file_distant)]
+        # # logger.debug(' '.join(cmd))
+        # sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
+        get_input_files.append('scp {}:{} {}'.format(self.ssh_arg_uws, param_file_local, param_file_distant))
         # Copy input files to workdir_path (scp if uploaded from form, or wget if given as a URI)
         # TODO: delete files
         for fname in files['form']:
-            cmd = ['scp',
-                   '{}/{}/{}'.format(UPLOADS_PATH, job.jobid, fname),
-                   '{}:{}/{}'.format(self.ssh_arg, wd, fname)]
-            logger.debug(' '.join(cmd))
-            sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
+            # cmd = ['scp',
+            #        '{}/{}/{}'.format(UPLOADS_PATH, job.jobid, fname),
+            #        '{}:{}/{}'.format(self.ssh_arg, wd, fname)]
+            # # logger.debug(' '.join(cmd))
+            # sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
+            get_input_files.append('scp -p {ssh_args}:{up}/{jobid}/{fname} {wd}/{fname}'.format(
+                ssh_args=self.ssh_arg_uws, up=UPLOADS_PATH, jobid=job.jobid, fname=fname, wd=wd
+            ))
         for furl in files['URI']:
-            fname = furl.split('/')[-1]
-            cmd = ['ssh', self.ssh_arg,
-                   'wget -q {} -O {}/{}'.format(furl, wd, fname)]
-            # logger.debug(' '.join(cmd))
-            sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
+            # fname = furl.split('/')[-1]
+            # cmd = ['ssh', self.ssh_arg,
+            #        'wget -q {} -O {}/{}'.format(furl, wd, fname)]
+            # # logger.debug(' '.join(cmd))
+            # sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
+            get_input_files.append('curl -OJ {url}'.format(url=furl))
         # Create sbatch file
         sbatch_file_local = '{}/{}_sbatch.sh'.format(TEMP_PATH, job.jobid)
         sbatch_file_distant = '{}/sbatch.sh'.format(jd)
         with open(sbatch_file_local, 'w') as f:
-            sbatch = self._make_sbatch(job)
+            sbatch = self._make_sbatch(job, get_input_files=get_input_files)
             f.write('\n'.join(sbatch))
         # Copy sbatch file to jobdata_path
         cmd = ['scp',
