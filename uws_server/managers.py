@@ -107,6 +107,7 @@ class Manager(object):
         # Function to copy results from wd to jd
         cp_results = [
             'copy_results() {',
+            '    touch $jd/copy_results',
         ]
         for rname, r in job.jdl.content.get('generated', {}).items():
             # TODO: copy directly to archive directory (?)
@@ -132,9 +133,7 @@ class Manager(object):
             #     ' || echo "NOT FOUND: {rname}={fname}"'
             #     ''.format(rname=rname, fname=fname)
             # )
-        cp_results.append(
-            '}',
-        )
+        cp_results.append('}')
         batch.extend(cp_results)
         # Set $wd and $jd
         batch.extend([
@@ -167,7 +166,7 @@ class Manager(object):
         batch.extend([
             '### EXECUTION',
             'job_event "EXECUTING"',
-            'echo "[`timestamp`] ***** Start job *****"',
+            'echo "[`timestamp`] Start job *****"',
             'touch $jd/start',
             # Load variables from params file
             '. $jd/parameters.sh',
@@ -180,7 +179,7 @@ class Manager(object):
             '### CLEAN',
             'rm -rf $wd',
             'touch $jd/done',
-            'echo "[`timestamp`] ***** Job done *****"',
+            'echo "[`timestamp`] Job done *****"',
             'trap - SIGHUP SIGINT SIGQUIT SIGTERM ERR',
             'job_event "COMPLETED"',
             'exit 0',
