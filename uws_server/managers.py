@@ -164,7 +164,7 @@ class Manager(object):
             ])
             batch.extend(get_input_files)
             batch.extend([
-                'ls -lthd *',
+                'ls -lth | tail -n +2',
             ])
         # Execution
         batch.extend([
@@ -180,7 +180,7 @@ class Manager(object):
             'echo "[`timestamp`] Job done *****"',
             '### COPY RESULTS',
             'echo "[`timestamp`] Copy results"',
-            'ls -lthd *',
+            'ls -lth | tail -n +2',
             'copy_results',
             '### CLEAN',
             'rm -rf $wd',
