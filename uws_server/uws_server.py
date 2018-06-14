@@ -516,7 +516,7 @@ def cp_script(jobname):
 # ----------
 
 
-@app.route('/get/result')
+@app.route('/store')
 def get_entity():
     try:
         user = set_user()
@@ -556,8 +556,8 @@ def get_entity():
         abort_500_except()
 
 
-# TODO: function will be deprecated (replaced by /get/result)
-@app.route('/get/result/<jobid>/<rname>')  # /<rfname>')
+# TODO: function will be deprecated (replaced by /store)
+@app.route('/store/<jobid>/<rname>')  # /<rfname>')
 def get_result_file(jobid, rname):  # , rfname):
     """Get result file <rname> for job <jobid>
 

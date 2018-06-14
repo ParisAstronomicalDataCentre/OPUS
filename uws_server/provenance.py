@@ -61,7 +61,7 @@ def job2prov(job, show_parameters=True, depth=1, recursive=False):
     pdoc.add_namespace('voprov', 'http://www.ivoa.net/documents/dm/provdm/voprov#')
     pdoc.add_namespace('opus_user', BASE_URL + '/user/')
     ns_result = 'opus_store'
-    pdoc.add_namespace('opus_store', BASE_URL + '/get/result/?ID=')
+    pdoc.add_namespace('opus_store', BASE_URL + '/store/?ID=')
     ns_jdl = job.jobname
     pdoc.add_namespace(ns_jdl, BASE_URL + '/jdl/' + job.jobname + '/votable#')
     # ns_job = job.jobname + '/' + job.jobid
@@ -71,7 +71,7 @@ def job2prov(job, show_parameters=True, depth=1, recursive=False):
     act = pdoc.activity(ns_jdl + ':' + job.jobid, job.start_time, job.end_time)
     # TODO: add job description, version, url, ...
     act.add_attributes({
-        'prov:label': job.jobname,
+        # 'prov:label': job.jobname,
         'voprov:doculink': job.jdl.content.get('url'),
     })
 
