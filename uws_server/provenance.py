@@ -69,10 +69,11 @@ def job2prov(job, show_parameters=True, depth=1, recursive=False):
 
     # Activity
     act = pdoc.activity(ns_jdl + ':' + job.jobid, job.start_time, job.end_time)
-    # TODO: add job description, version, url, ...
     act.add_attributes({
         # 'prov:label': job.jobname,
-        'voprov:doculink': job.jdl.content.get('url'),
+        'voprov:type': job.jdl.content.get('type'),
+        'voprov:subtype': job.jdl.content.get('subtype'),
+        'voprov:doculink': job.jdl.content.get('doculink'),
     })
 
     # Agent: owner of the job
