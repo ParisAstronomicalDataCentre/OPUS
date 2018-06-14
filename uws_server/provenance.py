@@ -52,7 +52,7 @@ def job2prov(job, show_parameters=True, depth=1, recursive=False):
     # Get new storage instance
     job.storage = getattr(storage, STORAGE + 'JobStorage')()
     # Update JDL content
-    job.jdl.read(job.jobname)
+    job.jdl.read(job.jobname, jobid=job.jobid)
 
     # Declaring namespaces for various prefixes used in the example
     pdoc.set_default_namespace('http://uws-server.readthedocs.io#')  # point to OPUS doc
