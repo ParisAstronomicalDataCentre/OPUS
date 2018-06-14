@@ -224,7 +224,9 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
 
     def get_users(self):
         """Get list of users with their token and roles"""
-        pass
+        rows = self.session.query(self.User).all()
+        return rows
+
 
     def add_user(self, name, token, roles=''):
         """Add user"""

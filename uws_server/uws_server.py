@@ -212,9 +212,17 @@ def favicon():
     return static_file('favicon.ico', root=APP_PATH)
 
 
-@app.route('/user/<username>')
-def get_user(username):
-    return {'id': username}
+@app.route('/user/<userid>')
+def get_user(userid):
+    ip = request.environ.get('REMOTE_ADDR', '')
+    if not is_client_trusted(ip):
+        abort_403()
+    user = set_user()
+    if not check_admin(user):
+        return {'id': userid}
+    job_storage = getattr(storage, STORAGE + 'JobStorage')()
+    users = job_storage.get_users()
+    return users
 
 
 # ----------
@@ -523,6 +531,14 @@ def cp_script(jobname):
 
 @app.route('/store')
 def get_entity():
+    """Get entity file corresponding to ID=entity_id
+
+    Returns:
+        200 OK: file (on success)
+        403 Forbidden
+        404 Not Found: Entity not found (on NotFoundWarning)
+        500 Internal Server Error (on error)
+    """
     try:
         user = set_user()
         if not 'ID' in request.query:
@@ -608,6 +624,55 @@ def get_result_file(jobid, rname):  # , rfname):
                                mimetype=content_type, download=True)
     except JobAccessDenied as e:
         abort_403(str(e))
+    except storage.NotFoundWarning as e:
+        abort_404(str(e))
+    except:
+        abort_500_except()
+
+
+@app.get('/provsap')
+def provsap():
+    """Get provenance for job/entity following IVOA ProvSAP
+
+    Returns:
+        200 OK: file (on success)
+        403 Forbidden
+        404 Not Found: Entity not found (on NotFoundWarning)
+        500 Internal Server Error (on error)
+    """
+    try:
+        user = set_user()
+        if not 'ID' in request.query:
+            raise UserWarning('"ID" is not specified in request')
+        # TODO: Assuming ID is a jobid (coud be an entity_id...)
+        jobid = request.query['ID']
+        depth = request.query.get('DEPTH', 1)
+        if depth == 'ALL':
+            depth = -1
+        else:
+            depth = int(depth)
+        format = request.query.get('RESPONSEFORMAT', 'PROV-SVG')
+        # Get job properties from DB
+        job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True)
+        logger.info('{} {} [{}]'.format(job.jobname, jobid, user))
+        # Return job provenance
+        pdoc = provenance.job2prov(job, depth=depth)
+        if format == 'PROV-SVG':
+            svg_content = provenance.prov2svg_content(pdoc)
+            response.content_type = 'text/xml; charset=UTF-8'
+            return svg_content
+        elif format == 'PROV-XML':
+            result = io.BytesIO()
+            pdoc.serialize(result, format='xml')
+            result.seek(0)
+            response.content_type = 'text/xml; charset=UTF-8'
+            return b'\n'.join(result.readlines())
+        else:  # return PROV-JSON as default
+            result = io.BytesIO()
+            pdoc.serialize(result, format='json')
+            result.seek(0)
+            response.content_type = 'application/json; charset=UTF-8'
+            return b'\n'.join(result.readlines())
     except storage.NotFoundWarning as e:
         abort_404(str(e))
     except:
@@ -1458,50 +1523,6 @@ def get_prov(jobname, jobid, provtype):
     except:
         abort_500_except()
 
-
-@app.get('/provsap')
-def provsap():
-    """
-    Get list of available jobs on server
-    :return: list of job names in json
-    """
-    try:
-        user = set_user()
-        if not 'ID' in request.query:
-            raise UserWarning('"ID" is not specified in request')
-        # Assuming ID is a jobid (coud be an entity_id...)
-        jobid = request.query['ID']
-        depth = request.query.get('DEPTH', 1)
-        if depth == 'ALL':
-            depth = -1
-        else:
-            depth = int(depth)
-        format = request.query.get('RESPONSEFORMAT', 'PROV-SVG')
-        # Get job properties from DB
-        job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True)
-        logger.info('{} {} [{}]'.format(job.jobname, jobid, user))
-        # Return job provenance
-        pdoc = provenance.job2prov(job, depth=depth)
-        if format == 'PROV-SVG':
-            svg_content = provenance.prov2svg_content(pdoc)
-            response.content_type = 'text/xml; charset=UTF-8'
-            return svg_content
-        elif format == 'PROV-XML':
-            result = io.BytesIO()
-            pdoc.serialize(result, format='xml')
-            result.seek(0)
-            response.content_type = 'text/xml; charset=UTF-8'
-            return b'\n'.join(result.readlines())
-        else:  # return PROV-JSON as default
-            result = io.BytesIO()
-            pdoc.serialize(result, format='json')
-            result.seek(0)
-            response.content_type = 'application/json; charset=UTF-8'
-            return b'\n'.join(result.readlines())
-    except storage.NotFoundWarning as e:
-        abort_404(str(e))
-    except:
-        abort_500_except()
 
 # ----------
 # /<jobname>/<jobid>/owner
