@@ -69,12 +69,12 @@ def job2prov(job, show_parameters=True, depth=1, recursive=False):
 
     # Activity
     act = pdoc.activity(ns_jdl + ':' + job.jobid, job.start_time, job.end_time)
-    act.add_attributes({
-        # 'prov:label': job.jobname,
-        'voprov:type': job.jdl.content.get('type'),
-        'voprov:subtype': job.jdl.content.get('subtype'),
-        'voprov:doculink': job.jdl.content.get('doculink'),
-    })
+    for attr in ['doculink', 'type', 'subtype', 'version']:
+        value = job.jdl.content.get(attr, None)
+        if value:
+            act.add_attributes({
+                'voprov:' + attr: value,
+            })
 
     # Agent: owner of the job
     owner = pdoc.agent('opus_user:' + job.owner)
@@ -122,7 +122,8 @@ def job2prov(job, show_parameters=True, depth=1, recursive=False):
             location = value
             logger.debug('No previous record for input entity {}'.format(entity_id))
         if show_parameters:
-            act_attr[ns_jdl + ':' + pname] = value
+            if value:
+                act_attr[ns_jdl + ':' + pname] = value
 
         # Explore used entities for the activity if depth > 0
         if depth != 0:
