@@ -214,7 +214,7 @@ def favicon():
 
 @app.route('/user/<username>')
 def get_user(username):
-    return username
+    return {'name': username}
 
 
 # ----------
