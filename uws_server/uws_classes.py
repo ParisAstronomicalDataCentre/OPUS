@@ -521,8 +521,8 @@ class Job(object):
         rfdir = '{}/{}/'.format(JOBDATA_PATH, self.jobid)
         for rname in ['stdout', 'stderr']:
             rfname = rname + '.log'
-            url = '{}//rest/{}/{}/{}'.format(BASE_URL, self.jobname, self.jobid, rname)
             if os.path.isfile(rfdir + rfname):
+                url = '{}//rest/{}/{}/{}'.format(BASE_URL, self.jobname, self.jobid, rname)
                 self.add_result_entry(rname, url, 'text/plain')
             else:
                 logger.warning('File {} missing'.format(rfname))
@@ -550,8 +550,8 @@ class Job(object):
                 # PROV JSON
                 rname = 'prov' + ptype
                 rfname = 'provenance.' + ptype
-                url = '{}//rest/{}/{}/prov{}'.format(BASE_URL, self.jobname, self.jobid, ptype)
                 if os.path.isfile(rfdir + rfname):
+                    url = '{}//rest/{}/{}/prov{}'.format(BASE_URL, self.jobname, self.jobid, ptype)
                     self.add_result_entry(rname, url, content_types[ptype])
                 else:
                     logger.warning('File {} missing'.format(rfname))
