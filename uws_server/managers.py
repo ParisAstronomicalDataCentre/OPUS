@@ -120,7 +120,7 @@ class Manager(object):
                 '        echo "  content_type: {rtype}" >> $jd/results.yml',
                 '        echo "  hash: "$hash >> $jd/results.yml',
                 '        echo "Found and copied: {rname}={fname}";',
-                '        cp $wd/{fname} $rs/{fname};',
+                '        mv $wd/{fname} $rs/{fname};',
                 '    else',
                 '        echo "NOT FOUND: {rname}={fname}"',
                 '    fi',
@@ -144,7 +144,7 @@ class Manager(object):
             'rs={}'.format(rs),
             'cp {}/{}.sh $jd'.format(self.scripts_path, job.jobname),
             'mkdir -p $rs',
-            #'mkdir -p $wd',
+            'mkdir -p $wd',
             'cd $wd',
             # 'echo "User is `id`"',
             # 'echo "Working dir is $wd"',
@@ -475,7 +475,7 @@ class SLURMManager(Manager):
         jd = '{}/{}'.format(self.jobdata_path, job.jobid)
         wd = '{}/{}'.format(self.workdir_path, job.jobid)
         cmd = ['ssh', self.ssh_arg,
-               'mkdir -p {{{jd},{wd}}}'.format(jd=jd, wd=wd)]
+               'mkdir -p {jd}'.format(jd=jd)]
         # logger.debug(' '.join(cmd))
         try:
             sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
