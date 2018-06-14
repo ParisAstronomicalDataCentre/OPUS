@@ -38,6 +38,7 @@
         'doculink',
         'type',
         'subtype',
+        'version',
         'contact_name',
         'contact_email',
         'executionDuration',

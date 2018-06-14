@@ -186,12 +186,12 @@ class JDLFile(object):
             'name': jobname,
             'annotation': post.get('annotation', jobname),
             #'description': post.get('description'),
-            'version': post.get('version', ''),
+            'doculink': post.get('doculink', ''),
+            'url': post.get('url', ''),
             'group': post.get('group', ''),
             'type': post.get('type', ''),
             'subtype': post.get('subtype', ''),
-            'doculink': post.get('doculink', ''),
-            'url': post.get('url', ''),
+            'version': post.get('version', ''),
             'contact_name': post.get('contact_name', ''),
             'contact_email': post.get('contact_email', ''),
             'parameters': params,
@@ -286,7 +286,7 @@ class VOTFile(JDLFile):
         if self.content['annotation']:
             ETree.SubElement(resource, 'DESCRIPTION').text = self.content['annotation']  # .decode() # not needed in Python 3
         # TODO: automatic list of attributes from jdl.content
-        for key in ['type', 'subtype', 'version', 'doculink']:
+        for key in ['doculink', 'type', 'subtype', 'version']:
             #'<PARAM name="{key}" datatype="char" arraysize="*" value="{value}" utype="voprov:ActivityDescription.{key}"/>'.format(key=key, value=self.content.get(key, '')))
             ETree.SubElement(resource, 'PARAM', attrib={
                 'name': key,
@@ -592,7 +592,7 @@ class VOTFile(JDLFile):
             ETree.SubElement(resource, 'DESCRIPTION').text = self.content['annotation']  # .decode()
         # TODO: automatic list of attributes from jdl.content
         job_attr = []
-        for key in ['type', 'subtype', 'annotation', 'version', 'doculink']:
+        for key in ['annotation', 'doculink', 'type', 'subtype', 'version']:
             job_attr.append('<PARAM name="{key}" datatype="char" arraysize="*" value="{value}" utype="voprov:ActivityDescription.{key}"/>'.format(key=key, value=self.content.get(key, '')))
         #     ,
         #     '<PARAM name="subtype" datatype="char" arraysize="*" value="{}" utype="voprov:ActivityDescription.subtype"/>'.format(self.content.get('job_subtype', '')),
