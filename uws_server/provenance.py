@@ -58,7 +58,7 @@ def job2prov(job, show_parameters=True, depth=1, recursive=False):
     pdoc.set_default_namespace('http://uws-server.readthedocs.io#')  # point to OPUS doc
     pdoc.add_namespace('prov', 'http://www.w3.org/ns/prov#')
     pdoc.add_namespace('foaf', 'http://xmlns.com/foaf/0.1/')
-    pdoc.add_namespace('voprov', 'http://www.ivoa.net/documents/dm/provdm/voprov#')
+    pdoc.add_namespace('voprov', 'http://www.ivoa.net/documents/ProvenanceDM#')
     pdoc.add_namespace('opus_user', BASE_URL + '/user/')
     ns_result = 'opus_store'
     pdoc.add_namespace('opus_store', BASE_URL + '/store/?ID=')
