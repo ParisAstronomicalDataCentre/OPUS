@@ -160,7 +160,7 @@ class Manager(object):
             ])
             batch.extend(get_input_files)
             batch.extend([
-                'ls -lthd *',
+                # 'ls -lthd *',
             ])
         # Execution
         batch.extend([
@@ -174,7 +174,7 @@ class Manager(object):
             '. $jd/{}.sh'.format(job.jobname),
             '### COPY RESULTS',
             'echo "[`timestamp`] Copy results"',
-            'ls -lthd *',
+            # 'ls -lthd *',
             'copy_results',
             '### CLEAN',
             'rm -rf $wd',
@@ -330,9 +330,12 @@ class LocalManager(Manager):
             params, files = job.parameters_to_bash(get_files=True)
             f.write(params)
         os.chmod(param_file, 0o744)
-        # Copy input files to workdir_path (scp if uploaded from form, or wget if given as a URI)
-        # TODO: delete files
         get_input_files = []
+        # Copy job description file
+        jdl_fname = job.jdl._get_filename(job.jobname)
+        get_input_files.append('cp -p {jdl} {jd}'.format(jdl=jdl_fname, jd=jd))
+        # Copy input files to workdir_path (scp if uploaded from form, or wget if given as a URI)
+        # TODO: delete files after
         for fname in files['form']:
             # shutil.copy(
             #     '{}/{}/{}'.format(UPLOADS_PATH, job.jobid, fname),
@@ -498,7 +501,14 @@ class SLURMManager(Manager):
         #        '{}:{}'.format(self.ssh_arg, param_file_distant)]
         # # logger.debug(' '.join(cmd))
         # sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
-        get_input_files.append('scp {}:{} {}'.format(self.ssh_arg_uws, param_file_local, param_file_distant))
+        get_input_files.append('scp {ssh_args}:{loc} {dist}'.format(
+            ssh_args=self.ssh_arg_uws, loc=param_file_local, dist=param_file_distant
+        ))
+        # Copy job description file
+        jdl_fname = job.jdl._get_filename(job.jobname)
+        get_input_files.append('scp -p {ssh_args}:{jdl} {jd}'.format(
+            ssh_args=self.ssh_arg_uws, jdl=jdl_fname, jd=jd
+        ))
         # Copy input files to workdir_path (scp if uploaded from form, or wget if given as a URI)
         # TODO: delete files
         for fname in files['form']:
