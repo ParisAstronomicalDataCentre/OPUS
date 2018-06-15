@@ -195,6 +195,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             name = Column(String(80), primary_key=True)
             token = Column(String(255))
             roles = Column(String(255), nullable=True)
+            # TODO: add last_connection, ips?,
 
         class Entity(self.Base):
             __tablename__ = 'entities'
@@ -225,19 +226,24 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
     def get_users(self):
         """Get list of users with their token and roles"""
         rows = self.session.query(self.User).all()
-        return rows
-
+        users = {r.name: {'token': r.token, 'roles': r.roles} for r in rows}
+        return users
 
     def add_user(self, name, token, roles=''):
         """Add user"""
-        d = {
-            'name': name,
-            'token': token,
-            'roles': roles
-        }
-        u = self.User(**d)
-        self.session.merge(u)
-        self.session.commit()
+        row = self.session.query(self.User).filter_by(name=name, token=token).first()
+        if not row:
+            d = {
+                'name': name,
+                'token': token,
+                'roles': roles
+            }
+            u = self.User(**d)
+            self.session.merge(u)
+            self.session.commit()
+            logger.info('User {} added to db'.format(name))
+        else:
+            logger.info('User {} already exist in db'.format(name))
 
     def remove_user(self, name, token):
         """Remove user from storage"""

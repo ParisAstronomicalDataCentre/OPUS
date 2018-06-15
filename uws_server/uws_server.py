@@ -90,6 +90,9 @@ def set_user():
     #logger = CustomAdapter(logger_init, {'username': user_name})
     if user == User('anonymous', 'anonymous') and ALLOW_ANONYMOUS == False:
         abort_403('User anomymous not allowed on this server')
+    # Add user if not in db
+    job_storage = getattr(storage, STORAGE + 'JobStorage')()
+    job_storage.add_user(user_name, user_token, roles='')
     return user
 
 
@@ -218,8 +221,8 @@ def get_user(userid):
     if not is_client_trusted(ip):
         abort_403()
     user = set_user()
-    if not check_admin(user):
-        return {'id': userid}
+    # if not check_admin(user):
+    #     return {'id': userid}
     job_storage = getattr(storage, STORAGE + 'JobStorage')()
     users = job_storage.get_users()
     return users
