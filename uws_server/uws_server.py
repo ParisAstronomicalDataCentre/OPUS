@@ -49,7 +49,7 @@ def strip_path():
 
 
 #@app.hook('before_request')
-def set_user():
+def set_user(jobname=None):
     global logger
     """Set user from request header"""
     # Use anonymous as default
@@ -92,44 +92,60 @@ def set_user():
         abort_403('User anomymous not allowed on this server')
     # Add user if not in db
     job_storage = getattr(storage, STORAGE + 'JobStorage')()
-    job_storage.add_user(user_name, user_token, roles='')
+    job_storage.add_user(user_name, user_token, jobname=jobname)
     return user
 
 
-def is_job_server(ip):
+def is_job_server(func):
     """Test if request comes from a job server"""
-    # IP or part of an IP has to be in the JOB_SERVERS list
-    matching = [x for x in JOB_SERVERS if x in ip]
-    if matching:
-        logger.info('{} from {} ({})'.format(request.urlparts.path, ip, JOB_SERVERS[matching[0]]))
-        return True
-    else:
-        logger.warning('{} wants to access {}'.format(ip, request.urlparts.path))
-        return False
+    def func_wrapper(*args, **kwargs):
+        # IP or part of an IP has to be in the JOB_SERVERS list
+        ip = request.environ.get('REMOTE_ADDR', '')
+        matching = [x for x in JOB_SERVERS if x in ip]
+        if matching:
+            logger.info('{} from {} ({})'.format(request.urlparts.path, ip, JOB_SERVERS[matching[0]]))
+        else:
+            logger.warning('{} wants to access {}'.format(ip, request.urlparts.path))
+            abort_403()
+    return func_wrapper
 
 
-def is_client_trusted(ip):
+def is_client_trusted(func):
     """Test if request comes from a trusted client"""
-    # IP or part of an IP has to be in the TRUSTED_CLIENTS list
-    # TODO: ip here is the ip of the web browser (request sent from javascript...) should trust the client URL maybe?
-    # TODO: or access those pages from web server, not web browser
-    matching = [x for x in TRUSTED_CLIENTS if x in ip]
-    if matching:
-        logger.info('{} from {} ({})'.format(request.urlparts.path, ip, TRUSTED_CLIENTS[matching[0]]))
-        return True
-    else:
-        logger.warning('{} wants to access {}'.format(ip, request.urlparts.path))
-        return False
+    def func_wrapper(*args, **kwargs):
+        # IP or part of an IP has to be in the TRUSTED_CLIENTS list
+        # TODO: ip here is the ip of the web browser (request sent from javascript...) should trust the client URL maybe?
+        # TODO: or access those pages from web server, not web browser
+        ip = request.environ.get('REMOTE_ADDR', '')
+        matching = [x for x in TRUSTED_CLIENTS if x in ip]
+        if matching:
+            logger.info('{} from {} ({})'.format(request.urlparts.path, ip, TRUSTED_CLIENTS[matching[0]]))
+        else:
+            logger.warning('{} wants to access {}'.format(ip, request.urlparts.path))
+            abort_403()
+    return func_wrapper
 
 
-def is_localhost():
+def is_localhost(func):
     """Test if localhost"""
-    ip = request.environ.get('REMOTE_ADDR', '')
-    logger.debug(ip)
-    if ip == BASE_IP:
-        return True
-    else:
-        return False
+    def func_wrapper(*args, **kwargs):
+        ip = request.environ.get('REMOTE_ADDR', '')
+        logger.debug(ip)
+        if ip != BASE_IP:
+            abort_403()
+    return func_wrapper
+
+
+def is_admin(func):
+    """ Decorator to test if user is the admin
+    :param func:
+    :return:
+    """
+    def func_wrapper(*args, **kwargs):
+        user = set_user()
+        if not check_admin(user):
+            abort_403()
+    return func_wrapper
 
 
 # ----------
@@ -215,15 +231,217 @@ def favicon():
     return static_file('favicon.ico', root=APP_PATH)
 
 
-@app.route('/user/<userid>')
-def get_user(userid):
-    ip = request.environ.get('REMOTE_ADDR', '')
-    if not is_client_trusted(ip):
-        abort_403()
-    user = set_user()
-    # if not check_admin(user):
-    #     return {'id': userid}
+# ----------
+# SCIM v2 API for user management
+# ----------
+
+
+@app.get('/scim/v2/ServiceProviderConfig')
+def SCIM_ServiceProviderConfig():
+    scim_config = """
+  {
+    "schemas":
+      ["urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig"],
+    "patch": {
+      "supported":false
+    },
+    "bulk": {
+      "supported":false,
+      "maxOperations":1000,
+      "maxPayloadSize":1048576
+    },
+    "filter": {
+      "supported":false,
+      "maxResults": 200
+    },
+    "changePassword": {
+      "supported":false
+    },
+    "sort": {
+      "supported":false
+    },
+    "etag": {
+      "supported":false
+    },
+    "authenticationSchemes": [
+      {
+        "name": "HTTP Basic",
+        "description":
+          "Authentication scheme using the HTTP Basic Standard",
+        "specUri": "http://www.rfc-editor.org/info/rfc2617",
+        "type": "httpbasic"
+       }
+    ]
+  }
+    """
+    response.content_type = 'application/json; charset=UTF-8'
+    return scim_config
+
+
+@app.get('/scim/v2/Schemas')
+def SCIM_Schemas():
+    scim_schemas = """
+  {
+    "id" : "urn:ietf:params:scim:schemas:core:2.0:User",
+    "name" : "User",
+    "description" : "User Account",
+    "attributes" : [
+      {
+        "name" : "userName",
+        "type" : "string",
+        "multiValued" : false,
+        "description" : "Unique identifier for the User, typically used by the user to directly authenticate to the service provider. Each User MUST include a non-empty userName value.  This identifier MUST be unique across the service provider's entire set of Users. REQUIRED.",
+        "required" : true,
+        "caseExact" : false,
+        "mutability" : "readWrite",
+        "returned" : "default",
+        "uniqueness" : "server"
+      },
+      {
+        "name" : "token",
+        "type" : "string",
+        "multiValued" : false,
+        "description" : "The User's token.",
+        "required" : true,
+        "caseExact" : true,
+        "mutability" : "writeOnly",
+        "returned" : "never",
+        "uniqueness" : "none"
+      },
+      {
+        "name" : "roles",
+        "type" : "string",
+        "multiValued" : true,
+        "description" : "A coma-separated list of roles for the User",
+        "required" : false,
+        "mutability" : "readWrite",
+        "returned" : "default"
+      },
+      {
+        "name" : "active",
+        "type" : "boolean",
+        "multiValued" : false,
+        "description" : "A Boolean value indicating the User's administrative status.",
+        "required" : false,
+        "mutability" : "readWrite",
+        "returned" : "default"
+      }
+    ]
+  }
+    """
+    response.content_type = 'application/json; charset=UTF-8'
+    return scim_schemas
+
+
+@app.get('/scim/v2/ResourceTypes')
+def SCIM_ResourceTypes():
+    scim_resourcetypes = """
+{
+  "itemsPerPage": 1,
+  "startIndex": 1,
+  "Resources": [
+    {
+      "schemas": ["urn:ietf:params:scim:schemas:core:2.0:ResourceType"],
+      "id": "Users",
+      "name": "User",
+      "endpoint": "/Users",
+      "description": "User Account",
+      "schema": "urn:scim:schemas:core:2.0:User"
+    }
+  ]
+}
+    """
+    response.content_type = 'application/json; charset=UTF-8'
+    return scim_resourcetypes
+
+
+@app.get('/scim/v2/ResourceTypes/User')
+def SCIM_ResourceTypes_User():
+    scim_resourcetypes = """
+    {
+      "id": "Users",
+      "schemas": [
+        "urn:scim:schemas:core:2.0:ResourceType"
+      ],
+      "name": "User",
+      "description": "Core User",
+      "endpoint": "/Users",
+      "schema": "urn:scim:schemas:core:2.0:User"
+    }
+    """
+    response.content_type = 'application/json; charset=UTF-8'
+    return scim_resourcetypes
+
+
+@is_client_trusted
+@is_admin
+@app.post('/scim/v2/Users')
+def create_user():
     job_storage = getattr(storage, STORAGE + 'JobStorage')()
+    # job_storage.add_user(name, token, roles=None, jobname=None):
+    # return user
+    pass
+
+
+@is_client_trusted
+@is_admin
+@app.get('/scim/v2/Users')
+def get_users():
+    job_storage = getattr(storage, STORAGE + 'JobStorage')()
+    users = job_storage.get_users()
+    scim_user_resources = []
+    for u in users:
+        user_dict = {
+            'schemas': ["urn:scim:schemas:core:2.0:User"],
+            'id': u['name'],
+            'userName': u['name'],
+            'meta': {
+                "resourceType": "User",
+                "created": u['first_connection'],
+                "lastModified": u['first_connection'],
+                "location": "scim/v2/Users/" + u['name'],
+            }
+        }
+        for attr in ['token', 'roles', 'active']:
+            user_dict[attr] = u[attr]
+        scim_user_resources.append(user_dict)
+    scim_users = {
+        "itemsPerPage": 10000,
+        "startIndex": 1,
+        "Resources": scim_user_resources
+    }
+    return scim_users
+
+
+@is_client_trusted
+@is_admin
+@app.get('/scim/v2/Users/<userid>')
+def get_user(userid):
+    job_storage = getattr(storage, STORAGE + 'JobStorage')()
+    users = job_storage.get_users(name=userid)
+    u = users[0]
+    user_dict = {
+        'schemas': ["urn:scim:schemas:core:2.0:User"],
+        'id': u['name'],
+        'userName': u['name'],
+        'meta': {
+            "resourceType": "User",
+            "created": u['first_connection'],
+            "lastModified": u['first_connection'],
+            "location": "scim/v2/Users/" + u['name'],
+        }
+    }
+    for attr in ['token', 'roles', 'active']:
+        user_dict[attr] = u[attr]
+    return user_dict
+
+
+@is_client_trusted
+@is_admin
+@app.route('/scim/v2/Users/<userid>', method='PATCH')
+def patch_user(userid):
+    job_storage = getattr(storage, STORAGE + 'JobStorage')()
+
     users = job_storage.get_users()
     return users
 
@@ -233,6 +451,7 @@ def get_user(userid):
 # ----------
 
 
+@is_client_trusted
 @app.route('/db/init')
 def init_db():
     """Initialize the database structure with test data
@@ -242,12 +461,6 @@ def init_db():
         403 Forbidden (if not super_user)
         500 Internal Server Error
     """
-    # user = set_user()
-    # if not is_localhost():
-    #     abort_403()
-    ip = request.environ.get('REMOTE_ADDR', '')
-    if not is_client_trusted(ip):
-        abort_403()
     try:
         filename = APP_PATH + '/uws_server/job_database.sqlite'
         with open(filename) as f:
@@ -261,6 +474,7 @@ def init_db():
     redirect('/db/show/dummy', 303)
 
 
+@is_client_trusted
 @app.route('/db/test')
 def test_db():
     """Initialize the database structure with test data
@@ -270,12 +484,6 @@ def test_db():
         403 Forbidden (if not super_user)
         500 Internal Server Error
     """
-    # user = set_user()
-    #if not is_localhost():
-    #    abort_403()
-    ip = request.environ.get('REMOTE_ADDR', '')
-    if not is_client_trusted(ip):
-        abort_403()
     try:
         filename = APP_PATH + '/uws_server/job_database_test.sqlite'
         with open(filename) as f:
@@ -289,6 +497,7 @@ def test_db():
     redirect('/db/show/dummy', 303)
 
 
+@is_client_trusted
 @app.route('/db/show/<jobname>')
 def show_db(jobname):
     """Show database in HTML
@@ -299,11 +508,6 @@ def show_db(jobname):
         500 Internal Server Error (on error)
     """
     user = set_user()
-    #if not is_localhost():
-    #    abort_403()
-    ip = request.environ.get('REMOTE_ADDR', '')
-    if not is_client_trusted(ip):
-        abort_403()
     html = ''
     try:
         logger.info('Show Database for ' + user.name)
@@ -352,6 +556,7 @@ def get_jobnames():
         abort_404(e.args[0])
 
 
+@is_client_trusted
 #@app.post('/config/job_definition')
 @app.post('/jdl')
 def create_new_job_definition():
@@ -359,9 +564,6 @@ def create_new_job_definition():
     # No need to authenticate, users can propose new jobs that will have to be validated
     # Check if client is trusted? not really needed
     jobname = ''
-    ip = request.environ.get('REMOTE_ADDR', '')
-    if not is_client_trusted(ip):
-        abort_403()
     try:
         jobname = request.forms.get('name').split('/')[-1]
         # Create JDL file from job_jdl
@@ -446,14 +648,12 @@ def get_script(jobname):
     abort_404('No script file found for ' + jobname)
 
 
+@is_client_trusted
 #@app.get('/config/validate_job/<jobname>')
 @app.post('/jdl/<jobname:path>/validate')
 def validate_job_definition(jobname):
     """Use filled form to create a JDL file for the given job"""
     # Check if client is trusted (only admin should be allowed to validate a job)
-    ip = request.environ.get('REMOTE_ADDR', '')
-    if not is_client_trusted(ip):
-        abort_403()
     try:
         # Copy script and jdl from new
         jdl = uws_jdl.__dict__[JDL]()
@@ -500,14 +700,12 @@ def validate_job_definition(jobname):
     # redirect('/client/job_definition?jobname={}&msg=validated'.format(jobname), 303)
 
 
+@is_client_trusted
 #@app.get('/config/cp_script/<jobname>')
 @app.post('/jdl/<jobname:path>/copy_script')
 def cp_script(jobname):
     """copy script to job manager for the given job"""
     # Check if client is trusted (only admin should be allowed to validate a job)
-    ip = request.environ.get('REMOTE_ADDR', '')
-    if not is_client_trusted(ip):
-        abort_403()
     try:
         # Copy script to job manager
         script_dst = '{}/{}.sh'.format(SCRIPTS_PATH, jobname)
@@ -687,6 +885,7 @@ def provsap():
 # ----------
 
 
+@is_localhost
 @app.route('/handler/maintenance/<jobname>')
 def maintenance(jobname):
     """Performs server maintenance, e.g. executed regularly by the server itself (localhost)
@@ -697,8 +896,6 @@ def maintenance(jobname):
         500 Internal Server Error (on error)
     """
     global logger
-    if not is_localhost():
-        abort_403()
     try:
         user = User('maintenance', MAINTENANCE_TOKEN)
         logger = logger_init
@@ -740,6 +937,7 @@ def maintenance(jobname):
 # ----------
 
 
+@is_job_server
 @app.post('/handler/job_event')
 def job_event():
     """New events for job with given process_id
@@ -754,9 +952,6 @@ def job_event():
         500 Internal Server Error (on error)
     """
     global logger
-    ip = request.environ.get('REMOTE_ADDR', '')
-    if not is_job_server(ip):
-        abort_403()
     try:
         user = User('job_event', JOB_EVENT_TOKEN)
         logger = logger_init

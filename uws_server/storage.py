@@ -195,6 +195,9 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             name = Column(String(80), primary_key=True)
             token = Column(String(255))
             roles = Column(String(255), nullable=True)
+            active = Column(Boolean(), default=True)
+            first_connection = Column(myDateTime)
+            # last_login = Column(myDateTime)
             # TODO: add last_connection, ips?,
 
         class Entity(self.Base):
@@ -223,27 +226,30 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
     # ----------
     # UserStorage methods
 
-    def get_users(self):
+    def get_users(self, name=None, token=None):
         """Get list of users with their token and roles"""
-        rows = self.session.query(self.User).all()
-        users = {r.name: {'token': r.token, 'roles': r.roles} for r in rows}
+        if name and token:
+            rows = self.session.query(self.User).filter_by(name=name, token=token).all()
+        else:
+            rows = self.session.query(self.User).all()
+        users = [r.__dict__ for r in rows]
         return users
 
-    def add_user(self, name, token, roles=''):
+    def add_user(self, name, token, roles=None, jobname=None):
         """Add user"""
         row = self.session.query(self.User).filter_by(name=name, token=token).first()
         if not row:
             d = {
                 'name': name,
                 'token': token,
-                'roles': roles
+                'first_connection': dt.datetime.now(),
             }
+            if roles:
+                d['roles'] = roles
             u = self.User(**d)
             self.session.merge(u)
             self.session.commit()
             logger.info('User {} added to db'.format(name))
-        else:
-            logger.info('User {} already exist in db'.format(name))
 
     def remove_user(self, name, token):
         """Remove user from storage"""
