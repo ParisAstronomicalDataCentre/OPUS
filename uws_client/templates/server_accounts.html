@@ -1,0 +1,12 @@
+{% extends "skeleton.html" %}
+{% block js %}
+    <script type="text/javascript" src="/static/js/server_accounts.js" defer></script>
+{% endblock %}
+{% block content %}
+	<div class="container bs-docs-container">
+	    <div class="col-md-offset-2 col-md-8">
+            <form class="form-horizontal" action="{{ url_for('preferences') }}" method="POST" name="server_accounts_form">
+            </form>
+	    </div> <!-- col -->
+	</div> <!-- container -->
+{% endblock %}
