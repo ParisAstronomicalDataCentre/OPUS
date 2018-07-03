@@ -358,6 +358,21 @@ def preferences():
     return render_template('preferences.html')
 
 
+@app.route('/server_accounts', methods=['GET', 'POST'])
+@login_required
+@roles_required('admin')
+def server_accounts():
+    if request.method == 'POST':
+        logger.debug('Modify user on server')
+        # send patch request to scim endpoint for user
+
+        flash('User successfully updated', 'info')
+        return redirect(url_for('preferences'), 303)
+    # Get users from server
+
+    return render_template('server_accounts.html')
+
+
 # ----------
 # Web Pages
 
