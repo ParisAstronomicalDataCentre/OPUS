@@ -61,7 +61,8 @@ def ENTITY_ID_GEN(**kwargs):
     # kwargs contains all the attributes of an entity
     # For a UWS system: entity_id = jobid + result_name should be unique...
     # return str(uuid.uuid4())
-    return '{}_{}'.format(kwargs['jobid'], kwargs['result_name'])
+    #return '{}_{}'.format(kwargs['jobid'], kwargs['result_name'])
+    return JOB_ID_GEN()
 
 # Those servers can have access to /job_event/<jobid_manager> to change the phase or report an error
 # The IP can be truncated to allow to refer to a set of IPs

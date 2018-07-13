@@ -544,7 +544,7 @@ class Job(object):
                 provenance.prov2xml(pdoc, rfdir + 'provenance.xml')
                 provenance.prov2svg(pdoc, rfdir + 'provenance.svg')
             except Exception as e:
-                logger.warning('ERROR in provenance files creation: ' + str(e))
+                logger.error('ERROR in provenance files creation: ' + str(e))
                 raise
             for ptype in ptypes:
                 # PROV JSON

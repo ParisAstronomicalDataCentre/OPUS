@@ -194,7 +194,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             __tablename__ = 'users'
             name = Column(String(80), primary_key=True)
             token = Column(String(255))
-            roles = Column(String(255), nullable=True)
+            roles = Column(String(255), default='')
             active = Column(Boolean(), default=True)
             first_connection = Column(myDateTime)
             # last_login = Column(myDateTime)
@@ -256,12 +256,20 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         self.session.query(self.User).filter_by(name=name, token=token).delete()
         self.session.commit()
 
+    def change_roles(self, name, roles=''):
+        row = self.session.query(self.User).filter_by(name=name).first()
+        row.roles = roles
+        self.session.merge(row)
+        self.session.commit()
+        logger.debug('Roles changed for user {}: {}'.format(name, roles))
+
     def add_role(self, name, token, role=''):
         """Add role to user, i.e. access to a job"""
         row = self.session.query(self.User).filter_by(name=name, token=token).first()
         roles = row.roles.split(',')
         if not role in roles:
             roles.append(role)
+            row.roles = ','.join(roles)
             self.session.merge(row)
             self.session.commit()
             logger.debug('Role {} added for user {}:{}'.format(role, name, token))
@@ -274,6 +282,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         roles = row.roles.split(',')
         if role in roles:
             roles.pop(role)
+            row.roles = ','.join(roles)
             self.session.merge(row)
             self.session.commit()
             logger.debug('Role {} removed for user {}:{}'.format(role, name, token))
@@ -472,7 +481,11 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         if entity_id:
             pass
         elif jobid and result_name:
-            pass
+            query = self.session.query(self.Entity).filter_by(jobid=jobid, result_name=result_name)
+            entity = query.first()
+            if not entity:
+                raise NotFoundWarning('Result "{}" NOT FOUND'.format(entity_id))
+            return entity.__dict__
         elif file_name and hash:
             pass
         else:

@@ -383,43 +383,7 @@ def create_user():
     pass
 
 
-@is_client_trusted
-@is_admin
-@app.get('/scim/v2/Users')
-def get_users():
-    job_storage = getattr(storage, STORAGE + 'JobStorage')()
-    users = job_storage.get_users()
-    scim_user_resources = []
-    for u in users:
-        user_dict = {
-            'schemas': ["urn:scim:schemas:core:2.0:User"],
-            'id': u['name'],
-            'userName': u['name'],
-            'meta': {
-                "resourceType": "User",
-                "created": u['first_connection'],
-                "lastModified": u['first_connection'],
-                "location": "scim/v2/Users/" + u['name'],
-            }
-        }
-        for attr in ['token', 'roles', 'active']:
-            user_dict[attr] = u[attr]
-        scim_user_resources.append(user_dict)
-    scim_users = {
-        "itemsPerPage": 10000,
-        "startIndex": 1,
-        "Resources": scim_user_resources
-    }
-    return scim_users
-
-
-@is_client_trusted
-@is_admin
-@app.get('/scim/v2/Users/<userid>')
-def get_user(userid):
-    job_storage = getattr(storage, STORAGE + 'JobStorage')()
-    users = job_storage.get_users(name=userid)
-    u = users[0]
+def user2scim(u):
     user_dict = {
         'schemas': ["urn:scim:schemas:core:2.0:User"],
         'id': u['name'],
@@ -438,12 +402,45 @@ def get_user(userid):
 
 @is_client_trusted
 @is_admin
+@app.get('/scim/v2/Users')
+def get_users():
+    job_storage = getattr(storage, STORAGE + 'JobStorage')()
+    users = job_storage.get_users()
+    scim_user_resources = []
+    for u in users:
+        scim_user_resources.append(user2scim(u))
+    scim_users = {
+        "itemsPerPage": 10000,
+        "startIndex": 1,
+        "Resources": scim_user_resources
+    }
+    return scim_users
+
+
+@is_client_trusted
+@is_admin
+@app.get('/scim/v2/Users/<userid>')
+def get_user(userid):
+    job_storage = getattr(storage, STORAGE + 'JobStorage')()
+    users = job_storage.get_users(name=userid)
+    u = users[0]
+    return user2scim(u)
+
+
+@is_client_trusted
+@is_admin
 @app.route('/scim/v2/Users/<userid>', method='PATCH')
 def patch_user(userid):
     job_storage = getattr(storage, STORAGE + 'JobStorage')()
-
-    users = job_storage.get_users()
-    return users
+    users = job_storage.get_users(name=userid)
+    u = users[0]
+    for k in request.POST.keys():
+        if k in ['token', 'roles', 'active']:
+            u[k] = request.POST[k]
+    # save modified user
+        if k == 'roles':
+            job_storage.change_roles(userid, roles=request.POST[k])
+    return user2scim(u)
 
 
 # ----------
@@ -598,41 +595,6 @@ def convert_jdl(jobname):
     return 'JDL converted for {}'.format(jobname)
 
 
-@app.get('/jdl/<jobname:path>/json')
-def get_jdl_json(jobname):
-    """
-    Get json description file for jobname
-    :param jobname:
-    :return: json description
-    """
-    try:
-        #logger.info(jobname)
-        jdl = uws_jdl.__dict__[JDL]()
-        jdl.read(jobname)
-        return jdl.content
-    except UserWarning as e:
-        abort_404(e.args[0])
-
-
-@app.get('/jdl/<jobname:path>/votable')
-#@app.get('/jdl/<jobname:path>')
-def get_jdl(jobname):
-    """
-    Get JDL file for jobname
-    :param jobname:
-    :return: WADL file
-    """
-    #logger.info(jobname)
-    fname = '{}/votable/{}_vot.xml'.format(JDL_PATH, jobname)
-    #logger.info(fname)
-    if os.path.isfile(fname):
-        with open(fname) as f:
-            jdl = f.readlines()
-        response.content_type = 'text/xml; charset=UTF-8'
-        return jdl
-    abort_404('No WADL file found for ' + jobname)
-
-
 @app.get('/jdl/<jobname:path>/script')
 def get_script(jobname):
     """
@@ -644,7 +606,7 @@ def get_script(jobname):
     logger.info('Job script read: {}'.format(fname))
     if os.path.isfile(fname):
         response.content_type = 'text/plain; charset=UTF-8'
-        return static_file(fname, root='/')
+        return static_file(fname, root='/', mimetype='text')
     abort_404('No script file found for ' + jobname)
 
 
@@ -723,6 +685,40 @@ def cp_script(jobname):
     response.content_type = 'text/plain; charset=UTF-8'
     return 'Script copied for job {}'.format(jobname)
     # redirect('/client/job_definition?jobname={}&msg=script_copied'.format(jobname), 303)
+
+
+@app.get('/jdl/<jobname:path>/json')
+def get_jdl_json(jobname):
+    """
+    Get json description file for jobname
+    :param jobname:
+    :return: json description
+    """
+    try:
+        #logger.info(jobname)
+        jdl = uws_jdl.__dict__[JDL]()
+        jdl.read(jobname)
+        return jdl.content
+    except UserWarning as e:
+        abort_404(e.args[0])
+
+#@app.get('/jdl/<jobname:path>/votable')
+@app.get('/jdl/<jobname>')
+def get_jdl(jobname):
+    """
+    Get JDL file for jobname
+    :param jobname:
+    :return: WADL file
+    """
+    #logger.info(jobname)
+    fname = '{}/votable/{}_vot.xml'.format(JDL_PATH, jobname)
+    #logger.info(fname)
+    if os.path.isfile(fname):
+        with open(fname) as f:
+            jdl = f.readlines()
+        response.content_type = 'text/xml; charset=UTF-8'
+        return jdl
+    abort_404('No WADL file found for ' + jobname)
 
 
 # ----------
@@ -955,7 +951,7 @@ def job_event():
     try:
         user = User('job_event', JOB_EVENT_TOKEN)
         logger = logger_init
-        logger.info('from {} with POST={}'.format(ip, str(request.POST.dict)))
+        logger.info('with POST={}'.format(str(request.POST.dict)))
         if 'jobid' in request.POST:
             process_id = request.POST['jobid']
             # Get job properties from DB based on process_id

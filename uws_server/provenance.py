@@ -62,13 +62,15 @@ def job2prov(job, show_parameters=True, depth=1, recursive=False):
     pdoc.add_namespace('opus_user', BASE_URL + '/user/')
     ns_result = 'opus_store'
     pdoc.add_namespace('opus_store', BASE_URL + '/store/?ID=')
+    pdoc.add_namespace('opus_job', BASE_URL + '/rest/')
+    pdoc.add_namespace('opus_jdl', BASE_URL + '/jdl/')
     ns_jdl = job.jobname
     pdoc.add_namespace(ns_jdl, BASE_URL + '/jdl/' + job.jobname + '/votable#')
     # ns_job = job.jobname + '/' + job.jobid
     # pdoc.add_namespace(ns_job, BASE_URL + '/jdl/' + job.jobname + '/votable#')
 
     # Activity
-    act = pdoc.activity(ns_jdl + ':' + job.jobid, job.start_time, job.end_time)
+    act = pdoc.activity('opus_job:' + job.jobname + '/' + job.jobid, job.start_time, job.end_time)
     for attr in ['doculink', 'type', 'subtype', 'version']:
         value = job.jdl.content.get(attr, None)
         if value:
@@ -85,7 +87,16 @@ def job2prov(job, show_parameters=True, depth=1, recursive=False):
         'prov:role': 'owner'
     })
 
-    # Agent: contact for the job
+    # Plan = ActivityDescription
+    plan = pdoc.entity('opus_jdl:' + job.jobname)
+    plan.add_attributes({
+        'prov:type': 'prov:Plan'
+    })
+    pdoc.influence(act, plan, other_attributes={
+        # 'prov:type': 'voprov:ActivityDescription',
+    })
+
+    # Agent: contact for the job in ActivityDescription
     contact_name = job.jdl.content.get('contact_name')
     contact_email = job.jdl.content.get('contact_email')
     if not contact_name:
@@ -102,6 +113,7 @@ def job2prov(job, show_parameters=True, depth=1, recursive=False):
         act.wasAssociatedWith(contact, attributes={
             'prov:role': 'contact'
         })
+
 
     # Used entities
     e_in = []
@@ -134,7 +146,9 @@ def job2prov(job, show_parameters=True, depth=1, recursive=False):
                 'prov:location': location,
                 # 'prov:type': pdict['datatype'],
             })
-            act.used(e_in[-1])
+            act.used(e_in[-1], attributes={
+                'prov:role': pname
+            })
             if entity:
                 e_in[-1].add_attributes({
                     'voprov:result_name': entity['result_name'],
@@ -149,16 +163,32 @@ def job2prov(job, show_parameters=True, depth=1, recursive=False):
                     job.storage.read(other_job, get_attributes=True, get_parameters=True, get_results=True)
                     other_pdocs.append(job2prov(other_job, depth=depth-2, recursive=True))
 
-    # Parameters as Activity attributes
+    # Parameters
+    params = []
     if show_parameters:
+        all_params = pdoc.collection('opus_job:' + job.jobname + '/' + job.jobid + '/parameters')
         for pname, pdict in job.jdl.content.get('parameters', {}).items():
             pqn = ns_jdl + ':' + pname
             if pname in job.parameters:
-                act_attr[pqn] = job.parameters[pname]['value']
+                value = job.parameters[pname]['value']
             else:
-                act_attr[pqn] = pdict['default']
-        if len(act_attr) > 0:
-            act.add_attributes(act_attr)
+                value = pdict['default']
+            # act_attr[pqn] = value
+            params.append(pdoc.entity('opus_job:' + job.jobname + '/' + job.jobid + '/parameters/' + pname))
+            pattrs = {
+                'prov:value': value,
+            }
+            for pkey, pvalue in pdict.items():
+                if pvalue:
+                    pattrs['voprov:' + pkey] = pvalue
+            params[-1].add_attributes(pattrs)
+            pdoc.influence(act, params[-1], other_attributes={
+            #     'prov:role': pname
+            })
+            all_params.hadMember(params[-1])
+        # pdoc.influence(act, all_params)
+        # if len(act_attr) > 0:
+        #     act.add_attributes(act_attr)
 
     # Generated entities (if depth > 0)
     if depth != 0 or recursive:
@@ -166,25 +196,31 @@ def job2prov(job, show_parameters=True, depth=1, recursive=False):
         for rname in job.results:
             if rname not in ['stdout', 'stderr', 'provjson', 'provxml', 'provsvg']:
                 rdict = job.jdl.content['generated'][rname]
-                entity_id = job.jobid + '_' + rname
-                entity = job.storage.get_entity(entity_id)
-                rqn = ns_result + ':' + entity_id
+                # entity_id = job.jobid + '_' + rname
+                entity = job.storage.search_entity(jobid=job.jobid, result_name=rname)
+                rqn = ns_result + ':' + entity['entity_id']
                 e_out.append(pdoc.entity(rqn))
                 # TODO: use publisher_did? add prov attributes, add voprov attributes?
                 e_out[-1].add_attributes({
                     'prov:location': job.results[rname]['url'],
-                    'voprov:result_name': entity['result_name'],
-                    'voprov:file_name': entity['file_name'],
+                    # 'voprov:result_name': entity['result_name'],
+                    # 'voprov:file_name': entity['file_name'],
                     'voprov:content_type': entity['content_type'],
                 })
-                e_out[-1].wasGeneratedBy(act, entity['creation_time'])
+                e_out[-1].wasGeneratedBy(act, entity['creation_time'], attributes={
+                    'prov:role': rname,
+                })
                 #for e in e_in:
                 #    e_out[-1].wasDerivedFrom(e)
+                e_out[-1].wasAttributedTo(owner, attributes={
+                    'prov:role': 'owner',
+                })
 
     # Merge all prov documents
     for opdoc in other_pdocs:
         logger.debug(opdoc.serialize())
         pdoc.update(opdoc)
+    pdoc.unified()
 
     return pdoc
 
