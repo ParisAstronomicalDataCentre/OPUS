@@ -967,7 +967,7 @@ def job_event():
                 if new_phase == 'ERROR':
                     msg = request.POST.get('error_msg', '')
                     job.change_status('ERROR', msg)
-                    logger.info('ERROR reported for job {} {} (from {})'.format(job.jobname, job.jobid, ip))
+                    logger.info('ERROR reported for job {} {}'.format(job.jobname, job.jobid))
                 elif new_phase not in [cur_phase]:
                     # Convert phase if needed
                     if new_phase not in PHASES:
@@ -980,8 +980,8 @@ def job_event():
                             raise UserWarning('Unknown new phase ' + new_phase + ' for job ' + job.jobid)
                     # Change job status
                     job.change_status(new_phase, msg)
-                    logger.info('Phase {} --> {} for job {} {} (from {})'
-                                ''.format(cur_phase, new_phase, job.jobname, job.jobid, ip))
+                    logger.info('Phase {} --> {} for job {} {}'
+                                ''.format(cur_phase, new_phase, job.jobname, job.jobid))
                 else:
                     raise UserWarning('Phase is already ' + new_phase)
             else:
