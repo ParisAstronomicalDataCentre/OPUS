@@ -296,34 +296,34 @@ var uws_client = (function($) {
                 </td>\
                 <td class="text-center" style="vertical-align: middle;">\
                     <div class="btn-group">\
-                    <button type="button" class="properties btn btn-default btn-sm">\
-                        <span class="glyphicon glyphicon-info-sign"></span>\
-                        <span class="hidden-xs hidden-sm hidden-md">&nbsp;Properties</span>\
-                    </button>\
-                    <button type="button" class="parameters btn btn-default btn-sm">\
-                        <span class="glyphicon glyphicon-edit"></span>\
-                        <span class="hidden-xs hidden-sm hidden-md">&nbsp;&nbsp;Parameters</span>\
-                    </button>\
-                    <button type="button" class="results btn btn-default btn-sm">\
-                        <span class="glyphicon glyphicon-open"></span>\
-                        <span class="hidden-xs hidden-sm hidden-md">&nbsp;Results</span>\
-                    </button>\
+                        <button type="button" class="properties btn btn-default btn-sm">\
+                            <span class="glyphicon glyphicon-info-sign"></span>\
+                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;Properties</span>\
+                        </button>\
+                        <button type="button" class="parameters btn btn-default btn-sm">\
+                            <span class="glyphicon glyphicon-edit"></span>\
+                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;&nbsp;Parameters</span>\
+                        </button>\
+                        <button type="button" class="results btn btn-default btn-sm">\
+                            <span class="glyphicon glyphicon-open"></span>\
+                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;Results</span>\
+                        </button>\
                     </div>\
                 </td>\
                 <td class="text-center" style="vertical-align: middle;">\
                     <div class="btn-group">\
-                    <button type="button" class="start btn btn-default btn-sm">\
-                        <span class="glyphicon glyphicon-play"></span>\
-                        <span class="hidden-xs hidden-sm hidden-md">&nbsp;Start</span>\
-                    </button>\
-                    <button type="button" class="abort btn btn-default btn-sm">\
-                        <span class="glyphicon glyphicon-off"></span>\
-                        <span class="hidden-xs hidden-sm hidden-md">&nbsp;Abort</span>\
-                    </button>\
-                    <button type="button" class="delete btn btn-default btn-sm">\
-                        <span class="glyphicon glyphicon-trash"></span>\
-                        <span class="hidden-xs hidden-sm hidden-md">&nbsp;Delete</span>\
-                    </button>\
+                        <button type="button" class="start btn btn-default btn-sm">\
+                            <span class="glyphicon glyphicon-play"></span>\
+                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;Start</span>\
+                        </button>\
+                        <button type="button" class="abort btn btn-default btn-sm">\
+                            <span class="glyphicon glyphicon-off"></span>\
+                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;Abort</span>\
+                        </button>\
+                        <button type="button" class="delete btn btn-default btn-sm">\
+                            <span class="glyphicon glyphicon-trash"></span>\
+                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;Delete</span>\
+                        </button>\
                     </div>\
                 </td>\
             </tr>';
