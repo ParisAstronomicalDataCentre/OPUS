@@ -213,6 +213,12 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             access_url = Column(String(255), nullable=True)
             owner = Column(String(64))
 
+        class Used(self.Base):
+            __tablename__ = 'used'
+            entity_id = Column(String(80), ForeignKey("entities.entity_id"))
+            jobid = Column(String(80), ForeignKey("jobs.jobid"))  # uuid: max=36
+            role = Column(String(255))
+
         # self.Base.prepare(self.engine, reflect=True)
         self.Base.metadata.create_all(self.engine)
         self.Job = Job  # self.Base.classes.jobs
@@ -220,6 +226,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         self.Result = Result  # self.Base.classes.job_results
         self.User = User
         self.Entity = Entity
+        self.Used = Used
         self.Session = sessionmaker(bind=self.engine)
         self.session = self.Session()
 
