@@ -92,7 +92,7 @@ def set_user(jobname=None):
         abort_403('User anomymous not allowed on this server')
     # Add user if not in db
     job_storage = getattr(storage, STORAGE + 'JobStorage')()
-    job_storage.add_user(user_name, user_token, jobname=jobname)
+    job_storage.add_user(user_name, token=user_token)
     return user
 
 
@@ -373,16 +373,6 @@ def SCIM_ResourceTypes_User():
     return scim_resourcetypes
 
 
-@is_client_trusted
-@is_admin
-@app.post('/scim/v2/Users')
-def create_user():
-    job_storage = getattr(storage, STORAGE + 'JobStorage')()
-    # job_storage.add_user(name, token, roles=None, jobname=None):
-    # return user
-    pass
-
-
 def user2scim(u):
     user_dict = {
         'schemas': ["urn:scim:schemas:core:2.0:User"],
@@ -408,7 +398,9 @@ def get_users():
     users = job_storage.get_users()
     scim_user_resources = []
     for u in users:
-        scim_user_resources.append(user2scim(u))
+        # do not expose opus-admin
+        if u['name'] != ADMIN_NAME:
+            scim_user_resources.append(user2scim(u))
     scim_users = {
         "itemsPerPage": 10000,
         "startIndex": 1,
@@ -419,29 +411,54 @@ def get_users():
 
 @is_client_trusted
 @is_admin
-@app.get('/scim/v2/Users/<userid>')
-def get_user(userid):
+@app.post('/scim/v2/Users')
+def create_users():
+    name = request.POST.get('name', '')
+    if name:
+        token = request.POST.get('token', '')
+        roles = request.POST.get('roles', None)
+        job_storage = getattr(storage, STORAGE + 'JobStorage')()
+        job_storage.add_user(name, token=token, roles=roles)
+        users = job_storage.get_users(name=name)
+        u = users[0]
+        return user2scim(u)
+    else:
+        abort_500('No user name provided')
+
+
+@is_client_trusted
+@is_admin
+@app.get('/scim/v2/Users/<name>')
+def get_user(name):
     job_storage = getattr(storage, STORAGE + 'JobStorage')()
-    users = job_storage.get_users(name=userid)
+    users = job_storage.get_users(name=name)
     u = users[0]
     return user2scim(u)
 
 
 @is_client_trusted
 @is_admin
-@app.route('/scim/v2/Users/<userid>', method='PATCH')
-def patch_user(userid):
+@app.route('/scim/v2/Users/<name>', method='POST')
+def patch_user(name):
     job_storage = getattr(storage, STORAGE + 'JobStorage')()
-    users = job_storage.get_users(name=userid)
+    users = job_storage.get_users(name=name)
     u = users[0]
     for k in request.POST.keys():
         if k in ['token', 'roles', 'active']:
             u[k] = request.POST[k]
-    # save modified user
+        # save modified user
         if k == 'roles':
-            job_storage.change_roles(userid, roles=request.POST[k])
+            # job_storage.change_roles(userid, roles=request.POST[k])
+            job_storage.update_user(name, k, request.POST[k])
     return user2scim(u)
 
+
+@is_client_trusted
+@is_admin
+@app.route('/scim/v2/Users/<name>', method='DELETE')
+def delete_user(name):
+    job_storage = getattr(storage, STORAGE + 'JobStorage')()
+    users = job_storage.remove_user(name)
 
 # ----------
 # Database testing
@@ -741,7 +758,7 @@ def get_entity():
         if not 'ID' in request.query:
             raise UserWarning('"ID" is not specified in request')
         entity_id = request.query['ID']
-        logger.debug('Init storage for entity {}'.format(entity_id))
+        # logger.debug('Init storage for entity {}'.format(entity_id))
         job_storage = getattr(storage, STORAGE + 'JobStorage')()
         entity = job_storage.get_entity(entity_id)
 
