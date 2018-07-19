@@ -84,6 +84,10 @@ class UserStorage(object):
         """Remove user from storage"""
         pass
 
+    def update_user(self, name, key, value):
+        """Update user attribute"""
+        pass
+
     def add_role(self, name, token, role=''):
         """Add role to user, i.e. access to a job"""
         pass
@@ -142,6 +146,7 @@ class EntityStorage(object):
 # SQLAlchemy
 
 
+
 class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
 
     def __init__(self, db_string=SQLALCHEMY_DB):
@@ -193,12 +198,13 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         class User(self.Base):
             __tablename__ = 'users'
             name = Column(String(80), primary_key=True)
-            token = Column(String(255))
+            token = Column(String(255), default=TOKEN_GEN)
             roles = Column(String(255), default='')
             active = Column(Boolean(), default=True)
             first_connection = Column(myDateTime)
             # last_login = Column(myDateTime)
             # TODO: add last_connection, ips?,
+            # TODO: roles as a table with FK to jobnames,
 
         class Entity(self.Base):
             __tablename__ = 'entities'
@@ -215,8 +221,8 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
 
         class Used(self.Base):
             __tablename__ = 'used'
-            entity_id = Column(String(80), ForeignKey("entities.entity_id"))
-            jobid = Column(String(80), ForeignKey("jobs.jobid"))  # uuid: max=36
+            entity_id = Column(String(80), ForeignKey("entities.entity_id"), primary_key=True)
+            jobid = Column(String(80), ForeignKey("jobs.jobid"), primary_key=True)  # uuid: max=36
             role = Column(String(255))
 
         # self.Base.prepare(self.engine, reflect=True)
@@ -233,42 +239,46 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
     # ----------
     # UserStorage methods
 
-    def get_users(self, name=None, token=None):
+    def get_users(self, name=None):
         """Get list of users with their token and roles"""
-        if name and token:
-            rows = self.session.query(self.User).filter_by(name=name, token=token).all()
+        if name:
+            rows = self.session.query(self.User).filter_by(name=name).all()
         else:
             rows = self.session.query(self.User).all()
         users = [r.__dict__ for r in rows]
         return users
 
-    def add_user(self, name, token, roles=None, jobname=None):
+    def add_user(self, name, token=None, roles=None):
         """Add user"""
-        row = self.session.query(self.User).filter_by(name=name, token=token).first()
+        row = self.session.query(self.User).filter_by(name=name).first()
         if not row:
             d = {
                 'name': name,
-                'token': token,
                 'first_connection': dt.datetime.now(),
             }
+            if token:
+                d['token'] = token
             if roles:
                 d['roles'] = roles
             u = self.User(**d)
             self.session.merge(u)
             self.session.commit()
             logger.info('User {} added to db'.format(name))
+        # else:
+        #     logger.info('User {} already exists in db'.format(name))
 
-    def remove_user(self, name, token):
+    def remove_user(self, name):
         """Remove user from storage"""
-        self.session.query(self.User).filter_by(name=name, token=token).delete()
+        self.session.query(self.User).filter_by(name=name).delete()
         self.session.commit()
+        logger.info('User {} removed from db'.format(name))
 
-    def change_roles(self, name, roles=''):
+    def update_user(self, name, key, value):
+        """Update user attribute"""
         row = self.session.query(self.User).filter_by(name=name).first()
-        row.roles = roles
-        self.session.merge(row)
+        setattr(row, key, value)
         self.session.commit()
-        logger.debug('Roles changed for user {}: {}'.format(name, roles))
+        logger.debug('User {} updated: {}={}'.format(name, key, value))
 
     def add_role(self, name, token, role=''):
         """Add role to user, i.e. access to a job"""
