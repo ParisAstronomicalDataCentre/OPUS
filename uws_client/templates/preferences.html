@@ -2,22 +2,25 @@
 {% block content %}
 	<div class="container bs-docs-container">
 	    <div class="col-md-offset-2 col-md-8">
-            <form class="form-horizontal" action="{{ url_for('preferences') }}" method="POST" name="preferences_form">
-                {% for key in config.EDITABLE_CONFIG %}
-                <div class="form-group">
-                    <label class="col-md-4 control-label">{{ key }}</label>
-                    <div id="div_' + pname + '" class="col-md-8 controls">
-                        <input class="form-control" name="{{ key }}" type="text" value="{{ config[key] }}"/>
+            <h3>Client Preferences</h3>
+            <p>
+                <form class="form-horizontal" action="{{ url_for('preferences') }}" method="POST" name="preferences_form">
+                    {% for key in config.EDITABLE_CONFIG %}
+                    <div class="form-group">
+                        <label class="col-md-4 control-label">{{ key }}</label>
+                        <div id="div_' + pname + '" class="col-md-8 controls">
+                            <input class="form-control" name="{{ key }}" type="text" value="{{ config[key] }}"/>
+                        </div>
                     </div>
-                </div>
-                {% endfor %}
-                <div id="form-buttons" class="form-group">
-                    <div class="col-md-offset-4 col-md-8">
-                        <button type="submit" class="btn btn-primary">Submit</button>
-                        <button type="reset" class="btn btn-default">Reset</button>
+                    {% endfor %}
+                    <div id="form-buttons" class="form-group">
+                        <div class="col-md-offset-4 col-md-8">
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                            <button type="reset" class="btn btn-default">Reset</button>
+                        </div>
                     </div>
-                </div>
-            </form>
+                </form>
+            </p>
 	    </div> <!-- col -->
 	</div> <!-- container -->
 {% endblock %}
