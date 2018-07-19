@@ -44,7 +44,7 @@ ADMIN_EMAIL = 'mathieu.servillat@obspm.fr'
 JOB_EVENT_TOKEN = 'c18de332'  # TOKEN for special user job_event, used internally
 MAINTENANCE_TOKEN = '419cb761'  # TOKEN for special user maintenant, used internally
 ALLOW_ANONYMOUS = True
-CHECK_PERMISSIONS = False
+CHECK_PERMISSIONS = True  # check rights to create/edit a job
 CHECK_OWNER = False
 
 # Identifiers will be generated with the following UUID_GEN function
@@ -63,6 +63,14 @@ def ENTITY_ID_GEN(**kwargs):
     # return str(uuid.uuid4())
     #return '{}_{}'.format(kwargs['jobid'], kwargs['result_name'])
     return JOB_ID_GEN()
+
+def TOKEN_GEN(name):
+    try:
+        token = uuid.uuid5(uuid.NAMESPACE_X500, APP_PATH + name)
+    except:
+        token = uuid.uuid4()
+    return str(token)
+
 
 # Those servers can have access to /job_event/<jobid_manager> to change the phase or report an error
 # The IP can be truncated to allow to refer to a set of IPs
