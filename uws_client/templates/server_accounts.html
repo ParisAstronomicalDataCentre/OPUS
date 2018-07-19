@@ -4,10 +4,26 @@
 {% endblock %}
 {% block content %}
 	<div class="container bs-docs-container">
-	    <div class="col-md-offset-2 col-md-8">
-            <p>Manage Server Accounts</p>
-            <form id="server_accounts_patch" class="form-horizontal" action="" method="POST" name="server_accounts_form">
-            </form>
-	    </div> <!-- col -->
+        <div id="job_list_panel" class="panel panel-default">
+            <div class="panel-heading clearfix">
+                <div class="btn-group pull-right">
+                    <button id="refresh_list" type="button" class="actions btn btn-default">Refresh User List</button>
+                </div>
+                <span class="panel-title pull-left" style="padding-top: 6px; padding-right: 6px;">Manage server accounts</span>
+            </div>
+            <div id="div_table" class="table-responsive">
+                <table class="table table-bordered table-condensed tablesorter">
+                    <thead>
+                        <th class="text-center">User name</th>
+                        <th class="text-center">Roles</th>
+                        <th class="text-center">Token</th>
+                        <th class="text-center">Active</th>
+                        <th class="text-center">Actions</th>
+                    </thead>
+                    <tbody id="server_accounts_table">
+                    </tbody>
+                </table>
+            </div>
+        </div> <!-- panel -->
 	</div> <!-- container -->
 {% endblock %}
