@@ -130,7 +130,7 @@ def job2prov(job, show_parameters=True, depth=1, recursive=False):
             logger.debug('Input entity found: {}'.format(entity))
         except:
             entity_id = job.jobid + '_' + pname
-            pqn = ns_result + ':' + entity_id
+            pqn = entity_id
             location = value
             logger.debug('No previous record for input entity {}'.format(entity_id))
         if show_parameters:
@@ -163,7 +163,7 @@ def job2prov(job, show_parameters=True, depth=1, recursive=False):
                     job.storage.read(other_job, get_attributes=True, get_parameters=True, get_results=True)
                     other_pdocs.append(job2prov(other_job, depth=depth-2, recursive=True))
 
-    # Parameters
+    # Parameters that influence the activity
     params = []
     if show_parameters:
         all_params = pdoc.collection('opus_job:' + job.jobname + '/' + job.jobid + '/parameters')
@@ -176,6 +176,7 @@ def job2prov(job, show_parameters=True, depth=1, recursive=False):
             # act_attr[pqn] = value
             params.append(pdoc.entity('opus_job:' + job.jobname + '/' + job.jobid + '/parameters/' + pname))
             pattrs = {
+                'prov:type': 'voprov:Parameter',
                 'prov:value': value,
             }
             for pkey, pvalue in pdict.items():
@@ -183,7 +184,7 @@ def job2prov(job, show_parameters=True, depth=1, recursive=False):
                     pattrs['voprov:' + pkey] = pvalue
             params[-1].add_attributes(pattrs)
             pdoc.influence(act, params[-1], other_attributes={
-            #     'prov:role': pname
+                 'prov:type': 'voprov:hadConfiguration',
             })
             all_params.hadMember(params[-1])
         # pdoc.influence(act, all_params)
@@ -195,7 +196,7 @@ def job2prov(job, show_parameters=True, depth=1, recursive=False):
         e_out = []
         for rname in job.results:
             if rname not in ['stdout', 'stderr', 'provjson', 'provxml', 'provsvg']:
-                rdict = job.jdl.content['generated'][rname]
+                # rdict = job.jdl.content['generated'].get(rname, {})
                 # entity_id = job.jobid + '_' + rname
                 entity = job.storage.search_entity(jobid=job.jobid, result_name=rname)
                 rqn = ns_result + ':' + entity['entity_id']
