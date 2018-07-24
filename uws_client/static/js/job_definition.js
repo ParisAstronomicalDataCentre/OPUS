@@ -15,6 +15,7 @@
         'text/x-votable+xml',
         'application/json',
         'application/pdf',
+        'application/postscript',
         'image/jpeg',
         'image/png',
         'image/fits',
