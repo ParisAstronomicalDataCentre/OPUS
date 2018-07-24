@@ -117,18 +117,21 @@ class Manager(object):
             # TODO: copy directly to archive directory (?)
             fname = job.get_result_filename(rname)
             line = [
-                '    if [ -f $wd/{fname} ]; then',
-                "        hash=`shasum -a " + SHA_ALGO + " $wd/{fname} | awk '{{print $1}}'`",
-                '        echo {rname}: >> $jd/results.yml',
-                '        echo "  file_name: {fname}" >> $jd/results.yml',
-                '        echo "  file_dir: $rs" >> $jd/results.yml',
-                '        echo "  content_type: {rtype}" >> $jd/results.yml',
-                '        echo "  hash: "$hash >> $jd/results.yml',
-                '        echo "Found and copied: {rname}={fname}";',
-                '        mv $wd/{fname} $rs/{fname};',
-                '    else',
-                '        echo "NOT FOUND: {rname}={fname}"',
-                '    fi',
+                '    flist =  `ls {fname}`',
+                '    for fresult in $flist; do',
+                '        if [ -f $fresult ]; then',
+                "            hash=`shasum -a " + SHA_ALGO + " $fresult | awk '{{print $1}}'`",
+                '            echo $fresult: >> $jd/results.yml',
+                '            echo "  file_name: $fresult" >> $jd/results.yml',
+                '            echo "  file_dir: $rs" >> $jd/results.yml',
+                '            echo "  content_type: {rtype}" >> $jd/results.yml',
+                '            echo "  hash: "$hash >> $jd/results.yml',
+                '            echo "Found and copied {rname}: $fresult";',
+                '            mv $fresult $rs/$fresult;',
+                '        else',
+                '            echo "NOT FOUND: {rname}={fname}"',
+                '        fi',
+                '    done',
             ]
             cp_results.append('\n'.join(line).format(rname=rname, fname=fname, rtype=r['content_type']))
             # cp_results.append(
