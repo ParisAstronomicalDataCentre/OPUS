@@ -805,8 +805,10 @@ var uws_client = (function($) {
             };
         };
         for (var r in job['results']) {
-            if (jdl.generated_keys.includes(r) != -1 && details_keys.includes(r) != -1) {
-                console.log('additional result found: ' + r);
+            if (jdl.generated_keys.includes(r) != -1) {
+                if (details_keys.includes(r) != -1) {
+                    console.log('additional result found: ' + r);
+                };
             };
         };
         $('#details_list').html('');
