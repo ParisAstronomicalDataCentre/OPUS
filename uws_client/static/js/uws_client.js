@@ -804,7 +804,7 @@ var uws_client = (function($) {
             };
         };
         for (var r in job['results']) {
-            if jdl.generated_keys.includes(r) != -1) {
+            if (jdl.generated_keys.includes(r) != -1) {
                 console.log('additional result found: ' + r);
             };
         };
