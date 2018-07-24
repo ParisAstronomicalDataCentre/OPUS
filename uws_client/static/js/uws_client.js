@@ -788,6 +788,7 @@ var uws_client = (function($) {
     var displayResultsOk = function(job){
         var jdl = clients[job.jobName].jdl;
         var serviceUrl = clients[job.jobName].serviceUrl;
+        var details_keys =['stdout','stderr','provjson','provxml','provsvg'];
         $('#result_list').html('');
         //var generated_keys = jdl.generated_keys.concat(['stdout','stderr','provjson','provxml','provsvg']);
         for (var rkey in jdl.generated_keys) {
@@ -804,12 +805,11 @@ var uws_client = (function($) {
             };
         };
         for (var r in job['results']) {
-            if (jdl.generated_keys.includes(r) != -1) {
+            if (jdl.generated_keys.includes(r) != -1) and (details_keys.includes(r)) {
                 console.log('additional result found: ' + r);
             };
         };
         $('#details_list').html('');
-        var details_keys =['stdout','stderr','provjson','provxml','provsvg'];
         for (var rkey in details_keys) {
             var r = details_keys[rkey];
             var r_url = serviceUrl + '/' + job.jobId + '/' + r;
