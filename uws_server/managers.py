@@ -117,7 +117,7 @@ class Manager(object):
             # TODO: copy directly to archive directory (?)
             fname = job.get_result_filename(rname)
             line = [
-                '    flist =  `ls {fname}`',
+                '    flist=`ls {fname}`',
                 '    for fresult in $flist; do',
                 '        if [ -f $fresult ]; then',
                 "            hash=`shasum -a " + SHA_ALGO + " $fresult | awk '{{print $1}}'`",
