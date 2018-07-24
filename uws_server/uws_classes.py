@@ -141,7 +141,7 @@ class Job(object):
         self.user = user
         # Link to the storage, e.g. SQLite, see settings.py
         # self.storage = storage.__dict__[STORAGE + 'JobStorage']()
-        logger.debug('Init storage for job {}'.format(self.jobid))
+        # logger.debug('Init storage for job {}'.format(self.jobid))
         self.storage = getattr(storage, STORAGE + 'JobStorage')()
 
         # Check if user has rights to create/edit such a job, else raise JobAccessDenied
@@ -252,37 +252,48 @@ class Job(object):
         upload_dir = '{}/{}'.format(UPLOADS_PATH, self.jobid)
         for pname in self.jdl.content.get('used', {}):
             if pname in list(files.keys()):
+                # Parameter is a file from the form
                 if not os.path.isdir(upload_dir):
                     os.makedirs(upload_dir)
                 post_p = post.pop(pname)
                 f = files[pname]
                 f.save(upload_dir + '/' + f.filename)
-                # Parameter value is set to the file name on server
+                # Parameter value is set to the file name on server (known to be in the uploads/<jobid> directory)
                 value = 'file://' + f.filename
                 # value = f.filename
                 logger.info('Input {} is a file and was downloaded ({})'.format(pname, f.filename))
-            elif pname in post:
-                value = post.pop(pname)
-                logger.info('Input {} is a value (identifier) : {}'.format(pname, value))
-                # TODO: use url in jdl.used if set (replace $ID with value)
+                # TODO: check if file already exists in entity store (hash + ID in name or jobid)
+
             else:
-                value = self.jdl.content['used'][pname]['default']
-                logger.info('Input {} set by default'.format(pname))
+                # Parameter is a value or an ID (set from post or by default)
+                if pname in post:
+                    value = post.pop(pname)
+                    logger.info('Input {} is a value (or an identifier) : {}'.format(pname, value))
+                else:
+                    value = self.jdl.content['used'][pname]['default']
+                    logger.info('Input {} set by default'.format(pname))
+                # TODO: check if ID already exists in entity store
+
+                # try to onvert ID to a URL and upload
+                url = self.jdl.content['used'][pname]['url']
+                if url:
+                    furl = url.replace('$ID', value)
+                    logger.info('Input {} is a URL : {}'.format(pname, furl))
+                    # TODO: upload the file to upload dir
+
+                    # TODO: check if file already exists in entity store (hash + ID in name or jobid)
+
             self.parameters[pname] = {'value': value, 'byref': True}
         # Search parameters in POST
         for pname in self.jdl.content.get('parameters', {}):
             if pname not in self.parameters:
                 # TODO: use JDL to check if value is valid
                 ptype = self.jdl.content['parameters'][pname]['datatype']
-                if 'anyURI' in ptype:
-                    byref = True
-                else:
-                    byref = False
                 if pname in post:
                     value = post.pop(pname)
                 else:
                     value = self.jdl.content['parameters'][pname]['default']
-                self.parameters[pname] = {'value': value, 'byref': byref}
+                self.parameters[pname] = {'value': value, 'byref': False}
         # Other POST parameters
         for pname in post:
             # Those parameters won't be used for job control, or stored as used entities, but they will be loaded
@@ -345,7 +356,7 @@ class Job(object):
                     pvalue = pvalue.split('/')[-1]
                 # Test if file was uploaded from the form, and given the "file://" prefix (see self.set_from_post())
                 if 'file://' in pvalue:
-                    pvalue = pvalue.split('/')[-1]
+                    pvalue = pvalue.split('file://')[-1]
                     files['form'].append(pvalue)
             params.append(pname + '=\"' + pvalue + '\"')
         # Used
@@ -359,7 +370,7 @@ class Job(object):
                         pvalue = pvalue.split('/')[-1]
                     # Test if file was uploaded from the form, and given the "file://" prefix (see self.set_from_post())
                     if 'file://' in pvalue:
-                        pvalue = pvalue.split('/')[-1]
+                        pvalue = pvalue.split('file://')[-1]
                         files['form'].append(pvalue)
                 params.append(pname + '=\"' + pvalue + '\"')
         # Results
@@ -730,7 +741,7 @@ class JobList(object):
         self.jobid = 'joblist'
         self.user = user
         # Link to the storage, e.g. SQLiteStorage, see settings.py
-        logger.debug('Init storage for joblist')
+        # logger.debug('Init storage for joblist')
         self.storage = getattr(storage, STORAGE + 'JobStorage')()
 
         # Check if user has rights to create/edit such a job, else raise JobAccessDenied
@@ -739,7 +750,7 @@ class JobList(object):
         # Check if user is admin, then get all jobs
         if check_admin(user):
             where_owner = False
-            logger.debug('User is the admin')
+            logger.debug('User is the admin: list all jobs')
 
         self.jobs = self.storage.get_list(self, phase=phase, after=after, last=last, where_owner=where_owner)
 
