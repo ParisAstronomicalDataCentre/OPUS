@@ -803,6 +803,11 @@ var uws_client = (function($) {
                 displayResult('result_list', r, r_type, r_url, r_url_auth);
             };
         };
+        for (var r in job['results']) {
+            if !(r in jdl.generated_keys) {
+                console.log('additional result found: ' + r);
+            };
+        };
         $('#details_list').html('');
         var details_keys =['stdout','stderr','provjson','provxml','provsvg'];
         for (var rkey in details_keys) {
