@@ -808,6 +808,13 @@ var uws_client = (function($) {
             if (jdl.generated_keys.includes(r) == false) {
                 if (details_keys.includes(r) == false) {
                     console.log('additional result found: ' + r);
+                    var r_url = job['results'][r];
+                    var r_url_auth = r_url.split('?').pop();
+                    if (r_url_auth != r_url) {
+                        r_url_auth = client_proxy_url + server_result_url + '?' + r_url_auth
+                    };
+                    var r_type = r.split('.').pop();
+                    displayResult('result_list', r, r_type, r_url, r_url_auth);
                 };
             };
         };
