@@ -805,8 +805,8 @@ var uws_client = (function($) {
             };
         };
         for (var r in job['results']) {
-            if (jdl.generated_keys.includes(r) != -1) {
-                if (details_keys.includes(r) != -1) {
+            if (jdl.generated_keys.includes(r) == false) {
+                if (details_keys.includes(r) == false) {
                     console.log('additional result found: ' + r);
                 };
             };
