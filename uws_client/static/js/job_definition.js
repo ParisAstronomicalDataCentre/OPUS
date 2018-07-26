@@ -261,7 +261,7 @@
                     var attr = elt_fields[iattr];
                     console.log(attr);
                     console.log(type + '_' + attr + '_' + i);
-                    $(this).find('.' + type + '_' + attr).attr(attr, type + '_' + attr + '_' + i);
+                    $(this).find('.' + type + '_' + attr).attr('name', type + '_' + attr + '_' + i);
                 };
 //                $(this).find('.' + type + '_name').attr('name', type + '_name_' + i);
 //                $(this).find('.' + type + '_type').attr('name', type + '_type_' + i);
