@@ -125,7 +125,7 @@ class Manager(object):
                 "            hash=`shasum -a " + SHA_ALGO + " $fresult | awk '{{print $1}}'`",
                 '            echo $fresult: >> $jd/results.yml',
                 '            echo "  result_name: {rname}" >> $jd/results.yml',
-                '            echo "  result_value: {rfname}" >> $jd/results.yml',
+                '            echo "  result_value: \'{rfname}\'" >> $jd/results.yml',
                 '            echo "  file_name: $fresult" >> $jd/results.yml',
                 '            echo "  file_dir: $rs" >> $jd/results.yml',
                 '            echo "  content_type: {rtype}" >> $jd/results.yml',
