@@ -263,16 +263,6 @@
                     console.log(type + '_' + attr + '_' + i);
                     $(this).find('.' + type + '_' + attr).attr('name', type + '_' + attr + '_' + i);
                 };
-//                $(this).find('.' + type + '_name').attr('name', type + '_name_' + i);
-//                $(this).find('.' + type + '_type').attr('name', type + '_type_' + i);
-//                $(this).find('.' + type + '_default').attr('name', type + '_default_' + i);
-//                $(this).find('.' + type + '_required').attr('name', type + '_required_' + i);
-//                $(this).find('.' + type + '_datatype').attr('name', type + '_datatype_' + i);
-//                $(this).find('.' + type + '_annotation').attr('name', type + '_annotation_' + i);
-//                $(this).find('.' + type + '_options').attr('name', type + '_options_' + i);
-//                $(this).find('.' + type + '_attributes').attr('name', type + '_attributes_' + i);
-//                $(this).find('.' + type + '_isfile').attr('name', type + '_isfile_' + i);
-//                $(this).find('.' + type + '_url').attr('name', type + '_url_' + i);
             }
         });
         $('.selectpicker').selectpicker('refresh');
