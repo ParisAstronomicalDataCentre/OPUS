@@ -257,7 +257,7 @@
                 $(this).find('.moveup_' + type).attr('id', 'moveup_' + type + '_' + i);
                 $(this).find('.movedown_' + type).attr('id', 'movedown_' + type + '_' + i);
                 for (var attr in param_fields) {
-                    $(this).find('.' + type + '_' + pattr).attr(pattr, type + '_' + pattr + '_' + i);
+                    $(this).find('.' + type + '_' + attr).attr(attr, type + '_' + attr + '_' + i);
                 };
 //                $(this).find('.' + type + '_name').attr('name', type + '_name_' + i);
 //                $(this).find('.' + type + '_type').attr('name', type + '_type_' + i);
