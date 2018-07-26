@@ -369,7 +369,7 @@
 				    i++;
 				    var attr_mapping = {
 				        'name': used,
-				        'type': jdl.used[used]['type'],
+				        'type': jdl.used[used]['content_type'],
 				        'default': jdl.used[used]['default'],
 				        'annotation': jdl.used[used]['annotation'],
 				    };
@@ -396,7 +396,7 @@
 				    i++;
 				    var attr_mapping = {
 				        'name': result,
-				        'type': jdl.generated[result]['type'],
+				        'type': jdl.generated[result]['content_type'],
 				        'default': jdl.generated[result]['default'],
 				        'annotation': jdl.generated[result]['annotation'],
 				    };
