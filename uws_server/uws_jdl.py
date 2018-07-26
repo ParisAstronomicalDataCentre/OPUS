@@ -112,7 +112,7 @@ class JDLFile(object):
             logger.info('Job script saved: ' + script_fname)
 
     def set_from_post(self, post):
-        logger.debug(post)
+        logger.debug(post.__dict__)
         # Read form
         keys = list(post.keys())
         jobname = post.get('name').split('/')[-1]
@@ -413,7 +413,6 @@ class VOTFile(JDLFile):
                 result = ETree.Element('GROUP', attrib=attrib)
                 ETree.SubElement(result, 'DESCRIPTION').text = rdict.get('annotation', '')
                 for edattr in gen_attr:
-                    logger.debug(edattr)
                     ETree.SubElement(result, 'PARAM', attrib={
                         'name': edattr,
                         'value': rdict.get(edattr, ''),
