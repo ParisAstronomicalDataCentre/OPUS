@@ -122,15 +122,11 @@ class JDLFile(object):
         while 'param_name_' + str(iparam) in keys:
             pname = post.get('param_name_' + str(iparam), '')
             if pname:
-                ptype = post.get('param_datatype_' + str(iparam), '')
-                pdefault = post.get('param_default_' + str(iparam), '')
-                preq = post.get('param_required_' + str(iparam), '')
-                pdesc = post.get('param_annotation_' + str(iparam), '')
                 params[pname] = {
-                    'datatype': ptype,
-                    'default': pdefault,
-                    'required': (preq == 'on'),
-                    'annotation': pdesc,
+                    'datatype': post.get('param_datatype_' + str(iparam), ''),
+                    'default': post.get('param_default_' + str(iparam), ''),
+                    'required': (post.get('param_required_' + str(iparam), '') == 'on'),
+                    'annotation': post.get('param_annotation_' + str(iparam), ''),
                 }
                 poptions = post.get('param_options_' + str(iparam), '')
                 if poptions:
@@ -150,18 +146,15 @@ class JDLFile(object):
             if pname:
                 ptype = post.get('used_type_' + str(iused), '')
                 # TODO: do a getall for all options
-                pmult = post.get('used_multiplicity_' + str(iused), '')
-                pdefault = post.get('used_default_' + str(iused), '')
-                pdesc = post.get('used_annotation_' + str(iused), '')
                 pisfile = post.get('used_isfile_' + str(iused), '')
                 purl = post.get('used_url_' + str(iused), '')
                 if pisfile == 'File':
                     purl = 'file://$ID'.format(pname)
                 used[pname] = {
                     'content_type': ptype,  # ', '.join(ptype),
-                    'multiplicity': pmult,
-                    'default': pdefault,
-                    'annotation': pdesc,
+                    'multiplicity': post.get('used_multiplicity_' + str(iused), ''),
+                    'default': post.get('used_default_' + str(iused), ''),
+                    'annotation': post.get('used_annotation_' + str(iused), ''),
                     'url': purl,
                 }
             iused += 1
@@ -171,15 +164,11 @@ class JDLFile(object):
         while 'generated_name_' + str(iresult) in keys:
             rname = post.get('generated_name_' + str(iresult), '')
             if rname:
-                rtype = post.get('generated_type_' + str(iresult), '')
-                rdefault = post.get('generated_default_' + str(iresult), '')
-                rmult = post.get('used_multiplicity_' + str(iresult), '')
-                rdesc = post.get('generated_annotation_' + str(iresult), '')
                 results[rname] = {
-                    'content_type': rtype,
-                    'multiplicity': rmult,
-                    'default': rdefault,
-                    'annotation': rdesc,
+                    'content_type': post.get('generated_type_' + str(iresult), ''),
+                    'multiplicity': post.get('used_multiplicity_' + str(iresult), ''),
+                    'default': post.get('generated_default_' + str(iresult), ''),
+                    'annotation': post.get('generated_annotation_' + str(iresult), ''),
                 }
             iresult += 1
         # Create job.content structure
