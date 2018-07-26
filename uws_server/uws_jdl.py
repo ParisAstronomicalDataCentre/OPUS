@@ -170,6 +170,7 @@ class JDLFile(object):
                     'default': post.get('generated_default_' + str(iresult), ''),
                     'annotation': post.get('generated_annotation_' + str(iresult), ''),
                 }
+                results.move_to_end(rname)
             iresult += 1
         # Create job.content structure
         self.content.update({
