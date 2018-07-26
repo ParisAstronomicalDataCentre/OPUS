@@ -511,7 +511,7 @@ class Job(object):
                 file_dir = rinfo['file_dir'],
                 owner = self.owner,
             )
-            self.add_result_entry(entity['result_name'], entity['access_url'], entity['content_type'])
+            self.add_result_entry(rname, entity['access_url'], entity['content_type'])
 
         # access_url computed for UWS server (retrieve endpoint with entity_id)
         #                     or distant server (url given with $ID to replace by entity_id)
