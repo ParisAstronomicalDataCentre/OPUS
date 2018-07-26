@@ -11,8 +11,9 @@ var uwsLib = (function() {
 		var parametersElement = $(xml).find("uws\\:parameters, parameters");
 		$(parametersElement).find("uws\\:parameter, parameter").each(function(){
 			var elementName = $(this).attr('id');
-			var elementValue = $(this).text();
-			parameters[elementName] = elementValue ;
+			parameters[elementName] = new Object();
+			parameters[elementName].value = $(this).text();
+			parameters[elementName].byref = $(this).attr('byref');
 		});
 		return parameters;
 	};
@@ -22,8 +23,9 @@ var uwsLib = (function() {
 		var resultsElement = $(xml).find("uws\\:results, results");
 		$(resultsElement).find("uws\\:result, result").each(function(){
 			var elementName = $(this).attr('id');
-			var elementValue = $(this).attr("xlink:href");
-			results[elementName] = elementValue ;
+			results[elementName] = new Object() ;
+			results[elementName].href = $(this).attr("xlink:href");
+			results[elementName].mimetype = $(this).attr("mime-type");
 		});
 		return results;
 	};

@@ -255,6 +255,7 @@ var uws_client = (function($) {
     // DISPLAY JOB ROW
 
     var displayJobRow = function(job){
+        logger('OBJECT', job);
         var creation_time = job.creationTime.split("T");
         if (creation_time.length == 1) {
             creation_time = "";
@@ -281,8 +282,8 @@ var uws_client = (function($) {
         };
         var times = 'creation:    \t'+creation_time+'\n'+'start:         \t'+start_time+'\n'+'end:           \t'+end_time+'\n'+'destruction:\t'+destr_time
         var param_list = "jobid = " + job.jobId + '\nParameters:';
-        for (var pname in job['parameters']) {
-            var pvalue = job['parameters'][pname];
+        for (var pname in job.parameters) {
+            var pvalue = job.parameters[pname].value;
             pvalue = decodeURIComponent(pvalue).replace(/[+]/g, " ");
             param_list += '\n' + pname + ' = ' + pvalue;
         };
@@ -600,7 +601,7 @@ var uws_client = (function($) {
                     displayParamFormInputType(pname, p);
                 } else {
                     $('#id_'+pname).attr('disabled','disabled');
-                    if (!(pname in job['parameters'])) {
+                    if (!(pname in job.parameters)) {
                         $('#id_'+pname).wrap('<div class="input-group"></div>');
                         $('#id_'+pname).parent().append('<span class="input-group-addon" style="line-height: 1.4;"><small>default used</small></span>');
                     };
@@ -627,7 +628,7 @@ var uws_client = (function($) {
                 displayParamFormInputType(pname, p);
             } else {
                 $('#id_'+pname).attr('disabled','disabled');
-                if (!(pname in job['parameters'])) {
+                if (!(pname in job.parameters)) {
                     $('#id_'+pname).wrap('<div class="input-group"></div>');
                     $('#id_'+pname).parent().append('<span class="input-group-addon" style="line-height: 1.4;"><small>default used</small></span>');
                 };
@@ -643,14 +644,14 @@ var uws_client = (function($) {
         // Add control parameters if they are set
         for (var pkey in jdl.control_parameters_keys) {
             var pname = jdl.control_parameters_keys[pkey];
-            if (pname in job['parameters']) {
+            if (pname in job.parameters) {
                 var pdesc = jdl.control_parameters[pname];
                 displayParamFormInput(pname, {'default': '', 'annotation': pdesc})
                 $('#id_'+pname).attr('disabled','disabled');
             }
         }
         // Disable button if job is not PENDING
-        if (job['phase'] != 'PENDING') {
+        if (job.phase != 'PENDING') {
             //$('#id_'+pname).removeAttr('readonly');
             //$('#id_'+pname).removeAttr('disabled');
             //$('#button_'+pname).removeAttr('disabled');
@@ -660,9 +661,9 @@ var uws_client = (function($) {
         };
         // Fill value from job
         $('#job_params').append('<input id="all_params" name="all_params" type="hidden" value=""/>');
-        $('#all_params').attr('value', JSON.stringify(job['parameters']));
-        for (var pname in job['parameters']) {
-            var pvalue = job['parameters'][pname];
+        $('#all_params').attr('value', JSON.stringify(job.parameters));
+        for (var pname in job.parameters) {
+            var pvalue = job.parameters[pname].value;
             pvalue = decodeURIComponent(pvalue).replace(/[+]/g, " ");
             // Add in param_list table (if present in DOM)
             $('#param_list').append('<tr><td><strong>' + pname + '</strong></td><td>' + pvalue + '</td></tr>');
@@ -793,27 +794,28 @@ var uws_client = (function($) {
         //var generated_keys = jdl.generated_keys.concat(['stdout','stderr','provjson','provxml','provsvg']);
         for (var rkey in jdl.generated_keys) {
             var r = jdl.generated_keys[rkey];
-            // if r is in job['results']
-            if ($.inArray(r, Object.keys(job['results'])) !== -1) {
-                var r_url = job['results'][r];
+            // if r is in job.results
+            if ($.inArray(r, Object.keys(job.results)) !== -1) {
+                var r_url = job.results[r].href;
+                var r_type = job.results[r].mimetype;
                 var r_url_auth = r_url.split('?').pop();
                 if (r_url_auth != r_url) {
                     r_url_auth = client_proxy_url + server_result_url + '?' + r_url_auth
                 };
-                var r_type = jdl.generated[r]['content_type']; //r_name.split('.').pop();
+                // var r_type = jdl.generated[r]['content_type']; //r_name.split('.').pop();
                 displayResult('result_list', r, r_type, r_url, r_url_auth);
             };
         };
-        for (var r in job['results']) {
+        for (var r in job.results) {
             if (jdl.generated_keys.includes(r) == false) {
                 if (details_keys.includes(r) == false) {
                     console.log('additional result found: ' + r);
-                    var r_url = job['results'][r];
+                    var r_url = job.results[r].href;
+                    var r_type = job.results[r].mimetype;
                     var r_url_auth = r_url.split('?').pop();
                     if (r_url_auth != r_url) {
                         r_url_auth = client_proxy_url + server_result_url + '?' + r_url_auth
                     };
-                    var r_type = r.split('.').pop();
                     displayResult('result_list', r, r_type, r_url, r_url_auth);
                 };
             };
