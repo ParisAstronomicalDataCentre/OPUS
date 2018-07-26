@@ -118,8 +118,8 @@ class Manager(object):
             rfname = job.get_result_filename(rname)
             line = [
                 '    flist=`ls {rfname}`',
-                '    for fresult in $flist; do',
-                '        if [ -f $fresult ]; then',
+                '    if [ -z $flist ]; then',
+                '        for fresult in $flist; do',
                 "            hash=`shasum -a " + SHA_ALGO + " $fresult | awk '{{print $1}}'`",
                 '            echo $fresult: >> $jd/results.yml',
                 '            echo "  result_name: {rname}" >> $jd/results.yml',
@@ -128,12 +128,12 @@ class Manager(object):
                 '            echo "  file_dir: $rs" >> $jd/results.yml',
                 '            echo "  content_type: {rtype}" >> $jd/results.yml',
                 '            echo "  hash: "$hash >> $jd/results.yml',
-                '            echo "Found and copied {rname}: $fresult";',
+                '            echo "Found and copied {rname}={rfname} --> $fresult";',
                 '            mv $fresult $rs/$fresult;',
-                '        else',
-                '            echo "NOT FOUND: {rname}={fname}"',
-                '        fi',
-                '    done',
+                '        done',
+                '    else',
+                '        echo "NOT FOUND: {rname}={rfname}"',
+                '    fi',
             ]
             cp_results.append('\n'.join(line).format(rname=rname, fname=rfname, rtype=r['content_type']))
             # cp_results.append(
