@@ -210,7 +210,8 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             __tablename__ = 'entities'
             entity_id = Column(String(80), primary_key=True)
             jobid = Column(String(80), ForeignKey("jobs.jobid"))  # uuid: max=36
-            result_name = Column(String(255))
+            result_name = Column(String(255), nullable=True)
+            result_value = Column(String(255), nullable=True)
             hash = Column(String(255))
             content_type = Column(String(255), nullable=True)
             creation_time = Column(myDateTime)

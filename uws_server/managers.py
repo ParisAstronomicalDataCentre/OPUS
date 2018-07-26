@@ -115,13 +115,15 @@ class Manager(object):
         ]
         for rname, r in job.jdl.content.get('generated', {}).items():
             # TODO: copy directly to archive directory (?)
-            fname = job.get_result_filename(rname)
+            rfname = job.get_result_filename(rname)
             line = [
-                '    flist=`ls {fname}`',
+                '    flist=`ls {rfname}`',
                 '    for fresult in $flist; do',
                 '        if [ -f $fresult ]; then',
                 "            hash=`shasum -a " + SHA_ALGO + " $fresult | awk '{{print $1}}'`",
                 '            echo $fresult: >> $jd/results.yml',
+                '            echo "  result_name: {rname}" >> $jd/results.yml',
+                '            echo "  result_value: {rfname}" >> $jd/results.yml',
                 '            echo "  file_name: $fresult" >> $jd/results.yml',
                 '            echo "  file_dir: $rs" >> $jd/results.yml',
                 '            echo "  content_type: {rtype}" >> $jd/results.yml',
@@ -133,7 +135,7 @@ class Manager(object):
                 '        fi',
                 '    done',
             ]
-            cp_results.append('\n'.join(line).format(rname=rname, fname=fname, rtype=r['content_type']))
+            cp_results.append('\n'.join(line).format(rname=rname, fname=rfname, rtype=r['content_type']))
             # cp_results.append(
             #     '    [ -f $wd/{fname} ]'
             #     ' && {{ cp $wd/{fname} $rs; echo "Found and copied: {rname}={fname}"; }}'

@@ -503,7 +503,8 @@ class Job(object):
             rinfo = result_list[rname]
             entity = self.storage.register_entity(
                 jobid = self.jobid,
-                result_name = rname,
+                result_name = rinfo['result_name'],
+                result_value = rinfo['result_value'],
                 hash = rinfo['hash'],
                 content_type = rinfo['content_type'],
                 file_name = rinfo['file_name'],
