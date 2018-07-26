@@ -112,6 +112,7 @@ class JDLFile(object):
             logger.info('Job script saved: ' + script_fname)
 
     def set_from_post(self, post):
+        logger.debug(post)
         # Read form
         keys = list(post.keys())
         jobname = post.get('name').split('/')[-1]
