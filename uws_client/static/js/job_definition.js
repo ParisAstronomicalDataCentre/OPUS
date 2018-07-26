@@ -19,6 +19,7 @@
         'image/jpeg',
         'image/png',
         'image/fits',
+        'application/x-cdf',
         'video/mp4',
     ]
     var type_options = {
