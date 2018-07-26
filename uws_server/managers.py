@@ -119,6 +119,8 @@ class Manager(object):
             line = [
                 '    flist=`ls {rfname}`',
                 '    if [ -z $flist ]; then',
+                '        echo "NOT FOUND: {rname}={rfname}"',
+                '    else',
                 '        for fresult in $flist; do',
                 "            hash=`shasum -a " + SHA_ALGO + " $fresult | awk '{{print $1}}'`",
                 '            echo $fresult: >> $jd/results.yml',
@@ -131,8 +133,6 @@ class Manager(object):
                 '            echo "Found and copied {rname}={rfname} --> $fresult";',
                 '            mv $fresult $rs/$fresult;',
                 '        done',
-                '    else',
-                '        echo "NOT FOUND: {rname}={rfname}"',
                 '    fi',
             ]
             cp_results.append('\n'.join(line).format(rname=rname, rfname=rfname, rtype=r['content_type']))
