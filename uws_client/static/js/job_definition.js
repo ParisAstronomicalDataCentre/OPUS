@@ -313,6 +313,7 @@
 			type : 'GET',
 			dataType: "json",
 			success : function(jdl) {
+			    console.log(jdl);
                 $('#load_msg').attr('class', 'text-info');
                 $('#load_msg').text('JDL loaded.');
                 $('#load_msg').show().delay(3000).fadeOut();
@@ -441,11 +442,11 @@
 		});
     }
 
-	function get_jdl() {
+	function save_jdl() {
         var jobname = $('input[name=name]').val();
-        // ajax command to get_jdl on UWS server
+        // ajax command to save_jdl from UWS server
         $.ajax({
-			url : server_url + '/jdl/' + jobname + '/json',  //.split("/").pop(),  // to remove new/ (not needed here)
+			url : server_url + '/jdl/' + jobname,  //.split("/").pop(),  // to remove new/ (not needed here)
 			type : 'GET',
 			dataType: "text",
 			success : function(jdl) {
@@ -502,8 +503,8 @@
         $('#load_jdl').click( function() {
             load_jdl();
         });
-        $('#get_jdl').click( function() {
-            get_jdl();
+        $('#save_jdl').click( function() {
+            save_jdl();
         });
         $('#validate_job').click( function() {
             jobname = $('input[name=name]').val().split("/").pop();  // remove 'new/'
