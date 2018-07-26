@@ -135,7 +135,7 @@ class Manager(object):
                 '        echo "NOT FOUND: {rname}={rfname}"',
                 '    fi',
             ]
-            cp_results.append('\n'.join(line).format(rname=rname, fname=rfname, rtype=r['content_type']))
+            cp_results.append('\n'.join(line).format(rname=rname, rfname=rfname, rtype=r['content_type']))
             # cp_results.append(
             #     '    [ -f $wd/{fname} ]'
             #     ' && {{ cp $wd/{fname} $rs; echo "Found and copied: {rname}={fname}"; }}'
