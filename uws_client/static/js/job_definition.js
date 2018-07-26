@@ -46,7 +46,7 @@
         'executionDuration',
         'quote',
     ]
-    var param_fields = [
+    var elt_fields = [
         'name',
         'datatype',
         'type',
@@ -257,8 +257,10 @@
                 $(this).find('.remove_' + type).attr('id', 'remove_' + type + '_' + i);
                 $(this).find('.moveup_' + type).attr('id', 'moveup_' + type + '_' + i);
                 $(this).find('.movedown_' + type).attr('id', 'movedown_' + type + '_' + i);
-                for (var attr in param_fields) {
-                    $(this).find('.' + type + '_' + attr).attr(attr, type + '_' + attr + '_' + i);
+                for (var eattr in elt_fields) {
+                    console.log(eattr);
+                    console.log(type + '_' + eattr + '_' + i);
+                    $(this).find('.' + type + '_' + eattr).attr(eattr, type + '_' + eattr + '_' + i);
                 };
 //                $(this).find('.' + type + '_name').attr('name', type + '_name_' + i);
 //                $(this).find('.' + type + '_type').attr('name', type + '_type_' + i);
