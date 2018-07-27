@@ -790,6 +790,7 @@ var uws_client = (function($) {
         var jdl = clients[job.jobName].jdl;
         var serviceUrl = clients[job.jobName].serviceUrl;
         var details_keys =['stdout','stderr','provjson','provxml','provsvg'];
+        var final_phase = ['COMPLETED', 'ABORTED', 'ERROR']
         $('#result_list').html('');
         //var generated_keys = jdl.generated_keys.concat(['stdout','stderr','provjson','provxml','provsvg']);
         for (var rkey in jdl.generated_keys) {
@@ -838,7 +839,7 @@ var uws_client = (function($) {
                     r_type = 'image/svg+xml'
                     break;
             };
-            if (job.phase == 'COMPLETED') {
+            if (final_phase.includes(job.phase)) {
                 displayResult('details_list', r, r_type, r_url, r_url_auth);
             };
         };
