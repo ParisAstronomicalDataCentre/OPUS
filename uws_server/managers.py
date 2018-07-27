@@ -121,7 +121,7 @@ class Manager(object):
             # TODO: copy directly to archive directory (?)
             rfname = job.get_result_filename(rname)
             line = [
-                '    flist=`ls {rfname}`',
+                '    flist=`ls {rfname} 2>/dev/null`',
                 '    if [ -z "{rfname}"] || [ -z $flist ]; then',
                 '        echo "NOT FOUND: {rname}={rfname}"',
                 '    else',
