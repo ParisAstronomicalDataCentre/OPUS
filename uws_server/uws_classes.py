@@ -677,31 +677,32 @@ class Job(object):
             # Set start_time
             if new_phase in ['QUEUED']:
                 self.start_time = now.strftime(DT_FMT)
-            try:
-                # Get results, logs
-                if new_phase in ['COMPLETED', 'ABORTED', 'ERROR']:
+            if self.phase not in ['ERROR']:
+                try:
+                    # Get results, logs
+                    if new_phase in ['COMPLETED', 'ABORTED', 'ERROR']:
+                        self.end_time = now.strftime(DT_FMT)
+                        self.manager.get_jobdata(self)
+                        # Add results, logs, provenance (if they exist...) to job control db
+                        self.add_results()
+                        self.add_logs()
+                    # Add provenance files
+                    if new_phase in ['COMPLETED']:
+                        # self.storage.read(self, get_parameters=True, get_results=True)
+                        self.add_provenance()
+                except Exception as e:
+                    self.phase = 'ERROR'
+                    error = 'Cannot get jobdata (or update db) for job {}'.format(self.jobid)
+                    if self.error:
+                        self.error += '. ' + error
+                    else:
+                        self.error = error
                     self.end_time = now.strftime(DT_FMT)
-                    self.manager.get_jobdata(self)
-                    # Add results, logs, provenance (if they exist...) to job control db
-                    self.add_results()
-                    self.add_logs()
-                # Add provenance files
-                if new_phase in ['COMPLETED']:
-                    # self.storage.read(self, get_parameters=True, get_results=True)
-                    self.add_provenance()
-            except Exception as e:
-                self.phase = 'ERROR'
-                error = 'Cannot get jobdata (or update db) for job {}'.format(self.jobid)
-                if self.error:
-                    self.error += '. ' + error
-                else:
-                    self.error = error
-                self.end_time = now.strftime(DT_FMT)
-                self.storage.save(self)
-                change_status_signal = signal('job_status')
-                result = change_status_signal.send('change_status', sig_jobid=self.jobid, sig_phase=self.phase)
-                raise
-            # increment error message is needed
+                    self.storage.save(self)
+                    change_status_signal = signal('job_status')
+                    result = change_status_signal.send('change_status', sig_jobid=self.jobid, sig_phase=self.phase)
+                    raise
+            # Increment error message is needed
             if new_phase in ['ERROR', 'ABORTED']:
                 # Set job.error or add
                 if self.error:
@@ -724,7 +725,7 @@ class Job(object):
             # Send signal (e.g. if WAIT command expecting signal)
             change_status_signal = signal('job_status')
             result = change_status_signal.send('change_status', sig_jobid=self.jobid, sig_phase=self.phase)
-            #logger.info('Signal sent for status change ({} --> {}). Results: \n{}'.format(previous_phase, self.phase, str(result)))
+            logger.debug('Signal sent for status change ({} --> {}). Results: \n{}'.format(previous_phase, self.phase, str(result)))
         else:
             raise UserWarning('Job {} cannot be updated to {} while in phase {}'
                               ''.format(self.jobid, new_phase, self.phase))
