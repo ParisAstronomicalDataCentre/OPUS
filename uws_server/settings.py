@@ -176,11 +176,11 @@ UWS_PARAMETERS = {
 
 # Parameters allowed for SLURM sbatch header, prefixed with 'slurm:'
 SLURM_PARAMETERS = {
-    'slurm_mem': 'Memory to be allocated to the job',
-    'slurm_nodes': 'Number of nodes allocated to the job',
-    'slurm_ntasks-per-node': '',
-    'slurm_partition': 'short, ...',
-    'slurm_account': 'If needed (obspm for quadri12)',
+    'mem': 'Memory to be allocated to the job',
+    'nodes': 'Number of nodes allocated to the job',
+    'ntasks-per-node': '',
+    'partition': 'short, ...',
+    'account': 'If needed (obspm for quadri12)',
 }
 
 # Control parameters allowed in a form for job creation
