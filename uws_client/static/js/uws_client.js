@@ -824,23 +824,25 @@ var uws_client = (function($) {
         $('#details_list').html('');
         for (var rkey in details_keys) {
             var r = details_keys[rkey];
-            console.log(r);
-            var r_url = serviceUrl + '/' + job.jobId + '/' + r;
-            var r_url_auth = client_proxy_url + server_jobs_url + job.jobName + '/' + job.jobId + '/' + r;
-            var r_type = 'text/plain';
-            switch (r) {
-                case 'provjson':
-                    r_type = 'application/json'
-                    break;
-                case 'provxml':
-                    r_type = 'text/xml'
-                    break;
-                case 'provsvg':
-                    r_type = 'image/svg+xml'
-                    break;
-            };
-            if (final_phase.includes(job.phase)) {
-                displayResult('details_list', r, r_type, r_url, r_url_auth);
+            if ($.inArray(r, Object.keys(job.results)) !== -1) {
+                console.log(r);
+                var r_url = serviceUrl + '/' + job.jobId + '/' + r;
+                var r_url_auth = client_proxy_url + server_jobs_url + job.jobName + '/' + job.jobId + '/' + r;
+                var r_type = 'text/plain';
+                switch (r) {
+                    case 'provjson':
+                        r_type = 'application/json'
+                        break;
+                    case 'provxml':
+                        r_type = 'text/xml'
+                        break;
+                    case 'provsvg':
+                        r_type = 'image/svg+xml'
+                        break;
+                };
+                if (final_phase.includes(job.phase)) {
+                    displayResult('details_list', r, r_type, r_url, r_url_auth);
+                };
             };
         };
     };
