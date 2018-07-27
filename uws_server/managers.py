@@ -122,7 +122,7 @@ class Manager(object):
             rfname = job.get_result_filename(rname)
             line = [
                 '    flist=`ls {rfname}`',
-                '    if [ -z $flist ]; then',
+                '    if [ -z "{rfname}"] || [ -z $flist ]; then',
                 '        echo "NOT FOUND: {rname}={rfname}"',
                 '    else',
                 '        for fresult in $flist; do',
