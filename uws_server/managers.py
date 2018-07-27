@@ -61,7 +61,6 @@ class Manager(object):
             '### INIT',
             'JOBID={}'.format(jobid_var),
             'echo "JOBID is $JOBID"',
-            'cat /var/lib/slurm-llnl/slurmd/$JOBID/slurm_script',
             'timestamp() {',
             '    date +"%Y-%m-%dT%H:%M:%S"',
             '}',
@@ -123,7 +122,7 @@ class Manager(object):
             rfname = job.get_result_filename(rname)
             line = [
                 '    flist=`ls {rfname} 2>/dev/null`',
-                '    if ([ -z "{rfname}"] || [ -z $flist ]); then',
+                '    if ([ -z "{rfname}" ] || [ -z $flist ]); then',
                 '        echo "NOT FOUND: {rname}={rfname}"',
                 '    else',
                 '        for fresult in $flist; do',
