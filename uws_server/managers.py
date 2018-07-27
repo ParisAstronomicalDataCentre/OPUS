@@ -459,7 +459,7 @@ class SLURMManager(Manager):
         ]
         # Insert server/job specific sbatch commands
         for k in SLURM_PARAMETERS:
-            if k not in SLURM_SBATCH_DEFAULT:
+            if k in SLURM_SBATCH_DEFAULT:
                 # Check if parameter is given in job.parameters or use default
                 v = job.parameters.get('slurm_'+k, {'value': SLURM_SBATCH_DEFAULT[k]})
                 sbatch.append('#SBATCH --{}={}'.format(k, v['value']))
