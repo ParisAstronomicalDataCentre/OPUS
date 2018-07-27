@@ -458,15 +458,14 @@ class SLURMManager(Manager):
             '#SBATCH --time={}'.format(duration_str),
         ]
         # Insert server/job specific sbatch commands
-        for k in SLURM_SBATCH_DEFAULT:
-            # Check if parameter is given in job.parameters or use default
-            v = job.parameters.get('slurm_'+k, SLURM_SBATCH_DEFAULT[k])
-            sbatch.append('#SBATCH --{}={}'.format(k, v))
         for k in SLURM_PARAMETERS:
             if k not in SLURM_SBATCH_DEFAULT:
-                if 'slurm_'+k in job.parameters:
-                    v = job.parameters.get('slurm_'+k, SLURM_SBATCH_DEFAULT[k])
-                    sbatch.append('#SBATCH --{}={}'.format(k, v))
+                # Check if parameter is given in job.parameters or use default
+                v = job.parameters.get('slurm_'+k, {'value': SLURM_SBATCH_DEFAULT[k]})
+                sbatch.append('#SBATCH --{}={}'.format(k, v['value']))
+            elif 'slurm_'+k in job.parameters:
+                v = job.parameters.get('slurm_'+k)
+                sbatch.append('#SBATCH --{}={}'.format(k, v['value']))
         # Script init and execution
         sbatch.extend(
             self._make_batch(job, jobid_var='$SLURM_JOBID', get_input_files=get_input_files)
