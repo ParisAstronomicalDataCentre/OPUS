@@ -61,6 +61,7 @@ class Manager(object):
             '### INIT',
             'JOBID={}'.format(jobid_var),
             'echo "JOBID is $JOBID"',
+            'cat /var/lib/slurm-llnl/slurmd/$JOBID/slurm_script',
             'timestamp() {',
             '    date +"%Y-%m-%dT%H:%M:%S"',
             '}',
