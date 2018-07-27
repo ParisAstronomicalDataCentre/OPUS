@@ -120,34 +120,33 @@ class Manager(object):
         for rname, r in job.jdl.content.get('generated', {}).items():
             # TODO: copy directly to archive directory (?)
             rfname = job.get_result_filename(rname)
-            if rfname:
-                line = [
-                    '    flist=`ls {rfname} 2>/dev/null`',
-                    '    if [ -z $flist ]; then',
-                    '        echo "NOT FOUND: {rname}={rfname}"',
-                    '    else',
-                    '        for fresult in $flist; do',
-                    "            hash=`shasum -a " + SHA_ALGO + " $fresult | awk '{{print $1}}'`",
-                    '            echo $fresult: >> $jd/results.yml',
-                    '            echo "  result_name: {rname}" >> $jd/results.yml',
-                    '            echo "  result_value: \'{rfname}\'" >> $jd/results.yml',
-                    '            echo "  file_name: $fresult" >> $jd/results.yml',
-                    '            echo "  file_dir: $rs" >> $jd/results.yml',
-                    '            echo "  content_type: {rtype}" >> $jd/results.yml',
-                    '            echo "  hash: "$hash >> $jd/results.yml',
-                    '            echo "Found and copied {rname}={rfname} --> $fresult";',
-                    '            mv $fresult $rs/$fresult;',
-                    '        done',
-                    '    fi',
-                ]
-                cp_results.append('\n'.join(line).format(rname=rname, rfname=rfname, rtype=r['content_type']))
-                # cp_results.append(
-                #     '    [ -f $wd/{fname} ]'
-                #     ' && {{ cp $wd/{fname} $rs; echo "Found and copied: {rname}={fname}"; }}'
-                #     ' || echo "NOT FOUND: {rname}={fname}"'
-                #     ''.format(rname=rname, fname=fname)
-                # )
-            cp_results.append('}')
+            line = [
+                '    flist=`ls {rfname} 2>/dev/null`',
+                '    if ([ -z "{rfname}" ] || [ -z $flist ]); then',
+                '        echo "NOT FOUND: {rname}={rfname}"',
+                '    else',
+                '        for fresult in $flist; do',
+                "            hash=`shasum -a " + SHA_ALGO + " $fresult | awk '{{print $1}}'`",
+                '            echo $fresult: >> $jd/results.yml',
+                '            echo "  result_name: {rname}" >> $jd/results.yml',
+                '            echo "  result_value: \'{rfname}\'" >> $jd/results.yml',
+                '            echo "  file_name: $fresult" >> $jd/results.yml',
+                '            echo "  file_dir: $rs" >> $jd/results.yml',
+                '            echo "  content_type: {rtype}" >> $jd/results.yml',
+                '            echo "  hash: "$hash >> $jd/results.yml',
+                '            echo "Found and copied {rname}={rfname} --> $fresult";',
+                '            mv $fresult $rs/$fresult;',
+                '        done',
+                '    fi',
+            ]
+            cp_results.append('\n'.join(line).format(rname=rname, rfname=rfname, rtype=r['content_type']))
+            # cp_results.append(
+            #     '    [ -f $wd/{fname} ]'
+            #     ' && {{ cp $wd/{fname} $rs; echo "Found and copied: {rname}={fname}"; }}'
+            #     ' || echo "NOT FOUND: {rname}={fname}"'
+            #     ''.format(rname=rname, fname=fname)
+            # )
+        cp_results.append('}')
         batch.extend(cp_results)
         # Set $wd and $jd
         batch.extend([
