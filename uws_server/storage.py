@@ -225,7 +225,8 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             __tablename__ = 'used'
             entity_id = Column(String(80), ForeignKey("entities.entity_id"), primary_key=True)
             jobid = Column(String(80), ForeignKey("jobs.jobid"), primary_key=True)  # uuid: max=36
-            role = Column(String(255))
+            role = Column(String(255), nullable=True)
+            owner = Column(String(64), nullable=True)
 
         # self.Base.prepare(self.engine, reflect=True)
         self.Base.metadata.create_all(self.engine)
@@ -450,34 +451,68 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         # jobid, result_name, file_name, file_dir=None, access_url=None, hash=None, content_type=None, owner='anonymous', owner_token='anonymous'):
         """Add entity, store hash and properties, return entity_id"""
         # Check for required attributes in kwargs
-        for k in ['file_name', 'owner']:
+        for k in ['file_name', 'file_dir', 'owner']:
             if not k in kwargs:
                 raise UserWarning('Attribute {} is missing to register a new entity'.format(k))
-        # Redefine file_dir if ARCHIVE is Local (the file has been copied to RESULTS_PATH)
+        # Redefine file_dir if ARCHIVE is Local (the generated file has been copied to RESULTS_PATH)
         if ARCHIVE == 'Local':
-            kwargs['file_dir'] = os.path.join(RESULTS_PATH, kwargs['jobid'])
+            if 'result_name' in kwargs:
+                kwargs['file_dir'] = os.path.join(RESULTS_PATH, kwargs['jobid'])
+            elif 'used_role' in kwargs:
+                kwargs['file_dir'] = os.path.join(UPLOADS_PATH, kwargs['jobid'])
         # Compute hash if not given (look for file in file_dir)
         if not 'hash' in kwargs:
             kwargs['hash'] = self.get_hash(os.path.join(kwargs['file_dir'], kwargs['file_name']))
         # Set creation_time if not given
-        if not 'creation_time' in kwargs:
-            now = dt.datetime.now()
-            kwargs['creation_time'] = now.strftime(DT_FMT)
-        # Generate unique identifier for the entity
-        # For a UWS system: entity_id = jobid + result name
-        # ! hash may not be unique
-        entity_id = ENTITY_ID_GEN(**kwargs)
-        kwargs['entity_id'] = entity_id
-        # Define access_url if not given
-        if not 'access_url' in kwargs:
-            kwargs['access_url'] = '{}/store?ID={}'.format(BASE_URL, entity_id)
-        # Store info in DB
-        e = self.Entity(**kwargs)
-        self.session.merge(e)
-        self.session.commit()
-        # Return entity_id
-        logger.info('New entity registered: {}'.format(str(kwargs)))
-        return kwargs
+        # if not 'creation_time' in kwargs:
+        #     now = dt.datetime.now()
+        #     kwargs['creation_time'] = now.strftime(DT_FMT)
+
+        # Check if file already exists --> first hash, then test if filename contains entity_id or jobid if found
+        entity = False
+        elist = self.session.query(self.Entity).filter_by(hash=kwargs['hash']).all()
+        if elist:
+            for e in elist:
+                if e['entity_id'] in kwargs['file_name']:
+                    # Entity has the expected entity_id in its name
+                    logger.info('Entity found for {} with same hash, and file_name contains entity_id: {}'.format(kwargs['file_name'], str(e)))
+                    entity = e.__dict__
+                    entity_id = entity['entity_id']
+                elif e['jobid'] in kwargs['file_name']:
+                    # Entity has the jobid that generated it in its name
+                    logger.info('Entity found for {} with same hash, and file_name contains jobid: {}'.format(kwargs['file_name'], str(e)))
+                    entity = e.__dict__
+                    entity_id = entity['entity_id']
+
+        if not entity:
+            # Generate unique identifier for the new entity
+            entity_id = ENTITY_ID_GEN(**kwargs)
+
+        # Check if used (pop used_jobid and used_role and add Used entry)
+        if 'used_jobid' in kwargs:
+            jobid = kwargs.pop('used_jobid')
+            role = kwargs.pop('used_role', None)
+            used = self.Used(entity_id=entity_id, jobid=jobid, role=role, owner=kwargs['owner'])
+            self.session.merge(used)
+            self.session.commit()
+            logger.info('Adding Used relation for file_name={} (entity_id={})'.format(kwargs['file_name'], entity_id))
+
+        if not entity:
+            # Store new entity and return attributes
+            kwargs['entity_id'] = entity_id
+            # Define access_url if not given
+            if not 'access_url' in kwargs:
+                kwargs['access_url'] = '{}/store?ID={}'.format(BASE_URL, entity_id)
+            # Store info in DB
+            e = self.Entity(**kwargs)
+            self.session.merge(e)
+            self.session.commit()
+            # Return entity_id
+            logger.info('New entity registered: {}'.format(str(kwargs)))
+            return kwargs
+        else:
+            # Return existing entity attributes
+            return entity
 
     def remove_entity(self, entity_id=None, jobid=None, owner='anonymous'):
         """Remove entity"""

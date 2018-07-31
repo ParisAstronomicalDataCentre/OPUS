@@ -249,7 +249,7 @@ class Job(object):
                     #self.parameters[pname] = {'value': value, 'byref': False}
                     setattr(self, pname, value)
         # Search inputs in POST/files
-        upload_dir = '{}/{}'.format(UPLOADS_PATH, self.jobid)
+        upload_dir = os.path.join(UPLOADS_PATH, self.jobid)
         for pname in self.jdl.content.get('used', {}):
             if pname in list(files.keys()):
                 # Parameter is a file from the form
@@ -262,19 +262,23 @@ class Job(object):
                 value = 'file://' + f.filename
                 # value = f.filename
                 logger.info('Input {} is a file and was downloaded ({})'.format(pname, f.filename))
-                # TODO: check if file already exists in entity store (hash + ID in name or jobid)
-
+                # Check if file already exists in entity store (hash + ID in name or jobid) and ass in Used table
+                entity = self.storage.register_entity(file_name=f.filename, file_dir=upload_dir,
+                                                      used_jobid=self.jobid, used_role=pname,
+                                                      owner=self.user.name)
             else:
-                # Parameter is a value or an ID (set from post or by default)
+                # Parameter is a value, possibly an ID (set from post or by default)
                 if pname in post:
+                    # Get value from post
                     value = post.pop(pname)
                     logger.info('Input {} is a value (or an identifier) : {}'.format(pname, value))
                 else:
+                    # Set value to its default
                     value = self.jdl.content['used'][pname]['default']
                     logger.info('Input {} set by default'.format(pname))
                 # TODO: check if ID already exists in entity store
 
-                # try to onvert ID to a URL and upload
+                # try to convert ID to a URL and upload
                 url = self.jdl.content['used'][pname]['url']
                 if url:
                     furl = url.replace('$ID', value)
@@ -495,6 +499,7 @@ class Job(object):
     def add_results(self):
         # Read results.yml to know generated results (those that are located in the results directory)
         rf_name = os.path.join(JOBDATA_PATH, self.jobid, 'results.yml')
+        now = dt.datetime.now()
         result_list = {}
         if os.path.isfile(rf_name):
             with open(rf_name, 'r') as rf:
@@ -509,6 +514,7 @@ class Job(object):
                 content_type = rinfo['content_type'],
                 file_name = rinfo['file_name'],
                 file_dir = rinfo['file_dir'],
+                creation_time = now.strftime(DT_FMT),
                 owner = self.owner,
             )
             self.add_result_entry(rname, entity['access_url'], entity['content_type'])
