@@ -774,13 +774,15 @@ def get_entity():
         download = entity['entity_id'] + os.path.splitext(entity['file_name'])[1]
         logger.debug('{} [{}]'.format(str(entity), user))
         response.set_header('Content-type', entity['content_type'])
-        if any(x in entity['content_type'] for x in ['text', 'xml', 'json', 'image/png', 'image/jpeg']):
-            return static_file(entity['file_name'], root=entity['file_dir'], mimetype=entity['content_type'],
-                               download=download)
-        else:
-            response.set_header('Content-Disposition', 'attachment; filename="{}"'.format(entity['file_name']))
-            return static_file(entity['file_name'], root=entity['file_dir'], mimetype=entity['content_type'],
-                               download=download)
+        return static_file(entity['file_name'], root=entity['file_dir'], mimetype=entity['content_type'],
+                           download=download)
+        # if any(x in entity['content_type'] for x in ['text', 'xml', 'json', 'image/png', 'image/jpeg']):
+        #     return static_file(entity['file_name'], root=entity['file_dir'], mimetype=entity['content_type'],
+        #                        download=download)
+        # else:
+        #     response.set_header('Content-Disposition', 'attachment; filename="{}"'.format(entity['file_name']))
+        #     return static_file(entity['file_name'], root=entity['file_dir'], mimetype=entity['content_type'],
+        #                        download=download)
     except JobAccessDenied as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
