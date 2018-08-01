@@ -493,7 +493,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                         logger.info('Entity found for {} with same hash, and file_name contains jobid: {}'.format(kwargs['file_name'], str(entity)))
                         entity_id = entity['entity_id']
                     else:
-                        used = self.session.query(self.Used).filter_by(entity_id=row.entity_id, jobid=kwargs['jobid'], role=row.file_name).all()
+                        used = self.session.query(self.Used).filter_by(entity_id=row.entity_id, jobid=kwargs.get('jobid'), role=row.file_name).all()
                         if used:
                             # Entity has already been used by the same job (and is now exposed as a UWS result)
                             entity = dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
