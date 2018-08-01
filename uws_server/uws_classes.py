@@ -275,6 +275,7 @@ class Job(object):
             self.jdl.read(self.jobname)
         # Pop UWS attributes keywords from POST or set by default
         self.execution_duration = self.jdl.content.get('executionDuration', EXECUTION_DURATION_DEF)
+        post.pop('control_parameters')
         for pname in CONTROL_PARAMETERS_KEYS:
             if pname in post:
                 value = post.pop(pname)

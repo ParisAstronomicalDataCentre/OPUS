@@ -661,16 +661,18 @@ var uws_client = (function($) {
         };
         // Fill value from job
         $('#job_params').append('<input id="all_params" name="all_params" type="hidden" value=""/>');
-        $('#all_params').attr('value', JSON.stringify(job.parameters));
+        var qs = {}};
         for (var pname in job.parameters) {
             var pvalue = job.parameters[pname].value;
             pvalue = decodeURIComponent(pvalue).replace(/[+]/g, " ");
+            qs[pname] = pvalue
             // Add in param_list table (if present in DOM)
             $('#param_list').append('<tr><td><strong>' + pname + '</strong></td><td>' + pvalue + '</td></tr>');
             // Update form fields
             $('#id_' + pname).attr('value', pvalue);
         };
         $('.selectpicker').selectpicker('refresh');
+        $('#all_params').attr('value', JSON.stringify(qs));
         // Add buttons
         var elt = '\
             <div id="form-buttons" class="form-group">\n\
