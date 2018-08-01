@@ -134,7 +134,7 @@ def job2prov(job, depth=1, direction='BACK', members=0, steps=0, agent=0, model=
             location = entity['access_url']
             logger.debug('Input entity found: {}'.format(entity))
         else:
-            pqn = value.split('/')[-1]
+            pqn = '_:' + value.split('/')[-1]
             location = value
             logger.debug('No previous record for input entity {}={}'.format(pname, value))
         if show_parameters:
@@ -209,7 +209,7 @@ def job2prov(job, depth=1, direction='BACK', members=0, steps=0, agent=0, model=
                     rqn = ns_result + ':' + entity['entity_id']
                     content_type = entity['content_type']
                 else:
-                    rqn = rname
+                    rqn = '_:' + rname
                     content_type = job.results[rname]['content_type']
                 e_out.append(pdoc.entity(rqn))
                 # TODO: use publisher_did? add prov attributes, add voprov attributes?
