@@ -206,10 +206,12 @@ def job2prov(job, depth=1, direction='BACK', members=0, steps=0, agent=0, model=
                 # if entity_id:
                 entity = job_storage.get_entity(entity_id, silent=True)
                 if entity:
-                    rqn = ns_result + ':' + entity['entity_id']
+                    entity_id = entity['entity_id']
+                    rqn = ns_result + ':' + entity_id
                     content_type = entity['content_type']
                 else:
-                    rqn = ':' + rname
+                    entity_id = rname
+                    rqn = ':' + entity_id
                     content_type = job.results[rname]['content_type']
                 e_out.append(pdoc.entity(rqn))
                 # TODO: use publisher_did? add prov attributes, add voprov attributes?
@@ -219,15 +221,18 @@ def job2prov(job, depth=1, direction='BACK', members=0, steps=0, agent=0, model=
                     # 'voprov:file_name': entity['file_name'],
                     'voprov:content_type': content_type,
                 })
-                e_out[-1].wasGeneratedBy(act, attributes={
-                    'prov:role': rname,
-                })
-                #for e in e_in:
-                #    e_out[-1].wasDerivedFrom(e)
-                if agent:
-                    e_out[-1].wasAttributedTo(owner, attributes={
-                        'prov:role': 'owner',
+                # test if not used
+                used = job_storage.query(job_storage.Used).filter_by(entity_id=entity_id, jobid=job.jobid).all()
+                if not used:
+                    e_out[-1].wasGeneratedBy(act, attributes={
+                        'prov:role': rname,
                     })
+                    #for e in e_in:
+                    #    e_out[-1].wasDerivedFrom(e)
+                    if agent:
+                        e_out[-1].wasAttributedTo(owner, attributes={
+                            'prov:role': 'owner',
+                        })
 
     # Merge all prov documents
     for opdoc in other_pdocs:
