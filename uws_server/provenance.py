@@ -122,6 +122,7 @@ def job2prov(job, depth=1, direction='BACK', members=0, steps=0, agent=0, model=
     # Used entities
     e_in = []
     act_attr = {}
+    used_entities = []
     for pname, pdict in job.jdl.content.get('used', {}).items():
         # Assuming that used entity is a file or a URL (not a value or an ID)
         value = job.parameters.get(pname, {}).get('value', '')
@@ -130,11 +131,13 @@ def job2prov(job, depth=1, direction='BACK', members=0, steps=0, agent=0, model=
         # entity_id = os.path.splitext(os.path.basename(value))[0]
         entity = job_storage.get_entity(entity_id, silent=True)
         if entity:
+            used_entities.append(entity_id)
             pqn = ns_result + ':' + entity_id
             location = entity['access_url']
             logger.debug('Input entity found: {}'.format(entity))
         else:
-            pqn = ':' + value.split('/')[-1]
+            pqn = value.split('/')[-1]  # removes file:// if present, or longer path
+            used_entities.append(pqn)
             location = value
             logger.debug('No previous record for input entity {}={}'.format(pname, value))
         if show_parameters:
@@ -221,9 +224,8 @@ def job2prov(job, depth=1, direction='BACK', members=0, steps=0, agent=0, model=
                     # 'voprov:file_name': entity['file_name'],
                     'voprov:content_type': content_type,
                 })
-                # test if not used
-                used = job_storage.session.query(job_storage.Used).filter_by(entity_id=entity_id, jobid=job.jobid).all()
-                if not used:
+                # Only shox result if it is not already used
+                if entity_id not in used_entities:
                     e_out[-1].wasGeneratedBy(act, attributes={
                         'prov:role': rname,
                     })
