@@ -744,7 +744,7 @@ def get_jdl(jobname):
 
 
 @app.route('/store')
-def get_entity():
+def download_entity():
     """Get entity file corresponding to ID=entity_id
 
     Returns:
