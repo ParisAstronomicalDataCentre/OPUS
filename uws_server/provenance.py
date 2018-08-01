@@ -20,7 +20,8 @@ from . import storage
 # http://lists.g-vo.org/pipermail/prov-adhoc/2015-June/000025.html
 
 
-def job2prov(job, show_parameters=True, depth=1, recursive=False, show_generated=False):
+def job2prov(job, depth=1, direction='BACK', members=0, steps=0, agent=0, model='IVOA',
+             show_parameters=True, recursive=False, show_generated=False):
     """
     Create ProvDocument based on job description
     :param job: UWS job
@@ -79,13 +80,14 @@ def job2prov(job, show_parameters=True, depth=1, recursive=False, show_generated
             })
 
     # Agent: owner of the job
-    owner = pdoc.agent('opus_user:' + job.owner)
-    # owner.add_attributes({
-    #     'foaf:name': job.owner,
-    # })
-    act.wasAssociatedWith(owner, attributes={
-        'prov:role': 'owner'
-    })
+    if agent:
+        owner = pdoc.agent('opus_user:' + job.owner)
+        # owner.add_attributes({
+        #     'foaf:name': job.owner,
+        # })
+        act.wasAssociatedWith(owner, attributes={
+            'prov:role': 'owner'
+        })
 
     # Plan = ActivityDescription
     if depth > 0:
@@ -98,22 +100,23 @@ def job2prov(job, show_parameters=True, depth=1, recursive=False, show_generated
         })
 
     # Agent: contact for the job in ActivityDescription
-    contact_name = job.jdl.content.get('contact_name')
-    contact_email = job.jdl.content.get('contact_email')
-    if not contact_name:
-        contact_name = contact_email
-    if contact_name:
-        contact = pdoc.agent(contact_name)
-        # contact.add_attributes({
-        #     'foaf:name': contact_name,
-        # })
-        if contact_email:
-            contact.add_attributes({
-                'foaf:mbox': "<mailto:{}>".format(contact_email)
+    if agent:
+        contact_name = job.jdl.content.get('contact_name')
+        contact_email = job.jdl.content.get('contact_email')
+        if not contact_name:
+            contact_name = contact_email
+        if contact_name:
+            contact = pdoc.agent(contact_name)
+            # contact.add_attributes({
+            #     'foaf:name': contact_name,
+            # })
+            if contact_email:
+                contact.add_attributes({
+                    'foaf:mbox': "<mailto:{}>".format(contact_email)
+                })
+            act.wasAssociatedWith(contact, attributes={
+                'prov:role': 'contact'
             })
-        act.wasAssociatedWith(contact, attributes={
-            'prov:role': 'contact'
-        })
 
 
     # Used entities
@@ -218,14 +221,16 @@ def job2prov(job, show_parameters=True, depth=1, recursive=False, show_generated
                 })
                 #for e in e_in:
                 #    e_out[-1].wasDerivedFrom(e)
-                e_out[-1].wasAttributedTo(owner, attributes={
-                    'prov:role': 'owner',
-                })
+                if agent:
+                    e_out[-1].wasAttributedTo(owner, attributes={
+                        'prov:role': 'owner',
+                    })
 
     # Merge all prov documents
     for opdoc in other_pdocs:
         logger.debug(opdoc.serialize())
         pdoc.update(opdoc)
+    pdoc.flattened()
     pdoc.unified()
 
     return pdoc
