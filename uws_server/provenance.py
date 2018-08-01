@@ -206,7 +206,7 @@ def job2prov(job, depth=1, direction='BACK', members=0, steps=0, agent=0, model=
                 # rdict = job.jdl.content['generated'].get(rname, {})
                 # entity_id = job.jobid + '_' + rname
                 # if entity_id:
-                entity = job_storage.get_entity(entity_id, slent=True)
+                entity = job_storage.get_entity(entity_id, silent=True)
                 if entity:
                     rqn = ns_result + ':' + entity['entity_id']
                     content_type = entity['content_type']
