@@ -8,6 +8,8 @@ Defines classes for UWS objects job and job_list
 
 import shutil
 import urllib.request, urllib.parse, urllib.error
+import requests
+import re
 import datetime as dt
 import xml.etree.ElementTree as ETree
 import yaml
@@ -31,6 +33,39 @@ class JobAccessDenied(Exception):
 class EntityAccessDenied(Exception):
     """User has no right to access job"""
     pass
+
+
+# ---------
+# Helper function
+
+
+def is_downloadable(url):
+    """
+    Does the url contain a downloadable resource
+    """
+    h = requests.head(url, allow_redirects=True)
+    header = h.headers
+    content_type = header.get('content-type')
+    if 'html' in content_type.lower():
+        logger.warning('Fiund HTML page, nothing to download')
+        return False
+    content_length = header.get('content-length', None)
+    if content_length and content_length > 2e8:  # 200 mb approx
+        logger.warning('File is too large to be downloaded')
+        return False
+    return True
+
+
+def get_filename_from_cd(cd):
+    """
+    Get filename from content-disposition
+    """
+    if not cd:
+        return None
+    fname = re.findall('filename=\"(.+)\"', cd)
+    if len(fname) == 0:
+        return None
+    return fname[0]
 
 
 # ---------
@@ -71,7 +106,7 @@ def check_permissions(job):
     """Check if user has rights to create/edit such a job, else raise JobAccessDenied"""
     if CHECK_PERMISSIONS:
         if job.user in special_users:
-            logger.debug('Permission granted for special user {} (job {}/{})'.format(job.user.name, job.jobname, job.jobid))
+            # logger.debug('Permission granted for special user {} (job {}/{})'.format(job.user.name, job.jobname, job.jobid))
             pass
         else:
             if job.jobname:
@@ -243,51 +278,74 @@ class Job(object):
         for pname in CONTROL_PARAMETERS_KEYS:
             if pname in post:
                 value = post.pop(pname)
-                self.parameters[pname] = {'value': value, 'byref': False}
+                self.parameters[pname] = {
+                    'value': value,
+                    'byref': False,
+                    'entity_id': None,
+                }
                 if pname in UWS_PARAMETERS:
                     pname = upper2underscore(pname.split('uws_')[-1])  # remove the prefix uws_ to update the class attribute
                     #self.parameters[pname] = {'value': value, 'byref': False}
                     setattr(self, pname, value)
-        # Search inputs in POST/files
+        # Search input entities in POST/files
         upload_dir = os.path.join(UPLOADS_PATH, self.jobid)
         for pname in self.jdl.content.get('used', {}):
+            entity = {}
             if pname in list(files.keys()):
-                # Parameter is a file from the form
-                if not os.path.isdir(upload_dir):
-                    os.makedirs(upload_dir)
+                # 1/ Parameter is a file from the form
                 post_p = post.pop(pname)
                 f = files[pname]
-                f.save(upload_dir + '/' + f.filename)
+                if not os.path.isdir(upload_dir):
+                    os.makedirs(upload_dir)
+                f.save(os.path.join(upload_dir, f.filename))
                 # Parameter value is set to the file name on server (known to be in the uploads/<jobid> directory)
                 value = 'file://' + f.filename
                 # value = f.filename
-                logger.info('Input {} is a file and was downloaded ({})'.format(pname, f.filename))
-                # Check if file already exists in entity store (hash + ID in name or jobid) and ass in Used table
+                logger.info('Input "{}" is a file and was downloaded ({})'.format(pname, f.filename))
+                # Check if file already exists in entity store (hash + ID in name or jobid) and add in Used table
                 entity = self.storage.register_entity(file_name=f.filename, file_dir=upload_dir,
                                                       used_jobid=self.jobid, used_role=pname,
                                                       owner=self.user.name)
             else:
-                # Parameter is a value, possibly an ID (set from post or by default)
+                # 2/ Parameter is a value, possibly an ID (set from post or by default)
                 if pname in post:
                     # Get value from post
                     value = post.pop(pname)
-                    logger.info('Input {} is a value (or an identifier) : {}'.format(pname, value))
+                    logger.info('Input "{}" is a value (or an identifier): {}'.format(pname, value))
                 else:
                     # Set value to its default
                     value = self.jdl.content['used'][pname]['default']
-                    logger.info('Input {} set by default'.format(pname))
-                # TODO: check if ID already exists in entity store
-
-                # try to convert ID to a URL and upload
+                    logger.info('Input "{}" set by default: {}'.format(pname, value))
+                # 3/ Try to convert value/ID to a URL and upload
                 url = self.jdl.content['used'][pname]['url']
                 if url:
                     furl = url.replace('$ID', value)
-                    logger.info('Input {} is a URL : {}'.format(pname, furl))
                     # TODO: upload the file to upload dir
-
-                    # TODO: check if file already exists in entity store (hash + ID in name or jobid)
-
-            self.parameters[pname] = {'value': value, 'byref': True}
+                    r = requests.get(furl, allow_redirects=True)
+                    if r.status_code == 200:
+                        cd = r.headers.get('content-disposition')
+                        filename = get_filename_from_cd(cd)
+                        if not os.path.isdir(upload_dir):
+                            os.makedirs(upload_dir)
+                        open(os.path.join(upload_dir, filename), 'wb').write(r.content)
+                        # Parameter value is set to the file name on server
+                        value = 'file://' + filename
+                        logger.info('Input "{}" is a URL and was downloaded : {}'.format(pname, furl))
+                        # TODO: check if file already exists in entity store (hash + ID in name or jobid)
+                        entity = self.storage.register_entity(file_name=filename, file_dir=upload_dir,
+                                                              used_jobid=self.jobid, used_role=pname,
+                                                              owner=self.user.name)
+                    else:
+                        logger.warning('Cannot upload URL for input "{}": {}'.format(pname, furl))
+                # TODO: 4/ check if value is an ID that already exists in the entity store ? other attribute ?
+                if not entity:
+                    pass
+            # Store Input entity in UWS parameters
+            self.parameters[pname] = {
+                'value': value,
+                'byref': True,
+                'entity_id': entity.get('entity_id', None),
+            }
         # Search parameters in POST
         for pname in self.jdl.content.get('parameters', {}):
             if pname not in self.parameters:
@@ -297,14 +355,22 @@ class Job(object):
                     value = post.pop(pname)
                 else:
                     value = self.jdl.content['parameters'][pname]['default']
-                self.parameters[pname] = {'value': value, 'byref': False}
+                self.parameters[pname] = {
+                    'value': value,
+                    'byref': False,
+                    'entity_id': False,
+                }
         # Other POST parameters
         for pname in post:
             # Those parameters won't be used for job control, or stored as used entities, but they will be loaded
             # in the environment during execution
             if pname not in ['PHASE']:
                 value = post[pname]
-                self.parameters[pname] = {'value': value, 'byref': False}
+                self.parameters[pname] = {
+                    'value': value,
+                    'byref': False,
+                    'entity_id': False,
+                }
         # Upload files for multipart/form-data
         #for fname, f in files.iteritems():
         # Save to storage
@@ -407,10 +473,10 @@ class Job(object):
 
     def _parameters_to_xml_fill(self, xml_params):
         # Add each parameter that has a value
-        for pname, p in self.parameters.items():
-            if p['value']:
-                value = urllib.parse.quote_plus(urllib.parse.unquote_plus(p['value']))
-                by_ref = str(p['byref']).lower()
+        for pname, pdict in self.parameters.items():
+            if pdict['value']:
+                value = urllib.parse.quote_plus(urllib.parse.unquote_plus(pdict['value']))
+                by_ref = str(pdict['byref']).lower()
                 ETree.SubElement(xml_params, 'uws:parameter', attrib={'id': pname, 'byReference': by_ref}).text = value
 
     def parameters_to_xml(self):
@@ -492,9 +558,8 @@ class Job(object):
     # Metadata management
     # ----------
 
-    def add_result_entry(self, rname, url, content_type):
-        self.results[rname] = {'url': url, 'content_type': content_type}
-        logger.info('Add {} to results db'.format(rname))
+    def add_result_entry(self, rname, url, content_type, entity_id):
+        self.results[rname] = {'url': url, 'content_type': content_type, 'entity_id': entity_id}
 
     def add_results(self):
         # Read results.yml to know generated results (those that are located in the results directory)
@@ -517,7 +582,8 @@ class Job(object):
                 creation_time = now.strftime(DT_FMT),
                 owner = self.owner,
             )
-            self.add_result_entry(rname, entity['access_url'], entity['content_type'])
+            self.add_result_entry(rname, entity['access_url'], entity['content_type'], entity['entity_id'])
+            logger.info('Result added to db: {}'.format(rname))
 
         # access_url computed for UWS server (retrieve endpoint with entity_id)
         #                     or distant server (url given with $ID to replace by entity_id)
@@ -541,9 +607,9 @@ class Job(object):
             rfname = rname + '.log'
             if os.path.isfile(rfdir + rfname):
                 url = '{}//rest/{}/{}/{}'.format(BASE_URL, self.jobname, self.jobid, rname)
-                self.add_result_entry(rname, url, 'text/plain')
+                self.add_result_entry(rname, url, 'text/plain', None)
             else:
-                logger.warning('File {} missing'.format(rfname))
+                logger.warning('Log file missing: {}'.format(rfname))
 
     def add_provenance(self):
         # Create PROV files (added as a result)
@@ -570,9 +636,9 @@ class Job(object):
                 rfname = 'provenance.' + ptype
                 if os.path.isfile(rfdir + rfname):
                     url = '{}//rest/{}/{}/prov{}'.format(BASE_URL, self.jobname, self.jobid, ptype)
-                    self.add_result_entry(rname, url, content_types[ptype])
+                    self.add_result_entry(rname, url, content_types[ptype], None)
                 else:
-                    logger.warning('File {} missing'.format(rfname))
+                    logger.warning('Provenance file missing: {}'.format(rfname))
 
 
     # ----------
