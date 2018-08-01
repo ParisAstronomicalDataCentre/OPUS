@@ -551,6 +551,7 @@ class Job(object):
         xml_jobinfo = ETree.SubElement(xml_job, 'uws:jobInfo')
         # ETree.SubElement(xml_jobinfo, 'process_id').text = str(self.process_id)
         add_sub_elt(xml_jobinfo, 'process_id', str(self.process_id))
+        logger.debug(self.jobid)
         return ETree.tostring(xml_job)
 
 
