@@ -482,15 +482,16 @@ def cp_script(jobname):
 @app.route('/proxy/<path:uri>', methods=['GET', 'POST', 'DELETE'])
 def proxy(uri):
     response = uws_server_request('/' + uri, method=request.method, init_request=request)
-    # logger.debug(r.headers.__dict__)
+    logger.debug(response.headers.__dict__)
     # def generate():
     #     for chunk in r.iter_content(CHUNK_SIZE):
     #         yield chunk
     # return Response(stream_with_context(generate()), content_type = r.headers['content-type'])
-    # headers = {}
-    # for k in ['content-length']:  #, 'content-encoding']:
-    #     headers[k] = r.headers[k]
-    return Response(response, status=response.status_code, content_type=response.headers['content-type'])  # , headers=headers)
+    headers = {}
+    for k in ['content-length', 'content-disposition']:  #, 'content-encoding']:
+        if k in response.headers.__dict__['_store']:
+            headers[k] = response.headers[k]
+    return Response(response, status=response.status_code, content_type=response.headers.get('content-type', None), headers=headers)
 
 
 def uws_server_request(uri, method='GET', init_request=None):
