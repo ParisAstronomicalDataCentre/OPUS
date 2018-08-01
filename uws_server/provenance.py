@@ -128,17 +128,15 @@ def job2prov(job, depth=1, direction='BACK', members=0, steps=0, agent=0, model=
         entity_id = job.parameters.get(pname, {}).get('entity_id', None)
         logger.debug('Search for entity: {}'.format(entity_id))
         # entity_id = os.path.splitext(os.path.basename(value))[0]
-        entity = {}
-        try:
-            pqn = ns_result + ':' + entity_id
-            entity = job_storage.get_entity(entity_id)
+        pqn = ns_result + ':' + entity_id
+        entity = job_storage.get_entity(entity_id)
+        if entity:
             location = entity['access_url']
             logger.debug('Input entity found: {}'.format(entity))
-        except:
-            entity_id = job.jobid + '_' + pname
-            pqn = entity_id
+        else:
+            pqn = value.split('/')[-1]
             location = value
-            logger.debug('No previous record for input entity {}'.format(entity_id))
+            logger.debug('No previous record for input entity {}={}'.format(pname, value))
         if show_parameters:
             if value:
                 act_attr[ns_jdl + ':' + pname] = value
