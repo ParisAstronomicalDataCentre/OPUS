@@ -482,12 +482,12 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             elist = self.session.query(self.Entity).filter_by(hash=kwargs['hash']).all()
             if elist:
                 for row in elist:
-                    if row.entity_id in kwargs['file_name']:
+                    if str(row.entity_id) in kwargs['file_name']:
                         # Entity has the expected entity_id in its name
                         entity = dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
                         logger.info('Entity found for {} with same hash, and file_name contains entity_id: {}'.format(kwargs['file_name'], str(entity)))
                         entity_id = entity['entity_id']
-                    elif row.jobid in kwargs['file_name']:
+                    elif str(row.jobid) in kwargs['file_name']:
                         # Entity has the jobid that generated it in its name
                         entity = dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
                         logger.info('Entity found for {} with same hash, and file_name contains jobid: {}'.format(kwargs['file_name'], str(entity)))
