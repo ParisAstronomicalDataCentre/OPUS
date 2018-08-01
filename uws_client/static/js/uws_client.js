@@ -661,11 +661,11 @@ var uws_client = (function($) {
         };
         // Fill value from job
         $('#job_params').append('<input id="all_params" name="all_params" type="hidden" value=""/>');
-        var qs = {}};
+        var qs = {};
         for (var pname in job.parameters) {
             var pvalue = job.parameters[pname].value;
             pvalue = decodeURIComponent(pvalue).replace(/[+]/g, " ");
-            qs[pname] = pvalue
+            qs[pname] = pvalue;
             // Add in param_list table (if present in DOM)
             $('#param_list').append('<tr><td><strong>' + pname + '</strong></td><td>' + pvalue + '</td></tr>');
             // Update form fields
