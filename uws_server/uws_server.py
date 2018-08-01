@@ -861,27 +861,45 @@ def provsap():
         user = set_user()
         if not 'ID' in request.query:
             raise UserWarning('"ID" is not specified in request')
+        kwargs = {}
+        kwargs['depth'] = request.query.get('DEPTH', 1)
         format = request.query.get('RESPONSEFORMAT', 'PROV-SVG')
-        depth = request.query.get('DEPTH', 1)
-        if depth == 'ALL':
-            depth = -1
+        kwargs['direction'] = request.query.get('DIRECTION', 'BACK')
+        kwargs['agent'] = request.query.get('AGENT', 0)
+        kwargs['members'] = request.query.get('MEMBERS', 0)
+        kwargs['steps'] = request.query.get('STEPS', 0)
+        if kwargs['depth'] == 'ALL':
+            kwargs['depth'] = -1
         else:
-            depth = int(depth)
-        try:
-            # Test if ID is an entity_id, and get the related jobid (that generated the entity)
-            job_storage = getattr(storage, STORAGE + 'JobStorage')()
-            entity = job_storage.get_entity(request.query['ID'])
-            jobid = entity.get('jobid')
-            if depth > 0:
-                depth -= 1
-        except storage.NotFoundWarning as e:
-            # Then it is a jobid
-            jobid = request.query['ID']
-        # Get job properties from DB
-        job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True)
-        logger.info('{} {} [{}]'.format(job.jobname, jobid, user))
-        # Return job provenance
-        pdoc = provenance.job2prov(job, depth=depth, show_generated=True)
+            kwargs['depth'] = int(kwargs['depth'])
+        ids = request.query.getall('ID')
+        pdocs = []
+        for id in ids:
+            show_generated = False
+            try:
+                # Test if ID is an entity_id, and get the related jobid (that generated the entity)
+                job_storage = getattr(storage, STORAGE + 'JobStorage')()
+                entity = job_storage.get_entity(id)
+                jobid = entity.get('jobid')
+                show_generated = True
+                if kwargs['depth'] > 0:
+                    kwargs['depth'] -= 1
+            except storage.NotFoundWarning as e:
+                # Then it is a jobid
+                jobid = id
+            # Get job properties from DB
+            job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True)
+            logger.info('{} {} [{}]'.format(job.jobname, jobid, user))
+            # Return job provenance
+            pdoc = provenance.job2prov(job, show_generated=show_generated, **kwargs)
+            pdocs.append(pdoc)
+        # Merge all pdocs
+        pdoc = pdocs.pop()
+        for opdoc in pdocs:
+            logger.debug(opdoc.serialize())
+            pdoc.update(opdoc)
+        pdoc.unified()
+
         if format == 'PROV-SVG':
             svg_content = provenance.prov2svg_content(pdoc)
             response.content_type = 'text/xml; charset=UTF-8'
