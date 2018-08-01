@@ -50,7 +50,7 @@ def job2prov(job, show_parameters=True, depth=1, recursive=False):
     pdoc = ProvDocument()
     other_pdocs = []
     # Get new storage instance
-    job.storage = getattr(storage, STORAGE + 'JobStorage')()
+    job_storage = getattr(storage, STORAGE + 'JobStorage')()
     # Update JDL content
     job.jdl.read(job.jobname, jobid=job.jobid)
 
@@ -90,7 +90,7 @@ def job2prov(job, show_parameters=True, depth=1, recursive=False):
     # Plan = ActivityDescription
     plan = pdoc.entity('opus_jdl:' + job.jobname)
     plan.add_attributes({
-        'prov:type': 'prov:Plan'
+        'prov:type': 'voprov:ActivityDescription'
     })
     pdoc.influence(act, plan, other_attributes={
         # 'prov:type': 'voprov:ActivityDescription',
@@ -121,11 +121,13 @@ def job2prov(job, show_parameters=True, depth=1, recursive=False):
     for pname, pdict in job.jdl.content.get('used', {}).items():
         # Assuming that used entity is a file or a URL (not a value or an ID)
         value = job.parameters.get(pname, {}).get('value', '')
-        entity_id = os.path.splitext(os.path.basename(value))[0]
+        entity_id = job.parameters.get(pname, {}).get('entity_id', None)
+        logger.debug('Search for entity: {}'.format(entity_id))
+        # entity_id = os.path.splitext(os.path.basename(value))[0]
         entity = {}
         try:
             pqn = ns_result + ':' + entity_id
-            entity = job.storage.get_entity(entity_id)
+            entity = job_storage.get_entity(entity_id)
             location = entity['access_url']
             logger.debug('Input entity found: {}'.format(entity))
         except:
@@ -160,13 +162,13 @@ def job2prov(job, show_parameters=True, depth=1, recursive=False):
                 if depth != 1:
                     other_job = copy.copy(job)
                     other_job.jobid = entity['jobid']
-                    job.storage.read(other_job, get_attributes=True, get_parameters=True, get_results=True)
+                    job_storage.read(other_job, get_attributes=True, get_parameters=True, get_results=True)
                     other_pdocs.append(job2prov(other_job, depth=depth-2, recursive=True))
 
     # Parameters that influence the activity
     params = []
     if show_parameters:
-        all_params = pdoc.collection('opus_job:' + job.jobname + '/' + job.jobid + '/parameters')
+        # all_params = pdoc.collection('opus_job:' + job.jobname + '/' + job.jobid + '/parameters')
         for pname, pdict in job.jdl.content.get('parameters', {}).items():
             pqn = ns_jdl + ':' + pname
             if pname in job.parameters:
@@ -184,9 +186,9 @@ def job2prov(job, show_parameters=True, depth=1, recursive=False):
                     pattrs['voprov:' + pkey] = pvalue
             params[-1].add_attributes(pattrs)
             pdoc.influence(act, params[-1], other_attributes={
-                 'prov:type': 'voprov:hadConfiguration',
+                 # 'prov:type': 'voprov:hadConfiguration',
             })
-            all_params.hadMember(params[-1])
+            # all_params.hadMember(params[-1])
         # pdoc.influence(act, all_params)
         # if len(act_attr) > 0:
         #     act.add_attributes(act_attr)
@@ -196,9 +198,11 @@ def job2prov(job, show_parameters=True, depth=1, recursive=False):
         e_out = []
         for rname in job.results:
             if rname not in ['stdout', 'stderr', 'provjson', 'provxml', 'provsvg']:
+                entity_id = job.results[rname]['entity_id']
                 # rdict = job.jdl.content['generated'].get(rname, {})
                 # entity_id = job.jobid + '_' + rname
-                entity = job.storage.search_entity(jobid=job.jobid, result_name=rname)
+                # if entity_id:
+                entity = job_storage.get_entity(entity_id)
                 rqn = ns_result + ':' + entity['entity_id']
                 e_out.append(pdoc.entity(rqn))
                 # TODO: use publisher_did? add prov attributes, add voprov attributes?
