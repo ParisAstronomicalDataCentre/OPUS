@@ -222,7 +222,7 @@ def job2prov(job, depth=1, direction='BACK', members=0, steps=0, agent=0, model=
                     'voprov:content_type': content_type,
                 })
                 # test if not used
-                used = job_storage.query(job_storage.Used).filter_by(entity_id=entity_id, jobid=job.jobid).all()
+                used = job_storage.session.query(job_storage.Used).filter_by(entity_id=entity_id, jobid=job.jobid).all()
                 if not used:
                     e_out[-1].wasGeneratedBy(act, attributes={
                         'prov:role': rname,
