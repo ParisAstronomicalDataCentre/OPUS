@@ -206,17 +206,22 @@ def job2prov(job, depth=1, direction='BACK', members=0, steps=0, agent=0, model=
                 # rdict = job.jdl.content['generated'].get(rname, {})
                 # entity_id = job.jobid + '_' + rname
                 # if entity_id:
-                entity = job_storage.get_entity(entity_id)
-                rqn = ns_result + ':' + entity['entity_id']
+                entity = job_storage.get_entity(entity_id, slent=True)
+                if entity:
+                    rqn = ns_result + ':' + entity['entity_id']
+                    content_type = entity['content_type']
+                else:
+                    rqn = rname
+                    content_type = job.results[rname]['content_type']
                 e_out.append(pdoc.entity(rqn))
                 # TODO: use publisher_did? add prov attributes, add voprov attributes?
                 e_out[-1].add_attributes({
                     'prov:location': job.results[rname]['url'],
                     # 'voprov:result_name': entity['result_name'],
                     # 'voprov:file_name': entity['file_name'],
-                    'voprov:content_type': entity['content_type'],
+                    'voprov:content_type': content_type,
                 })
-                e_out[-1].wasGeneratedBy(act, entity['creation_time'], attributes={
+                e_out[-1].wasGeneratedBy(act, attributes={
                     'prov:role': rname,
                 })
                 #for e in e_in:
