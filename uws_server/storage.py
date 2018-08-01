@@ -546,12 +546,15 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             self.session.query(self.Used).filter_by(jobid=jobid).delete()
         self.session.commit()
 
-    def get_entity(self, entity_id):
+    def get_entity(self, entity_id, silent=False):
         """Return all entity attributes"""
         query = self.session.query(self.Entity).filter_by(entity_id=entity_id)
         row = query.first()
         if not row:
-            raise NotFoundWarning('Result "{}" NOT FOUND'.format(entity_id))
+            if silent:
+                return {}
+            else:
+                raise NotFoundWarning('Result "{}" NOT FOUND'.format(entity_id))
         return dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
 
     def search_entity(self, entity_id=None, jobid=None, result_name=None, file_name=None, hash=None, owner='anonymous', owner_token='anonymous'):

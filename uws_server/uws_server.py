@@ -876,15 +876,15 @@ def provsap():
         pdocs = []
         for id in ids:
             show_generated = False
-            try:
-                # Test if ID is an entity_id, and get the related jobid (that generated the entity)
-                job_storage = getattr(storage, STORAGE + 'JobStorage')()
-                entity = job_storage.get_entity(id)
+            # Test if ID is an entity_id, and get the related jobid (that generated the entity)
+            job_storage = getattr(storage, STORAGE + 'JobStorage')()
+            entity = job_storage.get_entity(id, silent=True)
+            if entity:
                 jobid = entity.get('jobid')
                 show_generated = True
                 if kwargs['depth'] > 0:
                     kwargs['depth'] -= 1
-            except storage.NotFoundWarning as e:
+            else:
                 # Then it is a jobid
                 jobid = id
             # Get job properties from DB
