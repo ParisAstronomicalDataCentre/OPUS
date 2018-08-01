@@ -665,9 +665,9 @@ var uws_client = (function($) {
         for (var pname in job.parameters) {
             var pvalue = job.parameters[pname].value;
             pvalue = decodeURIComponent(pvalue).replace(/[+]/g, " ");
-            if (pname != 'control_parameters'') {
+            if (pname != 'control_parameters') {
                 qs[pname] = pvalue;
-            }
+            };
             // Add in param_list table (if present in DOM)
             $('#param_list').append('<tr><td><strong>' + pname + '</strong></td><td>' + pvalue + '</td></tr>');
             // Update form fields
