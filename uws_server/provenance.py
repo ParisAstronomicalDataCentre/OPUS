@@ -128,9 +128,9 @@ def job2prov(job, depth=1, direction='BACK', members=0, steps=0, agent=0, model=
         entity_id = job.parameters.get(pname, {}).get('entity_id', None)
         logger.debug('Search for entity: {}'.format(entity_id))
         # entity_id = os.path.splitext(os.path.basename(value))[0]
-        pqn = ns_result + ':' + entity_id
         entity = job_storage.get_entity(entity_id)
         if entity:
+            pqn = ns_result + ':' + entity_id
             location = entity['access_url']
             logger.debug('Input entity found: {}'.format(entity))
         else:
