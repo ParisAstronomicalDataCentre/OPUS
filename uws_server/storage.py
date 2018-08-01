@@ -185,7 +185,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             value = Column(String(255), nullable=True)
             byref = Column(myBoolean, default=False, nullable=True)
             # is_entity = Column(myBoolean, default=False, nullable=True)
-            # entity_id = Column(String(255), ForeignKey("entities.id"), nullable=True)
+            entity_id = Column(String(255), ForeignKey("entities.entity_id"), nullable=True)
 
         class Result(self.Base):
             __tablename__ = 'job_results'
@@ -193,7 +193,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             name = Column(String(255), primary_key=True)
             url = Column(String(255), nullable=True)
             content_type = Column(String(64), nullable=True)
-            # entity_id = Column(String(255), ForeignKey("entities.id"), nullable=True)
+            entity_id = Column(String(255), ForeignKey("entities.entity_id"), nullable=True)
 
         class User(self.Base):
             __tablename__ = 'users'
@@ -209,9 +209,10 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         class Entity(self.Base):
             __tablename__ = 'entities'
             entity_id = Column(String(80), primary_key=True)
-            file_name = Column(String(255))
+            value = Column(String(255), nullable=True)
+            file_name = Column(String(255), nullable=True)
             file_dir = Column(String(255), nullable=True)
-            hash = Column(String(255))
+            hash = Column(String(255), nullable=True)
             creation_time = Column(myDateTime)
             content_type = Column(String(255), nullable=True)
             access_url = Column(String(255), nullable=True)
@@ -333,7 +334,8 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             'jobid': job.jobid,
             'name': pname,
             'value': job.parameters[pname]['value'],
-            'byref': job.parameters[pname]['byref']
+            'byref': job.parameters[pname]['byref'],
+            'entity_id': job.parameters[pname]['entity_id'],
         }
         p = self.Parameter(**d)
         self.session.merge(p)
@@ -344,7 +346,8 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             'jobid': job.jobid,
             'name': rname,
             'url': job.results[rname]['url'],
-            'content_type': job.results[rname]['content_type']
+            'content_type': job.results[rname]['content_type'],
+            'entity_id': job.results[rname]['entity_id'],
         }
         r = self.Result(**d)
         self.session.merge(r)
@@ -400,6 +403,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                 row.name: {
                     'value': row.value,
                     'byref': row.byref,
+                    'entity_id': row.entity_id,
                 }
                 for row in params
             }
@@ -413,6 +417,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                 row.name: {
                     'url': row.url,
                     'content_type': row.content_type,
+                    'entity_id': row.entity_id,
                 }
                 for row in results
             }
@@ -451,38 +456,55 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         # jobid, result_name, file_name, file_dir=None, access_url=None, hash=None, content_type=None, owner='anonymous', owner_token='anonymous'):
         """Add entity, store hash and properties, return entity_id"""
         # Check for required attributes in kwargs
-        for k in ['file_name', 'file_dir', 'owner']:
+        entity = {}
+        for k in ['owner']:
             if not k in kwargs:
-                raise UserWarning('Attribute {} is missing to register a new entity'.format(k))
-        # Redefine file_dir if ARCHIVE is Local (the generated file has been copied to RESULTS_PATH)
-        if ARCHIVE == 'Local':
-            if 'result_name' in kwargs:
-                kwargs['file_dir'] = os.path.join(RESULTS_PATH, kwargs['jobid'])
-            elif 'used_role' in kwargs:
-                kwargs['file_dir'] = os.path.join(UPLOADS_PATH, kwargs['jobid'])
-        # Compute hash if not given (look for file in file_dir)
-        if not 'hash' in kwargs:
-            kwargs['hash'] = self.get_hash(os.path.join(kwargs['file_dir'], kwargs['file_name']))
-        # Set creation_time if not given
-        # if not 'creation_time' in kwargs:
-        #     now = dt.datetime.now()
-        #     kwargs['creation_time'] = now.strftime(DT_FMT)
+                raise UserWarning('Attribute {} is missing to register an entity'.format(k))
+        if 'file_name' in kwargs:
+            for k in ['file_dir']:
+                if not k in kwargs:
+                    raise UserWarning('Attribute {} is missing to register an entity'.format(k))
+            # Redefine file_dir if ARCHIVE is Local (the generated file has been copied to RESULTS_PATH)
+            if ARCHIVE == 'Local':
+                if 'result_name' in kwargs:
+                    kwargs['file_dir'] = os.path.join(RESULTS_PATH, kwargs['jobid'])
+                elif 'used_jobid' in kwargs:
+                    kwargs['file_dir'] = os.path.join(UPLOADS_PATH, kwargs['used_jobid'])
+            # Compute hash if not given (look for file in file_dir)
+            if not 'hash' in kwargs:
+                kwargs['hash'] = self.get_hash(os.path.join(kwargs['file_dir'], kwargs['file_name']))
+            # Set creation_time if not given
+            # if not 'creation_time' in kwargs:
+            #     now = dt.datetime.now()
+            #     kwargs['creation_time'] = now.strftime(DT_FMT)
 
-        # Check if file already exists --> first hash, then test if filename contains entity_id or jobid if found
-        entity = False
-        elist = self.session.query(self.Entity).filter_by(hash=kwargs['hash']).all()
-        if elist:
-            for e in elist:
-                if e['entity_id'] in kwargs['file_name']:
-                    # Entity has the expected entity_id in its name
-                    logger.info('Entity found for {} with same hash, and file_name contains entity_id: {}'.format(kwargs['file_name'], str(e)))
-                    entity = e.__dict__
-                    entity_id = entity['entity_id']
-                elif e['jobid'] in kwargs['file_name']:
-                    # Entity has the jobid that generated it in its name
-                    logger.info('Entity found for {} with same hash, and file_name contains jobid: {}'.format(kwargs['file_name'], str(e)))
-                    entity = e.__dict__
-                    entity_id = entity['entity_id']
+            # Check if file already exists --> first hash, then test if filename contains entity_id or jobid if found
+            elist = self.session.query(self.Entity).filter_by(hash=kwargs['hash']).all()
+            if elist:
+                for row in elist:
+                    if row.entity_id in kwargs['file_name']:
+                        # Entity has the expected entity_id in its name
+                        entity = dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
+                        logger.info('Entity found for {} with same hash, and file_name contains entity_id: {}'.format(kwargs['file_name'], str(entity)))
+                        entity_id = entity['entity_id']
+                    elif row.jobid in kwargs['file_name']:
+                        # Entity has the jobid that generated it in its name
+                        entity = dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
+                        logger.info('Entity found for {} with same hash, and file_name contains jobid: {}'.format(kwargs['file_name'], str(entity)))
+                        entity_id = entity['entity_id']
+
+        if 'value' in kwargs:
+            for k in ['name']:
+                if not k in kwargs:
+                    raise UserWarning('Attribute {} is missing to register an entity'.format(k))
+            # entity is a value or an ID
+            row = self.session.query(self.Entity).filter_by(entity_id=kwargs['value']).first()
+            if row:
+                entity_id = kwargs['value']
+                logger.info('Entity found with value=entity_id={}'.format(entity_id))
+            else:
+                # Not found in entity store, is it an entity_id or a simple value ?
+                pass
 
         if not entity:
             # Generate unique identifier for the new entity
@@ -507,7 +529,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             e = self.Entity(**kwargs)
             self.session.merge(e)
             self.session.commit()
-            # Return entity_id
+            # Return entity attributes
             logger.info('New entity registered: {}'.format(str(kwargs)))
             return kwargs
         else:
@@ -518,17 +540,19 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         """Remove entity"""
         if entity_id:
             self.session.query(self.Entity).filter_by(entity_id=entity_id).delete()
+            self.session.query(self.Used).filter_by(entity_id=entity_id).delete()
         elif jobid:
             self.session.query(self.Entity).filter_by(jobid=jobid).delete()
+            self.session.query(self.Used).filter_by(jobid=jobid).delete()
         self.session.commit()
 
     def get_entity(self, entity_id):
         """Return all entity attributes"""
         query = self.session.query(self.Entity).filter_by(entity_id=entity_id)
-        entity = query.first()
-        if not entity:
+        row = query.first()
+        if not row:
             raise NotFoundWarning('Result "{}" NOT FOUND'.format(entity_id))
-        return entity.__dict__
+        return dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
 
     def search_entity(self, entity_id=None, jobid=None, result_name=None, file_name=None, hash=None, owner='anonymous', owner_token='anonymous'):
         """Search entity, return all entity attributes, maybe for several entities"""
@@ -536,10 +560,10 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             pass
         elif jobid and result_name:
             query = self.session.query(self.Entity).filter_by(jobid=jobid, result_name=result_name)
-            entity = query.first()
-            if not entity:
+            row = query.first()
+            if not row:
                 raise NotFoundWarning('Result "{}" NOT FOUND'.format(entity_id))
-            return entity.__dict__
+            return dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
         elif file_name and hash:
             pass
         else:
@@ -587,7 +611,8 @@ class SQLJobStorage(SQLStorage, JobStorage):
             'jobid': job.jobid,
             'name': pname,
             'value': job.parameters[pname]['value'],
-            'byref': job.parameters[pname]['byref']
+            'byref': job.parameters[pname]['byref'],
+            'entity_id': job.parameters[pname]['entity_id'],
         }
         self._save_query('job_parameters', d)
 
@@ -597,7 +622,8 @@ class SQLJobStorage(SQLStorage, JobStorage):
             'jobid': job.jobid,
             'name': rname,
             'url': job.results[rname]['url'],
-            'content_type': job.results[rname]['content_type']
+            'content_type': job.results[rname]['content_type'],
+            'entity_id': job.results[rname]['entity_id'],
         }
         self._save_query('job_results', d)
 
