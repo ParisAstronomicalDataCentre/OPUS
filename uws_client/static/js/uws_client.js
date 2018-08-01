@@ -306,7 +306,7 @@ var uws_client = (function($) {
                             <span class="hidden-xs hidden-sm hidden-md">&nbsp;&nbsp;Parameters</span>\
                         </button>\
                         <button type="button" class="results btn btn-default btn-sm">\
-                            <span class="glyphicon glyphicon-open"></span>\
+                            <span class="glyphicon glyphicon-save"></span>\
                             <span class="hidden-xs hidden-sm hidden-md">&nbsp;Results</span>\
                         </button>\
                     </div>\
@@ -703,14 +703,14 @@ var uws_client = (function($) {
     // DISPLAY RESULTS
 
     var displayResult = function(list, r, r_type, r_url, r_url_auth){
-        var r_id = 'result_'+r
+        var rsplit = r.split('.').shift()
+        var r_id = 'result_'+rsplit
         var r_name = r_url.split('/').pop();
         var r_panel = '\
             <div id="'+r_id+'" class="panel panel-default" value="'+r_url+'">\
                 <div class="panel-heading clearfix">\
                     <span class="pull-left" style="padding-top: 4px;">\
-                        <span class="panel-title"><strong>'+r+'</strong></span>: \
-                        <a href="'+r_url+'" target="_blank">Download</a>\
+                        <span class="panel-title"><strong>'+r+'</strong></span> ['+r_type+']\
                     </span>\
                     <div class="btn-group pull-right">\
                     </div>\
@@ -719,12 +719,16 @@ var uws_client = (function($) {
         // Add to list
         $('#'+list).append(r_panel);
         // Some results are shown in the details box if present
-        $('#'+r_id+' div.panel-heading span a').html('Download ['+r_type+']');
+        // $('#'+r_id+' div.panel-heading span a').html('Download ['+r_type+']');
         // Add download button through proxy (with auth)
         $('#'+r_id+' div.panel-heading div.btn-group').append('\
             <a class="samp btn btn-default btn-sm" href="' + r_url_auth + '">\
                 <span class="glyphicon glyphicon-save"></span>\
-                Auth Access\
+                Auth Download\
+            </a>\
+            <a class="samp btn btn-default btn-sm" href="' + r_url + '">\
+                <span class="glyphicon glyphicon-save"></span>\
+                Anonymous Download\
             </a>'
         );
         // Show preview according to result type (file extension)
