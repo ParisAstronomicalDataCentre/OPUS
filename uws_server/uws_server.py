@@ -856,23 +856,32 @@ def provsap():
         404 Not Found: Entity not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
+
     try:
         user = set_user()
         if not 'ID' in request.query:
             raise UserWarning('"ID" is not specified in request')
-        # TODO: Assuming ID is a jobid (coud be an entity_id...)
-        jobid = request.query['ID']
+        format = request.query.get('RESPONSEFORMAT', 'PROV-SVG')
         depth = request.query.get('DEPTH', 1)
         if depth == 'ALL':
             depth = -1
         else:
             depth = int(depth)
-        format = request.query.get('RESPONSEFORMAT', 'PROV-SVG')
+        try:
+            # Test if ID is an entity_id, and get the related jobid (that generated the entity)
+            job_storage = getattr(storage, STORAGE + 'JobStorage')()
+            entity = job_storage.get_entity(request.query['ID'])
+            jobid = entity.get('jobid')
+            if depth > 0:
+                depth -= 1
+        except storage.NotFoundWarning as e:
+            # Then it is a jobid
+            jobid = request.query['ID']
         # Get job properties from DB
         job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True)
         logger.info('{} {} [{}]'.format(job.jobname, jobid, user))
         # Return job provenance
-        pdoc = provenance.job2prov(job, depth=depth)
+        pdoc = provenance.job2prov(job, depth=depth, show_generated=True)
         if format == 'PROV-SVG':
             svg_content = provenance.prov2svg_content(pdoc)
             response.content_type = 'text/xml; charset=UTF-8'

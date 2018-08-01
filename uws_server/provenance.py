@@ -20,7 +20,7 @@ from . import storage
 # http://lists.g-vo.org/pipermail/prov-adhoc/2015-June/000025.html
 
 
-def job2prov(job, show_parameters=True, depth=1, recursive=False):
+def job2prov(job, show_parameters=True, depth=1, recursive=False, show_generated=False):
     """
     Create ProvDocument based on job description
     :param job: UWS job
@@ -88,13 +88,14 @@ def job2prov(job, show_parameters=True, depth=1, recursive=False):
     })
 
     # Plan = ActivityDescription
-    plan = pdoc.entity('opus_jdl:' + job.jobname)
-    plan.add_attributes({
-        'prov:type': 'voprov:ActivityDescription'
-    })
-    pdoc.influence(act, plan, other_attributes={
-        # 'prov:type': 'voprov:ActivityDescription',
-    })
+    if depth > 0:
+        plan = pdoc.entity('opus_jdl:' + job.jobname)
+        plan.add_attributes({
+            'prov:type': 'voprov:ActivityDescription'
+        })
+        pdoc.influence(act, plan, other_attributes={
+            # 'prov:type': 'voprov:ActivityDescription',
+        })
 
     # Agent: contact for the job in ActivityDescription
     contact_name = job.jdl.content.get('contact_name')
@@ -165,9 +166,9 @@ def job2prov(job, show_parameters=True, depth=1, recursive=False):
                     job_storage.read(other_job, get_attributes=True, get_parameters=True, get_results=True)
                     other_pdocs.append(job2prov(other_job, depth=depth-2, recursive=True))
 
-    # Parameters that influence the activity
+    # Parameters that influence the activity (if depth > 0)
     params = []
-    if show_parameters:
+    if depth != 0 and show_parameters:
         # all_params = pdoc.collection('opus_job:' + job.jobname + '/' + job.jobid + '/parameters')
         for pname, pdict in job.jdl.content.get('parameters', {}).items():
             pqn = ns_jdl + ':' + pname
@@ -194,7 +195,7 @@ def job2prov(job, show_parameters=True, depth=1, recursive=False):
         #     act.add_attributes(act_attr)
 
     # Generated entities (if depth > 0)
-    if depth != 0 or recursive:
+    if depth != 0 or recursive or show_generated:
         e_out = []
         for rname in job.results:
             if rname not in ['stdout', 'stderr', 'provjson', 'provxml', 'provsvg']:
