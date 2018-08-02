@@ -558,7 +558,7 @@ class SLURMManager(Manager):
         logger.debug(' '.join(cmd))
         process_out = str(sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True))
         # Get process_id from output (e.g. "Submitted batch job 9421")
-        process_id = re.match('Submitted batch job (.)? ', process_out)
+        process_id = re.match('Submitted batch job ([0-9]*).*', process_out).group(1)
         logger.debug(process_id)
         return process_id
 
