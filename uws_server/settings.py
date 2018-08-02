@@ -168,19 +168,19 @@ PHASE_CONVERT = {
 UWS_PARAMETERS = {
     'runId': 'User specific identifier for the job',  # this parameter will appear first in the form, helpful for a user to find their jobs
     'executionDuration': 'Required execution duration in seconds',
-    'uws_executionDuration': 'Required execution duration in seconds',
+    # 'uws_executionDuration': 'Required execution duration in seconds',
     'uws_quote': 'Estimation of the duration of the job',
     'destruction': 'Date of desctruction of the job',
-    'uws_destruction': 'Date of desctruction of the job',
+    #'uws_destruction': 'Date of desctruction of the job',
 }
 
 # Parameters allowed for SLURM sbatch header, prefixed with 'slurm:'
 SLURM_PARAMETERS = {
-    'mem': 'Memory to be allocated to the job',
-    'nodes': 'Number of nodes allocated to the job',
-    'ntasks-per-node': '',
-    'partition': 'short, ...',
-    'account': 'If needed (obspm for quadri12)',
+    'slurm_mem': 'Memory to be allocated to the job',
+    'slurm_nodes': 'Number of nodes allocated to the job',
+    'slurm_ntasks-per-node': '',
+    'slurm_partition': 'short, ...',
+    'slurm_account': 'If needed (obspm for quadri12)',
 }
 
 # Control parameters allowed in a form for job creation
@@ -189,10 +189,10 @@ CONTROL_PARAMETERS = dict( list(UWS_PARAMETERS.items()) )
 CONTROL_PARAMETERS_KEYS = [
     'runId',
     'executionDuration',
-    #'uws_executionDuration',
-    'destruction',
+    # 'uws_executionDuration',
     'uws_quote',
-    #'uws_destruction',
+    'destruction',
+    # 'uws_destruction',
 ]
 if MANAGER == 'Local':  # SLURM':
     CONTROL_PARAMETERS.update(SLURM_PARAMETERS)

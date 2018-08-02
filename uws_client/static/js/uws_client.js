@@ -567,7 +567,7 @@ var uws_client = (function($) {
         // Event to add control parameter
         $('#control_parameters').on('changed.bs.select', function(){
             var pname = $('#control_parameters').val();
-            if ($('#div_' + pname).length == 0) {
+            if ($('#id_' + pname).length == 0) {
                 var pdesc = jdl.control_parameters[pname];
                 displayParamFormInput(pname, {'default': '', 'annotation': pdesc, 'control': 'true'})
             } else {
@@ -647,8 +647,9 @@ var uws_client = (function($) {
         for (var pkey in jdl.control_parameters_keys) {
             var pname = jdl.control_parameters_keys[pkey];
             if (pname in job.parameters) {
-                var pdesc = jdl.control_parameters[pname];
-                displayParamFormInput(pname, {'default': '', 'annotation': pdesc})
+                if ($('#id_' + pname).length == 0) {
+                    var pdesc = jdl.control_parameters[pname];
+                    displayParamFormInput(pname, {'default': '', 'annotation': pdesc})
                 $('#id_'+pname).attr('disabled','disabled');
             }
         }
