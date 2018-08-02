@@ -524,7 +524,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             used = self.Used(entity_id=entity_id, jobid=jobid, role=role, owner=kwargs['owner'])
             self.session.merge(used)
             self.session.commit()
-            logger.info('Adding Used relation for file_name={} (entity_id={})'.format(kwargs['file_name'], entity_id))
+            logger.info('Adding Used relation for file_name={} (entity_id={}, jobid={})'.format(kwargs['file_name'], entity_id, jobid))
 
         if not entity:
             # Store new entity and return attributes
