@@ -553,10 +553,10 @@ class Job(object):
         # ETree.SubElement(xml_jobinfo, 'process_id').text = str(self.process_id)
         add_sub_elt(xml_jobinfo, 'process_id', str(self.process_id))
         logger.debug(self.jobid)
-        if xml_job:
+        try:
             return ETree.tostring(xml_job)
-        else:
-            raise storage.NotFoundWarning('Cannot serialize job {}'.format(self.jobid))
+        except:
+            raise UserWarning('Cannot serialize job {}'.format(self.jobid))
 
 
     # ----------
