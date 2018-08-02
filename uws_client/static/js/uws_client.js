@@ -1008,9 +1008,9 @@ var uws_client = (function($) {
         //    // 'this' refers to the pre element
         //    $(this).html();
         //});
-        var msg = xhr.responseText.match(/<pre>(.*?)<\/pre>/g)
+        var msg = xhr.responseText.match(/<pre>[\s\S]<\/pre>/g)
         if (msg && msg.length != 0) {
-            msg[0].replace(/<\/?pre>/g,'');
+            msg = msg[0].replace(/<\/?pre>/g,'');
         }
         logger('ERROR', 'getJobList', msg);
         $('#div_loading').hide();
