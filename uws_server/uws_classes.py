@@ -325,7 +325,7 @@ class Job(object):
                     logger.info('Input "{}" set by default: {}'.format(pname, value))
                 # 3/ Try to convert value/ID to a URL and upload
                 url = self.jdl.content['used'][pname]['url']
-                if url:
+                if url and url != 'file://':
                     furl = url.replace('$ID', value)
                     # TODO: upload the file to upload dir
                     r = requests.get(furl, allow_redirects=True)
