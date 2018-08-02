@@ -18,6 +18,7 @@ Specific functions are expected for those classes:
 
 import datetime as dt
 import subprocess as sp
+import re
 from .settings import *
 
 if MANAGER == 'Local':
@@ -555,12 +556,11 @@ class SLURMManager(Manager):
         cmd = ['ssh', self.ssh_arg,
                'sbatch {}'.format(sbatch_file_distant)]
         logger.debug(' '.join(cmd))
-        process_id = str(sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True))
+        process_out = str(sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True))
         # Get process_id from output (e.g. "Submitted batch job 9421")
+        process_id = re.match('Submitted batch job (.)? ', process_out)
         logger.debug(process_id)
-        logger.debug(process_id.split(' ')[-1])
-        logger.debug(int(process_id.split(' ')[-1]))
-        return process_id.split(' ')[-1]
+        return process_id
 
     def abort(self, job):
         """Abort job on SLURM server"""
