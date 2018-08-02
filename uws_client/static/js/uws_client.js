@@ -650,9 +650,10 @@ var uws_client = (function($) {
                 if ($('#id_' + pname).length == 0) {
                     var pdesc = jdl.control_parameters[pname];
                     displayParamFormInput(pname, {'default': '', 'annotation': pdesc})
+                };
                 $('#id_'+pname).attr('disabled','disabled');
-            }
-        }
+            };
+        };
         // Disable button if job is not PENDING
         if (job.phase != 'PENDING') {
             //$('#id_'+pname).removeAttr('readonly');
