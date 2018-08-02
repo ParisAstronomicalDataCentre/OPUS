@@ -554,9 +554,10 @@ class SLURMManager(Manager):
         # Start job using sbatch
         cmd = ['ssh', self.ssh_arg,
                'sbatch {}'.format(sbatch_file_distant)]
-        # logger.debug(' '.join(cmd))
+        logger.debug(' '.join(cmd))
         process_id = str(sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True))
         # Get process_id from output (e.g. "Submitted batch job 9421")
+        logger.debug(process_id)
         return process_id.split(' ')[-1]
 
     def abort(self, job):
