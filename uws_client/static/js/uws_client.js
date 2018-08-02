@@ -515,13 +515,15 @@ var uws_client = (function($) {
                 var p = jdl.used[pname];
                 displayParamFormInput(pname, p)
                 displayParamFormInputType(pname, p)
-            }
+            };
         };
         for (var pkey in jdl.parameters_keys) {
             var pname = jdl.parameters_keys[pkey];
-            var p = jdl.parameters[pname];
-            displayParamFormInput(pname, p)
-            displayParamFormInputType(pname, p)
+            if ($('#id_' + pname).length == 0) {
+                var p = jdl.parameters[pname];
+                displayParamFormInput(pname, p)
+                displayParamFormInputType(pname, p)
+            };
         };
         // Fill with init_params
         for(var pname in init_params){
@@ -533,11 +535,11 @@ var uws_client = (function($) {
                 if ($('#id_' + pname).length == 0) {
                     var pdesc = jdl.control_parameters[pname];
                     displayParamFormInput(pname, {'default': '', 'annotation': pdesc, 'control': 'true'})
-                }
+                };
                 // Update form fields
                 $('#id_' + pname).attr('value', pvalue);
-            }
-        }
+            };
+        };
         // Add buttons
         var elt = '\
             <div id="add_control" class=" form-group">\n\
