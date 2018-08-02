@@ -325,30 +325,31 @@ class Job(object):
                     logger.info('Input "{}" set by default: {}'.format(pname, value))
                 # 3/ Try to convert value/ID to a URL and upload
                 url = self.jdl.content['used'][pname]['url']
-                if url and url != 'file://':
+                if url:
                     furl = url.replace('$ID', value)
                     # TODO: upload the file to upload dir
-                    r = requests.get(furl, allow_redirects=True)
-                    if r.status_code == 200:
-                        cd = r.headers.get('content-disposition')
-                        filename = get_filename_from_cd(cd)
-                        if not os.path.isdir(upload_dir):
-                            os.makedirs(upload_dir)
-                        open(os.path.join(upload_dir, filename), 'wb').write(r.content)
-                        # Parameter value is set to the file name on server
-                        value = 'file://' + filename
-                        logger.info('Input "{}" is a URL and was downloaded : {}'.format(pname, furl))
-                        # TODO: check if file already exists in entity store (hash + ID in name or jobid)
-                        entity = self.storage.register_entity(
-                            file_name=filename,
-                            file_dir=upload_dir,
-                            used_jobid=self.jobid,
-                            used_role=pname,
-                            owner=self.user.name,
-                            content_type=content_type
-                        )
-                    else:
-                        logger.warning('Cannot upload URL for input "{}": {}'.format(pname, furl))
+                    if furl != 'file://':
+                        r = requests.get(furl, allow_redirects=True)
+                        if r.status_code == 200:
+                            cd = r.headers.get('content-disposition')
+                            filename = get_filename_from_cd(cd)
+                            if not os.path.isdir(upload_dir):
+                                os.makedirs(upload_dir)
+                            open(os.path.join(upload_dir, filename), 'wb').write(r.content)
+                            # Parameter value is set to the file name on server
+                            value = 'file://' + filename
+                            logger.info('Input "{}" is a URL and was downloaded : {}'.format(pname, furl))
+                            # TODO: check if file already exists in entity store (hash + ID in name or jobid)
+                            entity = self.storage.register_entity(
+                                file_name=filename,
+                                file_dir=upload_dir,
+                                used_jobid=self.jobid,
+                                used_role=pname,
+                                owner=self.user.name,
+                                content_type=content_type
+                            )
+                        else:
+                            logger.warning('Cannot upload URL for input "{}": {}'.format(pname, furl))
                 # TODO: 4/ check if value is an ID that already exists in the entity store ? other attribute ?
                 if not entity:
                     pass
