@@ -558,6 +558,8 @@ class SLURMManager(Manager):
         process_id = str(sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True))
         # Get process_id from output (e.g. "Submitted batch job 9421")
         logger.debug(process_id)
+        logger.debug(process_id.split(' ')[-1])
+        logger.debug(int(process_id.split(' ')[-1]))
         return process_id.split(' ')[-1]
 
     def abort(self, job):
