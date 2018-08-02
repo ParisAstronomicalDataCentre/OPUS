@@ -292,6 +292,7 @@ class Job(object):
         upload_dir = os.path.join(UPLOADS_PATH, self.jobid)
         for pname in self.jdl.content.get('used', {}):
             entity = {}
+            content_type = self.jdl.content['used'][pname].get('content_type', None)
             if pname in list(files.keys()):
                 # 1/ Parameter is a file from the form
                 post_p = post.pop(pname)
@@ -304,9 +305,14 @@ class Job(object):
                 # value = f.filename
                 logger.info('Input "{}" is a file and was downloaded ({})'.format(pname, f.filename))
                 # Check if file already exists in entity store (hash + ID in name or jobid) and add in Used table
-                entity = self.storage.register_entity(file_name=f.filename, file_dir=upload_dir,
-                                                      used_jobid=self.jobid, used_role=pname,
-                                                      owner=self.user.name)
+                entity = self.storage.register_entity(
+                    file_name=f.filename,
+                    file_dir=upload_dir,
+                    used_jobid=self.jobid,
+                    used_role=pname,
+                    owner=self.user.name,
+                    content_type=content_type
+                )
             else:
                 # 2/ Parameter is a value, possibly an ID (set from post or by default)
                 if pname in post:
@@ -333,9 +339,14 @@ class Job(object):
                         value = 'file://' + filename
                         logger.info('Input "{}" is a URL and was downloaded : {}'.format(pname, furl))
                         # TODO: check if file already exists in entity store (hash + ID in name or jobid)
-                        entity = self.storage.register_entity(file_name=filename, file_dir=upload_dir,
-                                                              used_jobid=self.jobid, used_role=pname,
-                                                              owner=self.user.name)
+                        entity = self.storage.register_entity(
+                            file_name=filename,
+                            file_dir=upload_dir,
+                            used_jobid=self.jobid,
+                            used_role=pname,
+                            owner=self.user.name,
+                            content_type=content_type
+                        )
                     else:
                         logger.warning('Cannot upload URL for input "{}": {}'.format(pname, furl))
                 # TODO: 4/ check if value is an ID that already exists in the entity store ? other attribute ?
