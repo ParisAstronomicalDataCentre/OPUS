@@ -547,7 +547,7 @@ class Job(object):
         xml_params = ETree.SubElement(xml_job, 'uws:parameters')
         self._parameters_to_xml_fill(xml_params)
         xml_results = ETree.SubElement(xml_job, 'uws:results')
-        self._results_to_xml_fill(xml_results)
+        #self._results_to_xml_fill(xml_results)
         add_sub_elt(xml_job, 'uws:errorSummary', self.error)
         xml_jobinfo = ETree.SubElement(xml_job, 'uws:jobInfo')
         # ETree.SubElement(xml_jobinfo, 'process_id').text = str(self.process_id)
