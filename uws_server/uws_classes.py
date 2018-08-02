@@ -552,7 +552,7 @@ class Job(object):
         xml_jobinfo = ETree.SubElement(xml_job, 'uws:jobInfo')
         # ETree.SubElement(xml_jobinfo, 'process_id').text = str(self.process_id)
         add_sub_elt(xml_jobinfo, 'process_id', str(self.process_id))
-        logger.debug(self.jobid)
+        # logger.debug(self.jobid)
         try:
             return ETree.tostring(xml_job)
         except:
@@ -578,17 +578,18 @@ class Job(object):
             rinfo = result_list[rname]
             entity = self.storage.register_entity(
                 jobid = self.jobid,
-                result_name = rinfo['result_name'],
-                result_value = rinfo['result_value'],
-                hash = rinfo['hash'],
-                content_type = rinfo['content_type'],
-                file_name = rinfo['file_name'],
-                file_dir = rinfo['file_dir'],
                 creation_time = now.strftime(DT_FMT),
                 owner = self.owner,
+                # result_name = rinfo['result_name'],
+                # result_value = rinfo['result_value'],
+                # hash = rinfo['hash'],
+                # content_type = rinfo['content_type'],
+                # file_name = rinfo['file_name'],
+                # file_dir = rinfo['file_dir'],
+                **rinfo,
             )
             self.add_result_entry(rname, entity['access_url'], entity['content_type'], entity['entity_id'])
-            logger.info('Result added to db: {}'.format(rname))
+            logger.info('Result added to job {}: {}'.format(self.jobid, rname))
 
         # access_url computed for UWS server (retrieve endpoint with entity_id)
         #                     or distant server (url given with $ID to replace by entity_id)
@@ -868,7 +869,10 @@ class JobList(object):
             ETree.SubElement(xml_job, 'uws:runId').text = job['run_id']
             ETree.SubElement(xml_job, 'uws:ownerId').text = job['owner']
             ETree.SubElement(xml_job, 'uws:creationTime').text = job['creation_time']
-        return ETree.tostring(xml_jobs)
+        try:
+            return ETree.tostring(xml_jobs)
+        except:
+            raise UserWarning('Cannot serialize joblist')
 
     def to_html(self):
         """Returns the HTML representation of jobs"""

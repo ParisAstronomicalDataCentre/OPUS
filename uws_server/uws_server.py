@@ -1081,6 +1081,8 @@ def get_joblist(jobname):
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
+    except UserWarning as e:
+        abort_500(e.args[0])
     except:
         abort_500_except()
 
@@ -1176,6 +1178,8 @@ def get_job(jobname, jobid):
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
+    except UserWarning as e:
+        abort_500(e.args[0])
     except:
         abort_500_except()
 
