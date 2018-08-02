@@ -1008,7 +1008,10 @@ var uws_client = (function($) {
         //    // 'this' refers to the pre element
         //    $(this).html();
         //});
-        var msg = xhr.responseText.match(/<pre>(.*?)<\/pre>/g)[0].replace(/<\/?pre>/g,'');
+        var msg = xhr.responseText.match(/<pre>(.*?)<\/pre>/g)
+        if (msg.length > 0) {
+            msg[0].replace(/<\/?pre>/g,'');
+        }
         logger('ERROR', 'getJobList', msg);
         $('#div_loading').hide();
         global.showMessage(msg, 'danger');

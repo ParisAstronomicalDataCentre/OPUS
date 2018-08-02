@@ -1079,6 +1079,8 @@ def get_joblist(jobname):
         return xml_out
     except JobAccessDenied as e:
         abort_403(str(e))
+    except storage.NotFoundWarning as e:
+        abort_404(str(e))
     except:
         abort_500_except()
 
