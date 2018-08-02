@@ -1009,7 +1009,7 @@ var uws_client = (function($) {
         //    $(this).html();
         //});
         var msg = xhr.responseText.match(/<pre>(.*?)<\/pre>/g)
-        if (msg.length > 0) {
+        if (msg && msg.length != 0) {
             msg[0].replace(/<\/?pre>/g,'');
         }
         logger('ERROR', 'getJobList', msg);
