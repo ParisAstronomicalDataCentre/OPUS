@@ -575,7 +575,8 @@ class Job(object):
             with open(rf_name, 'r') as rf:
                 result_list = yaml.load(rf)
         for rname in result_list:
-            rinfo = result_list[rname]
+            rinfo = dict(result_list[rname])
+            logger.debug(rinfo)
             entity = self.storage.register_entity(
                 jobid = self.jobid,
                 creation_time = now.strftime(DT_FMT),
