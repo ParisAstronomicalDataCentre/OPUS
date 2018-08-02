@@ -499,7 +499,7 @@ class Job(object):
                 attrib = {
                     'id': rname,
                     'xlink:href': r['url'],
-                    'mime-type': r['content_type'],
+                    'mime-type': r['content_type'] or 'text/plain',
                 }
                 ETree.SubElement(xml_results, 'uws:result', attrib=attrib)
 
