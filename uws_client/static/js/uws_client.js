@@ -1146,9 +1146,13 @@ var uws_client = (function($) {
     };
     var startJobError = function(jobId, xhr, status, exception){
         logger('ERROR', 'startJob '+jobId, exception);
-        var xhr_parts = xhr.responseText.match(/<pre>.*?<\/pre>/ims)[0].replace(/<\/?pre>/g,'').split('\n');
-        var xhr_text = '<pre>' + xhr_parts[xhr_parts.length-2] + '</pre>';
-        var msg = 'Cannot start job ' + jobId + ': ' + xhr_text;
+        var msg = xhr.responseText.match(/<pre>[\s\S]<\/pre>/g)
+        if (msg && msg.length != 0) {
+            msg = msg[0].replace(/<\/?pre>/g,'');
+        }
+        //var xhr_parts = xhr.responseText.match(/<pre>.*?<\/pre>/ims)[0].replace(/<\/?pre>/g,'').split('\n');
+        //var xhr_text = '<pre>' + xhr_parts[xhr_parts.length-2] + '</pre>';
+        var msg = 'Cannot start job ' + jobId + ': ' + msg;
         global.showMessage(msg, 'danger');
     };
 
