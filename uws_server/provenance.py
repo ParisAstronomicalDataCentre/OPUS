@@ -90,7 +90,7 @@ def job2prov(job, depth=1, direction='BACK', members=0, steps=0, agent=0, model=
         })
 
     # Plan = ActivityDescription
-    if depth > 0:
+    if depth != 0:
         plan = pdoc.entity('opus_jdl:' + job.jobname)
         plan.add_attributes({
             'prov:type': 'voprov:ActivityDescription'
@@ -168,7 +168,10 @@ def job2prov(job, depth=1, direction='BACK', members=0, steps=0, agent=0, model=
                     other_job = copy.copy(job)
                     other_job.jobid = entity['jobid']
                     job_storage.read(other_job, get_attributes=True, get_parameters=True, get_results=True)
-                    other_pdocs.append(job2prov(other_job, depth=depth-2, recursive=True))
+                    other_pdocs.append(job2prov(other_job,
+                                                depth=depth-2, direction=direction, members=members, steps=steps, agent=agent, model=model,
+                                                show_parameters=show_parameters,
+                                                recursive=True))
 
     # Parameters that influence the activity (if depth > 0)
     params = []
