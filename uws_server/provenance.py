@@ -20,7 +20,7 @@ from . import storage
 # http://lists.g-vo.org/pipermail/prov-adhoc/2015-June/000025.html
 
 
-def job2prov(job, depth=1, direction='BACK', members=0, steps=0, agent=0, model='IVOA',
+def job2prov(job, depth=1, direction='BACK', members=0, steps=0, agent=1, model='IVOA',
              show_parameters=True, recursive=False, show_generated=False):
     """
     Create ProvDocument based on job description

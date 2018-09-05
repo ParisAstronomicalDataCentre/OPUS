@@ -44,7 +44,7 @@ ADMIN_EMAIL = 'mathieu.servillat@obspm.fr'
 JOB_EVENT_TOKEN = 'c18de332'  # TOKEN for special user job_event, used internally
 MAINTENANCE_TOKEN = '419cb761'  # TOKEN for special user maintenant, used internally
 ALLOW_ANONYMOUS = True
-CHECK_PERMISSIONS = True  # check rights to create/edit a job
+CHECK_PERMISSIONS = False  # check rights to create/edit a job
 CHECK_OWNER = False
 
 # Identifiers will be generated with the following UUID_GEN function

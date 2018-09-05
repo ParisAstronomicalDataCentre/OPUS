@@ -865,7 +865,7 @@ def provsap():
         kwargs['depth'] = request.query.get('DEPTH', 1)
         format = request.query.get('RESPONSEFORMAT', 'PROV-SVG')
         kwargs['direction'] = request.query.get('DIRECTION', 'BACK')
-        kwargs['agent'] = request.query.get('AGENT', 0)
+        kwargs['agent'] = request.query.get('AGENT', 1)
         kwargs['members'] = request.query.get('MEMBERS', 0)
         kwargs['steps'] = request.query.get('STEPS', 0)
         if kwargs['depth'] == 'ALL':
