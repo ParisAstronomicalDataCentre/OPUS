@@ -34,19 +34,18 @@ from wtforms.validators import InputRequired
 #DEBUG=False
 #TESTING=False
 #SERVER_NAME=  # (e.g.: 'myapp.dev:5000')
-APPLICATION_ROOT = '/client'
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 VAR_PATH = '/var/www/opus'
 LOG_FILE_SUFFIX = ''
+APPLICATION_ROOT = '/opus_client'
 # UWS_SERVER_URL = 'http://localhost'
 UWS_SERVER_URL = 'https://voparis-uws-test.obspm.fr'
-UWS_SERVER_URL_JS = '/client/proxy'  # called by javascript, set to local url (proxy) to avoid cross-calls
+UWS_SERVER_URL_JS = '/opus_client/proxy'  # called by javascript, set to local url (proxy) to avoid cross-calls
 UWS_AUTH = 'Basic'
 
 # Editable configuration keywords
 EDITABLE_CONFIG = [
     'UWS_SERVER_URL',
-    'UWS_SERVER_URL_JS',
     'UWS_AUTH',
 ]
 

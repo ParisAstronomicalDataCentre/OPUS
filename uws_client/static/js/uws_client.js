@@ -27,10 +27,10 @@ var uws_client = (function($) {
     var server_jobs_url = '/rest/';
     var server_jdl_url = '/jdl/<jobname>/json';
     var server_result_url = '/store/';
-    var client_job_list_url = '/client/jobs';
-    var client_job_edit_url = '/client/job_edit';
-    var client_job_form_url = '/client/job_form';
-    var client_proxy_url = '/client/proxy';
+    var client_job_list_url = '/opus_client/jobs';
+    var client_job_edit_url = '/opus_client/job_edit';
+    var client_job_form_url = '/opus_client/job_form';
+    var client_proxy_url = '/opus_client/proxy';
     var jobNames;
     var clients = {};
     var refreshPhaseTimeout = {}; // stores setInterval functions for phase refresh
