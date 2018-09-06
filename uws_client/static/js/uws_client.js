@@ -27,6 +27,7 @@ var uws_client = (function($) {
     var server_jobs_url = '/rest/';
     var server_jdl_url = '/jdl/<jobname>/json';
     var server_result_url = '/store/';
+    var client_jdl_url = '/opus_client/jdl';
     var client_job_list_url = '/opus_client/jobs';
     var client_job_edit_url = '/opus_client/job_edit';
     var client_job_form_url = '/opus_client/job_form';

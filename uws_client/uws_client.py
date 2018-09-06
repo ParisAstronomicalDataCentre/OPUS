@@ -38,10 +38,15 @@ APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 VAR_PATH = '/var/www/opus'
 LOG_FILE_SUFFIX = ''
 APPLICATION_ROOT = '/opus_client'
+UWS_SERVER_URL_JS = '/opus_client/proxy'  # called by javascript, set to local url (proxy) to avoid cross-calls
 # UWS_SERVER_URL = 'http://localhost'
 UWS_SERVER_URL = 'https://voparis-uws-test.obspm.fr'
-UWS_SERVER_URL_JS = '/opus_client/proxy'  # called by javascript, set to local url (proxy) to avoid cross-calls
 UWS_AUTH = 'Basic'
+
+ADMIN_NAME = 'opus-admin'
+ADMIN_DEFAULT_PW = 'OPUS4dm1n'
+TESTUSER_NAME = 'testuser'
+TESTUSER_DEFAULT_PW = 'OPUSu53r'
 
 # Editable configuration keywords
 EDITABLE_CONFIG = [
@@ -240,16 +245,16 @@ def create_db():
         # Create admin user
         if not user_datastore.get_user('admin'):
             user_datastore.create_user(
-                email='opus-admin',
-                password='OPUS4dm1n',
+                email=ADMIN_NAME,
+                password=ADMIN_DEFAULT_PW,
                 active=True,
                 roles=['admin','job_definition','job_list'],
             )
         # Create demo user
         if not user_datastore.get_user('testuser'):
             user_datastore.create_user(
-                email='testuser',
-                password='OPUSu53r',
+                email=TESTUSER_NAME,
+                password=TESTUSER_DEFAULT_PW,
                 active=True,
                 roles=['user','job_definition','job_list'],
             )

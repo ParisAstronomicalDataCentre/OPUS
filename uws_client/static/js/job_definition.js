@@ -503,14 +503,14 @@
         $('#validate_job').click( function() {
             jobname = $('input[name=name]').val().split("/").pop();  // remove 'new/'
             if (jobname) {
-                window.location = '/client/jdl/' + jobname + '/validate';
+                window.location = uws_client.client_jdl_url + '/' + jobname + '/validate';
             };
             console.log('no jobname given');
         });
         $('#cp_script').click( function() {
             jobname = $('input[name=name]').val().split("/").pop();
             if (jobname) {
-                window.location = '/client/jdl/' + jobname + '/copy_script';
+                window.location = uws_client.client_jdl_url + '/' + jobname + '/copy_script';
             }
             console.log('no jobname given');
         });
