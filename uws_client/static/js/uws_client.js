@@ -712,7 +712,7 @@ var uws_client = (function($) {
     // DISPLAY RESULTS
 
     var displayResult = function(list, r, r_type, r_url, r_url_auth){
-        var rsplit = r.split('.').shift()
+        var rsplit = r.replace('.', '_')
         var r_id = 'result_'+rsplit
         var r_name = r_url.split('/').pop();
         var r_panel = '\
