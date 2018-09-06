@@ -90,6 +90,7 @@ class Manager(object):
             '    touch $jd/error',
             '    echo "[`timestamp`] ERROR"',
             '    echo "$msg"',
+            '    echo "[`timestamp`] Copy results"',
             '    copy_results',
             '    job_event "ERROR" "$msg"',
             '    rm -rf $wd',
@@ -101,6 +102,7 @@ class Manager(object):
             '    touch $jd/error',
             '    echo "[`timestamp`] ERROR"',
             '    echo "$msg"',
+            '    echo "[`timestamp`] Copy results"',
             '    copy_results',
             '    job_event "ERROR" "$msg"',
             '    rm -rf $wd',
@@ -116,6 +118,7 @@ class Manager(object):
         # Function to copy results from wd to jd
         cp_results = [
             'copy_results() {',
+            '    ls -lth | tail -n +2',
             '    touch $jd/copy_results',
         ]
         for rname, r in job.jdl.content.get('generated', {}).items():
@@ -190,7 +193,6 @@ class Manager(object):
             'echo "[`timestamp`] Job done *****"',
             '### COPY RESULTS',
             'echo "[`timestamp`] Copy results"',
-            'ls -lth | tail -n +2',
             'copy_results',
             '### CLEAN',
             'rm -rf $wd',
