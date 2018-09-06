@@ -222,7 +222,7 @@ def abort_500_except(msg=None):
 
 @app.route('/')
 def home():
-    redirect('/client')
+    redirect(BASE_URL + '/opus_client')
     # return 'OPUS'
 
 
@@ -485,7 +485,7 @@ def init_db():
         logger.info('Database initialized using ' + filename)
     except:
         abort_500_except()
-    redirect('/db/show/dummy', 303)
+    redirect(BASE_URL + '/db/show/dummy', 303)
 
 
 @is_client_trusted
@@ -508,7 +508,7 @@ def test_db():
         logger.info('Database initialized using ' + filename)
     except:
         abort_500_except()
-    redirect('/db/show/dummy', 303)
+    redirect(BASE_URL + '/db/show/dummy', 303)
 
 
 @is_client_trusted
@@ -1115,7 +1115,7 @@ def create_job(jobname):
     except:
         abort_500_except()
     # Response
-    redirect('/rest/' + jobname + '/' + job.jobid, 303)
+    redirect(BASE_URL + '/rest/' + jobname + '/' + job.jobid, 303)
 
 
 # ----------
@@ -1210,7 +1210,7 @@ def delete_job(jobname, jobid):
     except:
         abort_500_except()
     # Response
-    redirect('/rest/' + jobname, 303)
+    redirect(BASE_URL + '/rest/' + jobname, 303)
 
 
 @app.post('/rest/<jobname>/<jobid>')
@@ -1237,7 +1237,7 @@ def post_job(jobname, jobid):
         abort_500_except('STDERR output:\n' + e.output)
     except:
         abort_500_except()
-    redirect('/rest/' + jobname, 303)
+    redirect(BASE_URL + '/rest/' + jobname, 303)
 
 
 # ----------
@@ -1315,7 +1315,7 @@ def post_phase(jobname, jobid):
     except:
         abort_500_except()
     # Response
-    redirect('/rest/' + jobname + '/' + jobid, 303)
+    redirect(BASE_URL + '/rest/' + jobname + '/' + jobid, 303)
 
 
 # ----------
@@ -1385,7 +1385,7 @@ def post_executionduration(jobname, jobid):
     except:
         abort_500_except()
     # Response
-    redirect('/rest/' + jobname + '/' + jobid, 303)
+    redirect(BASE_URL + '/rest/' + jobname + '/' + jobid, 303)
 
 
 # ----------
@@ -1457,7 +1457,7 @@ def post_destruction(jobname, jobid):
     except:
         abort_500_except()
     # Response
-    redirect('/rest/' + jobname + '/' + jobid, 303)
+    redirect(BASE_URL + '/rest/' + jobname + '/' + jobid, 303)
 
 
 # ----------
@@ -1617,7 +1617,7 @@ def post_parameter(jobname, jobid, pname):
     except:
         abort_500_except()
     # Response
-    redirect('/rest/' + jobname + '/' + jobid + '/parameters', 303)
+    redirect(BASE_URL + '/rest/' + jobname + '/' + jobid + '/parameters', 303)
 
 
 # ----------

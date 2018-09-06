@@ -494,7 +494,8 @@ def proxy(uri):
 
 
 def uws_server_request(uri, method='GET', init_request=None):
-    logger.debug(app.config['UWS_SERVER_URL'])
+    server_url = app.config['UWS_SERVER_URL']
+    logger.debug(server_url)
     # Add auth information (Basic, Token...)
     auth = None
     if app.config['UWS_AUTH'] == 'Basic':
@@ -504,7 +505,7 @@ def uws_server_request(uri, method='GET', init_request=None):
             auth = HTTPBasicAuth('anonymous', 'anonymous')
     # Send request
     if method == 'DELETE':
-        response = requests.delete('{}{}'.format(app.config['UWS_SERVER_URL'], uri), auth=auth)
+        response = requests.delete('{}{}'.format(server_url, uri), auth=auth)
     elif method == 'POST':
         logger.debug(request.form.to_dict())
         post={}
@@ -522,11 +523,11 @@ def uws_server_request(uri, method='GET', init_request=None):
                 logger.debug('file: ' + fname)
                 fp = init_request.files[fname]
                 files[fname] = (fp.filename, fp.stream, fp.content_type, fp.headers)
-        response = requests.post('{}{}'.format(app.config['UWS_SERVER_URL'], uri), data=post, files=files, auth=auth)
+        response = requests.post('{}{}'.format(server_url, uri), data=post, files=files, auth=auth)
     else:
-        response = requests.get('{}{}'.format(app.config['UWS_SERVER_URL'], uri), params=init_request.args, auth=auth)
+        response = requests.get('{}{}'.format(server_url, uri), params=init_request.args, auth=auth)
     # Return response
-    logger.info("{} {} ({})".format(method, uri, response.status_code))
+    logger.info("{} {}{} ({})".format(method, server_url, uri, response.status_code))
     return response
 
 
