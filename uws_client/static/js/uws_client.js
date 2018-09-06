@@ -1213,6 +1213,7 @@ var uws_client = (function($) {
         displaySingleJob: displaySingleJob,
         displayParamForm: displayParamForm,
         displayParamFormInput: displayParamFormInput,
+        client_jdl_url: client_jdl_url,
         client_job_list_url: client_job_list_url,
         client_job_edit_url: client_job_edit_url,
         client_job_form_url: client_job_form_url,
