@@ -36,7 +36,7 @@ from wtforms.validators import InputRequired
 #SERVER_NAME=  # (e.g.: 'myapp.dev:5000')
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 VAR_PATH = '/var/www/opus'
-for p in [VAR_PATH + '/logs', VAR_PATH + '/config']
+for p in [VAR_PATH + '/logs', VAR_PATH + '/config']:
     if not os.path.isdir(p):
         os.makedirs(p)
 LOG_FILE_SUFFIX = ''
