@@ -731,11 +731,15 @@ var uws_client = (function($) {
         // $('#'+r_id+' div.panel-heading span a').html('Download ['+r_type+']');
         // Add download button through proxy (with auth)
         $('#'+r_id+' div.panel-heading div.btn-group').append('\
-            <a class="samp btn btn-default btn-sm" href="' + r_url_auth + '">\
-                <span class="glyphicon glyphicon-save"></span>\
-                Auth Download\
+            <a class="preview btn btn-default btn-sm">\
+                <span class="glyphicon glyphicon-eye-open"></span>\
+                Show preview\
             </a>\
-            <a class="samp btn btn-default btn-sm" href="' + r_url + '">\
+            <a class="download btn btn-default btn-sm" href="' + r_url_auth + '">\
+                <span class="glyphicon glyphicon-save"></span>\
+                Download\
+            </a>\
+            <a class="adownload btn btn-default btn-sm" href="' + r_url + '">\
                 <span class="glyphicon glyphicon-save"></span>\
                 Anonymous Download\
             </a>'
@@ -762,28 +766,32 @@ var uws_client = (function($) {
             case 'image/jpeg':
             case 'image/png':
                 // Show image preview
-                $('#'+r_id).append('\
-                    <div class="panel-body">\
-                        <img class="img-thumbnail" src="' + r_url_auth + '" />\
-                    </div>\
-                ');
+                $('#'+r_id+' div.panel-heading div.btn-group button.preview').click(function() {
+                    $('#'+r_id).append('\
+                        <div class="panel-body">\
+                            <img class="img-thumbnail" src="' + r_url_auth + '" />\
+                        </div>\
+                    ');
+                });
                 break;
             // Show text in textarea
             case 'text/plain':
                 // show textarea with log
-                $('#'+r_id).append('\
-                    <div class="panel-body">\
-                        <textarea class="log form-control" rows="10" style="font-family: monospace;" readonly>\
-                        </textarea>\
-                    </div>\
-                ');
-                $.ajax({
-                    url : r_url_auth,
-                    dataType: "text",
-                    context: r_id,  // Set this=r_id for success function
-                    success : function (txt) {
-                        $('#' + this + ' div.panel-body textarea').html(txt);
-                    }
+                $('#'+r_id+' div.panel-heading div.btn-group button.preview').click(function() {
+                    $('#'+r_id).append('\
+                        <div class="panel-body">\
+                            <textarea class="log form-control" rows="10" style="font-family: monospace;" readonly>\
+                            </textarea>\
+                        </div>\
+                    ');
+                    $.ajax({
+                        url : r_url_auth,
+                        dataType: "text",
+                        context: r_id,  // Set this=r_id for success function
+                        success : function (txt) {
+                            $('#' + this + ' div.panel-body textarea').html(txt);
+                        }
+                    });
                 });
                 break;
             // Show SVG
