@@ -778,6 +778,7 @@ var uws_client = (function($) {
             case 'text/plain':
                 // show textarea with log
                 $('#'+r_id+' div.panel-heading div.btn-group button.preview').click(function() {
+                    console.log(r_id);
                     $('#'+r_id).append('\
                         <div class="panel-body">\
                             <textarea class="log form-control" rows="10" style="font-family: monospace;" readonly>\
@@ -1125,7 +1126,15 @@ var uws_client = (function($) {
     };
     var createJobError = function(xhr, status, exception){
         logger('ERROR', 'createJob', exception);
-        var msg = 'Cannot create job.';
+        // var msg = 'Cannot create job.';
+        // global.showMessage(msg, 'danger');
+        var msg = xhr.responseText.match(/<pre>[\s\S]<\/pre>/g)
+        if (msg && msg.length != 0) {
+            msg = msg[0].replace(/<\/?pre>/g,'');
+        }
+        //var xhr_parts = xhr.responseText.match(/<pre>.*?<\/pre>/ims)[0].replace(/<\/?pre>/g,'').split('\n');
+        //var xhr_text = '<pre>' + xhr_parts[xhr_parts.length-2] + '</pre>';
+        var msg = 'Cannot create job: ' + msg;
         global.showMessage(msg, 'danger');
     };
 
