@@ -56,7 +56,10 @@ EDITABLE_CONFIG = [
 
 # Include host-specific setting
 if os.path.exists(APP_PATH + '/uws_client/settings_local.py'):
-    from .settings_local import *
+    if __name__ == '__main__':
+        from settings_local import *
+    else:
+        from .settings_local import *
 
 LOG_PATH = VAR_PATH + '/logs'  # the logs dir has to be writable from the app
 CONFIG_FILE = VAR_PATH + '/config/uws_client_config.yaml'  # the config dir has to be writable from the app
@@ -543,4 +546,5 @@ def uws_server_request(uri, method='GET', init_request=None):
 if __name__ == '__main__':
     # Run local web server
     #run(app, host='localhost', port=8080, debug=False, reloader=True)
+    app.run(host='localhost', port=8080, debug=False)
     pass
