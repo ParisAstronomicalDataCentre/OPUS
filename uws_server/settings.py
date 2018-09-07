@@ -27,7 +27,7 @@ LOG_FILE_SUFFIX = ''
 # URL an IP of the web server
 BASE_URL = 'http://localhost'
 BASE_IP = '127.0.0.1'
-LOCAL_USER = 'www'
+LOCAL_USER = 'www'  # Appache user (may be www, _www, apache...)
 
 # Admin name+pid has access to user database changes (i.e. set permissions)
 ADMIN_NAME = 'opus-admin'
@@ -35,29 +35,58 @@ ADMIN_TOKEN = 'e85d2a4e-27ea-5202-8b5c-241e82f5871a'
 ADMIN_EMAIL = 'mathieu.servillat@obspm.fr'
 JOB_EVENT_TOKEN = 'c18de332'  # TOKEN for special user job_event, used internally
 MAINTENANCE_TOKEN = '419cb761'  # TOKEN for special user maintenant, used internally
+
+# Access rules
 ALLOW_ANONYMOUS = True
 CHECK_PERMISSIONS = False  # check rights to create/edit a job
 CHECK_OWNER = False
+
+# max active jobs per user
+NJOBS_MAX = 4  # 0 for no restriction
+
+# Default destruction interval
+DESTRUCTION_INTERVAL = 30  # in days
+
+# Maximum and default execution duration, 0 implies unlimited execution duration
+EXECUTION_DURATION_DEF = 120  # in seconds
+EXECUTION_DURATION_MAX = 3600  # in seconds
+
+# Maximum wait time (UWS1.1)
+WAIT_TIME_MAX = 600  # in seconds
+
+# ARCHIVED phase (UWS1.1)
+USE_ARCHIVED_PHASE = True
+
+# Copy back results
+COPY_RESULTS = True  # copy results from Manager to UWS server (may be irrelevant if Manager = Local)
+
+# Add the provenance files to the results of the jobs
+GENERATE_PROV = True
 
 # Those servers can have access to /job_event/<jobid_manager> to change the phase or report an error
 # The IP can be truncated to allow to refer to a set of IPs
 JOB_SERVERS = {
     '::1': 'localhost',
     '127.0.0.1': 'localhost',
-    '145.238.151.': 'tycho/quadri12',
 }
+# TO BE PLACED in settings_local.py
+JOB_SERVERS.update({
+    '145.238.151.': 'tycho/quadri12',
+})
 
 # The server will allow db and jdl access only from trusted clients (while waiting for an auth system)
 # e.g. /db/init, /jdl/validate...
 TRUSTED_CLIENTS = {
     '::1':             'localhost',
     '127.0.0.1':       'localhost',
+}
+# TO BE PLACED in settings_local.py
+TRUSTED_CLIENTS.update({
     '145.238.193.69':  'voparis-uws-test.obspm.fr',
     '145.238.168.3':   'savagnin_ucopia',
     '145.238.180.240': 'savagnin_cable',
     '93.15.50.214':    'savagnin_home',
-}
-
+})
 
 # Identifiers will be generated with the following UUID_GEN function
 JOB_ID_LENGTH = 6   # length of uuid identifiers from the right, max=36
@@ -70,10 +99,7 @@ def JOB_ID_GEN():
 SHA_ALGO = '1'  # 1 (default), 224, 256, 384, 512
 
 def ENTITY_ID_GEN(**kwargs):
-    # kwargs contains all the attributes of an entity
-    # For a UWS system: entity_id = jobid + result_name should be unique...
-    # return str(uuid.uuid4())
-    #return '{}_{}'.format(kwargs['jobid'], kwargs['result_name'])
+    # kwargs contains all the known attributes of an entity
     return JOB_ID_GEN()
 
 def TOKEN_GEN(name):
@@ -82,7 +108,6 @@ def TOKEN_GEN(name):
     except:
         token = uuid.uuid4()
     return str(token)
-
 
 # Job Description Language files
 # VOTFile: VOTable following the Provenance DM ActivityDescription class
@@ -94,10 +119,11 @@ JDL = 'VOTFile'
 # SQLAlchemy: SQLAlchemy interface to the relational DB, e.g. SQLite, PostgreSQL...)
 # SQLite: direct use of SQLite -- to be deprecated
 STORAGE = 'SQLAlchemy'
+STORAGE_TYPE = 'SQLite'
 # SQLALCHEMY_DB = ''  # defined further below
-# SQLite storage info
+# SQLite storage type info
 SQLITE_FILE_NAME = 'job_database.db'
-# PGSQL storage info
+# PGSQL storage type info
 PGSQL_HOST = 'localhost'
 PGSQL_PORT = 5432
 PGSQL_DATABASE = 'opus'
@@ -112,11 +138,6 @@ PGSQL_PASSWORD = 'opus'
 ARCHIVE = 'Local'
 ARCHIVE_PATH = ''
 ARCHIVE_URL = ''  # use $ID for the identifier of the result
-
-# Copy back results
-COPY_RESULTS = True  # copy results from Manager to UWS server (may be irrelevant if Manager = Local)
-# Add the provenance files to the results of the jobs
-GENERATE_PROV = True
 
 # Define a Manager and its properties
 # Local: execution on the UWS server directly using Bash commands
@@ -167,15 +188,6 @@ UWS_PARAMETERS = {
     #'uws_destruction': 'Date of desctruction of the job',
 }
 
-# Parameters allowed for SLURM sbatch header, prefixed with 'slurm:'
-SLURM_PARAMETERS = {
-    'slurm_mem': 'Memory to be allocated to the job',
-    'slurm_nodes': 'Number of nodes allocated to the job',
-    'slurm_ntasks-per-node': '',
-    'slurm_partition': 'short, ...',
-    'slurm_account': 'If needed (obspm for quadri12)',
-}
-
 # Control parameters allowed in a form for job creation
 CONTROL_PARAMETERS = dict( list(UWS_PARAMETERS.items()) )
 # Order for the control parameters
@@ -187,7 +199,16 @@ CONTROL_PARAMETERS_KEYS = [
     'destruction',
     # 'uws_destruction',
 ]
+
 if MANAGER == 'SLURM':
+    # Parameters allowed for SLURM sbatch header, prefixed with 'slurm:'
+    SLURM_PARAMETERS = {
+        'slurm_mem': 'Memory to be allocated to the job',
+        'slurm_nodes': 'Number of nodes allocated to the job',
+        'slurm_ntasks-per-node': '',
+        'slurm_partition': 'short, ...',
+        'slurm_account': 'If needed (obspm for quadri12)',
+    }
     CONTROL_PARAMETERS.update(SLURM_PARAMETERS)
     CONTROL_PARAMETERS_KEYS.extend([
         'slurm_mem',
@@ -196,19 +217,6 @@ if MANAGER == 'SLURM':
         'slurm_partition',
         'slurm_account',
     ])
-
-# Default destruction interval
-DESTRUCTION_INTERVAL = 30  # in days
-
-# Maximum and default execution duration, 0 implies unlimited execution duration
-EXECUTION_DURATION_DEF = 120  # in seconds
-EXECUTION_DURATION_MAX = 3600  # in seconds
-
-# Maximum wait time (UWS1.1)
-WAIT_TIME_MAX = 600  # in seconds
-
-# ARCHIVED phase (UWS1.1)
-USE_ARCHIVED_PHASE = True
 
 
 # ----------
@@ -333,10 +341,12 @@ if 'test_' in main_dict.get('__file__', ''):
 
 
 #--- Set all _PATH based on APP_PATH or VAR_PATH -----------------------------------------------------------------------
-# Path to sqlite db file
-SQLITE_FILE = VAR_PATH + '/db/' + SQLITE_FILE_NAME
-SQLALCHEMY_DB = 'sqlite:///' + SQLITE_FILE
-# SQLALCHEMY_DB = 'postgresql://user:pwd@localhost:5432/mydatabase'
+if STORAGE_TYPE == 'SQLite':
+    # Path to sqlite db file
+    SQLITE_FILE = VAR_PATH + '/db/' + SQLITE_FILE_NAME
+    SQLALCHEMY_DB = 'sqlite:///' + SQLITE_FILE
+if STORAGE_TYPE == 'PostgreSQL':
+    SQLALCHEMY_DB = 'postgresql://{}:{}@{}:{}/{}'.format(PGSQL_USER, PGSQL_PASSWORD, PGSQL_HOST, PGSQL_PORT, PGSQL_DATABASE)
 # Logging
 LOG_PATH = VAR_PATH + '/logs'
 # Path for JDL files, should probably be accessed through a URL as static files
@@ -345,6 +355,7 @@ JDL_PATH = VAR_PATH + '/jdl'
 SCRIPTS_PATH = VAR_PATH + '/jdl/scripts'
 # Default path for job results and logs
 JOBDATA_PATH = VAR_PATH + '/jobdata'
+WORKDIR_PATH = VAR_PATH + '/workdir'
 RESULTS_PATH = VAR_PATH + '/results'
 # If POST contains files they are uploaded on the UWS server
 UPLOADS_PATH = VAR_PATH + '/uploads'
@@ -352,6 +363,12 @@ UPLOADS_PATH = VAR_PATH + '/uploads'
 TEMP_PATH = VAR_PATH + '/temp'
 #--- Set all _PATH based on APP_PATH or VAR_PATH -----------------------------------------------------------------------
 
+for p in [VAR_PATH + '/db', VAR_PATH + '/config',
+          LOG_PATH, JDL_PATH, JOBDATA_PATH, WORKDIR_PATH, RESULTS_PATH, UPLOADS_PATH, TEMP_PATH,
+          JDL_PATH + '/votable', JDL_PATH + '/votable/new', JDL_PATH + '/votable/saved',
+          JDL_PATH + '/scripts', JDL_PATH + '/scripts/new', JDL_PATH + '/scripts/saved']:
+    if not os.path.isdir(p):
+        os.makedirs(p)
 
 # Set logger
 LOGGING = {

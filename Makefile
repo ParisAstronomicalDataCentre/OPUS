@@ -7,8 +7,10 @@ init:
 	mkdir -p $(VAR_PATH)/jdl
 	mkdir -p $(VAR_PATH)/jdl/scripts
 	mkdir -p $(VAR_PATH)/jdl/scripts/new
+	mkdir -p $(VAR_PATH)/jdl/scripts/saved
 	mkdir -p $(VAR_PATH)/jdl/votable
 	mkdir -p $(VAR_PATH)/jdl/votable/new
+	mkdir -p $(VAR_PATH)/jdl/votable/saved
 	mkdir -p $(VAR_PATH)/jobdata
 	mkdir -p $(VAR_PATH)/logs
 	mkdir -p $(VAR_PATH)/results
