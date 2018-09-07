@@ -187,19 +187,19 @@ class Job(object):
         # Check if user has rights to create/edit such a job, else raise JobAccessDenied
         check_permissions(self)
 
-        # Check if max number of running jobs is not reached
-        jobs = self.storage.get_list(self, phase=ACTIVE_PHASES, where_owner=True)
-        if NJOBS_MAX and len(jobs) >= NJOBS_MAX:
-            raise TooManyJobs('Maximum number of active jobs reached for {} ({})'.format(user.name, NJOBS_MAX))
-
         # Link to the job manager, e.g. SLURM, see settings.py
         # self.manager = managers.__dict__[MANAGER + 'Manager']()
         self.manager = getattr(managers, MANAGER + 'Manager')()
         # Prepare jdl attribute, see settings.py
         # self.jdl = uws_jdl.__dict__[JDL]()
         self.jdl = getattr(uws_jdl, JDL)()
+
         # Fill job attributes
         if from_post:
+            # Check if max number of running jobs is not reached
+            jobs = self.storage.get_list(self, phase=ACTIVE_PHASES, where_owner=True)
+            if NJOBS_MAX and len(jobs) >= NJOBS_MAX:
+                raise TooManyJobs('Maximum number of active jobs reached for {} ({})'.format(user.name, NJOBS_MAX))
             # Create a new PENDING job and save to storage
             now = dt.datetime.now()
             destruction = dt.timedelta(DESTRUCTION_INTERVAL)  # default interval for UWS server
@@ -219,6 +219,7 @@ class Job(object):
             self.results = {}
             # Set parameters from POSTed info
             self.set_from_post(from_post.POST, from_post.files)
+
         elif get_attributes or get_parameters or get_results:
             # Get from storage
             self.storage.read(self,
@@ -229,6 +230,7 @@ class Job(object):
             # Check if the user is the owner of the job, else raise JobAccessDenied
             if run_check_owner:
                 check_owner(self)
+
         else:
             # Create blank job with None values, do not save to storage
             now = dt.datetime.now()
