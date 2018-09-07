@@ -185,7 +185,7 @@ class Job(object):
         # Check if max number of running jobs is not reached
         jobs = self.storage.get_list(self, phase=ACTIVE_PHASES, where_owner=True)
         if NJOBS_MAX and len(jobs) > NJOBS_MAX:
-            raise UserWarning('Maximum number of running jobs reached for {} ({})'.format(user.name, NJOBS_MAX))
+            raise UserWarning('Maximum number of active jobs reached for {} ({})'.format(user.name, NJOBS_MAX))
 
         # Link to the job manager, e.g. SLURM, see settings.py
         # self.manager = managers.__dict__[MANAGER + 'Manager']()
