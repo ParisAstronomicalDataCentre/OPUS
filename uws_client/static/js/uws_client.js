@@ -1129,7 +1129,7 @@ var uws_client = (function($) {
         // var msg = 'Cannot create job.';
         // global.showMessage(msg, 'danger');
         var msg = xhr.responseText.match(/<pre>[\s\S]<\/pre>/g)
-        console.log(msg);
+        console.log(xhr.responseText);
         //if (msg && msg.length != 0) {
         //    msg = msg[0].replace(/<\/?pre>/g,'');
         //}
