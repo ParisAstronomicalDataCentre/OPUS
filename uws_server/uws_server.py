@@ -1110,6 +1110,8 @@ def create_job(jobname):
                         ''.format(jobname, job.jobid, str(job.process_id), user))
     except UserWarning as e:
         abort_500(e.args[0])
+    except TooManyJobs as e:
+        abort_500(e.args[0])
     except CalledProcessError as e:
         abort_500_except('STDERR output:\n' + e.output)
     except:
