@@ -10,6 +10,7 @@
     var server_url;
 
     var content_types = [
+        'application/octet-stream',
         'text/plain',
         'text/xml',
         'text/x-votable+xml',
