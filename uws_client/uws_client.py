@@ -36,7 +36,7 @@ from wtforms.validators import InputRequired
 #SERVER_NAME=  # (e.g.: 'myapp.dev:5000')
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 VAR_PATH = '/var/www/opus'
-for p in [VAR_PATH + '/logs', VAR_PATH + '/config']:
+for p in [VAR_PATH + '/logs', VAR_PATH + '/config', VAR_PATH + '/db']:
     if not os.path.isdir(p):
         os.makedirs(p)
 LOG_FILE_SUFFIX = ''
@@ -102,6 +102,10 @@ LOGGING = {
             'level': 'DEBUG',
         },
         'wsgiproxy': {
+            'handlers': ['file_client'],
+            'level': 'DEBUG',
+        },
+        'flask_admin': {
             'handlers': ['file_client'],
             'level': 'DEBUG',
         },
@@ -249,7 +253,7 @@ def create_db():
             description='Access to job list',
         )
         # Create admin user
-        if not user_datastore.get_user('admin'):
+        if not user_datastore.get_user(ADMIN_NAME):
             user_datastore.create_user(
                 email=ADMIN_NAME,
                 password=ADMIN_DEFAULT_PW,
@@ -257,7 +261,7 @@ def create_db():
                 roles=['admin','job_definition','job_list'],
             )
         # Create demo user
-        if not user_datastore.get_user('testuser'):
+        if not user_datastore.get_user(TESTUSER_NAME):
             user_datastore.create_user(
                 email=TESTUSER_NAME,
                 password=TESTUSER_DEFAULT_PW,
@@ -265,7 +269,7 @@ def create_db():
                 roles=['user','job_definition','job_list'],
             )
         db.session.commit()
-        logger.debug('Database created')
+        logger.debug('Database created or updated')
     except Exception as e:
         db.session.rollback()
         logger.warning(str(e))
@@ -549,5 +553,5 @@ def uws_server_request(uri, method='GET', init_request=None):
 if __name__ == '__main__':
     # Run local web server
     #run(app, host='localhost', port=8080, debug=False, reloader=True)
-    app.run(host='localhost', port=8080, debug=False)
+    app.run(host='localhost', port=8080, debug=True)
     pass
