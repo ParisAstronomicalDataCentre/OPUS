@@ -575,8 +575,8 @@ class Job(object):
     # Metadata management
     # ----------
 
-    def add_result_entry(self, rname, url, content_type, entity_id):
-        self.results[rname] = {'url': url, 'content_type': content_type, 'entity_id': entity_id}
+    def add_result_entry(self, rid, url, content_type, entity_id):
+        self.results[rid] = {'url': url, 'content_type': content_type, 'entity_id': entity_id}
 
     def add_results(self):
         # Read results.yml to know generated results (those that are located in the results directory)
@@ -601,8 +601,11 @@ class Job(object):
                 # file_dir = rinfo['file_dir'],
                 **rinfo,
             )
-            self.add_result_entry(rname, entity['access_url'], entity['content_type'], entity['entity_id'])
-            logger.info('Result added to job {}: {}'.format(self.jobid, rname))
+            rid = entity['result_name']
+            if '*' in rinfo['result_value']:
+                rid = rname
+            self.add_result_entry(rid, entity['access_url'], entity['content_type'], entity['entity_id'])
+            logger.info('Result added to job {}: {}'.format(self.jobid, rid))
 
         # access_url computed for UWS server (retrieve endpoint with entity_id)
         #                     or distant server (url given with $ID to replace by entity_id)
