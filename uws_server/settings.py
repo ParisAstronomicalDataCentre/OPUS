@@ -42,7 +42,7 @@ CHECK_PERMISSIONS = False  # check rights to create/edit a job
 CHECK_OWNER = False
 
 # max active jobs per user
-NJOBS_MAX = 4  # 0 for no restriction
+NJOBS_MAX = 1  # 0 for no restriction
 
 # Default destruction interval
 DESTRUCTION_INTERVAL = 30  # in days
