@@ -17,7 +17,7 @@ init:
 	mkdir -p $(VAR_PATH)/temp
 	mkdir -p $(VAR_PATH)/uploads
 	mkdir -p $(VAR_PATH)/workdir
-	chown -R $(WWWUSER) $(VAR_PATH)/*
+	chown -R $(WWWUSER) $(VAR_PATH)
 
 test:
 	./test.py
