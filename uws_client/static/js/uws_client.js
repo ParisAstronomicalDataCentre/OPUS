@@ -1068,7 +1068,11 @@ var uws_client = (function($) {
     };
     var getJobPhaseError = function(jobId, xhr, status, exception){
         logger('ERROR', 'getJobPhase '+ jobId, exception);
-        var msg = 'Cannot get phase of job ' + jobId;
+        var msg = xhr.responseText.match(/<pre>[\s\S]*<\/pre>/g)
+        if (msg && msg.length != 0) {
+            msg = msg[0].replace(/<\/?pre>/g,'');
+        }
+        var msg = 'Cannot get phase of job ' + jobId + ': ' + msg;
         global.showMessage(msg, 'danger');
     };
 
@@ -1085,7 +1089,11 @@ var uws_client = (function($) {
     };
     var getJobInfosError = function(jobId, xhr, status, exception){
         logger('ERROR', 'getJobInfos '+ jobId, exception);
-        var msg = 'Cannot get info of job ' + jobId;
+        var msg = xhr.responseText.match(/<pre>[\s\S]*<\/pre>/g)
+        if (msg && msg.length != 0) {
+            msg = msg[0].replace(/<\/?pre>/g,'');
+        }
+        var msg = 'Cannot get info of job ' + jobId + ': ' + msg;
         global.showMessage(msg, 'danger');
     };
 
@@ -1102,7 +1110,11 @@ var uws_client = (function($) {
     };
     var getJobResultsError = function(jobId, xhr, status, exception){
         logger('ERROR', 'getJobResults '+ jobId, exception);
-        var msg = 'Cannot get job results for job' + jobId;
+        var msg = xhr.responseText.match(/<pre>[\s\S]*<\/pre>/g)
+        if (msg && msg.length != 0) {
+            msg = msg[0].replace(/<\/?pre>/g,'');
+        }
+        var msg = 'Cannot get job results for job' + jobId + ': ' + msg;
         global.showMessage(msg, 'danger');
     };
 
@@ -1126,14 +1138,10 @@ var uws_client = (function($) {
     };
     var createJobError = function(xhr, status, exception){
         logger('ERROR', 'createJob', exception);
-        // var msg = 'Cannot create job.';
-        // global.showMessage(msg, 'danger');
         var msg = xhr.responseText.match(/<pre>[\s\S]*<\/pre>/g)
         if (msg && msg.length != 0) {
             msg = msg[0].replace(/<\/?pre>/g,'');
         }
-        //var xhr_parts = xhr.responseText.match(/<pre>.*?<\/pre>/ims)[0].replace(/<\/?pre>/g,'').split('\n');
-        //var xhr_text = '<pre>' + xhr_parts[xhr_parts.length-2] + '</pre>';
         var msg = 'Cannot create job: ' + msg;
         global.showMessage(msg, 'danger');
     };
@@ -1168,8 +1176,6 @@ var uws_client = (function($) {
         if (msg && msg.length != 0) {
             msg = msg[0].replace(/<\/?pre>/g,'');
         }
-        //var xhr_parts = xhr.responseText.match(/<pre>.*?<\/pre>/ims)[0].replace(/<\/?pre>/g,'').split('\n');
-        //var xhr_text = '<pre>' + xhr_parts[xhr_parts.length-2] + '</pre>';
         var msg = 'Cannot start job ' + jobId + ': ' + msg;
         global.showMessage(msg, 'danger');
     };
@@ -1189,7 +1195,11 @@ var uws_client = (function($) {
     };
     var abortJobError = function(jobId, xhr, status, exception){
         logger('ERROR', 'abortJob '+ jobId, exception);
-        var msg = 'Cannot abort job ' + jobId;
+        var msg = xhr.responseText.match(/<pre>[\s\S]*<\/pre>/g)
+        if (msg && msg.length != 0) {
+            msg = msg[0].replace(/<\/?pre>/g,'');
+        }
+        var msg = 'Cannot abort job ' + jobId + ': ' + msg;
         global.showMessage(msg, 'danger');
     };
 
@@ -1214,7 +1224,11 @@ var uws_client = (function($) {
     };
     var destroyJobError = function(jobId, xhr, status, exception){
         logger('ERROR', 'destroyJob '+jobId, exception);
-        var msg = 'Cannot delete job ' + jobId;
+        var msg = xhr.responseText.match(/<pre>[\s\S]*<\/pre>/g)
+        if (msg && msg.length != 0) {
+            msg = msg[0].replace(/<\/?pre>/g,'');
+        }
+        var msg = 'Cannot delete job ' + jobId + ': ' + msg;
         global.showMessage(msg, 'danger');
     };
 
