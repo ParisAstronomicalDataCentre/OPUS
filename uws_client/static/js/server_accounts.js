@@ -7,7 +7,7 @@
     "use strict";
 
     var server_url;
-    var endpoint;
+    var client_url;
     var job_options = [];
 
     function get_jobnames() {
@@ -225,7 +225,7 @@
     
         // Get jobname/jobid
         server_url = $('#server_url').attr('value');
-        endpoint = $('#endpoint').attr('value');
+        client_url = $('#client_url').attr('value');
 
         // Get user list
         get_jobnames();

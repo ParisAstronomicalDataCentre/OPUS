@@ -7,7 +7,7 @@
     "use strict";
 
     var server_url;
-    var endpoint;
+    var client_url;
     var jobname;
     var jobid;
 
@@ -16,12 +16,12 @@
         $('#form-buttons').remove();
         // Get jobname/jobid
         server_url = $('#server_url').attr('value');
-        endpoint = $('#endpoint').attr('value');
+        client_url = $('#client_url').attr('value');
         jobname = $('#jobname').attr('value');
         jobid = $('#jobid').attr('value');
         // Display job
         if (jobname && jobid) {
-            uws_client.initClient(endpoint, server_url, [jobname]);
+            uws_client.initClient(client_url, server_url, [jobname]);
             uws_client.displaySingleJob(jobname, jobid);
         };
         // Rerun job button
@@ -29,7 +29,7 @@
             // Collect job params
             var all_params = JSON.parse($('#all_params').attr('value'));
             var query_string = $.param(all_params);
-            location.href = uws_client.client_job_form_url + "/" + jobname + '?' + query_string;
+            location.href = uws_client.client_url + uws_client.client_url_job_form + "/" + jobname + '?' + query_string;
         })
     });
 

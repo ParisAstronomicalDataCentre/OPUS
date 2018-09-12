@@ -7,16 +7,17 @@
     "use strict";
 
     var server_url;
+    var client_url;
     var jobname = 'copy';
 
     $(document).ready( function() {
         
         server_url = $('#server_url').attr('value');
-        endpoint = $('#endpoint').attr('value');
+        client_url = $('#client_url').attr('value');
         jobname = $('#jobname').attr('value');
         var params = $('#init_params').attr('value');
         var init_params = JSON.parse(params);
-        uws_client.initClient(endpoint, server_url, [jobname]);
+        uws_client.initClient(client_url, server_url, [jobname]);
         uws_client.displayParamForm(jobname, init_params);
 
         // catch the form's submit event to validate form

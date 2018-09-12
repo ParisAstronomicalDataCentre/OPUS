@@ -24,15 +24,15 @@ var uws_client = (function($) {
     // var serviceUrl = $(location).attr('protocol') + '//' + $(location).attr('host');
     // "https://voparis-uws-test.obspm.fr/"; // app_url+"/uws-v1.0/" //
     var DEBUG = true;
-    var server_jobs_url = '/rest/';
-    var server_jdl_url = '/jdl/<jobname>/json';
-    var server_result_url = '/store/';
+    var server_url_jobs = '/rest/';
+    var server_url_jdl = '/jdl/<jobname>/json';
+    var server_url_results = '/store/';
     var client_url = '/opus_client';
-    var client_jdl_url = '/opus_client/jdl';
-    var client_job_list_url = client_url + '/jobs';
-    var client_job_edit_url = client_url + '/job_edit';
-    var client_job_form_url = client_url + '/job_form';
-    var client_proxy_url = client_url + '/proxy';
+    var client_url_jdl = '/jdl';
+    var client_url_jobs = '/jobs';
+    var client_url_job_edit = '/job_edit';
+    var client_url_job_form = '/job_form';
+    var client_url_proxy = '/proxy';
     var jobNames;
     var clients = {};
     var refreshPhaseTimeout = {}; // stores setInterval functions for phase refresh
@@ -100,18 +100,13 @@ var uws_client = (function($) {
         jobNames = jobNames_init;
         if (client_url.length) {
             client_url = clientUrl;
-            client_jdl_url = '/opus_client/jdl';
-            client_job_list_url = client_url + '/jobs';
-            client_job_edit_url = client_url + '/job_edit';
-            client_job_form_url = client_url + '/job_form';
-            client_proxy_url = client_url + '/proxy';
         }
         for (var i in jobNames) {
             // Init client
-            var url = serviceUrl + server_jobs_url + jobNames[i];
+            var url = serviceUrl + server_url_jobs + jobNames[i];
             clients[jobNames[i]] = new uwsLib.uwsClient(url);
             // Get JDL for job
-            $.getJSON(serviceUrl + server_jdl_url.replace("<jobname>", jobNames[i]), function(jdl) {
+            $.getJSON(serviceUrl + server_url_jdl.replace("<jobname>", jobNames[i]), function(jdl) {
                 clients[jobNames[i]].jdl = jdl;
             });
             logger('INFO', 'uwsClient at ' + clients[jobNames[i]].serviceUrl);
@@ -382,19 +377,19 @@ var uws_client = (function($) {
             var jobId = $(this).parents("tr").attr('id');
             var jobName = $(this).parents("tr").attr('jobname');
             selectJob(jobId);
-            window.location.href = client_job_edit_url + "/" + jobName + "/" + jobId + '#properties';
+            window.location.href = client_url + client_url_job_edit + "/" + jobName + "/" + jobId + '#properties';
         });
         $('#'+job.jobId+' td button.parameters').click( function() {
             var jobId = $(this).parents("tr").attr('id');
             var jobName = $(this).parents("tr").attr('jobname');
             selectJob(jobId);
-            window.location.href = client_job_edit_url + "/" + jobName + "/" + jobId + '#parameters';
+            window.location.href = client_url + client_url_job_edit + "/" + jobName + "/" + jobId + '#parameters';
         });
          $('#'+job.jobId+' td button.results').click( function() {
             var jobId = $(this).parents("tr").attr('id');
             var jobName = $(this).parents("tr").attr('jobname');
             selectJob(jobId);
-            window.location.href = client_job_edit_url + "/" + jobName + "/" + jobId + '#results';
+            window.location.href = client_url + client_url_job_edit + "/" + jobName + "/" + jobId + '#results';
         });
     };
 
@@ -857,7 +852,7 @@ var uws_client = (function($) {
                 var r_type = job.results[r].mimetype;
                 var r_url_auth = r_url.split('?').pop();
                 if (r_url_auth != r_url) {
-                    r_url_auth = client_proxy_url + server_result_url + '?' + r_url_auth
+                    r_url_auth = client_url + client_url_proxy + server_url_results + '?' + r_url_auth
                 };
                 // var r_type = jdl.generated[r]['content_type']; //r_name.split('.').pop();
                 displayResult('result_list', r, r_type, r_url, r_url_auth);
@@ -871,7 +866,7 @@ var uws_client = (function($) {
                     var r_type = job.results[r].mimetype;
                     var r_url_auth = r_url.split('?').pop();
                     if (r_url_auth != r_url) {
-                        r_url_auth = client_proxy_url + server_result_url + '?' + r_url_auth
+                        r_url_auth = client_url + client_url_proxy + server_url_results + '?' + r_url_auth
                     };
                     displayResult('result_list', r, r_type, r_url, r_url_auth);
                 };
@@ -883,7 +878,7 @@ var uws_client = (function($) {
             if ($.inArray(r, Object.keys(job.results)) !== -1) {
                 console.log(r);
                 var r_url = serviceUrl + '/' + job.jobId + '/' + r;
-                var r_url_auth = client_proxy_url + server_jobs_url + job.jobName + '/' + job.jobId + '/' + r;
+                var r_url_auth = client_url + client_url_proxy + server_url_jobs + job.jobName + '/' + job.jobId + '/' + r;
                 var r_type = 'text/plain';
                 switch (r) {
                     case 'provjson':
@@ -940,7 +935,7 @@ var uws_client = (function($) {
         $("#"+job.jobId).on('destroyed', function() {
             $("#div_job").hide();
             setTimeout(function(){
-                window.location.href = client_job_list_url + "/" + job.jobName;  // + "?msg=deleted&jobid=" + jobId;
+                window.location.href = client_url + client_url_jobs + "/" + job.jobName;  // + "?msg=deleted&jobid=" + jobId;
             }, 3000);
         });
         // Change click event for Details buttons
@@ -972,7 +967,7 @@ var uws_client = (function($) {
         global.showMessage(msg, 'warning');
         logger('WARNING', 'displaySingleJob '+ jobId, exception);
         setTimeout(function(){
-            window.location.href = client_job_list_url;  // + "?msg=missing&jobid=" + jobId;
+            window.location.href = client_url + client_url_jobs;  // + "?msg=missing&jobid=" + jobId;
         }, 3000);
     };
 
@@ -1168,7 +1163,7 @@ var uws_client = (function($) {
     var createJobSuccess = function(job) {
         logger('INFO', 'Job created with id='+job.jobId+' jobname='+job.jobName);
         // redirect to URL + job_id
-        window.location.href = client_job_edit_url + "/" + job.jobName + "/" + job.jobId;
+        window.location.href = client_url + client_url_job_edit + "/" + job.jobName + "/" + job.jobId;
     };
     var createJobError = function(xhr, status, exception){
         logger('ERROR', 'createJob', exception);
@@ -1278,11 +1273,12 @@ var uws_client = (function($) {
         displaySingleJob: displaySingleJob,
         displayParamForm: displayParamForm,
         displayParamFormInput: displayParamFormInput,
-        client_jdl_url: client_jdl_url,
-        client_job_list_url: client_job_list_url,
-        client_job_edit_url: client_job_edit_url,
-        client_job_form_url: client_job_form_url,
-        client_proxy_url: client_proxy_url,
+        client_url: client_url,
+        client_url_jdl: client_url_jdl,
+        client_url_jobs: client_url_jobs,
+        client_url_job_edit: client_url_job_edit,
+        client_url_job_form: client_url_job_form,
+        client_url_proxy: client_url_proxy,
     }
 
 })(jQuery);

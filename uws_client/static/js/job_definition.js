@@ -8,6 +8,7 @@
 
     var editor;  // to use codemirror
     var server_url;
+    var endpoint;
 
     var content_types = [
         'application/octet-stream',
@@ -481,6 +482,7 @@
 
 	$(document).ready( function() {
         server_url = $('#server_url').attr('value');
+        client_url = $('#client_url').attr('value');
         get_jobnames();
 	    // Script editor with CodeMirror
 	    editor = CodeMirror.fromTextArea( $('textarea[name=script]')[0], {mode: "text/x-sh", lineNumbers: true } );
@@ -504,14 +506,14 @@
         $('#validate_job').click( function() {
             jobname = $('input[name=name]').val().split("/").pop();  // remove 'new/'
             if (jobname) {
-                window.location = uws_client.client_jdl_url + '/' + jobname + '/validate';
+                window.location = uws_client.client_url + uws_client.client_url_jdl + '/' + jobname + '/validate';
             };
             console.log('no jobname given');
         });
         $('#cp_script').click( function() {
             jobname = $('input[name=name]').val().split("/").pop();
             if (jobname) {
-                window.location = uws_client.client_jdl_url + '/' + jobname + '/copy_script';
+                window.location = uws_client.client_url + uws_client.client_url_jdl + '/' + jobname + '/copy_script';
             }
             console.log('no jobname given');
         });
