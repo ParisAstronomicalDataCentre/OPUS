@@ -506,14 +506,14 @@
         $('#validate_job').click( function() {
             jobname = $('input[name=name]').val().split("/").pop();  // remove 'new/'
             if (jobname) {
-                window.location = uws_client.client_url + uws_client.client_url_jdl + '/' + jobname + '/validate';
+                window.location = client_url + uws_client.client_url_jdl + '/' + jobname + '/validate';
             };
             console.log('no jobname given');
         });
         $('#cp_script').click( function() {
             jobname = $('input[name=name]').val().split("/").pop();
             if (jobname) {
-                window.location = uws_client.client_url + uws_client.client_url_jdl + '/' + jobname + '/copy_script';
+                window.location = client_url + uws_client.client_url_jdl + '/' + jobname + '/copy_script';
             }
             console.log('no jobname given');
         });

@@ -76,7 +76,7 @@
         $('#create_new_job').click( function() {
             var jobname = $('select[name=jobname]').val();
             if (jobname) {
-                window.location.href =  uws_client.client_url + uws_client.client_url_job_form + "/" + jobname;
+                window.location.href =  client_url + uws_client.client_url_job_form + "/" + jobname;
             }
         });
 

@@ -29,7 +29,7 @@
             // Collect job params
             var all_params = JSON.parse($('#all_params').attr('value'));
             var query_string = $.param(all_params);
-            location.href = uws_client.client_url + uws_client.client_url_job_form + "/" + jobname + '?' + query_string;
+            location.href = client_url + uws_client.client_url_job_form + "/" + jobname + '?' + query_string;
         })
     });
 
