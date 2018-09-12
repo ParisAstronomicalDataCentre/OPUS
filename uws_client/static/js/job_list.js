@@ -42,7 +42,7 @@
         // init UWS Client
         uws_client.initClient(client_url, server_url, [jobname]);
         // write new url in browser bar
-        history.pushState({ jobname: jobname }, '', uws_client.client_job_list_url + "/" + jobname);
+        history.pushState({ jobname: jobname }, '', uws_client.client_url + uws_client.client_url_jobs + "/" + jobname);
         // Prepare job list
         uws_client.getJobList();
         if ( $( "#job_id" ).length ) {
@@ -76,7 +76,7 @@
         $('#create_new_job').click( function() {
             var jobname = $('select[name=jobname]').val();
             if (jobname) {
-                window.location.href =  uws_client.client_job_form_url + "/" + jobname;
+                window.location.href =  uws_client.client_url + uws_client.client_url_job_form + "/" + jobname;
             }
         });
 
