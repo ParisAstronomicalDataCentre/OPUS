@@ -27,11 +27,12 @@ var uws_client = (function($) {
     var server_jobs_url = '/rest/';
     var server_jdl_url = '/jdl/<jobname>/json';
     var server_result_url = '/store/';
+    var client_url = '/opus_client';
     var client_jdl_url = '/opus_client/jdl';
-    var client_job_list_url = '/opus_client/jobs';
-    var client_job_edit_url = '/opus_client/job_edit';
-    var client_job_form_url = '/opus_client/job_form';
-    var client_proxy_url = '/opus_client/proxy';
+    var client_job_list_url = client_url + '/jobs';
+    var client_job_edit_url = client_url + '/job_edit';
+    var client_job_form_url = client_url + '/job_form';
+    var client_proxy_url = client_url + '/proxy';
     var jobNames;
     var clients = {};
     var refreshPhaseTimeout = {}; // stores setInterval functions for phase refresh
@@ -95,8 +96,16 @@ var uws_client = (function($) {
     //----------
     // CREATE MANAGER AND CLIENTS
 
-    function initClient(serviceUrl, jobNames_init){
+    function initClient(clientUrl, serviceUrl, jobNames_init){
         jobNames = jobNames_init;
+        if (client_url.length) {
+            client_url = clientUrl;
+            client_jdl_url = '/opus_client/jdl';
+            client_job_list_url = client_url + '/jobs';
+            client_job_edit_url = client_url + '/job_edit';
+            client_job_form_url = client_url + '/job_form';
+            client_proxy_url = client_url + '/proxy';
+        }
         for (var i in jobNames) {
             // Init client
             var url = serviceUrl + server_jobs_url + jobNames[i];

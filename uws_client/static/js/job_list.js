@@ -7,6 +7,7 @@
     "use strict";
 
     var server_url;
+    var endpoint;
 
     function get_jobnames() {
         // Get jobnames from server
@@ -39,7 +40,7 @@
     function load_job_list() {
         var jobname = $('select[name=jobname]').val();
         // init UWS Client
-        uws_client.initClient(server_url, [jobname]);
+        uws_client.initClient(endpoint, server_url, [jobname]);
         // write new url in browser bar
         history.pushState({ jobname: jobname }, '', uws_client.client_job_list_url + "/" + jobname);
         // Prepare job list
@@ -54,6 +55,7 @@
     $(document).ready( function() {
 
         server_url = $('#server_url').attr('value');
+        endpoint = $('#endpoint').attr('value');
         get_jobnames();
         $('.selectpicker').selectpicker('deselectAll');
         $('button.actions').attr('disabled', 'disabled');

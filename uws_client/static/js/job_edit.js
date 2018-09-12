@@ -21,7 +21,7 @@
         jobid = $('#jobid').attr('value');
         // Display job
         if (jobname && jobid) {
-            uws_client.initClient(server_url, [jobname]);
+            uws_client.initClient(endpoint, server_url, [jobname]);
             uws_client.displaySingleJob(jobname, jobid);
         };
         // Rerun job button
