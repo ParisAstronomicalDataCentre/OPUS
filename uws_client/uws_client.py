@@ -36,9 +36,6 @@ from wtforms.validators import InputRequired
 #SERVER_NAME=  # (e.g.: 'myapp.dev:5000')
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 VAR_PATH = '/var/www/opus'
-for p in [VAR_PATH + '/logs', VAR_PATH + '/config', VAR_PATH + '/db']:
-    if not os.path.isdir(p):
-        os.makedirs(p)
 LOG_FILE_SUFFIX = ''
 APPLICATION_ROOT = '/opus_client'
 UWS_SERVER_URL_JS = '/opus_client/proxy'  # called by javascript, set to local url (proxy) to avoid cross-calls
@@ -119,6 +116,11 @@ LOGGING = {
 logging.config.dictConfig(LOGGING)
 logger = logging.getLogger('uws_client')
 logger.debug('Load flask client')
+
+# Create var dirs if not exist
+for p in [VAR_PATH + '/logs', VAR_PATH + '/config', VAR_PATH + '/db']:
+    if not os.path.isdir(p):
+        os.makedirs(p)
 
 
 # ----------
