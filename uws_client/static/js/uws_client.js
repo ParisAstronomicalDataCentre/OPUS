@@ -752,7 +752,7 @@ var uws_client = (function($) {
                     <button type="button" class="samp btn btn-default btn-sm">SAMP</button>'
                 );
                 // Add event on SAMP button click
-                $('#'+r_id+' div.panel-heading div.btn-group button.samp').click(function() {
+                $('#'+r_id+' div.panel-heading div.btn-group a.samp').click(function() {
                     // var url = $(this).parents(".panel").attr('value');
                     //var name = url.split('/').pop();
                     samp_client.samp_image(r_url_auth);
@@ -765,45 +765,70 @@ var uws_client = (function($) {
             // Show images
             case 'image/jpeg':
             case 'image/png':
+            case 'image/gif':
                 // Show image preview
-                $('#'+r_id+' div.panel-heading div.btn-group button.preview').click(function() {
-                    $('#'+r_id).append('\
-                        <div class="panel-body">\
-                            <img class="img-thumbnail" src="' + r_url_auth + '" />\
-                        </div>\
-                    ');
+                $('#'+r_id+' div.panel-heading div.btn-group a.preview').click(function() {
+                    var txt = $(this).html();
+                    if (txt.indexOf('Show') !== -1) {
+                        $('#'+r_id).append('\
+                            <div class="panel-body">\
+                                <img class="img-thumbnail" src="' + r_url_auth + '" />\
+                            </div>\
+                        ');
+                        $(this).html(txt.replace('Show', 'Hide').replace('open', 'close'));
+                    } else {
+                        $('#'+r_id+' div.panel-body').remove();
+                        $(this).html(txt.replace('Hide', 'Show').replace('close', 'open'));
+                    };
                 });
                 break;
             // Show text in textarea
             case 'text/plain':
+            case 'text/xml':
+            case 'application/json':
                 // show textarea with log
-                $('#'+r_id+' div.panel-heading div.btn-group button.preview').click(function() {
-                    console.log(r_id);
-                    $('#'+r_id).append('\
-                        <div class="panel-body">\
-                            <textarea class="log form-control" rows="10" style="font-family: monospace;" readonly>\
-                            </textarea>\
-                        </div>\
-                    ');
-                    $.ajax({
-                        url : r_url_auth,
-                        dataType: "text",
-                        context: r_id,  // Set this=r_id for success function
-                        success : function (txt) {
-                            $('#' + this + ' div.panel-body textarea').html(txt);
-                        }
-                    });
+                $('#'+r_id+' div.panel-heading div.btn-group a.preview').click(function() {
+                    var txt = $(this).html();
+                    if (txt.indexOf('Show') !== -1) {
+                        $('#'+r_id).append('\
+                            <div class="panel-body">\
+                                <textarea class="log form-control" rows="10" style="font-family: monospace;" readonly>\
+                                </textarea>\
+                            </div>\
+                        ');
+                        $.ajax({
+                            url : r_url_auth,
+                            dataType: "text",
+                            context: r_id,  // Set this=r_id for success function
+                            success : function (txt) {
+                                $('#' + this + ' div.panel-body textarea').html(txt);
+                            }
+                        });
+                        $(this).html(txt.replace('Show', 'Hide').replace('open', 'close'));
+                    } else {
+                        $('#'+r_id+' div.panel-body').remove();
+                        $(this).html(txt.replace('Hide', 'Show').replace('close', 'open'));
+                    };
                 });
                 break;
             // Show SVG
             case 'image/svg+xml':
-                $('#'+r_id).append('\
-                    <div class="panel-body">\
-                    </div>\
-                ');
-                var r_id_svg = r_id
-                $('#'+r_id+' div.panel-body').load(r_url_auth, function() {
-                    $('#' + r_id_svg + ' > div.panel-body > svg').attr('width', '100%');
+                $('#'+r_id+' div.panel-heading div.btn-group a.preview').click(function() {
+                    var txt = $(this).html();
+                    if (txt.indexOf('Show') !== -1) {
+                        $('#'+r_id).append('\
+                            <div class="panel-body">\
+                            </div>\
+                        ');
+                        var r_id_svg = r_id
+                        $('#'+r_id+' div.panel-body').load(r_url_auth, function() {
+                            $('#' + r_id_svg + ' > div.panel-body > svg').attr('width', '100%');
+                        });
+                        $(this).html(txt.replace('Show', 'Hide').replace('open', 'close'));
+                    } else {
+                        $('#'+r_id+' div.panel-body').remove();
+                        $(this).html(txt.replace('Hide', 'Show').replace('close', 'open'));
+                    };
                 });
                 break;
         };
