@@ -42,7 +42,7 @@
         // init UWS Client
         uws_client.initClient(client_url, server_url, [jobname]);
         // write new url in browser bar
-        history.pushState({ jobname: jobname }, '', uws_client.client_url + uws_client.client_url_jobs + "/" + jobname);
+        history.pushState({ jobname: jobname }, '', client_url + uws_client.client_url_jobs + "/" + jobname);
         // Prepare job list
         uws_client.getJobList();
         if ( $( "#job_id" ).length ) {
