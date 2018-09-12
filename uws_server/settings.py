@@ -187,11 +187,7 @@ UWS_PARAMETERS = {
     'destruction': 'Date of desctruction of the job',
     #'uws_destruction': 'Date of desctruction of the job',
 }
-
-# Control parameters allowed in a form for job creation
-CONTROL_PARAMETERS = dict( list(UWS_PARAMETERS.items()) )
-# Order for the control parameters
-CONTROL_PARAMETERS_KEYS = [
+UWS_PARAMETERS_KEYS = [
     'runId',
     'executionDuration',
     # 'uws_executionDuration',
@@ -200,23 +196,25 @@ CONTROL_PARAMETERS_KEYS = [
     # 'uws_destruction',
 ]
 
-if MANAGER == 'SLURM':
-    # Parameters allowed for SLURM sbatch header, prefixed with 'slurm:'
-    SLURM_PARAMETERS = {
-        'slurm_mem': 'Memory to be allocated to the job',
-        'slurm_nodes': 'Number of nodes allocated to the job',
-        'slurm_ntasks-per-node': '',
-        'slurm_partition': 'short, ...',
-        'slurm_account': 'If needed (obspm for quadri12)',
-    }
-    CONTROL_PARAMETERS.update(SLURM_PARAMETERS)
-    CONTROL_PARAMETERS_KEYS.extend([
-        'slurm_mem',
-        'slurm_nodes',
-        'slurm_ntasks-per-node',
-        'slurm_partition',
-        'slurm_account',
-    ])
+# Control parameters allowed in a form for job creation - may be extended further below
+CONTROL_PARAMETERS = UWS_PARAMETERS
+# Order for the control parameters
+CONTROL_PARAMETERS_KEYS = UWS_PARAMETERS_KEYS
+
+SLURM_PARAMETERS = {
+    'slurm_mem': 'Memory to be allocated to the job',
+    'slurm_nodes': 'Number of nodes allocated to the job',
+    'slurm_ntasks-per-node': '',
+    'slurm_partition': 'short, ...',
+    'slurm_account': 'If needed (obspm for quadri12)',
+}
+SLURM_PARAMETERS_KEYS = [
+    'slurm_mem',
+    'slurm_nodes',
+    'slurm_ntasks-per-node',
+    'slurm_partition',
+    'slurm_account',
+]
 
 
 # ----------
@@ -338,6 +336,12 @@ if 'test_' in main_dict.get('__file__', ''):
     if 'MANAGER' in main_dict:
         MANAGER = main_dict['MANAGER']
 #--- If imported from unittest_server.py, redefine settings -----------------------------------------------------------------------
+
+
+if MANAGER == 'SLURM':
+    # Parameters allowed for SLURM sbatch header, prefixed with 'slurm:'
+    CONTROL_PARAMETERS.update(SLURM_PARAMETERS)
+    CONTROL_PARAMETERS_KEYS.extend(SLURM_PARAMETERS_KEYS)
 
 
 #--- Set all _PATH based on APP_PATH or VAR_PATH -----------------------------------------------------------------------
