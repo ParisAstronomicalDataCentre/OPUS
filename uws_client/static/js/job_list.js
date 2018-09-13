@@ -9,6 +9,18 @@
     var server_url;
     var client_url;
 
+    var job_list_columns = [
+        //'jobName',  // job.jobName
+        'jobId',  // job.jobId
+        'runId',  // job.runId
+        'creationTime',
+        'phase',
+        //'details',
+        'results',
+        'control',
+        //'delete',
+    ];
+
     function get_jobnames() {
         // Get jobnames from server
         $.ajax({

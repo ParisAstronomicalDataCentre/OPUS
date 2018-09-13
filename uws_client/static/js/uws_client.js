@@ -21,8 +21,7 @@
 var uws_client = (function($) {
     "use strict";
 
-    // var serviceUrl = $(location).attr('protocol') + '//' + $(location).attr('host');
-    // "https://voparis-uws-test.obspm.fr/"; // app_url+"/uws-v1.0/" //
+    // Config
     var DEBUG = true;
     var server_url_jobs = '/rest/';
     var server_url_jdl = '/jdl/<jobname>/json';
@@ -33,6 +32,31 @@ var uws_client = (function($) {
     var client_url_job_edit = '/job_edit';
     var client_url_job_form = '/job_form';
     var client_url_proxy = '/proxy';
+
+    var job_list_columns = [
+        //'jobName',  // job.jobName
+        'jobId',  // job.jobId
+        'runId',  // job.runId
+        'creationTime',
+        'phase',
+        'details',
+        //'results',
+        'control',
+        //'delete',
+    ];
+    var job_list_column_names = {
+        jobName: 'Job Name',
+        jobId: 'jobId',
+        runId: 'runId',
+        creationTime: 'Creation Time',
+        phase: 'Phase',
+        details: 'Details',
+        results: 'Results',
+        control: 'Control',
+        delete: 'Delete',
+    };
+
+    // Internal
     var jobNames;
     var clients = {};
     var refreshPhaseTimeout = {}; // stores setInterval functions for phase refresh
@@ -96,11 +120,14 @@ var uws_client = (function($) {
     //----------
     // CREATE MANAGER AND CLIENTS
 
-    function initClient(clientUrl, serviceUrl, jobNames_init){
+    function initClient(clientUrl, serviceUrl, jobNames_init, set_job_list_columns=[]){
         jobNames = jobNames_init;
-        if (client_url.length) {
+        if (set_job_list_columns.length) {
+            job_list_columns = set_job_list_columns;
+        };
+        if (clientUrl.length) {
             client_url = clientUrl;
-        }
+        };
         for (var i in jobNames) {
             // Init client
             var url = serviceUrl + server_url_jobs + jobNames[i];
@@ -110,7 +137,7 @@ var uws_client = (function($) {
                 clients[jobNames[i]].jdl = jdl;
             });
             logger('INFO', 'uwsClient at ' + clients[jobNames[i]].serviceUrl);
-        }
+        };
     };
 
     function wait_for_jdl(jobName, next_function, args){
@@ -133,13 +160,12 @@ var uws_client = (function($) {
     var prepareTable = function() {
         var tcontent = '\
             <thead>\
-                <tr>\
-                    <th class="text-center">Type</th>\
-                    <th class="text-center">runId</th>\
-                    <th class="text-center">Creation Time</th>\
-                    <th class="text-center">Phase</th>\
-                    <th class="text-center">Details</th>\
-                    <th class="text-center">Control</th>\
+                <tr>';
+        for (var col in job_list_columns) {
+            tcontent = tcontent + '\
+                    <th class="text-center">' + job_list_column_names[job_list_columns[col]] + '</th>';
+        };
+        tcontent = tcontent + '\
                 </tr>\
             </thead>\
             <tbody>\
@@ -267,39 +293,45 @@ var uws_client = (function($) {
         } else {
             creation_time = creation_time[0]+' '+creation_time[1].split('+')[0];
         };
-        var start_time = job.startTime.split("T");
-        if (start_time.length == 1) {
-            start_time = "";
-        } else {
-            start_time = start_time[0]+' '+start_time[1].split('+')[0];
-        };
-        var end_time = job.endTime.split("T");
-        if (end_time.length == 1) {
-            end_time = "";
-        } else {
-            end_time = end_time[0]+' '+end_time[1].split('+')[0];
-        };
-        var destr_time = job.destruction.split("T");
-        if (destr_time.length == 1) {
-            destr_time = "";
-        } else {
-            destr_time = destr_time[0]+' '+destr_time[1].split('+')[0];
-        };
-        var times = 'creation:    \t'+creation_time+'\n'+'start:         \t'+start_time+'\n'+'end:           \t'+end_time+'\n'+'destruction:\t'+destr_time
-        var param_list = "jobid = " + job.jobId + '\nParameters:';
-        for (var pname in job.parameters) {
-            var pvalue = job.parameters[pname].value;
-            pvalue = decodeURIComponent(pvalue).replace(/[+]/g, " ");
-            param_list += '\n' + pname + ' = ' + pvalue;
-        };
-        var row = '\
-            <tr id='+ job.jobId +' jobname='+ job.jobName +'>\
-                <td class="text-center" style="vertical-align: middle;" title="' + param_list + '">' + job.jobName + '</td>\
-                <td class="text-center" style="vertical-align: middle;">' + job.runId + '</td>\
-                <td class="text-center" style="vertical-align: middle;" title="' + times + '">' + creation_time + '</td>\
+        var times = '';
+        var param_list = '';
+//        var start_time = job.startTime.split("T");
+//        if (start_time.length == 1) {
+//            start_time = "";
+//        } else {
+//            start_time = start_time[0]+' '+start_time[1].split('+')[0];
+//        };
+//        var end_time = job.endTime.split("T");
+//        if (end_time.length == 1) {
+//            end_time = "";
+//        } else {
+//            end_time = end_time[0]+' '+end_time[1].split('+')[0];
+//        };
+//        var destr_time = job.destruction.split("T");
+//        if (destr_time.length == 1) {
+//            destr_time = "";
+//        } else {
+//            destr_time = destr_time[0]+' '+destr_time[1].split('+')[0];
+//        };
+//        var times = 'creation:    \t'+creation_time+'\n'+'start:         \t'+start_time+'\n'+'end:           \t'+end_time+'\n'+'destruction:\t'+destr_time
+//        var param_list = "jobid = " + job.jobId + '\nParameters:';
+//        for (var pname in job.parameters) {
+//            var pvalue = job.parameters[pname].value;
+//            pvalue = decodeURIComponent(pvalue).replace(/[+]/g, " ");
+//            param_list += '\n' + pname + ' = ' + pvalue;
+//        };
+
+        var row = '<tr id='+ job.jobId +' jobname='+ job.jobName +'>';
+        var col_content = {
+            jobName: '<td class="text-center" style="vertical-align: middle;" title="' + param_list + '">' + job.jobName + '</td>',
+            jobId: '<td class="text-center" style="vertical-align: middle;">' + job.jobId + '</td>',
+            runId: '<td class="text-center" style="vertical-align: middle;">' + job.runId + '</td>',
+            creationTime: '<td class="text-center" style="vertical-align: middle;" title="' + times + '">' + creation_time + '</td>',
+            phase: '\
                 <td class="text-center" style="vertical-align: middle;">\
                     <button type="button" class="phase btn btn-default">PHASE...</button>\
-                </td>\
+                </td>',
+            details: '\
                 <td class="text-center" style="vertical-align: middle;">\
                     <div class="btn-group">\
                         <button type="button" class="properties btn btn-default btn-sm">\
@@ -315,7 +347,15 @@ var uws_client = (function($) {
                             <span class="hidden-xs hidden-sm hidden-md">&nbsp;Results</span>\
                         </button>\
                     </div>\
-                </td>\
+                </td>',
+            results: '\
+                <td class="text-center" style="vertical-align: middle;">\
+                    <button type="button" class="results btn btn-default btn-sm">\
+                        <span class="glyphicon glyphicon-save"></span>\
+                        <span class="hidden-xs hidden-sm hidden-md">&nbsp;Results</span>\
+                    </button>\
+                </td>',
+            control: '\
                 <td class="text-center" style="vertical-align: middle;">\
                     <div class="btn-group">\
                         <button type="button" class="start btn btn-default btn-sm">\
@@ -331,8 +371,60 @@ var uws_client = (function($) {
                             <span class="hidden-xs hidden-sm hidden-md">&nbsp;Delete</span>\
                         </button>\
                     </div>\
-                </td>\
-            </tr>';
+                </td>',
+            delete: '\
+                <td class="text-center" style="vertical-align: middle;">\
+                    <button type="button" class="delete btn btn-default btn-sm">\
+                        <span class="glyphicon glyphicon-trash"></span>\
+                        <span class="hidden-xs hidden-sm hidden-md">&nbsp;Delete</span>\
+                    </button>\
+                </td>',
+        };
+        for (var col in job_list_columns) {
+            row = row + col_content[job_list_columns[col]];
+        };
+        row = row + '</tr>';
+//        var row = '\
+//            <tr id='+ job.jobId +' jobname='+ job.jobName +'>\
+//                <td class="text-center" style="vertical-align: middle;" title="' + param_list + '">' + job.jobName + '</td>\
+//                <td class="text-center" style="vertical-align: middle;">' + job.runId + '</td>\
+//                <td class="text-center" style="vertical-align: middle;" title="' + times + '">' + creation_time + '</td>\
+//                <td class="text-center" style="vertical-align: middle;">\
+//                    <button type="button" class="phase btn btn-default">PHASE...</button>\
+//                </td>\
+//                <td class="text-center" style="vertical-align: middle;">\
+//                    <div class="btn-group">\
+//                        <button type="button" class="properties btn btn-default btn-sm">\
+//                            <span class="glyphicon glyphicon-info-sign"></span>\
+//                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;Properties</span>\
+//                        </button>\
+//                        <button type="button" class="parameters btn btn-default btn-sm">\
+//                            <span class="glyphicon glyphicon-edit"></span>\
+//                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;&nbsp;Parameters</span>\
+//                        </button>\
+//                        <button type="button" class="results btn btn-default btn-sm">\
+//                            <span class="glyphicon glyphicon-save"></span>\
+//                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;Results</span>\
+//                        </button>\
+//                    </div>\
+//                </td>\
+//                <td class="text-center" style="vertical-align: middle;">\
+//                    <div class="btn-group">\
+//                        <button type="button" class="start btn btn-default btn-sm">\
+//                            <span class="glyphicon glyphicon-play"></span>\
+//                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;Start</span>\
+//                        </button>\
+//                        <button type="button" class="abort btn btn-default btn-sm">\
+//                            <span class="glyphicon glyphicon-off"></span>\
+//                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;Abort</span>\
+//                        </button>\
+//                        <button type="button" class="delete btn btn-default btn-sm">\
+//                            <span class="glyphicon glyphicon-trash"></span>\
+//                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;Delete</span>\
+//                        </button>\
+//                    </div>\
+//                </td>\
+//            </tr>';
         // Insert row in table
         $('#job_list tbody').prepend(row);
         // Display phase according to phase status, and update on click
@@ -1023,7 +1115,8 @@ var uws_client = (function($) {
         for (var i in jobNames) {
             var jobName = jobNames[i];
             logger('INFO', 'Get job list for ' + jobName);
-            clients[jobName].getJobListInfos(getJobListSuccess, getJobListError);
+            clients[jobName].getJobList(getJobListSuccess, getJobListError);
+            // clients[jobName].getJobListInfos(getJobListSuccess, getJobListError);
         }
     };
     var getJobListSuccess = function(jobs) {

@@ -57,6 +57,8 @@ var uwsLib = (function() {
 			job.jobName = jobName;
 			job.jobId = $(this).attr('id');
 			job.phase = $(this).find('uws\\:phase, phase').text();
+			job.runId = $(this).find("uws\\:runId, runId").text();
+			job.creationTime = $(this).find("uws\\:creationTime, creationTime").text();
 			jobs.push(job);
 		});
 		return jobs;
