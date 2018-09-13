@@ -152,6 +152,19 @@ def is_admin(func):
 # Abort functions
 # ----------
 
+class BadRequest(Exception):
+    pass
+
+
+def abort_400(msg=''):
+    """HTTP Error 403
+
+    Returns:
+        403 Forbidden
+    """
+    logger.warning('400 Bad Request: {} ({})'.format(msg, request.urlparts.path))
+    abort(400, '{}'.format(msg))
+
 
 def abort_403(msg=''):
     """HTTP Error 403
@@ -917,7 +930,9 @@ def provsap():
             response.content_type = 'application/json; charset=UTF-8'
             return b'\n'.join(result.readlines())
         else:
-            abort(400, 'Bad value for RESPONSEFORMAT ({}).\nAvailable RESPONSEFORMAT are (\'PROV-JSON\', \'PROV-XML\', \'PROV-SVG\').'.format(format))
+            raise BadRequest('Bad value for RESPONSEFORMAT ({}).\nAvailable RESPONSEFORMAT are (\'PROV-JSON\', \'PROV-XML\', \'PROV-SVG\').'.format(format))
+    except BadRequest as e:
+        abort_400(e.args[0])
     except storage.NotFoundWarning as e:
         abort_404(str(e))
     except:
