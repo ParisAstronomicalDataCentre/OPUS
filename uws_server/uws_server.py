@@ -917,7 +917,7 @@ def provsap():
             response.content_type = 'application/json; charset=UTF-8'
             return b'\n'.join(result.readlines())
         else:
-            raise Exception('Bad value for RESPONSEFORMAT ({}).\nAvailable RESPONSEFORMAT are (\'PROV-JSON\', \'PROV-XML\', \'PROV-SVG\').'.format(format))
+            abort(400, 'Bad value for RESPONSEFORMAT ({}).\nAvailable RESPONSEFORMAT are (\'PROV-JSON\', \'PROV-XML\', \'PROV-SVG\').'.format(format))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
     except:
