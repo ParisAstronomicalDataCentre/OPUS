@@ -910,12 +910,14 @@ def provsap():
             result.seek(0)
             response.content_type = 'text/xml; charset=UTF-8'
             return b'\n'.join(result.readlines())
-        else:  # return PROV-JSON as default
+        elif format == 'PROV-JSON':  # return PROV-JSON as default
             result = io.BytesIO()
             pdoc.serialize(result, format='json')
             result.seek(0)
             response.content_type = 'application/json; charset=UTF-8'
             return b'\n'.join(result.readlines())
+        else:
+            raise Exception('Bad value for RESPONSEFORMAT ({}).\nAvailable RESPONSEFORMAT are (\'PROV-JSON\', \'PROV-XML\', \'PROV-SVG\').'.format(format))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
     except:
