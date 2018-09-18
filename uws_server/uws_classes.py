@@ -282,12 +282,16 @@ class Job(object):
 
     def set_from_post(self, post, files):
         """Set attributes and parameters from POST"""
+        logger.debug('{}'.format(post.__dict__))
         # Read JDL
         if not self.jdl.content:
             self.jdl.read(self.jobname)
         # Pop UWS attributes keywords from POST or set by default
         self.execution_duration = self.jdl.content.get('executionDuration', EXECUTION_DURATION_DEF)
-        post.pop('control_parameters')
+        # Pop internal attributes
+        for pname in ['control_parameters', 'csrf_token']:
+            if pname in post:
+                post.pop(pname)
         for pname in CONTROL_PARAMETERS_KEYS:
             if pname in post:
                 value = post.pop(pname)

@@ -1237,6 +1237,7 @@ def post_job(jobname, jobid):
     """Alias for delete_job() if ACTION=DELETE"""
     try:
         user = set_user()
+        logger.debug('POST: {}'.format(request.POST.__dict__))
         logger.info('deleting {} {} [{}]'.format(jobname, jobid, user))
         if request.forms.get('ACTION') == 'DELETE':
             # Get job properties from DB

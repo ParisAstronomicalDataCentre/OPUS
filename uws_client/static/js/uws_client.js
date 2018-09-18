@@ -1251,7 +1251,8 @@ var uws_client = (function($) {
     // CREATE JOB
 
     var createJob = function(jobName, jobParams) {
-        clients[jobName].createJob(jobParams, createJobSuccess, createJobError);
+        var csrf_token = $('#csrf_token').attr('value');
+        clients[jobName].createJob(jobParams, createJobSuccess, createJobError, csrf_token);
     };
     var createJobSuccess = function(job) {
         logger('INFO', 'Job created with id='+job.jobId+' jobname='+job.jobName);
@@ -1273,7 +1274,8 @@ var uws_client = (function($) {
     // CREATE TEST JOB
 
     var createTestJob = function(jobName, jobParams) {
-        clients[jobName].createJob(jobParams, createTestJobSuccess, createJobError);
+        var csrf_token = $('#csrf_token').attr('value');
+        clients[jobName].createJob(jobParams, createTestJobSuccess, createJobError, csrf_token);
     };
     var createTestJobSuccess = function(job) {
         logger('INFO', 'Test job created with id='+job.jobId+' jobname='+job.jobName);
@@ -1284,9 +1286,10 @@ var uws_client = (function($) {
     //----------
     // START JOB
 
-    var startJob = function(jobId) {
+    var startJob = function(jobId, csrf_token='') {
         var jobName = $('#'+jobId).attr('jobname');
-        clients[jobName].startJob(jobId, startJobSuccess, startJobError);
+        var csrf_token = $('#csrf_token').attr('value');
+        clients[jobName].startJob(jobId, startJobSuccess, startJobError, csrf_token);
     };
     var startJobSuccess = function(jobId) {
         logger('INFO', 'Job started '+jobId);
@@ -1308,7 +1311,8 @@ var uws_client = (function($) {
 
     var abortJob = function (jobId){
         var jobName = $('#'+jobId).attr('jobname');
-        clients[jobName].abortJob(jobId, abortJobSuccess, abortJobError);
+        var csrf_token = $('#csrf_token').attr('value');
+        clients[jobName].abortJob(jobId, abortJobSuccess, abortJobError, csrf_token);
     };
     var abortJobSuccess = function(jobId){
         clearTimeout(refreshPhaseTimeout[jobId]);
@@ -1331,7 +1335,8 @@ var uws_client = (function($) {
 
     var destroyJob = function (jobId){
         var jobName = $('#'+jobId).attr('jobname');
-        clients[jobName].destroyJob(jobId, destroyJobSuccess, destroyJobError);
+        var csrf_token = $('#csrf_token').attr('value');
+        clients[jobName].destroyJob(jobId, destroyJobSuccess, destroyJobError, csrf_token);
     };
     var destroyJobSuccess = function(jobId, jobs){
         try {

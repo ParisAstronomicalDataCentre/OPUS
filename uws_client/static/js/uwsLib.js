@@ -88,12 +88,13 @@ var uwsLib = (function() {
 		});
 	};
 
-	uwsClient.prototype.createJob = function (jobParameters, SuccessCallback, ErrorCallback){
+	uwsClient.prototype.createJob = function (jobParameters, SuccessCallback, ErrorCallback, csrf_token=''){
 		var jobName = this.jobName;
 		$.ajax({
 			url : this.serviceUrl,
 			async : true,
 			type : 'POST',
+			headers: { "X-CSRFToken": csrf_token },
 			data : jobParameters,
 			success : function(xml) {
 				var job = getJobFromXml(xml, jobName);
@@ -107,13 +108,17 @@ var uwsLib = (function() {
 		});
 	};
 
-	uwsClient.prototype.destroyJob = function(id,successCallback, errorCallback) {
+	uwsClient.prototype.destroyJob = function(id, successCallback, errorCallback, csrf_token='') {
 		var jobName = this.jobName;
+		var post_data = {
+			'ACTION': 'DELETE',
+		}
 		$.ajax({
 			url : this.serviceUrl + "/" + id,
 			type: 'POST',
+			headers: { "X-CSRFToken": csrf_token },
 			dataType: "xml",
-			data: "ACTION=DELETE",
+			data: post_data,
 			success : function(xml) {
 				var jobs = getJobListFromXml(xml, jobName);
 				successCallback(id, jobs);
@@ -125,12 +130,16 @@ var uwsLib = (function() {
 		
 	};
 
-	uwsClient.prototype.abortJob = function(id, successCallback, errorCallback) {
+	uwsClient.prototype.abortJob = function(id, successCallback, errorCallback, csrf_token='') {
+		var post_data = {
+			'PHASE': 'ABORT',
+		}
 		$.ajax({
 			url : this.serviceUrl + "/" + id + "/phase",
 			type: 'POST',
+			headers: { "X-CSRFToken": csrf_token },
 			dataType: "xml",
-			data: "PHASE=ABORT",
+			data: post_data,
 			success : function(xml) {
 				successCallback(id);
 			},
@@ -141,12 +150,16 @@ var uwsLib = (function() {
 		
 	};
 
-	uwsClient.prototype.startJob = function(id, successCallback, errorCallback) {
+	uwsClient.prototype.startJob = function(id, successCallback, errorCallback, csrf_token='') {
+		var post_data = {
+			'PHASE': 'RUN',
+		}
 		$.ajax({
 			url : this.serviceUrl + "/" + id + "/phase",
 			type: 'POST',
+			headers: { "X-CSRFToken": csrf_token },
 			dataType: "xml",
-			data: "PHASE=RUN",
+			data: post_data,
 			success : function(xml) {
 				successCallback(id);
 			},

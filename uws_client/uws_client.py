@@ -512,7 +512,8 @@ def proxy(uri):
 
 def uws_server_request(uri, method='GET', init_request=None):
     server_url = app.config['UWS_SERVER_URL']
-    logger.debug(server_url)
+    # Remove server_url from uri if present (uri is expected to be a relative path)
+    uri = uri.replace(server_url, '')
     # Add auth information (Basic, Token...)
     auth = None
     if app.config['UWS_AUTH'] == 'Basic':
@@ -524,7 +525,6 @@ def uws_server_request(uri, method='GET', init_request=None):
     if method == 'DELETE':
         response = requests.delete('{}{}'.format(server_url, uri), auth=auth)
     elif method == 'POST':
-        logger.debug(request.form.to_dict())
         post={}
         for key in list(init_request.form.keys()):
             value = init_request.form.getlist(key)
@@ -532,7 +532,6 @@ def uws_server_request(uri, method='GET', init_request=None):
                 post[key] = value[0]
             else:
                 post[key] = value
-        logger.debug(post)
         files = {}
         if init_request.files:
             logger.debug('POST has files')
