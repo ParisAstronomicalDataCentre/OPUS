@@ -5,6 +5,7 @@
 """
 """
 
+import requests
 import traceback
 import glob
 import re
@@ -235,8 +236,13 @@ def abort_500_except(msg=None):
 
 @app.route('/')
 def home():
-    redirect(BASE_URL + '/opus_client')
-    # return 'OPUS'
+    resp = requests.get(BASE_URL + '/opus_client')
+    if resp.status_code == 200:
+        redirect(BASE_URL + '/opus_client')
+    resp = requests.get(BASE_URL + '/client')
+    if resp.status_code == 200:
+        redirect(BASE_URL + '/client')
+    return 'OPUS - https://uws-server.readthedocs.io/'
 
 
 @app.route('/favicon.ico')
