@@ -8,7 +8,7 @@
 
     var editor;  // to use codemirror
     var server_url;
-    var endpoint;
+    var client_url;
 
     var content_types = [
         'application/octet-stream',
