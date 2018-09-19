@@ -69,7 +69,7 @@ var uwsLib = (function() {
 		this.jobName = serviceUrl.split('/').pop();
 	};
 	
-	uwsClient.prototype.getJobListInfos
+	//uwsClient.prototype.getJobListInfos
 	
 	uwsClient.prototype.getJobs = function(SuccessCallback, ErrorCallback){
 		var jobName = this.jobName;
