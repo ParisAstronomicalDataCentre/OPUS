@@ -1117,22 +1117,24 @@ var uws_client = (function($) {
             logger('INFO', 'Get job list for ' + jobName);
             clients[jobName].getJobList(getJobListSuccess, getJobListError);
             // clients[jobName].getJobListInfos(getJobListSuccess, getJobListError);
-        }
+        };
     };
     var getJobListSuccess = function(jobs) {
         if (jobs.length == 0){
             //$('#job_list').html(' ');
             logger('INFO', 'Job list is empty');
-        }
+        };
         else{
             logger('INFO', 'Displaying job list...');
             for (var i = 0; i < jobs.length; i++) {
                 var job = jobs[i];
-                displayJob(job);
-            }
+                if (!$('#'+job.jobId).length) {
+                    displayJob(job);
+                };
+            };
             //$( "#job_list" ).tablesorter({sortList: [[1,1]]});
             logger('INFO', 'Job list loaded');
-        }
+        };
         $('#div_loading').hide();
         $('#div_table').show();
     };
