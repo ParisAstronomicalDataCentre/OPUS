@@ -1123,8 +1123,7 @@ var uws_client = (function($) {
         if (jobs.length == 0){
             //$('#job_list').html(' ');
             logger('INFO', 'Job list is empty');
-        };
-        else{
+        } else {
             logger('INFO', 'Displaying job list...');
             for (var i = 0; i < jobs.length; i++) {
                 var job = jobs[i];
