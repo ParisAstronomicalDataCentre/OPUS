@@ -617,7 +617,7 @@ class Job(object):
                 # file_dir = rinfo['file_dir'],
                 **rinfo,
             )
-            rid = entity['result_name']
+            rid = rinfo['result_name']
             if '*' in rinfo['result_value']:
                 rid = rname
             self.add_result_entry(rid, entity['access_url'], entity['content_type'], entity['entity_id'])
