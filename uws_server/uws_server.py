@@ -99,7 +99,7 @@ def set_user(jobname=None):
 
 def is_job_server(func):
     """Test if request comes from a job server"""
-    def func_wrapper(*args, **kwargs):
+    def is_job_server_wrapper(*args, **kwargs):
         # IP or part of an IP has to be in the JOB_SERVERS list
         ip = request.environ.get('REMOTE_ADDR', '')
         matching = [x for x in JOB_SERVERS if x in ip]
@@ -109,12 +109,12 @@ def is_job_server(func):
             logger.warning('{} wants to access {}'.format(ip, request.urlparts.path))
             abort_403()
         return func(*args, **kwargs)
-    return func_wrapper
+    return is_job_server_wrapper
 
 
 def is_client_trusted(func):
     """Test if request comes from a trusted client"""
-    def func_wrapper(*args, **kwargs):
+    def is_client_trusted_wrapper(*args, **kwargs):
         # IP or part of an IP has to be in the TRUSTED_CLIENTS list
         # TODO: ip here is the ip of the web browser (request sent from javascript...) should trust the client URL maybe?
         # TODO: or access those pages from web server, not web browser
@@ -126,18 +126,18 @@ def is_client_trusted(func):
             logger.warning('{} wants to access {}'.format(ip, request.urlparts.path))
             abort_403()
         return func(*args, **kwargs)
-    return func_wrapper
+    return is_client_trusted_wrapper
 
 
 def is_localhost(func):
     """Test if localhost"""
-    def func_wrapper(*args, **kwargs):
+    def is_localhost_wrapper(*args, **kwargs):
         ip = request.environ.get('REMOTE_ADDR', '')
         logger.debug(ip)
         if ip != BASE_IP:
             abort_403()
         return func(*args, **kwargs)
-    return func_wrapper
+    return is_localhost_wrapper
 
 
 def is_admin(func):
@@ -145,13 +145,13 @@ def is_admin(func):
     :param func:
     :return:
     """
-    def func_wrapper(*args, **kwargs):
+    def is_admin_wrapper(*args, **kwargs):
         user = set_user()
         logger.debug(user)
         if not check_admin(user):
             abort_403()
         return func(*args, **kwargs)
-    return func_wrapper
+    return is_admin_wrapper
 
 
 # ----------
@@ -414,9 +414,9 @@ def user2scim(u):
     return user_dict
 
 
+@app.get('/scim/v2/Users')
 @is_client_trusted
 @is_admin
-@app.get('/scim/v2/Users')
 def get_users():
     job_storage = getattr(storage, STORAGE + 'JobStorage')()
     users = job_storage.get_users()
@@ -433,9 +433,9 @@ def get_users():
     return scim_users
 
 
+@app.post('/scim/v2/Users')
 @is_client_trusted
 @is_admin
-@app.post('/scim/v2/Users')
 def create_users():
     name = request.POST.get('name', '')
     if name:
@@ -450,9 +450,9 @@ def create_users():
         abort_500('No user name provided')
 
 
+@app.get('/scim/v2/Users/<name>')
 @is_client_trusted
 @is_admin
-@app.get('/scim/v2/Users/<name>')
 def get_user(name):
     job_storage = getattr(storage, STORAGE + 'JobStorage')()
     users = job_storage.get_users(name=name)
@@ -460,9 +460,9 @@ def get_user(name):
     return user2scim(u)
 
 
+@app.route('/scim/v2/Users/<name>', method='POST')
 @is_client_trusted
 @is_admin
-@app.route('/scim/v2/Users/<name>', method='POST')
 def patch_user(name):
     job_storage = getattr(storage, STORAGE + 'JobStorage')()
     users = job_storage.get_users(name=name)
@@ -477,9 +477,9 @@ def patch_user(name):
     return user2scim(u)
 
 
+@app.route('/scim/v2/Users/<name>', method='DELETE')
 @is_client_trusted
 @is_admin
-@app.route('/scim/v2/Users/<name>', method='DELETE')
 def delete_user(name):
     job_storage = getattr(storage, STORAGE + 'JobStorage')()
     users = job_storage.remove_user(name)
@@ -489,8 +489,8 @@ def delete_user(name):
 # ----------
 
 
-@is_client_trusted
 @app.route('/db/init')
+@is_client_trusted
 def init_db():
     """Initialize the database structure with test data
 
@@ -512,8 +512,8 @@ def init_db():
     redirect(BASE_URL + '/db/show/dummy', 303)
 
 
-@is_client_trusted
 @app.route('/db/test')
+@is_client_trusted
 def test_db():
     """Initialize the database structure with test data
 
@@ -535,8 +535,8 @@ def test_db():
     redirect(BASE_URL + '/db/show/dummy', 303)
 
 
-@is_client_trusted
 @app.route('/db/show/<jobname>')
+@is_client_trusted
 def show_db(jobname):
     """Show database in HTML
 
@@ -594,9 +594,9 @@ def get_jobnames():
         abort_404(e.args[0])
 
 
-@is_client_trusted
 #@app.post('/config/job_definition')
 @app.post('/jdl')
+@is_client_trusted
 def create_new_job_definition():
     """Use posted parameters to create a new JDL file for the given job"""
     # No need to authenticate, users can propose new jobs that will have to be validated
@@ -619,8 +619,9 @@ def create_new_job_definition():
     # redirect('/client/job_definition?jobname=new/{}&msg=new'.format(jobname), 303)
 
 
-@is_client_trusted
 @app.get('/jdl/<jobname:path>/convert')
+@is_client_trusted
+@is_admin
 def convert_jdl(jobname):
     """
     Get json description file for jobname
@@ -705,10 +706,10 @@ def validate_job_definition(jobname):
     # redirect('/client/job_definition?jobname={}&msg=validated'.format(jobname), 303)
 
 
-@is_client_trusted
-@is_admin
 #@app.get('/config/cp_script/<jobname>')
 @app.post('/jdl/<jobname:path>/copy_script')
+@is_client_trusted
+@is_admin
 def cp_script(jobname):
     """copy script to job manager for the given job"""
     # Check if client is trusted (only admin should be allowed to validate a job)
@@ -958,8 +959,8 @@ def provsap():
 # ----------
 
 
-@is_localhost
 @app.route('/handler/maintenance/<jobname>')
+@is_localhost
 def maintenance(jobname):
     """Performs server maintenance, e.g. executed regularly by the server itself (localhost)
 
@@ -1010,8 +1011,8 @@ def maintenance(jobname):
 # ----------
 
 
-@is_job_server
 @app.post('/handler/job_event')
+@is_job_server
 def job_event():
     """New events for job with given process_id
 
