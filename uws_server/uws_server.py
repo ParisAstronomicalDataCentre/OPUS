@@ -614,6 +614,7 @@ def create_new_job_definition():
     # redirect('/client/job_definition?jobname=new/{}&msg=new'.format(jobname), 303)
 
 
+@is_client_trusted
 @app.get('/jdl/<jobname:path>/convert')
 def convert_jdl(jobname):
     """
@@ -647,6 +648,7 @@ def get_script(jobname):
 
 
 @is_client_trusted
+@is_admin
 #@app.get('/config/validate_job/<jobname>')
 @app.post('/jdl/<jobname:path>/validate')
 def validate_job_definition(jobname):
@@ -699,6 +701,7 @@ def validate_job_definition(jobname):
 
 
 @is_client_trusted
+@is_admin
 #@app.get('/config/cp_script/<jobname>')
 @app.post('/jdl/<jobname:path>/copy_script')
 def cp_script(jobname):
