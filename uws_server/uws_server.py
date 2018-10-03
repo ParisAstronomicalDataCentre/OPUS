@@ -652,10 +652,10 @@ def get_script(jobname):
     abort_404('No script file found for ' + jobname)
 
 
-@is_client_trusted
-@is_admin
 #@app.get('/config/validate_job/<jobname>')
 @app.post('/jdl/<jobname:path>/validate')
+@is_client_trusted
+@is_admin
 def validate_job_definition(jobname):
     """Use filled form to create a JDL file for the given job"""
     # Check if client is trusted (only admin should be allowed to validate a job)
