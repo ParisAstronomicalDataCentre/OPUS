@@ -447,7 +447,8 @@ def job_definition(jobname):
         if response.status_code == 200:
             flash('New job definition has been saved as new/{}'.format(jobname), 'info')
         else:
-            flash('Job definition for {jn} was not found on the server. Error during creation.'.format(jn=jobname))
+            flash('Job definition for {jn} was not found on the server. Error during creation.'.format(jn=jobname),
+              category='error')
         return redirect(url_for('job_definition', jobname='/new/{}'.format(jobname)), 303)
     # Show form
     # Set is_admin (will show validate buttons)
@@ -469,8 +470,11 @@ def validate_job(jobname):
     if response.status_code == 200:
         flash('Job definition for new/{jn} has been validated and renamed {jn}'.format(jn=jobname))
         #TODO: add job to db and link to admin and current_user
+    elif response.status_code == 403:
+        flash('Forbidden: insufficient rights to validate job definition for new/{jn}'.format(jn=jobname), category='warning')
     else:
-        flash('Job definition for {jn} was not found on the server. Cannot validate.'.format(jn=jobname))
+        flash('Job definition for {jn} was not found on the server. Cannot validate.'.format(jn=jobname),
+              category='error')
     return redirect(url_for('job_definition', jobname=jobname), 303)
 
 
