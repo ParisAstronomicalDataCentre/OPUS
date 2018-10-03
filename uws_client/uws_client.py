@@ -39,14 +39,13 @@ VAR_PATH = '/var/www/opus'
 LOG_FILE_SUFFIX = ''
 APPLICATION_ROOT = '/opus_client'
 UWS_SERVER_URL_JS = APPLICATION_ROOT + '/proxy'  # called by javascript, set to local url (proxy) to avoid cross-calls
-# UWS_SERVER_URL = 'http://localhost'
-UWS_SERVER_URL = 'https://voparis-uws-test.obspm.fr'
+UWS_SERVER_URL = 'http://localhost'  # to be defined in settings_local.py
 UWS_AUTH = 'Basic'
 
 ADMIN_NAME = 'opus-admin'
-ADMIN_DEFAULT_PW = 'OPUS4dm1n'
+ADMIN_DEFAULT_PW = 'opus-admin'  # to be changed after install, or defined in settings_local.py
 TESTUSER_NAME = 'testuser'
-TESTUSER_DEFAULT_PW = 'OPUSu53r'
+TESTUSER_DEFAULT_PW = 'testuser' # to be changed after install, or defined in settings_local.py
 
 # Editable configuration keywords
 EDITABLE_CONFIG = [
