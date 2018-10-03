@@ -5,7 +5,6 @@
 {% block js %}
     <script type="text/javascript" src="/static/js/codemirror.js" defer></script>
     <script type="text/javascript" src="/static/js/codemirror_shell.js" defer></script>
-    <script type="text/javascript" src="/static/js/FileSaver.min.js" defer></script>
     <script type="text/javascript" src="/static/js/uwsLib.js" defer></script>
     <script type="text/javascript" src="/static/js/uws_client.js" defer></script>
     <script type="text/javascript" src="/static/js/job_definition.js" defer></script>
@@ -40,8 +39,8 @@
                                 <div class="input-group">
                                     <input class="form-control name_typeahead" name="name" type="text" placeholder="Enter job name" value="" autocomplete="off"/>
                                     <span class="input-group-btn">
-                                        <button id="load_jdl" class="btn btn-default" type="button">Load JDL</button>
-                                        <button id="save_jdl" class="btn btn-default" type="button">Save JDL</button>
+                                        <button id="load_jdl" class="btn btn-default" type="button">Read JDL</button>
+                                        <button id="save_jdl" class="btn btn-default" type="button">Export JDL</button>
                                     </span>
                                 </div>
                             </div>
@@ -241,7 +240,7 @@
                         <div class="col-md-12 form-group">
                             <label class="col-md-2 control-label">&nbsp;</label>
                             <div class="col-md-6 controls">
-                                <input value="Create JDL and script" type="submit" class="btn btn-primary" />
+                                <input value="Save JDL and script" type="submit" class="btn btn-primary" />
                             </div>
                         </div>
                     </div>

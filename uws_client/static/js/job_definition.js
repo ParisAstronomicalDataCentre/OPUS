@@ -447,7 +447,14 @@
 			dataType: "text",
 			success : function(jdl) {
 				var blob = new Blob([jdl], {type: "text/xml;charset=utf-8"});
-                saveAs(blob, jobname + ".jdl");
+				var filename = jobname + ".xml";
+                //saveAs(blob, jobname + ".jdl");
+                var link = document.createElement('a');
+                link.href = window.URL.createObjectURL(blob);
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
 			},
 			error : function(xhr, status, exception) {
 				console.log(exception);
