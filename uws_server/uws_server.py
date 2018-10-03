@@ -104,10 +104,11 @@ def is_job_server(func):
         ip = request.environ.get('REMOTE_ADDR', '')
         matching = [x for x in JOB_SERVERS if x in ip]
         if matching:
-            logger.info('{} from {} ({})'.format(request.urlparts.path, ip, JOB_SERVERS[matching[0]]))
+            logger.debug('Access authorized to {} for {} ({})'.format(request.urlparts.path, ip, JOB_SERVERS[matching[
+                0]]))
+            pass
         else:
-            logger.warning('{} wants to access {}'.format(ip, request.urlparts.path))
-            abort_403()
+            abort_403('{} wants to access {}'.format(ip, request.urlparts.path))
         return func(*args, **kwargs)
     return is_job_server_wrapper
 
@@ -121,10 +122,11 @@ def is_client_trusted(func):
         ip = request.environ.get('REMOTE_ADDR', '')
         matching = [x for x in TRUSTED_CLIENTS if x in ip]
         if matching:
-            logger.info('{} from {} ({})'.format(request.urlparts.path, ip, TRUSTED_CLIENTS[matching[0]]))
+            logger.debug('Access authorized to {} for {} ({})'.format(request.urlparts.path, ip, TRUSTED_CLIENTS[
+                matching[0]]))
+            pass
         else:
-            logger.warning('{} wants to access {}'.format(ip, request.urlparts.path))
-            abort_403()
+            abort_403('{} wants to access {}'.format(ip, request.urlparts.path))
         return func(*args, **kwargs)
     return is_client_trusted_wrapper
 
@@ -133,9 +135,8 @@ def is_localhost(func):
     """Test if localhost"""
     def is_localhost_wrapper(*args, **kwargs):
         ip = request.environ.get('REMOTE_ADDR', '')
-        logger.debug(ip)
         if ip != BASE_IP:
-            abort_403()
+            abort_403('{} wants to access {}'.format(ip, request.urlparts.path))
         return func(*args, **kwargs)
     return is_localhost_wrapper
 
@@ -147,9 +148,8 @@ def is_admin(func):
     """
     def is_admin_wrapper(*args, **kwargs):
         user = set_user()
-        logger.debug(user)
         if not check_admin(user):
-            abort_403()
+            abort_403('{}:{} wants to access {}'.format(user.name, user.token, request.urlparts.path))
         return func(*args, **kwargs)
     return is_admin_wrapper
 
