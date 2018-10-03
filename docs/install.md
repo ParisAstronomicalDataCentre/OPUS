@@ -45,8 +45,8 @@ The following configuration file (e.g. `uws_server.conf`) should be placed in
         WSGIPassAuthorization On
 
         <Directory "/path_to_uws_server">
-        AllowOverride None
-        Require all granted
+            AllowOverride None
+            Require all granted
         </Directory>
 
     </VirtualHost>
