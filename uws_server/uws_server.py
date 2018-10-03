@@ -168,7 +168,7 @@ def abort_400(msg=''):
     Returns:
         403 Forbidden
     """
-    logger.warning('400 Bad Request: {} ({})'.format(msg, request.urlparts.path))
+    logger.warning('Bad Request: {} ({})'.format(msg, request.urlparts.path))
     abort(400, '{}'.format(msg))
 
 
@@ -178,7 +178,7 @@ def abort_403(msg=''):
     Returns:
         403 Forbidden
     """
-    logger.warning('403 Forbidden: {} ({})'.format(msg, request.urlparts.path))
+    logger.warning('Forbidden: {} ({})'.format(msg, request.urlparts.path))
     abort(403, '{}'.format(msg))
     # abort(403, 'You don\'t have permission to access {} on this server. \n{}'
     #            ''.format(request.urlparts.path, msg))
@@ -192,10 +192,10 @@ def abort_404(msg=None):
         404 Not Found + message
     """
     if msg:
-        logger.warning('404 Not Found: {} ({})'.format(msg, request.urlparts.path))
+        logger.warning('Not Found: {} ({})'.format(msg, request.urlparts.path))
         abort(404, msg)
     else:
-        logger.warning('404 Not Found')
+        logger.warning('Not Found')
         abort(404)
 
 
