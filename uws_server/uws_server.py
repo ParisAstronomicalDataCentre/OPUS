@@ -108,6 +108,7 @@ def is_job_server(func):
         else:
             logger.warning('{} wants to access {}'.format(ip, request.urlparts.path))
             abort_403()
+        return func(*args, **kwargs)
     return func_wrapper
 
 
@@ -124,6 +125,7 @@ def is_client_trusted(func):
         else:
             logger.warning('{} wants to access {}'.format(ip, request.urlparts.path))
             abort_403()
+        return func(*args, **kwargs)
     return func_wrapper
 
 
@@ -134,6 +136,7 @@ def is_localhost(func):
         logger.debug(ip)
         if ip != BASE_IP:
             abort_403()
+        return func(*args, **kwargs)
     return func_wrapper
 
 
@@ -144,8 +147,10 @@ def is_admin(func):
     """
     def func_wrapper(*args, **kwargs):
         user = set_user()
+        logger.debug(user)
         if not check_admin(user):
             abort_403()
+        return func(*args, **kwargs)
     return func_wrapper
 
 
