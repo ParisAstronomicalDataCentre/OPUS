@@ -446,10 +446,10 @@ def job_definition(jobname):
         response = uws_server_request('/jdl', method='POST', init_request=request)
         if response.status_code == 200:
             flash('New job definition has been saved as new/{}'.format(jobname), 'info')
+            return redirect(url_for('job_definition', jobname='new/{}'.format(jobname)), 303)
         else:
             flash('Error during creation of job definition for {jn}'.format(jn=jobname),
               category='alert')
-        return redirect(url_for('job_definition', jobname='/new/{}'.format(jobname)), 303)
     # Show form
     # Set is_admin (will show validate buttons)
     is_admin = False
@@ -470,12 +470,13 @@ def validate_job(jobname):
     if response.status_code == 200:
         flash('Job definition for new/{jn} has been validated and renamed {jn}'.format(jn=jobname))
         #TODO: add job to db and link to admin and current_user
+        return redirect(url_for('job_definition', jobname=jobname), 303)
     elif response.status_code == 403:
         flash('Forbidden: insufficient rights to validate job definition for new/{jn}'.format(jn=jobname), category='warning')
     else:
         flash('Error during validation of job definition for {jn}'.format(jn=jobname),
               category='alert')
-    return redirect(url_for('job_definition', jobname=jobname), 303)
+    return redirect(url_for('job_definition', jobname='new/' + jobname), 303)
 
 
 @app.route('/jdl/<path:jobname>/copy_script')
