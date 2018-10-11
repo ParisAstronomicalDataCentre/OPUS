@@ -181,13 +181,14 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                                                 depth=depth-2, direction=direction, members=members, steps=steps, agent=agent, model=model,
                                                 show_parameters=show_parameters,
                                                 recursive=True))
+                    # Need to relaod jdl if job2prov was executed... recursion issues?
+                    job.jdl.read(job.jobname, jobid=job.jobid)
 
     # Parameters that influence the activity (if depth > 0)
     params = []
     if depth != 0 and show_parameters:
         # all_params = pdoc.collection('opus_job:' + job.jobname + '/' + job.jobid + '/parameters')
         logger.debug(job.jobname + ' ' + job.jobid)
-        job.jdl.read(job.jobname, jobid=job.jobid)
         logger.debug(job.jdl.content['parameters'])
         for pname, pdict in job.jdl.content.get('parameters', {}).items():
             pqn = ns_jdl + ':' + pname
