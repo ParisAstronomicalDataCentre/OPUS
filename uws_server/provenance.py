@@ -13,6 +13,7 @@ from prov.dot import prov_to_dot
 from pydotplus.graphviz import InvocationException
 
 from .settings import *
+from .uws_classes import Job
 from . import storage
 from . import uws_jdl
 
@@ -169,9 +170,9 @@ def job2prov(job, depth=1, direction='BACK', members=0, steps=0, agent=1, model=
 
                 # Explores entity origin if depth > 1
                 if depth != 1 and entity['jobid']:
-                    other_job = copy.deepcopy(job)
-                    other_job.jobid = entity['jobid']
-                    job_storage.read(other_job, get_attributes=True, get_parameters=True, get_results=True)
+                    #other_job = copy.deepcopy(job)
+                    other_job = Job('', entity['jobid'], job.user, get_attributes=True, get_parameters=True, get_results=True)
+                    #job_storage.read(other_job, get_attributes=True, get_parameters=True, get_results=True)
                     other_pdocs.append(job2prov(other_job,
                                                 depth=depth-2, direction=direction, members=members, steps=steps, agent=agent, model=model,
                                                 show_parameters=show_parameters,
