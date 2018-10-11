@@ -248,7 +248,8 @@ class Job(object):
             self.results = {}
 
         if self.jobname:
-            self.jdl.read(self.jobname)
+            #self.jdl.read(self.jobname)
+            pass
         else:
             logger.debug('Attribute jobname not given for jobid {}'.format(self.jobid))
 
