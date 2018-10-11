@@ -166,16 +166,15 @@ class Job(object):
         from_post should contain the request object if not None
         """
         # Job description
+        self.jobname = jobname
         if from_process_id:
             # use process_id to restore jobname and jobid
-            self.jobname = jobname
-            self.jobid = jobid
+            self.jobid = None
             self.process_id = jobid
         else:
             if not jobid:
                 # Create new jobid
                 jobid = JOB_ID_GEN()
-            self.jobname = jobname
             self.jobid = jobid
             self.process_id = None
         self.user = user
@@ -193,7 +192,6 @@ class Job(object):
         # Prepare jdl attribute, see settings.py
         # self.jdl = uws_jdl.__dict__[JDL]()
         self.jdl = getattr(uws_jdl, JDL)()
-        self.jdl.read(self.jobname)
 
         # Fill job attributes
         if from_post:
@@ -248,6 +246,9 @@ class Job(object):
             self.run_id = None
             self.parameters = {}
             self.results = {}
+
+        if self.jobname:
+            self.jdl.read(self.jobname)
 
 
     # ----------
