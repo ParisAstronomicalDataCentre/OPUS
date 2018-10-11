@@ -14,6 +14,7 @@ from pydotplus.graphviz import InvocationException
 
 from .settings import *
 from . import storage
+from . import uws_jdl
 
 # examples:
 # http://prov.readthedocs.org/en/latest/usage.html#simple-prov-document
@@ -52,8 +53,11 @@ def job2prov(job, depth=1, direction='BACK', members=0, steps=0, agent=1, model=
     other_pdocs = []
     # Get new storage instance
     job_storage = getattr(storage, STORAGE + 'JobStorage')()
+    job_jdl = getattr(uws_jdl, JDL)()
+
     # Update JDL content
-    job.jdl.read(job.jobname, jobid=job.jobid)
+    job_jdl.read(job.jobname, jobid=job.jobid)
+    job.jdl.content = job_jdl.content
 
     # Declaring namespaces for various prefixes used in the example
     pdoc.set_default_namespace('http://uws-server.readthedocs.io#')  # point to OPUS doc
@@ -241,7 +245,7 @@ def job2prov(job, depth=1, direction='BACK', members=0, steps=0, agent=1, model=
 
     # Merge all prov documents
     for opdoc in other_pdocs:
-        logger.debug(opdoc.serialize())
+        #logger.debug(opdoc.serialize())
         pdoc.update(opdoc)
     pdoc.flattened()
     pdoc.unified()
