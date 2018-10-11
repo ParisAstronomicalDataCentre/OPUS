@@ -17,7 +17,6 @@ from blinker import signal
 from . import uws_jdl
 from . import storage
 from . import managers
-from . import provenance
 from .settings import *
 
 
@@ -657,6 +656,7 @@ class Job(object):
     def add_provenance(self):
         # Create PROV files (added as a result)
         if GENERATE_PROV:
+            from . import provenance
             rfdir = '{}/{}/'.format(JOBDATA_PATH, self.jobid)
             ptypes = ['json', 'xml', 'svg']
             content_types = {
