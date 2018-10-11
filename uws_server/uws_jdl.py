@@ -69,13 +69,23 @@ class JDLFile(object):
     Manage job description. This class defines required functions executed
     by the UWS server: save(), read().
     """
-    content = dict(
-        control_parameters=CONTROL_PARAMETERS,
-        control_parameters_keys=CONTROL_PARAMETERS_KEYS,
-    )
-    extension = ''
-    jdl_path = '.'
-    scripts_path = '.'
+
+    def __init__(self, jdl_path=JDL_PATH, scripts_path=SCRIPTS_PATH):
+        self.content = dict(
+            control_parameters=CONTROL_PARAMETERS,
+            control_parameters_keys=CONTROL_PARAMETERS_KEYS,
+        )
+        self.extension = ''
+        self.jdl_path = '.'
+        self.scripts_path = '.'
+
+    # content = dict(
+    #     control_parameters=CONTROL_PARAMETERS,
+    #     control_parameters_keys=CONTROL_PARAMETERS_KEYS,
+    # )
+    # extension = ''
+    # jdl_path = '.'
+    # scripts_path = '.'
 
     def _get_filename(self, jobname, jobid=None):
         fn = '{}/{}{}'.format(self.jdl_path, jobname, self.extension)
@@ -196,6 +206,10 @@ class JDLFile(object):
 class JSONFile(JDLFile):
 
     def __init__(self, jdl_path=JDL_PATH, scripts_path=SCRIPTS_PATH):
+        self.content = dict(
+            control_parameters=CONTROL_PARAMETERS,
+            control_parameters_keys=CONTROL_PARAMETERS_KEYS,
+        )
         self.extension = '.json'
         self.jdl_path = os.path.join(jdl_path, 'json')
         self.scripts_path = scripts_path
@@ -245,6 +259,10 @@ class VOTFile(JDLFile):
     }
 
     def __init__(self, jdl_path=JDL_PATH, scripts_path=SCRIPTS_PATH):
+        self.content = dict(
+            control_parameters=CONTROL_PARAMETERS,
+            control_parameters_keys=CONTROL_PARAMETERS_KEYS,
+        )
         self.extension = '_vot.xml'
         self.jdl_path = os.path.join(jdl_path, 'votable')
         self.scripts_path = scripts_path
@@ -842,6 +860,10 @@ class VOTFile(JDLFile):
 class WADLFile(JDLFile):
 
     def __init__(self, jdl_path=JDL_PATH, scripts_path=SCRIPTS_PATH):
+        self.content = dict(
+            control_parameters=CONTROL_PARAMETERS,
+            control_parameters_keys=CONTROL_PARAMETERS_KEYS,
+        )
         self.extension = '.wadl'
         self.jdl_path = os.path.join(jdl_path, 'wadl')
         self.scripts_path = scripts_path

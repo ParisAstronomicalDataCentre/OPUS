@@ -40,10 +40,17 @@ class Manager(object):
     get_jobdata() and cp_script().
     """
 
-    jobdata_path = '.'
-    scripts_path = '.'
-    workdir_path = '.'
-    results_path = '.'
+    def __init__(self):
+        # PATHs
+        self.scripts_path = SCRIPTS_PATH
+        self.jobdata_path = JOBDATA_PATH
+        self.workdir_path = LOCAL_WORKDIR_PATH
+        self.results_path = RESULTS_PATH
+
+    # jobdata_path = '.'
+    # scripts_path = '.'
+    # workdir_path = '.'
+    # results_path = '.'
 
     def _make_batch(self, job, jobid_var='$$', get_input_files=[]):
         """Make batch file to run the job and signal status to the UWS server directly
