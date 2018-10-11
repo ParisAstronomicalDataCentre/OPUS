@@ -885,6 +885,7 @@ def provsap():
         500 Internal Server Error (on error)
     """
 
+    from . import provenance
     try:
         user = set_user()
         if not 'ID' in request.query:
