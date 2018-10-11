@@ -22,7 +22,7 @@ from . import uws_jdl
 # http://lists.g-vo.org/pipermail/prov-adhoc/2015-June/000025.html
 
 
-def job2prov(job, depth=1, direction='BACK', members=0, steps=0, agent=1, model='IVOA',
+def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1, model='IVOA',
              show_parameters=True, recursive=False, show_generated=False):
     """
     Create ProvDocument based on job description
@@ -52,6 +52,11 @@ def job2prov(job, depth=1, direction='BACK', members=0, steps=0, agent=1, model=
     # Init
     pdoc = ProvDocument()
     other_pdocs = []
+
+
+    job = uws_classes.Job('', jobid, user, get_attributes=True, get_parameters=True,
+                          get_results=True)
+
     # Get new storage instance
     job_storage = getattr(storage, STORAGE + 'JobStorage')()
 
@@ -171,10 +176,10 @@ def job2prov(job, depth=1, direction='BACK', members=0, steps=0, agent=1, model=
                 # Explores entity origin if depth > 1
                 if depth != 1 and entity['jobid']:
                     #other_job = copy.deepcopy(job)
-                    other_job = uws_classes.Job('', entity['jobid'], job.user, get_attributes=True,
-                                                get_parameters=True, get_results=True)
+                    #other_job = uws_classes.Job('', entity['jobid'], job.user, get_attributes=True,
+                    #                            get_parameters=True, get_results=True)
                     #job_storage.read(other_job, get_attributes=True, get_parameters=True, get_results=True)
-                    other_pdocs.append(job2prov(other_job,
+                    other_pdocs.append(job2prov(entity['jobid'], job.user,
                                                 depth=depth-2, direction=direction, members=members, steps=steps, agent=agent, model=model,
                                                 show_parameters=show_parameters,
                                                 recursive=True))

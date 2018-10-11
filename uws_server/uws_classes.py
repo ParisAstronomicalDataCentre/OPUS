@@ -666,7 +666,7 @@ class Job(object):
             }
             try:
                 # TODO: check input entities and retrieve their provenance...
-                pdoc = provenance.job2prov(self)
+                pdoc = provenance.job2prov(self.jobid, self.user)
                 provenance.prov2json(pdoc, rfdir + 'provenance.json')
                 provenance.prov2xml(pdoc, rfdir + 'provenance.xml')
                 provenance.prov2svg(pdoc, rfdir + 'provenance.svg')

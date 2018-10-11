@@ -917,10 +917,10 @@ def provsap():
                 # Then it is a jobid
                 jobid = id
             # Get job properties from DB
-            job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True)
-            logger.info('{} {} [{}]'.format(job.jobname, jobid, user))
+            #job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True)
+            #logger.info('{} {} [{}]'.format(job.jobname, jobid, user))
             # Return job provenance
-            pdoc = provenance.job2prov(job, show_generated=show_generated, **kwargs)
+            pdoc = provenance.job2prov(jobid, user, show_generated=show_generated, **kwargs)
             pdocs.append(pdoc)
         # Merge all pdocs
         pdoc = pdocs.pop()
