@@ -57,6 +57,7 @@ def job2prov(job, depth=1, direction='BACK', members=0, steps=0, agent=1, model=
 
     # Load JDL content separately
     job.jdl.read(job.jobname, jobid=job.jobid)
+    logger.debug(job.jobname + ' ' + job.jobid)
     logger.debug(job.jdl.content['parameters'])
 
     # Declaring namespaces for various prefixes used in the example
