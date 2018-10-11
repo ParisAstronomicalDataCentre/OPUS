@@ -201,7 +201,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                 'prov:value': value,
             }
             for pkey, pvalue in pdict.items():
-                logger.debug(pkey + '=' + pvalue)
+                logger.debug(jobid + ': ' + job.jobid + ': ' + pkey + '=' + pvalue)
                 if pvalue:
                     pattrs['voprov:' + pkey] = pvalue
             params[-1].add_attributes(pattrs)
