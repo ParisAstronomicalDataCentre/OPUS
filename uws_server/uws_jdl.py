@@ -82,7 +82,6 @@ class JDLFile(object):
         if jobid:
             fn_jobid = '{}/{}/{}{}'.format(JOBDATA_PATH, jobid, jobname, self.extension)
             if os.path.isfile(fn_jobid):
-                logger.info('Loading JDL attached to job: {} {}'.format(jobname, jobid))
                 fn = fn_jobid
         # logger.info('JDL filename: ' + fn)
         return fn
@@ -416,7 +415,7 @@ class VOTFile(JDLFile):
         jdl_fname = self._get_filename(jobname)
         with open(jdl_fname, 'wb') as f:
             f.write(jdl_content)
-            logger.info('JDL saved as VOTable: ' + jdl_fname)
+        logger.info('JDL saved as VOTable: ' + jdl_fname)
 
     def read(self, jobname, jobid=None):
         """Read job description from VOTable file"""
@@ -559,6 +558,7 @@ class VOTFile(JDLFile):
             raise
             # return {}
         self.content.update(job_def)
+        logger.info('JDL loaded for job: {} {}'.format(jobname, jobid))
 
     def save_old(self, jobname):
         """Save job description to VOTable file"""
