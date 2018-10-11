@@ -169,7 +169,7 @@ def job2prov(job, depth=1, direction='BACK', members=0, steps=0, agent=1, model=
 
                 # Explores entity origin if depth > 1
                 if depth != 1 and entity['jobid']:
-                    other_job = copy.copy(job)
+                    other_job = copy.deepcopy(job)
                     other_job.jobid = entity['jobid']
                     job_storage.read(other_job, get_attributes=True, get_parameters=True, get_results=True)
                     other_pdocs.append(job2prov(other_job,
