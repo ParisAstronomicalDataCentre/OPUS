@@ -53,16 +53,16 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
     pdoc = ProvDocument()
     other_pdocs = []
 
-
+    # Load job in local variable
     job = uws_classes.Job('', jobid, user, get_attributes=True, get_parameters=True,
                           get_results=True)
 
     # Get new storage instance
-    job_storage = getattr(storage, STORAGE + 'JobStorage')()
-    job_jdl = getattr(uws_jdl, JDL)()
+    # job_storage = getattr(storage, STORAGE + 'JobStorage')()
 
     # Load JDL content separately
-    job_jdl.read(job.jobname, jobid=job.jobid)
+    # job_jdl = getattr(uws_jdl, JDL)()
+    job.jdl.read(job.jobname, jobid=job.jobid)
 
     # Declaring namespaces for various prefixes used in the example
     pdoc.set_default_namespace('http://uws-server.readthedocs.io#')  # point to OPUS doc
@@ -82,7 +82,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
     # Activity
     act = pdoc.activity('opus_job:' + job.jobname + '/' + job.jobid, job.start_time, job.end_time)
     for attr in ['doculink', 'type', 'subtype', 'version']:
-        value = job_jdl.content.get(attr, None)
+        value = job.jdl.content.get(attr, None)
         if value:
             act.add_attributes({
                 'voprov:' + attr: value,
@@ -110,8 +110,8 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
 
     # Agent: contact for the job in ActivityDescription
     if agent:
-        contact_name = job_jdl.content.get('contact_name')
-        contact_email = job_jdl.content.get('contact_email')
+        contact_name = job.jdl.content.get('contact_name')
+        contact_email = job.jdl.content.get('contact_email')
         if not contact_name:
             contact_name = contact_email
         if contact_name:
@@ -132,13 +132,13 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
     e_in = []
     act_attr = {}
     used_entities = []
-    for pname, pdict in job_jdl.content.get('used', {}).items():
+    for pname, pdict in job.jdl.content.get('used', {}).items():
         # Assuming that used entity is a file or a URL (not a value or an ID)
         value = job.parameters.get(pname, {}).get('value', '')
         entity_id = job.parameters.get(pname, {}).get('entity_id', None)
         logger.debug('Search for entity: {}'.format(entity_id))
         # entity_id = os.path.splitext(os.path.basename(value))[0]
-        entity = job_storage.get_entity(entity_id, silent=True)
+        entity = job.storage.get_entity(entity_id, silent=True)
         if entity:
             used_entities.append(entity_id)
             pqn = ns_result + ':' + entity_id
@@ -177,21 +177,17 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                     #other_job = copy.deepcopy(job)
                     #other_job = uws_classes.Job('', entity['jobid'], job.user, get_attributes=True,
                     #                            get_parameters=True, get_results=True)
-                    #job_storage.read(other_job, get_attributes=True, get_parameters=True, get_results=True)
+                    #job.storage.read(other_job, get_attributes=True, get_parameters=True, get_results=True)
                     other_pdocs.append(job2prov(entity['jobid'], job.user,
                                                 depth=depth-2, direction=direction, members=members, steps=steps, agent=agent, model=model,
                                                 show_parameters=show_parameters,
                                                 recursive=True))
-                    # Need to reload jdl if job2prov was executed... recursion issues?
-                    #job_jdl.read(job.jobname, jobid=job.jobid)
 
     # Parameters that influence the activity (if depth > 0)
     params = []
     if depth != 0 and show_parameters:
         # all_params = pdoc.collection('opus_job:' + job.jobname + '/' + job.jobid + '/parameters')
-        logger.debug(job.jobname + ' ' + job.jobid)
-        logger.debug(job_jdl.content['parameters'])
-        for pname, pdict in job_jdl.content.get('parameters', {}).items():
+        for pname, pdict in job.jdl.content.get('parameters', {}).items():
             pqn = ns_jdl + ':' + pname
             if pname in job.parameters:
                 value = job.parameters[pname]['value']
@@ -222,10 +218,10 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
         for rname in job.results:
             if rname not in ['stdout', 'stderr', 'provjson', 'provxml', 'provsvg']:
                 entity_id = job.results[rname]['entity_id']
-                # rdict = job_jdl.content['generated'].get(rname, {})
+                # rdict = job.jdl.content['generated'].get(rname, {})
                 # entity_id = job.jobid + '_' + rname
                 # if entity_id:
-                entity = job_storage.get_entity(entity_id, silent=True)
+                entity = job.storage.get_entity(entity_id, silent=True)
                 if entity:
                     entity_id = entity['entity_id']
                     rqn = ns_result + ':' + entity_id
