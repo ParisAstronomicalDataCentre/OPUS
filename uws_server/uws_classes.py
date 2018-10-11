@@ -193,6 +193,7 @@ class Job(object):
         # Prepare jdl attribute, see settings.py
         # self.jdl = uws_jdl.__dict__[JDL]()
         self.jdl = getattr(uws_jdl, JDL)()
+        self.jdl.read(self.jobname)
 
         # Fill job attributes
         if from_post:
