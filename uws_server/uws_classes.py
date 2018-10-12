@@ -289,7 +289,9 @@ class Job(object):
         logger.debug('{}'.format(post.__dict__))
         logger.debug('{}'.format(files.keys()))
         # Read JDL
+        logger.debug(self.jdl.content)
         self.jdl.read(self.jobname)
+        logger.debug(self.jdl.content)
         # Pop UWS attributes keywords from POST or set by default
         self.execution_duration = self.jdl.content.get('executionDuration', EXECUTION_DURATION_DEF)
         # Pop internal attributes
