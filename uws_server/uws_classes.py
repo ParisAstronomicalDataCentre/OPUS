@@ -287,10 +287,9 @@ class Job(object):
     def set_from_post(self, post, files):
         """Set attributes and parameters from POST"""
         logger.debug('{}'.format(post.__dict__))
-        logger.debug('{}'.format(files.__dict__))
+        logger.debug('{}'.format(files.keys()))
         # Read JDL
-        if not self.jdl.content:
-            self.jdl.read(self.jobname)
+        self.jdl.read(self.jobname)
         # Pop UWS attributes keywords from POST or set by default
         self.execution_duration = self.jdl.content.get('executionDuration', EXECUTION_DURATION_DEF)
         # Pop internal attributes
