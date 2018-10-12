@@ -438,145 +438,149 @@ class VOTFile(JDLFile):
     def read(self, jobname, jobid=None):
         """Read job description from VOTable file"""
         raw_jobname = jobname.split('/')[-1]  # remove new/ prefix
-        fname = self._get_filename(jobname, jobid=jobid)
-        # '{}/{}{}'.format(JDL_PATH, job.jobname, self.extension)
-        groups = {
-            'InputParams': 'parameters',
-            'Used': 'used',
-            'Generated': 'generated'
-        }
-        try:
-            with open(fname, 'r') as f:
-                jdl_string = f.read()
-            #print jdl_string
-            jdl_tree = ETree.fromstring(jdl_string)
-            #print jdl_tree
-            # Get default namespace
-            xmlns = '{' + jdl_tree.nsmap[None] + '}'
-            #print xmlns
-            # Read parameters description
-            resource_block = jdl_tree.find(".//{}RESOURCE[@ID='{}']".format(xmlns, raw_jobname))
-            #print resource_block
-            job_def = {
-                'name': resource_block.get('name'),
-                'parameters': collections.OrderedDict(),
-                'generated': collections.OrderedDict(),
-                'used': collections.OrderedDict()
+        if self.content.get('name') != jobname:
+            fname = self._get_filename(jobname, jobid=jobid)
+            # '{}/{}{}'.format(JDL_PATH, job.jobname, self.extension)
+            groups = {
+                'InputParams': 'parameters',
+                'Used': 'used',
+                'Generated': 'generated'
             }
-            for elt in resource_block.getchildren():
+            try:
+                with open(fname, 'r') as f:
+                    jdl_string = f.read()
+                #print jdl_string
+                jdl_tree = ETree.fromstring(jdl_string)
+                #print jdl_tree
+                # Get default namespace
+                xmlns = '{' + jdl_tree.nsmap[None] + '}'
+                #print xmlns
+                # Read parameters description
+                resource_block = jdl_tree.find(".//{}RESOURCE[@ID='{}']".format(xmlns, raw_jobname))
+                #print resource_block
+                job_def = {
+                    'name': resource_block.get('name'),
+                    'parameters': collections.OrderedDict(),
+                    'generated': collections.OrderedDict(),
+                    'used': collections.OrderedDict()
+                }
+                for elt in resource_block.getchildren():
 
-                if elt.tag == '{}DESCRIPTION'.format(xmlns):
-                    job_def['annotation'] = elt.text
-                    #print elt.text
-                if elt.tag == '{}LINK'.format(xmlns):
-                    job_def['doculink'] = elt.get('href')
-                if elt.tag == '{}PARAM'.format(xmlns):
-                    # TODO: set datatype of value in the dictionary?
-                    #print elt.get('name'), elt.get('value')
-                    job_def[elt.get('name')] = elt.get('value', '')
-                if elt.tag == '{}GROUP'.format(xmlns):
-                    group = groups[elt.get('name')]
-                    #print group
-                    order = 0
-                    keys = []
-                    if group == 'parameters':
-                        for p in elt:
-                            if p.tag == '{}PARAM'.format(xmlns):
+                    if elt.tag == '{}DESCRIPTION'.format(xmlns):
+                        job_def['annotation'] = elt.text
+                        #print elt.text
+                    if elt.tag == '{}LINK'.format(xmlns):
+                        job_def['doculink'] = elt.get('href')
+                    if elt.tag == '{}PARAM'.format(xmlns):
+                        # TODO: set datatype of value in the dictionary?
+                        #print elt.get('name'), elt.get('value')
+                        job_def[elt.get('name')] = elt.get('value', '')
+                    if elt.tag == '{}GROUP'.format(xmlns):
+                        group = groups[elt.get('name')]
+                        #print group
+                        order = 0
+                        keys = []
+                        if group == 'parameters':
+                            for p in elt:
+                                if p.tag == '{}PARAM'.format(xmlns):
+                                    order += 1
+                                    name = p.get('name')
+                                    keys.append(name)
+                                    #print name, p.get('datatype', 'char')
+                                    pdatatype = p.get('datatype', 'char')
+                                    pxtype = p.get('xtype', None)
+                                    if pxtype == 'application/octet-stream':
+                                        pdatatype = 'file'
+                                    else:
+                                        pdatatype = self.datatype_vo2xs[pdatatype]
+                                    prequired = 'true'
+                                    if p.get('type') == 'no_query':    # type="no_query" in VOTable
+                                        prequired = 'false'
+                                    item = {
+                                        'datatype': pdatatype,
+                                        'required': prequired,
+                                        'default': p.get('value'),
+                                        'unit': p.get('unit', ''),
+                                        'ucd': p.get('ucd', ''),
+                                        'utype': p.get('utype', ''),
+                                    }
+                                    for pp in p:
+                                        if pp.tag == '{}DESCRIPTION'.format(xmlns):
+                                            item['annotation'] = pp.text
+                                        if pp.tag == '{}VALUES'.format(xmlns):
+                                            options = []
+                                            for ppp in pp:
+                                                if ppp.tag == '{}MIN'.format(xmlns):
+                                                    item['min'] = ppp.get('value')
+                                                if ppp.tag == '{}MAX'.format(xmlns):
+                                                    item['max'] = ppp.get('value')
+                                                if ppp.tag == '{}OPTION'.format(xmlns):
+                                                    options.append(ppp.get('value'))
+                                            item['options'] = ','.join(options)
+                                    job_def[group][name] = item
+                        if group == 'used':
+                            for p in elt:
                                 order += 1
                                 name = p.get('name')
                                 keys.append(name)
-                                #print name, p.get('datatype', 'char')
-                                pdatatype = p.get('datatype', 'char')
-                                pxtype = p.get('xtype', None)
-                                if pxtype == 'application/octet-stream':
-                                    pdatatype = 'file'
-                                else:
-                                    pdatatype = self.datatype_vo2xs[pdatatype]
-                                prequired = 'true'
-                                if p.get('type') == 'no_query':    # type="no_query" in VOTable
-                                    prequired = 'false'
+                                ref = p.get('ref')
                                 item = {
-                                    'datatype': pdatatype,
-                                    'required': prequired,
-                                    'default': p.get('value'),
-                                    'unit': p.get('unit', ''),
-                                    'ucd': p.get('ucd', ''),
-                                    'utype': p.get('utype', ''),
+                                    'datatype': 'xs:string',  # may be changed below
+                                    'annotation': '',         # filled below
+                                    'url': '',                # default to ''
                                 }
+                                if ref:
+                                    item['datatype'] = job_def.get('parameters').get(ref).get('datatype', item['datatype'])
+                                    item['default'] = job_def.get('parameters').get(ref).get('default')
+                                    item['annotation'] = job_def.get('parameters').get(ref).get('annotation', item['annotation'])
                                 for pp in p:
+                                    if pp.tag == '{}PARAM'.format(xmlns):
+                                        if pp.get('name'):
+                                            item[pp.get('name')] = pp.get('value')
                                     if pp.tag == '{}DESCRIPTION'.format(xmlns):
                                         item['annotation'] = pp.text
-                                    if pp.tag == '{}VALUES'.format(xmlns):
-                                        options = []
-                                        for ppp in pp:
-                                            if ppp.tag == '{}MIN'.format(xmlns):
-                                                item['min'] = ppp.get('value')
-                                            if ppp.tag == '{}MAX'.format(xmlns):
-                                                item['max'] = ppp.get('value')
-                                            if ppp.tag == '{}OPTION'.format(xmlns):
-                                                options.append(ppp.get('value'))
-                                        item['options'] = ','.join(options)
+                                    if pp.tag == '{}LINK'.format(xmlns):
+                                        purl = pp.get('href')
+                                        item['url'] = purl
+                                        if 'file://' in purl:
+                                            item['datatype'] = 'file'
                                 job_def[group][name] = item
-                    if group == 'used':
-                        for p in elt:
-                            order += 1
-                            name = p.get('name')
-                            keys.append(name)
-                            ref = p.get('ref')
-                            item = {
-                                'datatype': 'xs:string',  # may be changed below
-                                'annotation': '',         # filled below
-                                'url': '',                # default to ''
-                            }
-                            if ref:
-                                item['datatype'] = job_def.get('parameters').get(ref).get('datatype', item['datatype'])
-                                item['default'] = job_def.get('parameters').get(ref).get('default')
-                                item['annotation'] = job_def.get('parameters').get(ref).get('annotation', item['annotation'])
-                            for pp in p:
-                                if pp.tag == '{}PARAM'.format(xmlns):
-                                    if pp.get('name'):
-                                        item[pp.get('name')] = pp.get('value')
-                                if pp.tag == '{}DESCRIPTION'.format(xmlns):
-                                    item['annotation'] = pp.text
-                                if pp.tag == '{}LINK'.format(xmlns):
-                                    purl = pp.get('href')
-                                    item['url'] = purl
-                                    if 'file://' in purl:
-                                        item['datatype'] = 'file'
-                            job_def[group][name] = item
-                    if group == 'generated':
-                        for p in elt:
-                            order += 1
-                            name = p.get('name')
-                            keys.append(name)
-                            ref = p.get('ref')
-                            item = {
-                                'annotation': '',  # filled below
-                            }
-                            if ref:
-                                item['default'] = job_def.get('parameters').get(ref).get('default')
-                                item['annotation'] = job_def.get('parameters').get(ref).get('annotation')
-                            for pp in p:
-                                if pp.tag == '{}PARAM'.format(xmlns):
-                                    if pp.get('name'):
-                                        item[pp.get('name')] = pp.get('value')
-                                if pp.tag == '{}DESCRIPTION'.format(xmlns):
-                                    item['annotation'] = pp.text
-                            job_def[group][name] = item
-                    job_def[group + '_keys'] = keys
-            # Log votable access
-            # frame, filename, line_number, function_name, lines, index = inspect.stack()[1]
-            # logger.debug('VOTable read at {} ({}:{}): {}'.format(function_name, filename, line_number, fname))
-        except IOError:
-            # if file does not exist, continue and return an empty dict
-            logger.debug('VOTable not found for job {}'.format(jobname))
-            raise UserWarning('VOTable not found for job {}'.format(jobname))
-        except Exception as e:
-            logger.error('{}'.format(e))
-            raise
-            # return {}
-        self.content.update(job_def)
-        logger.info('JDL loaded for job: {} {}'.format(jobname, jobid))
+                        if group == 'generated':
+                            for p in elt:
+                                order += 1
+                                name = p.get('name')
+                                keys.append(name)
+                                ref = p.get('ref')
+                                item = {
+                                    'annotation': '',  # filled below
+                                }
+                                if ref:
+                                    item['default'] = job_def.get('parameters').get(ref).get('default')
+                                    item['annotation'] = job_def.get('parameters').get(ref).get('annotation')
+                                for pp in p:
+                                    if pp.tag == '{}PARAM'.format(xmlns):
+                                        if pp.get('name'):
+                                            item[pp.get('name')] = pp.get('value')
+                                    if pp.tag == '{}DESCRIPTION'.format(xmlns):
+                                        item['annotation'] = pp.text
+                                job_def[group][name] = item
+                        job_def[group + '_keys'] = keys
+                # Log votable access
+                # frame, filename, line_number, function_name, lines, index = inspect.stack()[1]
+                # logger.debug('VOTable read at {} ({}:{}): {}'.format(function_name, filename, line_number, fname))
+            except IOError:
+                # if file does not exist, continue and return an empty dict
+                logger.debug('VOTable not found for job {}'.format(jobname))
+                raise UserWarning('VOTable not found for job {}'.format(jobname))
+            except Exception as e:
+                logger.error('{}'.format(e))
+                raise
+                # return {}
+            self.content.update(job_def)
+            logger.info('JDL loaded for job: {} {}'.format(jobname, jobid))
+        else:
+            logger.debug('JDL already loaded for job: {} {}'.format(jobname, jobid))
+
 
     def save_old(self, jobname):
         """Save job description to VOTable file"""

@@ -246,10 +246,7 @@ class Job(object):
             self.parameters = {}
             self.results = {}
 
-        if self.jobname:
-            #self.jdl.read(self.jobname)
-            pass
-        else:
+        if not self.jobname:
             logger.debug('Attribute jobname not given for jobid {}'.format(self.jobid))
 
 
@@ -260,8 +257,7 @@ class Job(object):
 
     def get_result_filename(self, rname):
         """Get the filename corresponding to the result name"""
-        if not self.jdl.content:
-            self.jdl.read(self.jobname)
+        self.jdl.read(self.jobname)
         if not self.parameters:
             # need to read all parameters
             self.storage.read(self, get_attributes=True, get_parameters=True, get_results=True)
@@ -289,9 +285,7 @@ class Job(object):
         logger.debug('{}'.format(post.__dict__))
         logger.debug('{}'.format(files.keys()))
         # Read JDL
-        logger.debug(self.jdl.content)
         self.jdl.read(self.jobname)
-        logger.debug(self.jdl.content)
         # Pop UWS attributes keywords from POST or set by default
         self.execution_duration = self.jdl.content.get('executionDuration', EXECUTION_DURATION_DEF)
         # Pop internal attributes
@@ -446,8 +440,7 @@ class Job(object):
             All parameters as a list of bash variables
             Dictionnary of files uploaded (from the 'form' or given as an 'URI')
         """
-        if not self.jdl.content:
-            self.jdl.read(self.jobname)
+        self.jdl.read(self.jobname)
         params = ['# Required parameters']
         files = {'URI': [], 'form': []}
         # Job parameters
