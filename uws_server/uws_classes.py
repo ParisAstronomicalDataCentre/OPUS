@@ -287,6 +287,7 @@ class Job(object):
     def set_from_post(self, post, files):
         """Set attributes and parameters from POST"""
         logger.debug('{}'.format(post.__dict__))
+        logger.debug('{}'.format(files.__dict__))
         # Read JDL
         if not self.jdl.content:
             self.jdl.read(self.jobname)
@@ -867,7 +868,7 @@ class JobList(object):
         # Check if user is admin, then get all jobs
         if check_admin(user):
             where_owner = False
-            logger.debug('User is the admin: list all jobs')
+            #logger.debug('User is the admin: list all jobs')
 
         self.jobs = self.storage.get_list(self, phase=phase, after=after, last=last, where_owner=where_owner)
 
