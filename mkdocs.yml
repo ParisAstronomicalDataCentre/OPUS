@@ -1,6 +1,7 @@
-site_name: Observatoire de Paris UWS Server (OPUS)
-repo_url: https://github.com/mservillat/OPUS
-pages:
+site_name: OPUS
+repo_url: https://github.com/ParisAstronomicalDataCentre/OPUS
+theme: readthedocs
+nav:
 - Overview: 'index.md'
 - Installation: 'install.md'
 - Configuration: 'settings.md'
