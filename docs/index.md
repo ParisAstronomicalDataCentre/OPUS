@@ -12,7 +12,7 @@ More information on the UWS pattern recommendation can be found
 [here](http://www.ivoa.net/documents/UWS/20101010/).
 
 More information on the IVOA Provenance Data Model can be found 
-[here](http://www.ivoa.net/documents/ProvenanceDM/20181011/).
+[here](http://www.ivoa.net/documents/ProvenanceDM/20181015/).
 
 The **UWS server** is a web application composed of:
 
