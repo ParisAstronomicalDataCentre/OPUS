@@ -1,5 +1,5 @@
-Server Installation
-===================
+Installation
+============
 Get the code from the git repository
 ------------------------------------
 The web application code can be placed in any directory, e.g. `OPUS_DIR=/opt/OPUS`. To create the `OPUS` directory, 
@@ -24,16 +24,16 @@ installation page)). A virtual environment should be created, e.g. with the foll
     $ source activate wsgi36
     $ pip install -r pip-requirements.txt
     
-The WSGI module should then be installed within this virtual environment, and a wsgi.conf file generated to setup the
+The WSGI module should then be installed within this virtual environment, and a `wsgi.conf` file generated to setup the
  Apache web server:
     
     $ pip install mod_wsgi
     $ mod_wsgi-express module-config
     $ mod_wsgi-express module-config > wsgi.conf
 
-OPUS then requires a directory to store its logs, files and database, e.g. OPUS_VAR=/var/www/opus. This directory 
+OPUS then requires a directory to store its logs, files and database, e.g. `OPUS_VAR=/var/www/opus`. This directory 
 must be writable from the web application, i.e. by the user Apache is running as (e.g. www, www-data or apache).
-The $OPUS_VAR/logs directory must also be created and writable for this user, if the logs are written in this 
+The `$OPUS_VAR/logs` directory must also be created and writable for this user, if the logs are written in this 
 directory (see Apache configuration proposed below).
     
 The unit tests may be run to check the main features of the UWS server:
@@ -41,7 +41,7 @@ The unit tests may be run to check the main features of the UWS server:
     $ make test
 
 Configure the web server
--------------------------
+------------------------
 
 The `uws_server/uws_server.py` file  can be directly run to test the application on
 `localhost:8080`. With Apache 2 and mod_wsgi, use the script `uws_server/wsgi.py` or create a similar script. In the 
@@ -53,12 +53,12 @@ convenience, the following links can be created:
     $ ln -sf uws_client/wsgi.py wsgi_client.py
 
 Apache should be setup by providing the necessary .conf files in the APACHE_CONF directory (e.g. for CentOS this 
-directory should be APACHE_CONF=/etc/httpd/conf.d/; for Debian/Ubuntu, the files should be placed in 
+directory should be `APACHE_CONF=/etc/httpd/conf.d/`; for Debian/Ubuntu, the files should be placed in 
 `/etc/apache2/sites-available/` with a link from `/etc/apache2/sites-enabled/`). 
 
 First copy the WSG module configuration (as root):
 
-    # cp /opt/OPUS/wsgi.conf $APACHE_CONF
+    # cp wsgi.conf $APACHE_CONF
 
 Then create a `opus.conf` file to define virtual hosts for the OPUS server and client, the content would then be:
 
