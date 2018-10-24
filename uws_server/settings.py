@@ -29,12 +29,14 @@ BASE_URL = 'http://localhost'
 BASE_IP = '127.0.0.1'
 LOCAL_USER = 'www'  # Appache user (may be www, _www, apache...)
 
-# Admin name+pid has access to user database changes (i.e. set permissions)
+# Admin name+token has access to user database changes (i.e. set permissions)
 ADMIN_NAME = 'opus-admin'
-ADMIN_TOKEN = 'e85d2a4e-27ea-5202-8b5c-241e82f5871a'
-ADMIN_EMAIL = 'mathieu.servillat@obspm.fr'
-JOB_EVENT_TOKEN = 'c18de332'  # TOKEN for special user job_event, used internally
-MAINTENANCE_TOKEN = '419cb761'  # TOKEN for special user maintenant, used internally
+ADMIN_EMAIL = 'a@b.com'
+ADMIN_TOKEN = 'TBD_in_settings_local.py'
+# TOKEN for special user job_event, used internally
+JOB_EVENT_TOKEN = 'TBD_in_settings_local.py'
+# TOKEN for special user maintenant, used internally
+MAINTENANCE_TOKEN = 'TBD_in_settings_local.py'
 
 # Access rules
 ALLOW_ANONYMOUS = True
@@ -42,7 +44,7 @@ CHECK_PERMISSIONS = False  # check rights to create/edit a job
 CHECK_OWNER = False
 
 # max active jobs per user
-NJOBS_MAX = 5  # 0 for no restriction
+NJOBS_MAX = 1  # 0 for no restriction
 
 # Default destruction interval
 DESTRUCTION_INTERVAL = 30  # in days
@@ -65,28 +67,19 @@ GENERATE_PROV = True
 
 # Those servers can have access to /job_event/<jobid_manager> to change the phase or report an error
 # The IP can be truncated to allow to refer to a set of IPs
+# TO BE PLACED and completed in settings_local.py
 JOB_SERVERS = {
-    '::1': 'localhost',
+    '::1':       'localhost',
     '127.0.0.1': 'localhost',
 }
-# TO BE PLACED in settings_local.py
-JOB_SERVERS.update({
-    '145.238.151.': 'tycho/quadri12',
-})
 
 # The server will allow db and jdl access only from trusted clients (while waiting for an auth system)
 # e.g. /db/init, /jdl/validate...
+# TO BE PLACED and completed in settings_local.py
 TRUSTED_CLIENTS = {
-    '::1':             'localhost',
-    '127.0.0.1':       'localhost',
+    '::1':       'localhost',
+    '127.0.0.1': 'localhost',
 }
-# TO BE PLACED in settings_local.py
-TRUSTED_CLIENTS.update({
-    '145.238.193.69':  'voparis-uws-test.obspm.fr',
-    '145.238.168.3':   'savagnin_ucopia',
-    '145.238.180.240': 'savagnin_cable',
-    '93.15.50.214':    'savagnin_home',
-})
 
 # Identifiers will be generated with the following UUID_GEN function
 JOB_ID_LENGTH = 6   # length of uuid identifiers from the right, max=36
@@ -109,13 +102,42 @@ def TOKEN_GEN(name):
         token = uuid.uuid4()
     return str(token)
 
+#----------
 # Job Description Language files
+
 # VOTFile: VOTable following the Provenance DM ActivityDescription class
 # WADLFile: WADL file describing the web service
 # WSDLFile: WSDL file describing the web service -- not implemented
 JDL = 'VOTFile'
 
+# Parameters allowed at Job creation for job control
+# either the direct name of the UWS attribute, or prefixed with 'uws:'
+UWS_PARAMETERS = {
+    'runId': 'User specific identifier for the job',  # this parameter will appear first in the form, helpful for a user to find their jobs
+    'executionDuration': 'Required execution duration in seconds',
+    # 'uws_executionDuration': 'Required execution duration in seconds',
+    'uws_quote': 'Estimation of the duration of the job',
+    'destruction': 'Date of desctruction of the job',
+    #'uws_destruction': 'Date of desctruction of the job',
+}
+UWS_PARAMETERS_KEYS = [
+    'runId',
+    'executionDuration',
+    # 'uws_executionDuration',
+    'uws_quote',
+    'destruction',
+    # 'uws_destruction',
+]
+
+# Control parameters allowed in a form for job creation - may be extended further below
+CONTROL_PARAMETERS = UWS_PARAMETERS
+# Order for the control parameters
+CONTROL_PARAMETERS_KEYS = UWS_PARAMETERS_KEYS
+
+
+#----------
 # Storage of job information (SQLAlchemy, SQLite, PGSQL)
+
 # SQLAlchemy: SQLAlchemy interface to the relational DB, e.g. SQLite, PostgreSQL...)
 # SQLite: direct use of SQLite -- to be deprecated
 STORAGE = 'SQLAlchemy'
@@ -130,7 +152,9 @@ PGSQL_DATABASE = 'opus'
 PGSQL_USER = 'opus'
 PGSQL_PASSWORD = 'opus'
 
+#----------
 # Archive for results
+
 # Local: store results in the local directory RESULTS_PATH
 # SLURM: specific path accessible from the SLURM work cluster / nodes (given in ARCHIVE_PATH, need also the base access URL)
 # FTP: not implemented
@@ -139,12 +163,17 @@ ARCHIVE = 'Local'
 ARCHIVE_PATH = ''
 ARCHIVE_URL = ''  # use $ID for the identifier of the result
 
+#----------
 # Define a Manager and its properties
+
 # Local: execution on the UWS server directly using Bash commands
-# SLURM: execution through a SLURM control manager (additional config required)
+# SLURM: execution through a SLURM control manager (additional config required below)
 MANAGER = 'Local'
 LOCAL_WORKDIR_PATH = '/tmp'
+
+#----------
 # SLURM Manager
+
 SLURM_URL = 'tycho.obspm.fr'  # 'quadri12.obspm.fr'  #
 SLURM_USER = 'vouws'  # need to add the web server ssh key (e.g. user www) in .ssh/authorized_hosts
 SLURM_MAIL_USER = ADMIN_EMAIL
@@ -176,30 +205,6 @@ PHASE_CONVERT = {
                                            'administrator. The job may or may not have been initiated'),
     'SUSPENDED': dict(phase='SUSPENDED', msg='Job has an allocation, but execution has been suspended'),
 }
-
-# Parameters allowed at Job creation for job control
-# either the direct name of the UWS attribute, or prefixed with 'uws:'
-UWS_PARAMETERS = {
-    'runId': 'User specific identifier for the job',  # this parameter will appear first in the form, helpful for a user to find their jobs
-    'executionDuration': 'Required execution duration in seconds',
-    # 'uws_executionDuration': 'Required execution duration in seconds',
-    'uws_quote': 'Estimation of the duration of the job',
-    'destruction': 'Date of desctruction of the job',
-    #'uws_destruction': 'Date of desctruction of the job',
-}
-UWS_PARAMETERS_KEYS = [
-    'runId',
-    'executionDuration',
-    # 'uws_executionDuration',
-    'uws_quote',
-    'destruction',
-    # 'uws_destruction',
-]
-
-# Control parameters allowed in a form for job creation - may be extended further below
-CONTROL_PARAMETERS = UWS_PARAMETERS
-# Order for the control parameters
-CONTROL_PARAMETERS_KEYS = UWS_PARAMETERS_KEYS
 
 SLURM_PARAMETERS = {
     'slurm_mem': 'Memory to be allocated to the job',
