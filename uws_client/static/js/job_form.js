@@ -30,7 +30,10 @@
 //                formData.append($(this).attr('name'), $(this)[0].files[0]);
 //            });
             formData.append('PHASE', 'RUN');
+            //var anim_icon = '<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span>&nbsp;';
+            //$('button[type=submit]').html(anim_icon);
             uws_client.createJob(jobname, formData);
+            global.showMessage('Job submitted to server, waiting for response...', 'info');
         });
     });
         
