@@ -94,16 +94,15 @@ class User(object):
         """Override the default Equals behavior"""
         return self.name == other.name and self.token == other.token
 
+    def check_admin(user):
+        return user == User(ADMIN_NAME, ADMIN_TOKEN)
+
 
 special_users = [
     User(ADMIN_NAME, ADMIN_TOKEN),
     User('job_event', JOB_EVENT_TOKEN),
     User('maintenance', MAINTENANCE_TOKEN)
 ]
-
-
-def check_admin(user):
-    return user == User(ADMIN_NAME, ADMIN_TOKEN)
 
 
 def check_permissions(job):
@@ -860,7 +859,7 @@ class JobList(object):
         check_permissions(self)
 
         # Check if user is admin, then get all jobs
-        if check_admin(user):
+        if user.check_admin():
             where_owner = False
             #logger.debug('User is the admin: list all jobs')
 

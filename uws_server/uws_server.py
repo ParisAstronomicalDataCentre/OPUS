@@ -88,7 +88,7 @@ def set_user(jobname=None):
     # Create user object
     user = User(user_name, user_token)
     # Add user name at the end of each log entry
-    #logger = CustomAdapter(logger_init, {'username': user_name})
+    logger = CustomAdapter(logger_init, {'username': user_name})
     if user == User('anonymous', 'anonymous') and ALLOW_ANONYMOUS == False:
         abort_403('User anomymous not allowed on this server')
     # Add user if not in db
@@ -148,7 +148,7 @@ def is_admin(func):
     """
     def is_admin_wrapper(*args, **kwargs):
         user = set_user()
-        if not check_admin(user):
+        if not user.check_admin():
             abort_403('{}:{} wants to access {}'.format(user.name, user.token, request.urlparts.path))
         return func(*args, **kwargs)
     return is_admin_wrapper
@@ -503,7 +503,8 @@ def init_db():
         filename = APP_PATH + '/uws_server/job_database.sqlite'
         with open(filename) as f:
             sql = f.read()
-        db = storage.__dict__[STORAGE + 'JobStorage']()
+        #db = storage.__dict__[STORAGE + 'JobStorage']()
+        db = getattr(storage, STORAGE + 'JobStorage')()
         db.cursor.executescript(sql)
         db.conn.commit()
         logger.info('Database initialized using ' + filename)
@@ -526,7 +527,8 @@ def test_db():
         filename = APP_PATH + '/uws_server/job_database_test.sqlite'
         with open(filename) as f:
             sql = f.read()
-        db = storage.__dict__[STORAGE + 'JobStorage']()
+        #db = storage.__dict__[STORAGE + 'JobStorage']()
+        db = getattr(storage, STORAGE + 'JobStorage')()
         db.session.query(sql)
         db.session.commit()
         logger.info('Database initialized using ' + filename)
@@ -583,14 +585,21 @@ def get_jobnames():
         user = set_user()
         # jobnames = ['copy', 'ctbin']
         # List jdl files (=available jobs)
-        jdl = uws_jdl.__dict__[JDL]()
+        #jdl = uws_jdl.__dict__[JDL]()
+        jdl = getattr(uws_jdl, JDL)()
         flist = glob.glob('{}/*{}'.format(jdl.jdl_path, jdl.extension))
         # Check if JDL file exists on server?
         jobnames_jdl = [f.split('/')[-1].split(jdl.extension)[0] for f in flist]
         jobnames_all = [j for j in jobnames_jdl if os.path.isfile('{}/{}.sh'.format(jdl.scripts_path, j))]
-        # Check if user has access
-        db = storage.__dict__[STORAGE + 'JobStorage']()
-        jobnames = [j for j in jobnames_all if db.has_access(user, j)]
+        jobnames = []
+        if user.check_admin():
+            jobnames = jobnames_all
+        else:
+            # Check if user has access
+            #db = storage.__dict__[STORAGE + 'JobStorage']()
+            db = getattr(storage, STORAGE + 'JobStorage')()
+            roles = db.get_roles(user)
+            jobnames = [j for j in jobnames_all if j in roles]
         jobnames.sort()
         jobnames_json = {'jobnames': jobnames}
         return jobnames_json
@@ -609,7 +618,8 @@ def create_new_job_definition():
     try:
         jobname = request.forms.get('name').split('/')[-1]
         # Create JDL file from job_jdl
-        jdl = uws_jdl.__dict__[JDL]()
+        #jdl = uws_jdl.__dict__[JDL]()
+        jdl = getattr(uws_jdl, JDL)()
         jdl.set_from_post(request.forms)
         # Save as a new job description
         jdl.save('new/' + jobname)
@@ -623,40 +633,6 @@ def create_new_job_definition():
     # redirect('/client/job_definition?jobname=new/{}&msg=new'.format(jobname), 303)
 
 
-@app.get('/jdl/<jobname:path>/convert')
-@is_client_trusted
-@is_admin
-def convert_jdl(jobname):
-    """
-    Get json description file for jobname
-    :param jobname:
-    :return: json description
-    """
-    try:
-        #logger.info(jobname)
-        uws_jdl.update_vot(jobname)
-    except UserWarning as e:
-        abort_404(e.args[0])
-    except:
-        abort_500_except()
-    return 'JDL converted for {}'.format(jobname)
-
-
-@app.get('/jdl/<jobname:path>/script')
-def get_script(jobname):
-    """
-    Get script file as text
-    :param jobname:
-    :return:
-    """
-    fname = '{}/{}.sh'.format(SCRIPTS_PATH, jobname)
-    logger.info('Job script read: {}'.format(fname))
-    if os.path.isfile(fname):
-        response.content_type = 'text/plain; charset=UTF-8'
-        return static_file(fname, root='/', mimetype='text')
-    abort_404('No script file found for ' + jobname)
-
-
 #@app.get('/config/validate_job/<jobname>')
 @app.post('/jdl/<jobname:path>/validate')
 @is_client_trusted
@@ -666,7 +642,8 @@ def validate_job_definition(jobname):
     # Check if client is trusted (only admin should be allowed to validate a job)
     try:
         # Copy script and jdl from new
-        jdl = uws_jdl.__dict__[JDL]()
+        #jdl = uws_jdl.__dict__[JDL]()
+        jdl = getattr(uws_jdl, JDL)()
         jdl_src = '{}/new/{}{}'.format(jdl.jdl_path, jobname, jdl.extension)
         jdl_dst = '{}/{}{}'.format(jdl.jdl_path, jobname, jdl.extension)
         script_src = '{}/new/{}.sh'.format(jdl.scripts_path, jobname)
@@ -695,7 +672,8 @@ def validate_job_definition(jobname):
             shutil.copy(script_src, script_dst)
             logger.info('Job script copied: ' + script_dst)
             # Copy script to job manager
-            manager = managers.__dict__[MANAGER + 'Manager']()
+            #manager = managers.__dict__[MANAGER + 'Manager']()
+            manager = getattr(managers, MANAGER + 'Manager')()
             manager.cp_script(jobname)
             logger.info('Job script copied to work cluster: ' + jobname)
         else:
@@ -710,6 +688,25 @@ def validate_job_definition(jobname):
     # redirect('/client/job_definition?jobname={}&msg=validated'.format(jobname), 303)
 
 
+@app.get('/jdl/<jobname:path>/convert')
+@is_client_trusted
+@is_admin
+def convert_jdl(jobname):
+    """
+    Get json description file for jobname
+    :param jobname:
+    :return: json description
+    """
+    try:
+        #logger.info(jobname)
+        uws_jdl.update_vot(jobname)
+    except UserWarning as e:
+        abort_404(e.args[0])
+    except:
+        abort_500_except()
+    return 'JDL converted for {}'.format(jobname)
+
+
 #@app.get('/config/cp_script/<jobname>')
 @app.post('/jdl/<jobname:path>/copy_script')
 @is_client_trusted
@@ -721,7 +718,8 @@ def cp_script(jobname):
         # Copy script to job manager
         script_dst = '{}/{}.sh'.format(SCRIPTS_PATH, jobname)
         if os.path.isfile(script_dst):
-            manager = managers.__dict__[MANAGER + 'Manager']()
+            #manager = managers.__dict__[MANAGER + 'Manager']()
+            manager = getattr(managers, MANAGER + 'Manager')()
             manager.cp_script(jobname)
             logger.info('Job script copied to work cluster: ' + jobname)
         else:
@@ -736,6 +734,21 @@ def cp_script(jobname):
     # redirect('/client/job_definition?jobname={}&msg=script_copied'.format(jobname), 303)
 
 
+@app.get('/jdl/<jobname:path>/script')
+def get_script(jobname):
+    """
+    Get script file as text
+    :param jobname:
+    :return:
+    """
+    fname = '{}/{}.sh'.format(SCRIPTS_PATH, jobname)
+    logger.info('Job script downloaded: {}'.format(fname))
+    if os.path.isfile(fname):
+        response.content_type = 'text/plain; charset=UTF-8'
+        return static_file(fname, root='/', mimetype='text')
+    abort_404('No script file found for ' + jobname)
+
+
 @app.get('/jdl/<jobname:path>/json')
 def get_jdl_json(jobname):
     """
@@ -745,11 +758,14 @@ def get_jdl_json(jobname):
     """
     try:
         #logger.info(jobname)
-        jdl = uws_jdl.__dict__[JDL]()
+        #jdl = uws_jdl.__dict__[JDL]()
+        jdl = getattr(uws_jdl, JDL)()
         jdl.read(jobname)
+        logger.info('JDL downloaded: {}'.format(jobname))
         return jdl.content
     except UserWarning as e:
         abort_404(e.args[0])
+
 
 #@app.get('/jdl/<jobname:path>/votable')
 @app.get('/jdl/<jobname>')
@@ -804,7 +820,7 @@ def download_entity():
                     raise EntityAccessDenied('User {} is not the owner of the entity'.format(user.name))
 
         download = entity['entity_id'] + os.path.splitext(entity['file_name'])[1]
-        logger.debug('{} [{}]'.format(str(entity), user))
+        logger.debug('{}'.format(str(entity)))
         response.set_header('Content-type', entity['content_type'])
         return static_file(entity['file_name'], root=entity['file_dir'], mimetype=entity['content_type'],
                            download=download)
@@ -861,7 +877,7 @@ def get_result_file(jobid, rname):  # , rfname):
         #response.content_type = 'text/plain; charset=UTF-8'
         #return str(job.results[result]['url'])
         content_type = job.results[rname]['content_type']
-        logger.debug('{} {} {} {} {} [{}]'.format(job.jobname, jobid, rname, rfname, content_type, user))
+        logger.debug('{} {} {} {} {}'.format(job.jobname, jobid, rname, rfname, content_type))
         response.set_header('Content-type', content_type)
         if any(x in content_type for x in ['text', 'xml', 'json', 'image/png', 'image/jpeg']):
             return static_file(rfname, root='{}/{}'.format(RESULTS_PATH, job.jobid),
@@ -922,7 +938,7 @@ def provsap():
                 jobid = id
             # Get job properties from DB
             #job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True)
-            #logger.info('{} {} [{}]'.format(job.jobname, jobid, user))
+            #logger.info('{} {}'.format(job.jobname, jobid))
             # Return job provenance
             pdoc = provenance.job2prov(jobid, user, show_generated=show_generated, **kwargs)
             pdocs.append(pdoc)
@@ -1100,7 +1116,7 @@ def get_joblist(jobname):
     """
     try:
         user = set_user()
-        logger.info('{} [{}]'.format(jobname, user))
+        logger.info('{}'.format(jobname))
         # UWS v1.1 PHASE keyword
         phase = None
         if 'PHASE' in request.query:
@@ -1139,12 +1155,12 @@ def create_job(jobname):
         # TODO: add attributes: execution_duration, mem, nodes, ntasks-per-node
         # Set new job description from POSTed parameters
         job = Job(jobname, '', user, from_post=request)
-        logger.info('{} {} CREATED [{}]'.format(jobname, job.jobid, user))
+        logger.info('{} {} CREATED and PENDING'.format(jobname, job.jobid))
         # If PHASE=RUN, start job
         if request.forms.get('PHASE') == 'RUN':
             job.start()
-            logger.info('{} {} QUEUED with process_id={} [{}]'
-                        ''.format(jobname, job.jobid, str(job.process_id), user))
+            logger.info('{} {} QUEUED with process_id={}'
+                        ''.format(jobname, job.jobid, str(job.process_id)))
     except UserWarning as e:
         abort_500(e.args[0])
     except TooManyJobs as e:
@@ -1174,7 +1190,7 @@ def get_job(jobname, jobid):
     """
     try:
         user = set_user()
-        # logger.info('{} {} [{}]'.format(jobname, jobid, user))
+        logger.info('{} {}'.format(jobname, jobid))
         # Get job properties from DB
         job = Job(jobname, jobid, user,
                   get_attributes=True, get_parameters=True, get_results=True)
@@ -1191,7 +1207,7 @@ def get_job(jobname, jobid):
                 change_status_event = threading.Event()
 
                 def receiver(sender, **kw):
-                    logger.info('{}: {} is now {} [{}]'.format(sender, kw.get('sig_jobid'), kw.get('sig_phase'), user))
+                    logger.info('{}: {} is now {}'.format(sender, kw.get('sig_jobid'), kw.get('sig_phase')))
                     # Set event if job changed
                     if (kw.get('sig_jobid') == jobid) and (kw.get('sig_phase') != job.phase):
                         change_status_event.set()
@@ -1201,9 +1217,9 @@ def get_job(jobname, jobid):
                 # Connect to signal
                 change_status_signal.connect(receiver)
                 # Wait for signal event
-                logger.info('{}: Blocking for {} seconds [{}]'.format(jobid, wait_time, user))
+                logger.info('{}: Blocking for {} seconds'.format(jobid, wait_time))
                 event_is_set = change_status_event.wait(wait_time)
-                logger.info('{}: Continue execution [{}]'.format(jobid, user))
+                logger.info('{}: Continue execution'.format(jobid))
                 change_status_signal.disconnect(receiver)
                 # Reload job if necessary
                 if event_is_set:
@@ -1234,12 +1250,12 @@ def delete_job(jobname, jobid):
     """
     try:
         user = set_user()
-        logger.info('{} {} [{}]'.format(jobname, jobid, user))
+        logger.info('{} {}'.format(jobname, jobid))
         # Get job properties from DB
         job = Job(jobname, jobid, user)
         # Delete job
         job.delete()
-        logger.info('{} {} DELETED [{}]'.format(jobname, jobid, user))
+        logger.info('{} {} DELETED'.format(jobname, jobid))
     except JobAccessDenied as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
@@ -1258,13 +1274,13 @@ def post_job(jobname, jobid):
     try:
         user = set_user()
         logger.debug('POST: {}'.format(request.POST.__dict__))
-        logger.info('deleting {} {} [{}]'.format(jobname, jobid, user))
+        logger.info('deleting {} {}'.format(jobname, jobid))
         if request.forms.get('ACTION') == 'DELETE':
             # Get job properties from DB
             job = Job(jobname, jobid, user)
             # Delete job
             job.delete()
-            logger.info('{} {} DELETED [{}]'.format(jobname, jobid, user))
+            logger.info('{} {} DELETED'.format(jobname, jobid))
         else:
             raise UserWarning('ACTION=DELETE is not specified in POST')
     except JobAccessDenied as e:
@@ -1296,7 +1312,7 @@ def get_phase(jobname, jobid):
     """
     try:
         user = set_user()
-        # logger.info('{} {} [{}]'.format(jobname, jobid, user))
+        # logger.info('{} {}'.format(jobname, jobid))
         # Get job properties from DB
         job = Job(jobname, jobid, user)
         # Return value
@@ -1323,7 +1339,7 @@ def post_phase(jobname, jobid):
         user = set_user()
         if 'PHASE' in request.forms:
             new_phase = request.forms.get('PHASE')
-            logger.info('PHASE={} {} {} [{}]'.format(new_phase, jobname, jobid, user))
+            logger.info('PHASE={} {} {}'.format(new_phase, jobname, jobid))
             if new_phase == 'RUN':
                 # Get job properties from DB
                 job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True)
@@ -1332,14 +1348,14 @@ def post_phase(jobname, jobid):
                     raise UserWarning('Job has to be in PENDING phase')
                 # Start job
                 job.start()
-                logger.info('{} {} STARTED with process_id={} [{}]'
-                            ''.format(jobname, jobid, str(job.process_id), user))
+                logger.info('{} {} STARTED with process_id={}'
+                            ''.format(jobname, jobid, str(job.process_id)))
             elif new_phase == 'ABORT':
                 # Get job properties from DB
                 job = Job(jobname, jobid, user, get_attributes=True, get_parameters=True, get_results=True)
                 # Abort job
                 job.abort()
-                logger.info('{} {} ABORTED [{}]'.format(jobname, jobid, user))
+                logger.info('{} {} ABORTED'.format(jobname, jobid))
             else:
                 raise UserWarning('PHASE=' + new_phase + ' not expected')
         else:
@@ -1374,7 +1390,7 @@ def get_executionduration(jobname, jobid):
     """
     try:
         user = set_user()
-        logger.info('{} {} [{}]'.format(jobname, jobid, user))
+        logger.info('{} {}'.format(jobname, jobid))
         # Get job properties from DB
         job = Job(jobname, jobid, user)
         # Return value
@@ -1399,7 +1415,7 @@ def post_executionduration(jobname, jobid):
     """
     try:
         user = set_user()
-        logger.info('{} {} [{}]'.format(jobname, jobid, user))
+        logger.info('{} {}'.format(jobname, jobid))
         # Get value from POST
         if 'EXECUTIONDURATION' not in request.forms:
             raise UserWarning('EXECUTIONDURATION keyword required')
@@ -1415,7 +1431,7 @@ def post_executionduration(jobname, jobid):
 
         # Change value
         job.set_attribute('execution_duration', new_value)
-        logger.info('{} {} set execution_duration= [{}]'.format(jobname, jobid, str(new_value), user))
+        logger.info('{} {} set execution_duration={}'.format(jobname, jobid, str(new_value)))
     except JobAccessDenied as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
@@ -1444,7 +1460,7 @@ def get_destruction(jobname, jobid):
     """
     try:
         user = set_user()
-        logger.info('{} {} [{}]'.format(jobname, jobid, user))
+        logger.info('{} {}'.format(jobname, jobid))
         # Get job properties from DB
         job = Job(jobname, jobid, user)
         # Return value
@@ -1469,7 +1485,7 @@ def post_destruction(jobname, jobid):
     """
     try:
         user = set_user()
-        logger.info('{} {} [{}]'.format(jobname, jobid, user))
+        logger.info('{} {}'.format(jobname, jobid))
         # Get value from POST
         if 'DESTRUCTION' not in request.forms:
             raise UserWarning('DESTRUCTION keyword required')
@@ -1487,7 +1503,7 @@ def post_destruction(jobname, jobid):
         # Change value
         # job.set_destruction_time(new_value)
         job.set_attribute('destruction_time', new_value)
-        logger.info('{} {} set destruction_time={} [{}]'.format(jobname, jobid, new_value, user))
+        logger.info('{} {} set destruction_time={}'.format(jobname, jobid, new_value))
     except JobAccessDenied as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
@@ -1517,7 +1533,7 @@ def get_error(jobname, jobid):
     """
     try:
         user = set_user()
-        logger.info('{} {} [{}]'.format(jobname, jobid, user))
+        logger.info('{} {}'.format(jobname, jobid))
         # Get job properties from DB
         job = Job(jobname, jobid, user)
         # Return value
@@ -1547,7 +1563,7 @@ def get_quote(jobname, jobid):
     """
     try:
         user = set_user()
-        logger.info('{} {} [{}]'.format(jobname, jobid, user))
+        logger.info('{} {}'.format(jobname, jobid))
         # Get job properties from DB
         job = Job(jobname, jobid, user)
         # Return value
@@ -1578,7 +1594,7 @@ def get_parameters(jobname, jobid):
     """
     try:
         user = set_user()
-        logger.info('{} {} [{}]'.format(jobname, jobid, user))
+        logger.info('{} {}'.format(jobname, jobid))
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_parameters=True)
         # Return job parameters in UWS format
@@ -1633,7 +1649,7 @@ def post_parameter(jobname, jobid, pname):
     """
     try:
         user = set_user()
-        logger.info('pname={} {} {} [{}]'.format(pname, jobname, jobid, user))
+        logger.info('pname={} {} {}'.format(pname, jobname, jobid))
         # Get value from POST
         if 'VALUE' not in request.forms:
             raise UserWarning('VALUE keyword required')
@@ -1644,7 +1660,7 @@ def post_parameter(jobname, jobid, pname):
         # Change value
         if job.phase == 'PENDING':
             job.set_parameter(pname, new_value)
-            logger.info('{} {} set parameter {}={} [{}]'.format(jobname, jobid, pname, new_value, user))
+            logger.info('{} {} set parameter {}={}'.format(jobname, jobid, pname, new_value))
         else:
             raise UserWarning('Job "{}" must be in PENDING state (currently {}) to change parameter'
                               ''.format(jobid, job.phase))
@@ -1677,7 +1693,7 @@ def get_results(jobname, jobid):
     """
     try:
         user = set_user()
-        logger.info('{} {} [{}]'.format(jobname, jobid, user))
+        logger.info('{} {}'.format(jobname, jobid))
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_results=True)
         # Return job results in UWS format
@@ -1704,7 +1720,7 @@ def get_result(jobname, jobid, rname):
     """
     try:
         user = set_user()
-        logger.info('rname={} {} {} [{}]'.format(rname, jobname, jobid, user))
+        logger.info('rname={} {} {}'.format(rname, jobname, jobid))
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_results=True)
         # Check if result exists
@@ -1826,7 +1842,7 @@ def get_owner(jobname, jobid):
     """
     try:
         user = set_user()
-        logger.info('{} {} [{}]'.format(jobname, jobid, user))
+        logger.info('{} {}'.format(jobname, jobid))
         # Get job properties from DB
         job = Job(jobname, jobid, user)
         # Return value
