@@ -287,6 +287,13 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         self.session.commit()
         logger.debug('User {} updated: {}={}'.format(name, key, value))
 
+    def get_roles(self, user):
+        row = self.session.query(self.User).filter_by(name=user.name, token=user.token).first()
+        roles = []
+        if row:
+            roles = row.roles.split(',')
+        return roles
+
     def add_role(self, name, token, role=''):
         """Add role to user, i.e. access to a job"""
         row = self.session.query(self.User).filter_by(name=name, token=token).first()
