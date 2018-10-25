@@ -580,13 +580,17 @@ def get_jobnames():
     :return: list of job names in json
     """
     try:
+        user = set_user()
         # jobnames = ['copy', 'ctbin']
         # List jdl files (=available jobs)
         jdl = uws_jdl.__dict__[JDL]()
         flist = glob.glob('{}/*{}'.format(jdl.jdl_path, jdl.extension))
         # Check if JDL file exists on server?
         jobnames_jdl = [f.split('/')[-1].split(jdl.extension)[0] for f in flist]
-        jobnames = [j for j in jobnames_jdl if os.path.isfile('{}/{}.sh'.format(jdl.scripts_path, j))]
+        jobnames_all = [j for j in jobnames_jdl if os.path.isfile('{}/{}.sh'.format(jdl.scripts_path, j))]
+        # Check if user has access
+        db = storage.__dict__[STORAGE + 'JobStorage']()
+        jobnames = [j for j in jobnames_all if db.has_access(user, j)]
         jobnames.sort()
         jobnames_json = {'jobnames': jobnames}
         return jobnames_json

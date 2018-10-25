@@ -114,7 +114,7 @@ def check_permissions(job):
             pass
         else:
             if job.jobname:
-                if not job.storage.has_access(job.user, job):
+                if not job.storage.has_access(job.user, job.jobname):
                     raise JobAccessDenied('User {} does not have permission to create/edit {} jobs'.format(job.user.name, job.jobname))
     # else:
     #    logger.debug('Permissions not checked for job {}/{}'.format(job.jobname, job.jobid))
