@@ -100,7 +100,7 @@ class UserStorage(object):
         """Check if user has role"""
         pass
 
-    def has_access(self, user, job):
+    def has_access(self, user, jobname):
         """Check if user has access to the job"""
         pass
 
@@ -240,6 +240,9 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         self.Session = sessionmaker(bind=self.engine)
         self.session = self.Session()
 
+    def __del__(self):
+        self.session.close()
+
     # ----------
     # UserStorage methods
 
@@ -321,9 +324,9 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                 logger.debug('Role \"{}\" not found for user {}:{}'.format(role, name, token))
                 return False
 
-    def has_access(self, user, job):
+    def has_access(self, user, jobname):
         """Check if user has access to the job"""
-        return self.has_role(user.name, user.token, role=job.jobname)
+        return self.has_role(user.name, user.token, role=jobname)
 
     # ----------
     # JobStorage methods
