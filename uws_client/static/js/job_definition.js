@@ -422,7 +422,7 @@
                         editor.refresh();
                         console.log(exception);
                         $('#load_msg').attr('class', 'text-danger');
-                        $('#load_msg').text('No valid script found.');
+                        $('#load_msg').text(exception);
                         $('#load_msg').show().delay(2000).fadeOut();
                     }
                 });
@@ -432,7 +432,7 @@
                 editor.setValue('');
                 editor.refresh();
                 $('#load_msg').attr('class', 'text-danger');
-                $('#load_msg').text('No valid JDL found.');
+                $('#load_msg').text(exception);
 				$('#load_msg').show().delay(2000).fadeOut();
 			}
 		});
@@ -458,7 +458,7 @@
 			},
 			error : function(xhr, status, exception) {
 				console.log(exception);
-				$('#load_msg').text('No valid JDL found.');
+				$('#load_msg').text(exception);
 				$('#load_msg').show().delay(2000).fadeOut();
 			}
 		});
