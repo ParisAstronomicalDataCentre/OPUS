@@ -333,6 +333,8 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
 
     def has_access(self, user, jobname):
         """Check if user has access to the job"""
+        if user.check_admin():
+            return True
         return self.has_role(user.name, user.token, role=jobname)
 
     # ----------
