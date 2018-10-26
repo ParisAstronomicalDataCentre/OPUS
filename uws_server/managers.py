@@ -358,7 +358,6 @@ class LocalManager(Manager):
         jdl_fname = job.jdl._get_filename(job.jobname)
         get_input_files.append('cp -p {jdl} {jd}'.format(jdl=jdl_fname, jd=jd))
         # Copy input files to workdir_path (scp if uploaded from form, or wget if given as a URI)
-        # TODO: delete files after
         for fname in files['form']:
             # shutil.copy(
             #     '{}/{}/{}'.format(UPLOADS_PATH, job.jobid, fname),
@@ -532,7 +531,6 @@ class SLURMManager(Manager):
             ssh_args=self.ssh_arg_uws, jdl=jdl_fname, jd=jd
         ))
         # Copy input files to workdir_path (scp if uploaded from form, or wget if given as a URI)
-        # TODO: delete files
         for fname in files['form']:
             # cmd = ['scp',
             #        '{}/{}/{}'.format(UPLOADS_PATH, job.jobid, fname),

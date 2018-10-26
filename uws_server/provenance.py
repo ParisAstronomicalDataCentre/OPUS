@@ -97,10 +97,13 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
     if depth != 0:
         plan = pdoc.entity('opus_jdl:' + job.jobname)
         plan.add_attributes({
-            'prov:type': 'voprov:ActivityDescription'
+            'prov:type': 'voprov:ActivityDescription',
+        })
+        plan.add_attributes({
+            'prov:type': 'prov:Plan'
         })
         pdoc.influence(act, plan, other_attributes={
-            # 'prov:type': 'voprov:ActivityDescription',
+            'prov:type': 'voprov:hadDescription',
         })
 
     # Agent: contact for the job in ActivityDescription
@@ -151,7 +154,6 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
         # Explore used entities for the activity if depth > 0
         if depth != 0:
             e_in.append(pdoc.entity(pqn))
-            # TODO: use publisher_did? add prov attributes, add voprov attributes?
             e_in[-1].add_attributes({
                 # 'prov:value': value,
                 'prov:location': location,
@@ -162,21 +164,24 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
             })
             if entity:
                 e_in[-1].add_attributes({
+                    'voprov:content_type': entity['content_type'],
                     'voprov:result_name': entity['result_name'],
                     'voprov:file_name': entity['file_name'],
-                    'voprov:content_type': entity['content_type'],
                 })
-
                 # Explores entity origin if depth > 1
                 if depth != 1 and entity['jobid']:
                     #other_job = copy.deepcopy(job)
                     #other_job = uws_classes.Job('', entity['jobid'], job.user, get_attributes=True,
                     #                            get_parameters=True, get_results=True)
                     #job.storage.read(other_job, get_attributes=True, get_parameters=True, get_results=True)
-                    other_pdocs.append(job2prov(entity['jobid'], job.user,
-                                                depth=depth-2, direction=direction, members=members, steps=steps, agent=agent, model=model,
-                                                show_parameters=show_parameters,
-                                                recursive=True))
+                    other_pdocs.append(
+                        job2prov(
+                            entity['jobid'], job.user,
+                            depth=depth-2, direction=direction, members=members, steps=steps, agent=agent, model=model,
+                            show_parameters=show_parameters,
+                            recursive=True
+                        )
+                    )
 
     # Parameters that influence the activity (if depth > 0)
     params = []
@@ -199,7 +204,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                     pattrs['voprov:' + pkey] = pvalue
             params[-1].add_attributes(pattrs)
             pdoc.influence(act, params[-1], other_attributes={
-                 # 'prov:type': 'voprov:hadConfiguration',
+                 'prov:type': 'voprov:hadConfiguration',
             })
             # all_params.hadMember(params[-1])
         # pdoc.influence(act, all_params)
@@ -225,13 +230,15 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                     rqn = ':' + entity_id
                     content_type = job.results[rname]['content_type']
                 e_out.append(pdoc.entity(rqn))
-                # TODO: use publisher_did? add prov attributes, add voprov attributes?
                 e_out[-1].add_attributes({
                     'prov:location': job.results[rname]['url'],
-                    # 'voprov:result_name': entity['result_name'],
-                    # 'voprov:file_name': entity['file_name'],
                     'voprov:content_type': content_type,
                 })
+                if entity:
+                    e_out[-1].add_attributes({
+                        'voprov:result_name': entity['result_name'],
+                        'voprov:file_name': entity['file_name']
+                    })
                 # Only shox result if it is not already used
                 if entity_id not in used_entities:
                     e_out[-1].wasGeneratedBy(act, attributes={

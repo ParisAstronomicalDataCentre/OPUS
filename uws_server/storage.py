@@ -164,7 +164,6 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             __tablename__ = 'jobs'
             jobid = Column(String(80), primary_key=True)  # uuid: max=36
             jobname = Column(String(255))
-            # TODO: add label ?
             phase = Column(String(10))
             quote = Column(Integer(), nullable=True)
             execution_duration = Column(Integer(), nullable=True)
@@ -673,7 +672,6 @@ class SQLJobStorage(SQLStorage, JobStorage):
     # noinspection PyTypeChecker
     def read(self, job, get_attributes=True, get_parameters=False, get_results=False, from_process_id=False):
         """Read job from storage"""
-        # TODO: add owner and owner_token to all SELECT (except if... admin?)
         if from_process_id:
             # Query db for jobname and jobid using process_id
             query = "SELECT jobname, jobid FROM jobs WHERE process_id='{}';".format(job.process_id)

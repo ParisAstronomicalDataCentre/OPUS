@@ -117,8 +117,6 @@ def is_client_trusted(func):
     """Test if request comes from a trusted client"""
     def is_client_trusted_wrapper(*args, **kwargs):
         # IP or part of an IP has to be in the TRUSTED_CLIENTS list
-        # TODO: ip here is the ip of the web browser (request sent from javascript...) should trust the client URL maybe?
-        # TODO: or access those pages from web server, not web browser
         ip = request.environ.get('REMOTE_ADDR', '')
         matching = [x for x in TRUSTED_CLIENTS if x in ip]
         if matching:
@@ -135,7 +133,7 @@ def is_localhost(func):
     """Test if localhost"""
     def is_localhost_wrapper(*args, **kwargs):
         ip = request.environ.get('REMOTE_ADDR', '')
-        if ip != BASE_IP:
+        if ip != BASE_IP and ip != '::1':
             abort_403('{} wants to access {}'.format(ip, request.urlparts.path))
         return func(*args, **kwargs)
     return is_localhost_wrapper
@@ -562,7 +560,6 @@ def show_db(jobname):
 # JDL functions
 # ----------
 
-# TODO: change /jdl urls to match more closely the rest uws interface :
 # /jdl = list of job descriptions
 # /jdl/<jobname> = description for this job (json ? votable ?)
 # /jdl/<jobname>/votable
@@ -1001,40 +998,53 @@ def maintenance(jobname):
         500 Internal Server Error (on error)
     """
     global logger
+    report = []
     try:
         user = User('maintenance', MAINTENANCE_TOKEN)
         logger = logger_init
         logger.info('Maintenance checks for {}'.format(jobname))
         # Get joblist
         joblist = JobList(jobname, user, where_owner=False)
+        now = dt.datetime.now()
         for j in joblist.jobs:
             # For each job:
-            now = dt.datetime.now()
-            job = Job(jobname, j['jobid'], user,
-                      get_attributes=True, get_parameters=True, get_results=True)
-            # TODO: Check consistency of dates (destruction_time > end_time > start_time > creation_time)
+            job = Job(jobname, j['jobid'], user, get_attributes=True, get_parameters=True, get_results=True)
+            report.append('[{} {} {} {}]'.format(jobname, job.jobid, job.creation_time, job.phase))
+            # Check consistency of dates (destruction_time > end_time > start_time > creation_time)
+            if job.creation_time > job.start_time:
+                report.append('  creation_time > start_time')
+            if job.start_time > job.end_time:
+                report.append('  start_time > end_time')
+            if job.end_time > job.destruction_time:
+                report.append('  end_time > destruction_time')
+            # Check if start_time is set
             if not job.start_time and job.phase not in ['PENDING', 'QUEUED']:
-                logger.warning('Start time not set for {} {}'.format(jobname, job.jobid))
-            # TODO: Update status if phase is not PENDING or terminal (or for all jobs?)
-            if job.phase in ['QUEUED', 'EXECUTING', 'UNKNOWN']:
+                report.append('  Start time not set')
+            # Check status if phase is not terminal (or for all jobs?)
+            if job.phase not in TERMINAL_PHASES:
                 phase = job.phase
                 new_phase = job.get_status()  # will update the phase from manager
                 if new_phase != phase:
-                    logger.warning('Status has changed for {} {}: {} --> {}'
-                                   ''.format(jobname, job.jobid, phase, new_phase))
-            # TODO: If job is SUSPENDED, try to restart the job -> done by manager?
-            # TODO: If destruction time is passed, delete or archive job
+                    report.append('  Status has change: {} --> {}'.format(phase, new_phase))
+            # If destruction time is passed, delete or archive job
             destruction_time = dt.datetime.strptime(job.destruction_time, DT_FMT)
             if destruction_time < now:
-                logger.warning('Job should be deleted/archived: {} {}'.format(jobname, job.jobid))
+                report.append('  Job should be deleted/archived (destruction_time={})'.format(job.destruction_time))
         pass
+        report.append('Done')
+        for line in report:
+            logger.warning(line)
     except JobAccessDenied as e:
+        for line in report:
+            logger.warning(line)
         abort_403(str(e))
     except:
+        for line in report:
+            logger.warning(line)
         abort_500_except()
     # Response
     response.content_type = 'text/plain; charset=UTF-8'
-    return 'Maintenance performed\n'
+    return 'Maintenance report:\n' + '\n'.join(report)
 
 
 # ----------
@@ -1162,7 +1172,6 @@ def create_job(jobname):
     try:
         user = set_user()
         # TODO: Check if form submitted correctly, detect file size overflow?
-        # TODO: add attributes: execution_duration, mem, nodes, ntasks-per-node
         # Set new job description from POSTed parameters
         job = Job(jobname, '', user, from_post=request)
         logger.info('{} {} CREATED and PENDING'.format(jobname, job.jobid))
@@ -1437,11 +1446,13 @@ def post_executionduration(jobname, jobid):
             raise UserWarning('Execution duration must be an integer or a float')
         # Get job properties from DB
         job = Job(jobname, jobid, user)
-        # TODO: check phase?
-
-        # Change value
-        job.set_attribute('execution_duration', new_value)
-        logger.info('{} {} set execution_duration={}'.format(jobname, jobid, str(new_value)))
+        if job.phase == 'PENDING':
+            # Change value
+            job.set_attribute('execution_duration', new_value)
+            logger.info('{} {} set execution_duration={}'.format(jobname, jobid, str(new_value)))
+        else:
+            raise UserWarning('Job "{}" must be in PENDING state (currently {}) to change execution duration'
+                              ''.format(jobid, job.phase))
     except JobAccessDenied as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:

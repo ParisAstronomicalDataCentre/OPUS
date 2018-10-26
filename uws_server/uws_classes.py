@@ -342,7 +342,6 @@ class Job(object):
                 url = self.jdl.content['used'][pname]['url']
                 if url:
                     furl = url.replace('$ID', value)
-                    # TODO: upload the file to upload dir
                     if furl != 'file://':
                         r = requests.get(furl, allow_redirects=True)
                         if r.status_code == 200:
@@ -354,7 +353,6 @@ class Job(object):
                             # Parameter value is set to the file name on server
                             value = 'file://' + filename
                             logger.info('Input "{}" is a URL and was downloaded : {}'.format(pname, furl))
-                            # TODO: check if file already exists in entity store (hash + ID in name or jobid)
                             entity = self.storage.register_entity(
                                 file_name=filename,
                                 file_dir=upload_dir,
@@ -717,7 +715,6 @@ class Job(object):
         - QUEUED / HELD / SUSPENDED
         - EXECUTING
         """
-        # TODO: check if user has rights to abort job! (i.e. is owner or super_user)
         if self.phase in ['PENDING']:
             pass
         elif self.phase in ['QUEUED', 'HELD', 'SUSPENDED', 'EXECUTING']:
@@ -733,7 +730,6 @@ class Job(object):
 
         Job can be deleted at any time.
         """
-        # TODO: check if user has rights to delete job! (i.e. is owner or super_user)
         if self.phase not in ['PENDING']:
             # Send command to manager
             self.manager.delete(self)

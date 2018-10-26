@@ -478,7 +478,6 @@ def validate_job(jobname):
     # redirect to job_definition with message
     if response.status_code == 200:
         flash('Job definition for new/{jn} has been validated and renamed {jn}'.format(jn=jobname))
-        #TODO: add job to db and link to admin and current_user
         return redirect(url_for('job_definition', jobname=jobname), 303)
     elif response.status_code == 403:
         flash('Forbidden: insufficient rights to validate job definition for new/{jn}'.format(jn=jobname), category='warning')
