@@ -94,8 +94,8 @@ class User(object):
         """Override the default Equals behavior"""
         return self.name == other.name and self.token == other.token
 
-    def check_admin(user):
-        return user == User(ADMIN_NAME, ADMIN_TOKEN)
+    def check_admin(self):
+        return self == User(ADMIN_NAME, ADMIN_TOKEN)
 
 
 special_users = [

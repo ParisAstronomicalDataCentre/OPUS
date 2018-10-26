@@ -595,7 +595,7 @@ def get_jobnames():
         if user.check_admin():
             jobnames = jobnames_all
         else:
-            # Check if user has access
+            # keep jobnames accessible to user
             #db = storage.__dict__[STORAGE + 'JobStorage']()
             db = getattr(storage, STORAGE + 'JobStorage')()
             roles = db.get_roles(user)
@@ -741,12 +741,17 @@ def get_script(jobname):
     :param jobname:
     :return:
     """
-    fname = '{}/{}.sh'.format(SCRIPTS_PATH, jobname)
-    logger.info('Job script downloaded: {}'.format(fname))
-    if os.path.isfile(fname):
-        response.content_type = 'text/plain; charset=UTF-8'
-        return static_file(fname, root='/', mimetype='text')
-    abort_404('No script file found for ' + jobname)
+    user = set_user()
+    db = getattr(storage, STORAGE + 'JobStorage')()
+    if db.has_access(user, jobname):
+        fname = '{}/{}.sh'.format(SCRIPTS_PATH, jobname)
+        logger.info('Job script downloaded: {}'.format(fname))
+        if os.path.isfile(fname):
+            response.content_type = 'text/plain; charset=UTF-8'
+            return static_file(fname, root='/', mimetype='text')
+        abort_404('No script file found for ' + jobname)
+    else:
+        abort_403()
 
 
 @app.get('/jdl/<jobname:path>/json')
@@ -757,12 +762,17 @@ def get_jdl_json(jobname):
     :return: json description
     """
     try:
-        #logger.info(jobname)
-        #jdl = uws_jdl.__dict__[JDL]()
-        jdl = getattr(uws_jdl, JDL)()
-        jdl.read(jobname)
-        logger.info('JDL downloaded: {}'.format(jobname))
-        return jdl.content
+        user = set_user()
+        db = getattr(storage, STORAGE + 'JobStorage')()
+        if db.has_access(user, jobname):
+            #logger.info(jobname)
+            #jdl = uws_jdl.__dict__[JDL]()
+            jdl = getattr(uws_jdl, JDL)()
+            jdl.read(jobname)
+            logger.info('JDL downloaded: {}'.format(jobname))
+            return jdl.content
+        else:
+            abort_403()
     except UserWarning as e:
         abort_404(e.args[0])
 
