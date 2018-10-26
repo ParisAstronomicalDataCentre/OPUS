@@ -829,7 +829,7 @@ def download_entity():
                 else:
                     raise EntityAccessDenied('User {} is not the owner of the entity'.format(user.name))
 
-        download = entity['entity_id'] + os.path.splitext(entity['file_name'])[1]
+        download = entity['entity_id'] + '_' + entity['file_name'] #  + os.path.splitext(entity['file_name'])[1]
         logger.debug('{}'.format(str(entity)))
         response.set_header('Content-type', entity['content_type'])
         return static_file(entity['file_name'], root=entity['file_dir'], mimetype=entity['content_type'],
