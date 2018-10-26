@@ -380,12 +380,21 @@ def server_accounts():
     if request.method == 'POST':
         logger.debug('Modify user on server')
         # send patch request to scim endpoint for user
-
         flash('User successfully updated', 'info')
-        return redirect(url_for('preferences'), 303)
+        return redirect(url_for('server_accounts'), 303)
     # Get users from server
-
     return render_template('server_accounts.html')
+
+
+@app.route('/server_jobs', methods=['GET', 'POST'])
+@login_required
+@roles_required('admin')
+def server_jobs():
+    if request.method == 'POST':
+        flash('User successfully updated', 'info')
+        return redirect(url_for('server_jobs'), 303)
+    # Get users from server
+    return render_template('server_jobs.html')
 
 
 # ----------

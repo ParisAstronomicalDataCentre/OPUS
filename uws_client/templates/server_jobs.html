@@ -1,0 +1,28 @@
+{% extends "skeleton.html" %}
+{% block js %}
+    <script type="text/javascript" src="/static/js/server_jobs.js" defer></script>
+{% endblock %}
+{% block content %}
+	<div class="container bs-docs-container">
+        <div id="job_list_panel" class="panel panel-default">
+            <div class="panel-heading clearfix">
+                <div class="btn-group pull-right">
+                    <button id="new_job_definition" type="button" class="actions btn btn-default">New Job
+                        Definition</button>
+                    <button id="refresh_list" type="button" class="actions btn btn-default">Refresh List</button>
+                </div>
+                <span class="panel-title pull-left" style="padding-top: 6px; padding-right: 6px;">Manage job definitions on server</span>
+            </div>
+            <div id="div_table" class="table-responsive">
+                <table class="table table-bordered table-condensed tablesorter">
+                    <thead>
+                        <th class="text-center">Job name</th>
+                        <th class="text-center">Actions</th>
+                    </thead>
+                    <tbody id="server_jobs_table">
+                    </tbody>
+                </table>
+            </div>
+        </div> <!-- panel -->
+	</div> <!-- container -->
+{% endblock %}

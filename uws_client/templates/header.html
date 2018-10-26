@@ -40,15 +40,19 @@
 {% if current_user.has_role('admin') %}
                                 <li><a href="{{ url_for('preferences') }}">
                                     <span class="glyphicon glyphicon-cog"></span>
-                                    Preferences</a>
+                                    Client Preferences</a>
                                 </li>
                                 <li><a href="{{ url_for('user.index_view') }}">
                                     <span class="glyphicon glyphicon-user"></span>
-                                    Manage Client Users</a>
+                                    Client Users</a>
                                 </li>
                                 <li><a href="{{ url_for('server_accounts') }}">
                                     <span class="glyphicon glyphicon-user"></span>
-                                    Manage Server Users</a>
+                                    Server Users</a>
+                                </li>
+                                <li><a href="{{ url_for('server_jobs') }}">
+                                    <span class="glyphicon glyphicon-user"></span>
+                                    Server Jobs</a>
                                 </li>
                                 <li class="divider"></li>
 {% endif %}
