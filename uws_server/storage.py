@@ -505,7 +505,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                         entity_id = entity['entity_id']
                     else:
                         used = self.session.query(self.Used).filter_by(entity_id=row.entity_id, jobid=kwargs.get('jobid')).all()
-                        if used:
+                        if used and (used['file_name'] == kwargs['file_name']):
                             # Entity has already been used by the same job (and is now exposed as a UWS result)
                             entity = dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
                             logger.info('Entity found for {} with same hash, was used by the same job and is now exposed as a UWS result: {}'.format(kwargs['file_name'], str(entity)))
