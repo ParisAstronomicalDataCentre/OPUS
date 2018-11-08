@@ -947,6 +947,7 @@ def provsap():
             #job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True)
             #logger.info('{} {}'.format(job.jobname, jobid))
             # Return job provenance
+            logger.debug('{}'.format(kwargs))
             pdoc = provenance.job2prov(jobid, user, show_generated=show_generated, **kwargs)
             pdocs.append(pdoc)
         # Merge all pdocs
@@ -1030,6 +1031,7 @@ def maintenance(jobname):
             destruction_time = dt.datetime.strptime(job.destruction_time, DT_FMT)
             if destruction_time < now:
                 report.append('  Job should be deleted/archived (destruction_time={})'.format(job.destruction_time))
+                # TODO: effective deletion or achiving of job
         pass
         report.append('Done')
         for line in report:

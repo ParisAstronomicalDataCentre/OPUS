@@ -84,7 +84,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
             })
 
     # Agent: owner of the job
-    if agent:
+    if agent == 0:
         owner = pdoc.agent('opus_user:' + job.owner)
         # owner.add_attributes({
         #     'foaf:name': job.owner,
@@ -107,7 +107,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
         })
 
     # Agent: contact for the job in ActivityDescription
-    if agent:
+    if agent == 0:
         contact_name = job.jdl.content.get('contact_name')
         contact_email = job.jdl.content.get('contact_email')
         if not contact_name:
@@ -246,7 +246,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                     })
                     #for e in e_in:
                     #    e_out[-1].wasDerivedFrom(e)
-                    if agent:
+                    if agent == 0:
                         e_out[-1].wasAttributedTo(owner, attributes={
                             'prov:role': 'owner',
                         })
