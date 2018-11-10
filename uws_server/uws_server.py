@@ -108,7 +108,7 @@ def is_job_server(func):
                 0]]))
             pass
         else:
-            abort_403('{} wants to access {} (not a job_server)'.format(ip, request.urlparts.path))
+            abort_403('{} is not a job server'.format(ip, request.urlparts.path))
         return func(*args, **kwargs)
     return is_job_server_wrapper
 
@@ -124,7 +124,7 @@ def is_client_trusted(func):
                 matching[0]]))
             pass
         else:
-            abort_403('{} wants to access {} (not a client_trusted)'.format(ip, request.urlparts.path))
+            abort_403('{} is not a trusted client'.format(ip, request.urlparts.path))
         return func(*args, **kwargs)
     return is_client_trusted_wrapper
 
@@ -134,7 +134,7 @@ def is_localhost(func):
     def is_localhost_wrapper(*args, **kwargs):
         ip = request.environ.get('REMOTE_ADDR', '')
         if ip != BASE_IP and ip != '::1' and ip != '127.0.0.1':
-            abort_403('{} wants to access {} (not localhost)'.format(ip, request.urlparts.path))
+            abort_403('{} is not localhost'.format(ip, request.urlparts.path))
         return func(*args, **kwargs)
     return is_localhost_wrapper
 
@@ -147,7 +147,7 @@ def is_admin(func):
     def is_admin_wrapper(*args, **kwargs):
         user = set_user()
         if not user.check_admin():
-            abort_403('{} wants to access {} (not an admin)'.format(user.name, request.urlparts.path))
+            abort_403('{} is not an admin'.format(user.name, request.urlparts.path))
         return func(*args, **kwargs)
     return is_admin_wrapper
 
