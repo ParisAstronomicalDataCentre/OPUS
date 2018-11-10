@@ -589,7 +589,7 @@ def get_jobnames():
         jobnames_jdl = [f.split('/')[-1].split(jdl.extension)[0] for f in flist]
         jobnames_all = [j for j in jobnames_jdl if os.path.isfile('{}/{}.sh'.format(jdl.scripts_path, j))]
         jobnames = []
-        if user.check_admin():
+        if not CHECK_PERMISSIONS or user.check_admin():
             jobnames = jobnames_all
         else:
             # keep jobnames accessible to user
