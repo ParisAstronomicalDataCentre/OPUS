@@ -147,7 +147,7 @@ def is_admin(func):
     def is_admin_wrapper(*args, **kwargs):
         user = set_user()
         if not user.check_admin():
-            abort_403('{}:{} wants to access {}'.format(user.name, user.token, request.urlparts.path))
+            abort_403('{}:{} wants to access {} (not an admin)'.format(user.name, user.token, request.urlparts.path))
         return func(*args, **kwargs)
     return is_admin_wrapper
 
