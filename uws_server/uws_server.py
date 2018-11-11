@@ -613,11 +613,12 @@ def create_new_job_definition():
     # Check if client is trusted? not really needed
     jobname = ''
     try:
+        user = set_user()
         jobname = request.forms.get('name').split('/')[-1]
         # Create JDL file from job_jdl
         #jdl = uws_jdl.__dict__[JDL]()
         jdl = getattr(uws_jdl, JDL)()
-        jdl.set_from_post(request.forms)
+        jdl.set_from_post(request.forms, user)
         # Save as a new job description
         jdl.save('new/' + jobname)
         # Save bash script file in new/
