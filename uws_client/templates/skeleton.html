@@ -27,8 +27,8 @@
     <!-- Messages -->
 {% block message %}
     {% with messages = get_flashed_messages(with_categories=true) %}
-    <div class="container">
-        <div id="messages" class="col-md-8 col-md-offset-2">
+    <div id="messages_div" style="position: fixed; top:40px; left:25%; width:50%; z-index: 10; text-align: center;">
+        <div id="messages" class="col-md-12">
         {% if messages %}
         {% for category, message in messages %}
             {% if category != "message" %}

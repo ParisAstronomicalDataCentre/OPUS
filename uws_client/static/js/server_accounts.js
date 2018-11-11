@@ -93,9 +93,10 @@
                             <span class="glyphicon glyphicon-trash"></span>\
                             <span class="hidden-xs hidden-sm hidden-md">Delete</span>\
                         </button>\
-                        <button id="button_import_' + user.userName + '" type="button" class="import btn btn-default">\
+                        <button id="button_import_' + user.userName + '" type="button" class="import btn btn-default"\
+                         disabled>\
                             <span class="glyphicon glyphicon-import"></span>\
-                            <span class="hidden-xs hidden-sm hidden-md">Import</span>\
+                            <span class="hidden-xs hidden-sm hidden-md">Import to client</span>\
                         </button>\
                     </div>\
                 </td>\

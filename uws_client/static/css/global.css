@@ -91,3 +91,10 @@ body {
 .match-content {
     width: 100% !important;
 }
+
+#messages_div {
+    position: absolute;
+    bottom:2%;
+    right:2%;
+    z-index: 10;
+}
