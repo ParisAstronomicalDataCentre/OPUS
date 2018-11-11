@@ -317,6 +317,8 @@
                     attr = job_fields[attr];
     				$('[name=' + attr + ']').val(jdl[attr]);
     			};
+    			editor.setValue(jdl['script']);
+    			editor.refresh();
 				// $('[name=contact_name]').val(jdl.contact_name);
 				// $('[name=contact_email]').val(jdl['contact_email']);
 				// $('[name=executionDuration]').val(jdl.executionDuration);
@@ -406,26 +408,26 @@
 				};
                 $('.selectpicker').selectpicker('refresh');
                 // ajax command to get_script from UWS server
-                $.ajax({
-                    url : server_url + '/jdl/' + jobname + '/script', //.split("/").pop(),
-                    async : true,
-                    cache : false,
-                    type : 'GET',
-                    dataType: "text",
-                    success : function(script) {
-                        // $('textarea[name=script]').val(script);
-                        editor.setValue(script);
-                        editor.refresh();
-                    },
-                    error : function(xhr, status, exception) {
-                        editor.setValue('');
-                        editor.refresh();
-                        console.log(exception);
-                        $('#load_msg').attr('class', 'text-danger');
-                        $('#load_msg').text(exception);
-                        $('#load_msg').show().delay(2000).fadeOut();
-                    }
-                });
+//                $.ajax({
+//                    url : server_url + '/jdl/' + jobname + '/script', //.split("/").pop(),
+//                    async : true,
+//                    cache : false,
+//                    type : 'GET',
+//                    dataType: "text",
+//                    success : function(script) {
+//                        // $('textarea[name=script]').val(script);
+//                        editor.setValue(script);
+//                        editor.refresh();
+//                    },
+//                    error : function(xhr, status, exception) {
+//                        editor.setValue('');
+//                        editor.refresh();
+//                        console.log(exception);
+//                        $('#load_msg').attr('class', 'text-danger');
+//                        $('#load_msg').text(exception);
+//                        $('#load_msg').show().delay(2000).fadeOut();
+//                    }
+//                });
 			},
 			error : function(xhr, status, exception) {
                 console.log(exception);

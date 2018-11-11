@@ -742,9 +742,9 @@ def get_script(jobname):
     db = getattr(storage, STORAGE + 'JobStorage')()
     if db.has_access(user, jobname):
         fname = '{}/{}.sh'.format(SCRIPTS_PATH, jobname)
-        logger.info('Job script downloaded: {}'.format(fname))
         if os.path.isfile(fname):
             response.content_type = 'text/plain; charset=UTF-8'
+            logger.info('Job script downloaded: {}'.format(fname))
             return static_file(fname, root='/', mimetype='text')
         abort_404('No script file found for ' + jobname)
     else:
@@ -762,10 +762,16 @@ def get_jdl_json(jobname):
         user = set_user()
         db = getattr(storage, STORAGE + 'JobStorage')()
         if db.has_access(user, jobname):
-            #logger.info(jobname)
-            #jdl = uws_jdl.__dict__[JDL]()
+            # Get JDL content
             jdl = getattr(uws_jdl, JDL)()
             jdl.read(jobname)
+            # Attach script to JDL content
+            fname = '{}/{}.sh'.format(SCRIPTS_PATH, jobname)
+            if os.path.isfile(fname):
+                with open(fname,'r') as f:
+                    jdl.content['script'] = f.read()
+            else:
+                logger.warning('Script not found for {}'.format(jobname))
             logger.info('JDL downloaded: {}'.format(jobname))
             return jdl.content
         else:
@@ -790,7 +796,7 @@ def get_jdl(jobname):
             jdl = f.readlines()
         response.content_type = 'text/xml; charset=UTF-8'
         return jdl
-    abort_404('No WADL file found for ' + jobname)
+    abort_404('No JDL file found for ' + jobname)
 
 
 # ----------
