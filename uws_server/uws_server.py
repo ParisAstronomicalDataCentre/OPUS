@@ -621,8 +621,6 @@ def create_new_job_definition():
         jdl.set_from_post(request.forms, user)
         # Save as a new job description
         jdl.save('new/' + jobname)
-        # Save bash script file in new/
-        jdl.save_script('new/' + jobname, request.forms.get('script'))
     except:
         abort_500_except()
     # Response
@@ -739,17 +737,31 @@ def get_script(jobname):
     :param jobname:
     :return:
     """
-    user = set_user()
-    db = getattr(storage, STORAGE + 'JobStorage')()
-    if db.has_access(user, jobname):
-        fname = '{}/{}.sh'.format(SCRIPTS_PATH, jobname)
-        if os.path.isfile(fname):
+    # user = set_user()
+    # db = getattr(storage, STORAGE + 'JobStorage')()
+    # if db.has_access(user, jobname):
+    #     fname = '{}/{}.sh'.format(SCRIPTS_PATH, jobname)
+    #     if os.path.isfile(fname):
+    #         response.content_type = 'text/plain; charset=UTF-8'
+    #         logger.info('Job script downloaded: {}'.format(fname))
+    #         return static_file(fname, root='/', mimetype='text')
+    #     abort_404('No script file found for ' + jobname)
+    # else:
+    #     abort_403()
+    try:
+        user = set_user()
+        db = getattr(storage, STORAGE + 'JobStorage')()
+        if db.has_access(user, jobname):
+            # Get JDL content
+            jdl = getattr(uws_jdl, JDL)()
+            jdl.read_script(jobname)
+            logger.info('Job script downloaded: {}'.format(jobname))
             response.content_type = 'text/plain; charset=UTF-8'
-            logger.info('Job script downloaded: {}'.format(fname))
-            return static_file(fname, root='/', mimetype='text')
-        abort_404('No script file found for ' + jobname)
-    else:
-        abort_403()
+            return jdl.content['script']
+        else:
+            abort_403()
+    except UserWarning as e:
+        abort_404(e.args[0])
 
 
 @app.get('/jdl/<jobname:path>/json')
@@ -766,13 +778,6 @@ def get_jdl_json(jobname):
             # Get JDL content
             jdl = getattr(uws_jdl, JDL)()
             jdl.read(jobname)
-            # Attach script to JDL content
-            fname = '{}/{}.sh'.format(SCRIPTS_PATH, jobname)
-            if os.path.isfile(fname):
-                with open(fname,'r') as f:
-                    jdl.content['script'] = f.read()
-            else:
-                logger.warning('Script not found for {}'.format(jobname))
             logger.info('JDL downloaded: {}'.format(jobname))
             return jdl.content
         else:
@@ -797,7 +802,7 @@ def get_jdl(jobname):
             jdl = f.readlines()
         response.content_type = 'text/xml; charset=UTF-8'
         return jdl
-    abort_404('No JDL file found for ' + jobname)
+    abort_404('No VOTable file found for ' + jobname)
 
 
 # ----------

@@ -121,6 +121,14 @@ class JDLFile(object):
             f.write(script.replace('\r', ''))
             logger.info('Job script saved: ' + script_fname)
 
+    def read_script(self, jobname):
+        script_fname = '{}/{}.sh'.format(self.scripts_path, jobname)
+        if os.path.isfile(script_fname):
+            with open(script_fname,'r') as f:
+                self.content['script'] = f.read()
+        else:
+            logger.warning('Script not found for {}'.format(jobname))
+
     def set_from_post(self, post, user):
         logger.debug(post.__dict__)
         now = dt.datetime.now()
@@ -224,6 +232,8 @@ class JSONFile(JDLFile):
         with open(jdl_fname, 'w') as f:
             f.write(js)
             logger.info('JSON saved: ' + jdl_fname)
+        # Write script file
+        self.save_script(jobname, self.content['script'])
 
     def read(self, jobname):
         """Read job description from file"""
@@ -232,6 +242,9 @@ class JSONFile(JDLFile):
         with open(fname, 'r') as f:
             #self.content = json.load(f)
             self.content.update(yaml.safe_load(f))
+        # Load script in job_def
+        if 'script' not in self.content:
+            self.read_script(jobname)
 
 
 class VOTFile(JDLFile):
@@ -305,6 +318,7 @@ class VOTFile(JDLFile):
                 'datatype': "char",
                 'utype': 'voprov:ActivityDescription.{}'.format(key),
             })
+        # Contact information
         for key in ['name', 'email']:
             ETree.SubElement(resource, 'PARAM', attrib={
                 'name': 'contact_' + key,
@@ -313,6 +327,7 @@ class VOTFile(JDLFile):
                 'datatype': "char",
                 'utype': 'voprov:Agent.{}'.format(key),
             })
+        # UWS parameters
         for key in ['executionDuration', 'quote']:
             ETree.SubElement(resource, 'PARAM', attrib={
                 'name': key,
@@ -320,6 +335,16 @@ class VOTFile(JDLFile):
                 'datatype': "int",
                 'utype': 'uws:Job.{}'.format(key),
             })
+        # Script
+        script = ETree.SubElement(resource, 'PARAM', attrib={
+            'name': 'script',
+            'value': self.content.get('script', ''),
+            'arraysize': "*",
+            'datatype': "char",
+        })
+        #script_d = ETree.SubElement(script, 'DESCRIPTION').text = ETree.CDATA(self.content['script'])
+        #logger.debug(script_d.text)
+        # Python 3
         # Insert groups
         group_params = ETree.SubElement(resource, 'GROUP', attrib={
             'name': "InputParams",
@@ -436,6 +461,8 @@ class VOTFile(JDLFile):
         with open(jdl_fname, 'wb') as f:
             f.write(jdl_content)
         logger.info('JDL saved as VOTable: ' + jdl_fname)
+        # Write script file
+        self.save_script(jobname, self.content['script'])
 
     def read(self, jobname, jobid=None):
         """Read job description from VOTable file"""
@@ -477,6 +504,12 @@ class VOTFile(JDLFile):
                         # TODO: set datatype of value in the dictionary?
                         #print elt.get('name'), elt.get('value')
                         job_def[elt.get('name')] = elt.get('value', '')
+
+                        #logger.debug(elt.get('value', ''))
+                        #for subelt in elt:
+                        #    if subelt.tag == '{}DESCRIPTION'.format(xmlns):
+                        #        logger.debug(subelt.text)
+
                     if elt.tag == '{}GROUP'.format(xmlns):
                         group = groups[elt.get('name')]
                         #print group
@@ -579,6 +612,9 @@ class VOTFile(JDLFile):
                 raise
                 # return {}
             self.content.update(job_def)
+            # Load script in job_def
+            if 'script' not in self.content:
+                self.read_script(jobname)
             logger.info('JDL loaded for job: {} {}'.format(jobname, jobid))
         else:
             logger.debug('JDL already loaded for job: {} {}'.format(jobname, jobid))
