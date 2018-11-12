@@ -783,30 +783,27 @@ class Job(object):
             if new_phase in ['QUEUED']:
                 self.start_time = now.strftime(DT_FMT)
             if self.phase not in ['ERROR']:
-                try:
-                    # Get results, logs
-                    if new_phase in ['COMPLETED', 'ABORTED', 'ERROR']:
+                # Get results, logs
+                if new_phase in ['COMPLETED', 'ABORTED', 'ERROR']:
+                    try:
                         self.end_time = now.strftime(DT_FMT)
                         self.manager.get_jobdata(self)
                         # Add results, logs, provenance (if they exist...) to job control db
                         self.add_results()
                         self.add_logs()
-                    # Add provenance files
-                    if new_phase in ['COMPLETED']:
-                        # self.storage.read(self, get_parameters=True, get_results=True)
-                        self.add_provenance()
-                except Exception as e:
-                    self.phase = 'ERROR'
-                    error = 'Cannot get jobdata (or update db) for job {}'.format(self.jobid)
-                    if self.error:
-                        self.error += '. ' + error
-                    else:
-                        self.error = error
-                    self.end_time = now.strftime(DT_FMT)
-                    self.storage.save(self)
-                    change_status_signal = signal('job_status')
-                    result = change_status_signal.send('change_status', sig_jobid=self.jobid, sig_phase=self.phase)
-                    raise
+                    except Exception as e:
+                        self.phase = 'ERROR'
+                        error = 'Cannot get jobdata for job {}'.format(self.jobid)
+                        logger.error(error)
+                        if self.error:
+                            self.error += '. ' + error
+                        else:
+                            self.error = error
+                        self.end_time = now.strftime(DT_FMT)
+                        self.storage.save(self)
+                        change_status_signal = signal('job_status')
+                        result = change_status_signal.send('change_status', sig_jobid=self.jobid, sig_phase=self.phase)
+                        raise
             # Increment error message is needed
             if new_phase in ['ERROR', 'ABORTED']:
                 # Set job.error or add
@@ -827,6 +824,14 @@ class Job(object):
             self.phase = new_phase
             # Save job description
             self.storage.save(self)
+            # Add provenance files
+            if new_phase in ['COMPLETED']:
+                try:
+                    self.add_provenance()
+                    self.storage.save(self)
+                except Exception as e:
+                    error = 'Cannot generate provenance files for job {}'.format(self.jobid)
+                    logger.warning(error)
             # Send signal (e.g. if WAIT command expecting signal)
             change_status_signal = signal('job_status')
             result = change_status_signal.send('change_status', sig_jobid=self.jobid, sig_phase=self.phase)

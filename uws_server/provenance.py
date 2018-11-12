@@ -54,8 +54,8 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
     other_pdocs = []
 
     # Load job
-    job = uws_classes.Job('', jobid, user, get_attributes=True, get_parameters=True,
-                          get_results=True)
+    job = uws_classes.Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True)
+
     # Load JDL
     job.jdl.read(job.jobname, jobid=job.jobid)
 
