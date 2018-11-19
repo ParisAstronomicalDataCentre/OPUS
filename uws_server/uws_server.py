@@ -751,7 +751,7 @@ def get_script(jobname):
     try:
         user = set_user()
         db = getattr(storage, STORAGE + 'JobStorage')()
-        if db.has_access(user, jobname):
+        if not CHECK_PERMISSIONS or db.has_access(user, jobname):
             # Get JDL content
             jdl = getattr(uws_jdl, JDL)()
             jdl.read_script(jobname)
@@ -774,7 +774,7 @@ def get_jdl_json(jobname):
     try:
         user = set_user()
         db = getattr(storage, STORAGE + 'JobStorage')()
-        if db.has_access(user, jobname):
+        if not CHECK_PERMISSIONS or db.has_access(user, jobname):
             # Get JDL content
             jdl = getattr(uws_jdl, JDL)()
             jdl.read(jobname)
