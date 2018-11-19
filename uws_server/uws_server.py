@@ -484,7 +484,7 @@ def patch_user(name):
 @is_admin
 def delete_user(name):
     job_storage = getattr(storage, STORAGE + 'JobStorage')()
-    users = job_storage.remove_user('')
+    users = job_storage.remove_user(name)
     logger.info('User deleted: ' + name)
     response.content_type = 'text/plain; charset=UTF-8'
     response.status = 200
