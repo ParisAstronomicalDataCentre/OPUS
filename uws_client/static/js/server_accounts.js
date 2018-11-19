@@ -54,7 +54,7 @@
         $('#server_accounts_table').empty();
         for (var u in users) {
             var user = users[u]
-            var user_label = user.userName.replace('.', '_').replace('@', '_');
+            var user_label = user.userName.replace(/\./g, "_").replace(/@/g, "_");
             //console.log(user_label);
             var row = '\
             <tr id="' + user_label + '">\
@@ -147,7 +147,7 @@
     function patch_user(event) {
         var name = event.data.name;
         var key = event.data.key;
-        var user_label = name.replace('.', '_').replace('@', '_');
+        var user_label = name.replace(/\./g, "_").replace(/@/g, "_");
         var value = $('#' + key + '_' + user_label).val();
         if (key == 'roles') {
             // if($('#' + key + '_' + user_label +' option:selected').length == job_options.length){
