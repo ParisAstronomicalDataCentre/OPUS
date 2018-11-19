@@ -54,19 +54,20 @@
         $('#server_accounts_table').empty();
         for (var u in users) {
             var user = users[u]
-            //console.log(user.userName);
+            var user_label = user.userName.replace('.', '_');
+            //console.log(user_label);
             var row = '\
-            <tr id="' + user.userName + '">\
+            <tr id="' + user_label + '">\
                 <td class="text-center" style="vertical-align: middle;" title="Creation date: ' + user.meta.created + '">\
-                    ' + user.userName + '\
+                    ' + user_label + '\
                 </td>\
                 <td class="text-center" style="vertical-align: middle;">\
                     <div class="input-group">\
                         <div class="input-group-btn">\
-                            <select id="roles_' + user.userName + '" class="selectpicker" title="None" data_width="auto" multiple>\
+                            <select id="roles_' + user_label + '" class="selectpicker" title="None" data_width="auto" multiple>\
                                 ' + job_options.join() + '\
                             </select>\
-                            <button id="button_roles_' + user.userName + '" type="button" class="roles btn btn-default">\
+                            <button id="button_roles_' + user_label + '" type="button" class="roles btn btn-default">\
                                 <span class="glyphicon glyphicon-send"></span>\
                                 <span class="hidden-xs hidden-sm hidden-md"></span>\
                             </button>\
@@ -75,9 +76,9 @@
                 </td>\
                 <td class="text-center" style="vertical-align: middle;">\
                     <div class="input-group">\
-                        <input class="form-control" id="token_' + user.userName + '" name="token_' + user.userName + '" type="text" value="' + user.token + '"/>\
+                        <input class="form-control" id="token_' + user_label + '" name="token_' + user_label + '" type="text" value="' + user.token + '"/>\
                         <div class="input-group-btn">\
-                            <button id="button_token_' + user.userName + '" type="button" class="token btn btn-default">\
+                            <button id="button_token_' + user_label + '" type="button" class="token btn btn-default">\
                                 <span class="glyphicon glyphicon-send"></span>\
                                 <span class="hidden-xs hidden-sm hidden-md"></span>\
                             </button>\
@@ -85,15 +86,15 @@
                     </div>\
                 </td>\
                 <td class="text-center" style="vertical-align: middle;">\
-                    <input id="active_' + user.userName + '" name="active_' + user.userName + '" type="checkbox" checked="' + user.active + '" disabled="true"/>\
+                    <input id="active_' + user_label + '" name="active_' + user_label + '" type="checkbox" checked="' + user.active + '" disabled="true"/>\
                 </td>\
                 <td class="text-center" style="vertical-align: middle;">\
                     <div class="input-group-btn">\
-                        <button id="button_delete_' + user.userName + '" type="button" class="delete btn btn-default">\
+                        <button id="button_delete_' + user_label + '" type="button" class="delete btn btn-default">\
                             <span class="glyphicon glyphicon-trash"></span>\
                             <span class="hidden-xs hidden-sm hidden-md">Delete</span>\
                         </button>\
-                        <button id="button_import_' + user.userName + '" type="button" class="import btn btn-default"\
+                        <button id="button_import_' + user_label + '" type="button" class="import btn btn-default"\
                          disabled>\
                             <span class="glyphicon glyphicon-import"></span>\
                             <span class="hidden-xs hidden-sm hidden-md">Import to client</span>\
@@ -106,13 +107,13 @@
             // console.log(roles);
             $('.selectpicker').selectpicker('refresh');
             if (roles[0] == 'all') {
-                $('#roles_' + user.userName).selectpicker('selectAll');
+                $('#roles_' + user_label).selectpicker('selectAll');
             } else {
-                $('#roles_' + user.userName).selectpicker('val', roles);
+                $('#roles_' + user_label).selectpicker('val', roles);
             }
-            $('#button_roles_' + user.userName).click({name: user.userName, key: 'roles'}, patch_user);
-            $('#button_token_' + user.userName).click({name: user.userName, key: 'token'}, patch_user);
-            $('#button_delete_' + user.userName).click({name: user.userName}, delete_user);
+            $('#button_roles_' + user_label).click({name: user.userName, key: 'roles'}, patch_user);
+            $('#button_token_' + user_label).click({name: user.userName, key: 'token'}, patch_user);
+            $('#button_delete_' + user_label).click({name: user.userName}, delete_user);
         }
         // add form
         var row = '\
@@ -146,9 +147,10 @@
     function patch_user(event) {
         var name = event.data.name;
         var key = event.data.key;
-        var value = $('#' + key + '_' + name).val();
+        var user_label = name.replace('.', '_');
+        var value = $('#' + key + '_' + user_label).val();
         if (key == 'roles') {
-            // if($('#' + key + '_' + name +' option:selected').length == job_options.length){
+            // if($('#' + key + '_' + user_label +' option:selected').length == job_options.length){
             //    console.log('all options selected');
             //     value = 'all';
             // } else {
