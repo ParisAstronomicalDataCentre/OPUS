@@ -486,7 +486,7 @@ def delete_user(name):
     job_storage = getattr(storage, STORAGE + 'JobStorage')()
     users = job_storage.remove_user(name)
     logger.info('User deleted: ' + name)
-    return 1
+    return 'Success', 200, {'Content-Type': 'text/plain'}
 
 # ----------
 # Database testing
