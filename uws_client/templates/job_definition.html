@@ -31,6 +31,22 @@
 {% endif %}
             </div>
             <div class="panel-body">
+                <form class="form-horizontal">
+                    <div class="row">
+                        <div class="col-md-12 form-group">
+                            <label class="col-md-2 control-label">Import</label>
+                            <div class="col-md-6 controls">
+                                <div class="input-group">
+                                    <input id="jdl_file" class="form-control" name="file" type="file"/>
+                                    <span class="input-group-btn">
+                                        <button id="import_jdl" class="btn btn-default" type="button">Import JDL</button>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-md-4 help-block">Import job definition.</div>
+                        </div>
+                    </div>
+                </form>
                 <form action="{{ url_for('job_definition') }}" method="post" class="form-horizontal">
                     <div class="row">
                         <div class="col-md-12 form-group">
@@ -40,11 +56,11 @@
                                     <input class="form-control name_typeahead" name="name" type="text" placeholder="Enter job name" value="" autocomplete="off"/>
                                     <span class="input-group-btn">
                                         <button id="load_jdl" class="btn btn-default" type="button">Read JDL</button>
-                                        <button id="save_jdl" class="btn btn-default" type="button">Download JDL</button>
+                                        <button id="save_jdl" class="btn btn-default" type="button">Export JDL</button>
                                     </span>
                                 </div>
                             </div>
-                            <div class="col-md-4 help-block">Job name. <span id="load_msg" class="text-danger" style="display: none;">Message!</span></div>
+                            <div class="col-md-4 help-block">Job name.</div>
                         </div>
                     </div>
                     <div class="row">

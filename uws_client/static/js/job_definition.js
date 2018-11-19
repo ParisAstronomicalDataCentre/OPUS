@@ -310,9 +310,10 @@
 			dataType: "json",
 			success : function(jdl) {
 			    console.log(jdl);
-                $('#load_msg').attr('class', 'text-info');
-                $('#load_msg').text('JDL loaded.');
-                $('#load_msg').show().delay(3000).fadeOut();
+                global.showMessage('JDL loaded.', 'info')
+                //$('#load_msg').attr('class', 'text-info');
+                //$('#load_msg').text('JDL loaded.');
+                //$('#load_msg').show().delay(3000).fadeOut();
                 for (var attr in job_fields) {
                     attr = job_fields[attr];
     				$('[name=' + attr + ']').val(jdl[attr]);
@@ -433,9 +434,10 @@
                 console.log(exception);
                 editor.setValue('');
                 editor.refresh();
-                $('#load_msg').attr('class', 'text-danger');
-                $('#load_msg').text(exception);
-				$('#load_msg').show().delay(2000).fadeOut();
+                global.showMessage(exception, 'alert')
+                //$('#load_msg').attr('class', 'text-danger');
+                //$('#load_msg').text(exception);
+				//$('#load_msg').show().delay(2000).fadeOut();
 			}
 		});
     }
@@ -460,8 +462,9 @@
 			},
 			error : function(xhr, status, exception) {
 				console.log(exception);
-				$('#load_msg').text(exception);
-				$('#load_msg').show().delay(2000).fadeOut();
+                global.showMessage(exception, 'alert')
+				//$('#load_msg').text(exception);
+				//$('#load_msg').show().delay(2000).fadeOut();
 			}
 		});
 	}
