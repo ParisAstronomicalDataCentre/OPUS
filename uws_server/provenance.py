@@ -76,6 +76,9 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
 
     # Activity
     act = pdoc.activity('opus_job:' + job.jobname + '/' + job.jobid, job.start_time, job.end_time)
+    act.add_attributes({
+        'prov:label': job.jobname + '/' + job.jobid,
+    })
     for attr in ['doculink', 'type', 'subtype', 'version']:
         value = job.jdl.content.get(attr, None)
         if value:
@@ -86,9 +89,10 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
     # Agent: owner of the job
     if agent:
         owner = pdoc.agent('opus_user:' + job.owner)
-        # owner.add_attributes({
-        #     'foaf:name': job.owner,
-        # })
+        owner.add_attributes({
+            'prov:label': job.owner,
+            #'foaf:name': job.owner,
+        })
         act.wasAssociatedWith(owner, attributes={
             'prov:role': 'owner'
         })
@@ -97,6 +101,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
     if depth != 0:
         plan = pdoc.entity('opus_jdl:' + job.jobname)
         plan.add_attributes({
+            'prov:label': job.jobname,
             'prov:type': 'voprov:ActivityDescription',
         })
         plan.add_attributes({
@@ -114,9 +119,10 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
             contact_name = contact_email
         if contact_name:
             contact = pdoc.agent(contact_name)
-            # contact.add_attributes({
-            #     'foaf:name': contact_name,
-            # })
+            contact.add_attributes({
+                'prov:label': contact_name,
+                #'foaf:name': contact_name,
+            })
             if contact_email:
                 contact.add_attributes({
                     'foaf:mbox': "<mailto:{}>".format(contact_email)
@@ -155,6 +161,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
         if depth != 0:
             e_in.append(pdoc.entity(pqn))
             e_in[-1].add_attributes({
+                'prov:label': pname,
                 # 'prov:value': value,
                 'prov:location': location,
                 # 'prov:type': pdict['datatype'],
@@ -196,6 +203,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
             # act_attr[pqn] = value
             params.append(pdoc.entity('opus_job:' + job.jobname + '/' + job.jobid + '/parameters/' + pname))
             pattrs = {
+                'prov:label': pname,
                 'prov:type': 'voprov:Parameter',
                 'prov:value': value,
             }
@@ -231,6 +239,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                     content_type = job.results[rname]['content_type']
                 e_out.append(pdoc.entity(rqn))
                 e_out[-1].add_attributes({
+                    'prov:label': rname,
                     'prov:location': job.results[rname]['url'],
                     'voprov:content_type': content_type,
                 })
@@ -287,7 +296,7 @@ def prov2dot(prov_doc):
     :param prov_doc:
     :return:
     """
-    dot = prov_to_dot(prov_doc, use_labels=False, show_element_attributes=True, show_relation_attributes=True)
+    dot = prov_to_dot(prov_doc, use_labels=True, show_element_attributes=True, show_relation_attributes=False)
     return dot
 
 
