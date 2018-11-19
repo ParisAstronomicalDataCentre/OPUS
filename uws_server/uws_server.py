@@ -56,6 +56,7 @@ def set_user(jobname=None):
     # Use anonymous as default
     user_name = 'anonymous'
     user_token = 'anonymous'
+    user = User(user_name, user_token)
     # Check if REMOTE_USER is set by web server or use Basic Auth from header
     if request.auth:
         user_name, user_token = request.auth
@@ -86,14 +87,15 @@ def set_user(jobname=None):
     #     user_name, user_token = parse_auth(auth)
     #     logger.debug('Authorization: {}:{}'.format(user_name, user_token))
     # Create user object
-    user = User(user_name, user_token)
+    if user_name:
+        user = User(user_name, user_token)
     # Add user name at the end of each log entry
-    logger = CustomAdapter(logger_init, {'username': user_name})
+    logger = CustomAdapter(logger_init, {'username': user.name})
     if user == User('anonymous', 'anonymous') and ALLOW_ANONYMOUS == False:
         abort_403('User anomymous not allowed on this server')
     # Add user if not in db
     job_storage = getattr(storage, STORAGE + 'JobStorage')()
-    job_storage.add_user(user_name, token=user_token)
+    job_storage.add_user(user.name, token=user.token)
     return user
 
 
