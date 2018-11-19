@@ -436,7 +436,7 @@ def get_users():
 @app.post('/scim/v2/Users')
 @is_client_trusted
 @is_admin
-def create_users():
+def create_user():
     name = request.POST.get('name', '')
     if name:
         token = request.POST.get('token', '')
@@ -486,7 +486,10 @@ def delete_user(name):
     job_storage = getattr(storage, STORAGE + 'JobStorage')()
     users = job_storage.remove_user(name)
     logger.info('User deleted: ' + name)
-    return 'Success', 200, {'Content-Type': 'text/plain'}
+    response.content_type = 'text/plain; charset=UTF-8'
+    response.status = 200
+    return 'Success'
+
 
 # ----------
 # Database testing
