@@ -445,6 +445,7 @@ def create_users():
         job_storage.add_user(name, token=token, roles=roles)
         users = job_storage.get_users(name=name)
         u = users[0]
+        logger.info('User created: ' + name)
         return user2scim(u)
     else:
         abort_500('No user name provided')
@@ -474,6 +475,7 @@ def patch_user(name):
         if k == 'roles':
             # job_storage.change_roles(userid, roles=request.POST[k])
             job_storage.update_user(name, k, request.POST[k])
+    logger.info('User patched: ' + name)
     return user2scim(u)
 
 
@@ -483,6 +485,8 @@ def patch_user(name):
 def delete_user(name):
     job_storage = getattr(storage, STORAGE + 'JobStorage')()
     users = job_storage.remove_user(name)
+    logger.info('User deleted: ' + name)
+    return 1
 
 # ----------
 # Database testing
