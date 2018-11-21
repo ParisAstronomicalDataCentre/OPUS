@@ -315,8 +315,6 @@ class Job(object):
                 if not os.path.isdir(upload_dir):
                     os.makedirs(upload_dir)
                 f.save(os.path.join(upload_dir, f.filename))
-                # Parameter value is set to the file name on server (known to be in the uploads/<jobid> directory)
-                value = 'file://' + f.filename
                 # value = f.filename
                 logger.info('Input "{}" is a file and was downloaded ({})'.format(pname, f.filename))
                 # Check if file already exists in entity store (hash + ID in name or jobid) and add in Used table
@@ -328,8 +326,15 @@ class Job(object):
                     owner=self.user.name,
                     content_type=content_type
                 )
+                # Parameter value is set to the filename
+                # url = ARCHIVE_URL.format(ID=entity['entity_id'])
+                # if url.startswith('/'):
+                #     url = '{}{}'.format(BASE_URL, url)
+                # value = url
+                value = 'file://' + f.filename
             else:
                 # 2/ Parameter is a value, possibly an ID (set from post or by default)
+                # TODO: identify and store array of values
                 if pname in post:
                     # Get value from post
                     value = post.pop(pname)
@@ -351,7 +356,6 @@ class Job(object):
                                 os.makedirs(upload_dir)
                             open(os.path.join(upload_dir, filename), 'wb').write(r.content)
                             # Parameter value is set to the file name on server
-                            value = 'file://' + filename
                             logger.info('Input "{}" is a URL and was downloaded : {}'.format(pname, furl))
                             entity = self.storage.register_entity(
                                 file_name=filename,
@@ -361,6 +365,12 @@ class Job(object):
                                 owner=self.user.name,
                                 content_type=content_type
                             )
+                            # Parameter value is set to the URL of the file in the Entity Store
+                            # url = ARCHIVE_URL.format(ID=entity['entity_id'])
+                            # if url.startswith('/'):
+                            #     url = '{}{}'.format(BASE_URL, url)
+                            # value = url
+                            value = 'file://' + filename
                         else:
                             logger.warning('Cannot upload URL for input "{}": {}'.format(pname, furl))
                 # TODO: 4/ check if value is an ID that already exists in the entity store ? other attribute ?
@@ -374,6 +384,7 @@ class Job(object):
             }
         # Search parameters in POST
         for pname in self.jdl.content.get('parameters', {}):
+            # Check if it is a used entity
             if pname not in self.parameters:
                 # TODO: use JDL to check if value is valid
                 ptype = self.jdl.content['parameters'][pname]['datatype']
@@ -499,8 +510,16 @@ class Job(object):
     def _parameters_to_xml_fill(self, xml_params):
         # Add each parameter that has a value
         for pname, pdict in self.parameters.items():
-            if pdict['value']:
-                value = urllib.parse.quote_plus(urllib.parse.unquote_plus(pdict['value']))
+            if pdict.get('value', False):
+                value = pdict['value']
+                # Check if parameter is referencing by ref
+                if pdict.get('entity_id', False):
+                    # Convert to URL for XML output
+                    url = ARCHIVE_URL.format(ID=pdict['entity_id'])
+                    if url.startswith('/'):
+                        url = '{}{}'.format(BASE_URL, url)
+                    value = url
+                value = urllib.parse.quote_plus(urllib.parse.unquote_plus(value))
                 by_ref = str(pdict['byref']).lower()
                 ETree.SubElement(xml_params, 'uws:parameter', attrib={'id': pname, 'byReference': by_ref}).text = value
 

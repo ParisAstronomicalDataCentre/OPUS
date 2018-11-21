@@ -161,7 +161,7 @@ PGSQL_PASSWORD = 'opus'
 # VOSpace: not implemented
 ARCHIVE = 'Local'
 ARCHIVE_PATH = ''
-ARCHIVE_URL = ''  # use $ID for the identifier of the result
+ARCHIVE_URL = '/store?ID={ID}'  # use {ID} for the identifier of the result, relative or full URL
 
 #----------
 # Define a Manager and its properties

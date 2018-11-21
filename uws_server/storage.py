@@ -543,7 +543,10 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             kwargs['entity_id'] = entity_id
             # Define access_url if not given
             if not 'access_url' in kwargs:
-                kwargs['access_url'] = '{}/store?ID={}'.format(BASE_URL, entity_id)
+                url = ARCHIVE_URL.format(ID=entity_id)
+                if url.startswith('/'):
+                    url = '{}{}'.format(BASE_URL, url)
+                kwargs['access_url'] = url
             # Store info in DB
             e = self.Entity(**kwargs)
             self.session.merge(e)
