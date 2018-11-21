@@ -175,6 +175,10 @@ class Manager(object):
             # Move uploaded files to working directory if they exist
             #'echo "[`timestamp`] Prepare input files"',
             #'for filename in $up/*; do [ -f "$filename" ] && cp $filename $wd; done',
+            # Load variables from params file
+            '### PREPARE INPUT PARAMETERS',
+            'echo "[`timestamp`] Set input parameters"',
+            'cat $jd/parameters.sh',
         ])
         # Move/Get input files
         if get_input_files:
@@ -192,8 +196,6 @@ class Manager(object):
             'job_event "EXECUTING"',
             'echo "[`timestamp`] Start job *****"',
             'touch $jd/start',
-            # Load variables from params file
-            '. $jd/parameters.sh',
             # Run script in the current environment
             '. $jd/{}.sh'.format(job.jobname),
             'touch $jd/done',
