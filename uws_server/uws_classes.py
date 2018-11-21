@@ -492,9 +492,9 @@ class Job(object):
                 params.append(pname + '=\"' + pdict['default'] + '\"')
         # Return list of bash variables
         if get_files:
-            return separator.join(params), files
+            return separator.join(params) + '\n', files
         else:
-            return separator.join(params)
+            return separator.join(params) + '\n'
 
     def parameters_to_json(self):
         """Make parameter file content for given job

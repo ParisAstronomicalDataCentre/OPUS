@@ -179,6 +179,7 @@ class Manager(object):
             '### PREPARE INPUT PARAMETERS',
             'echo "[`timestamp`] Set input parameters"',
             'cat $jd/parameters.sh',
+            '. $jd/parameters.sh',
         ])
         # Move/Get input files
         if get_input_files:
