@@ -341,12 +341,15 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
 
     def _save_parameter(self, job, pname):
         # Save job parameter to db
+        eid = job.parameters[pname]['entity_id']
+        if not eid or eid != '0':
+            eid = None
         d = {
             'jobid': job.jobid,
             'name': pname,
             'value': job.parameters[pname]['value'],
             'byref': job.parameters[pname]['byref'],
-            'entity_id': job.parameters[pname]['entity_id'],
+            'entity_id': eid,
         }
         p = self.Parameter(**d)
         self.session.merge(p)

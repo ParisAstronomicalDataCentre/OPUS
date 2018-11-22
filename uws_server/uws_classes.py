@@ -395,7 +395,7 @@ class Job(object):
                 self.parameters[pname] = {
                     'value': value,
                     'byref': False,
-                    'entity_id': False,
+                    'entity_id': None,
                 }
         # Other POST parameters
         for pname in post:
@@ -406,7 +406,7 @@ class Job(object):
                 self.parameters[pname] = {
                     'value': value,
                     'byref': False,
-                    'entity_id': False,
+                    'entity_id': None,
                 }
         # Upload files for multipart/form-data
         #for fname, f in files.iteritems():
@@ -512,8 +512,8 @@ class Job(object):
         for pname, pdict in self.parameters.items():
             if pdict.get('value', False):
                 value = pdict['value']
-                # Check if parameter is referencing by ref
-                if pdict.get('entity_id', False):
+                # Check if parameter is referencing an entity
+                if pdict.get('entity_id', 0):
                     # Convert to URL for XML output
                     url = ARCHIVE_URL.format(ID=pdict['entity_id'])
                     if url.startswith('/'):
