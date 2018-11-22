@@ -183,12 +183,13 @@ SLURM_UPLOADS_PATH = '/poubelle/vouws/uploads'
 SLURM_WORKDIR_PATH = '/scratch/vouws/workdir'
 SLURM_RESULTS_PATH = '/poubelle/vouws/results'
 SLURM_SBATCH_DEFAULT = {
-    'mem': '200mb',
     'nodes': 1,
     'ntasks-per-node': 1,
     'partition': 'short',  # for tycho...
-    # 'account': 'obspm',  # for quadri12...
     # 'partition': 'def',  # for quadri12...'
+    # 'account': 'obspm',  # for quadri12...
+    'mem': '200mb',
+    #'tmp': '200mb',
 }
 
 PHASE_CONVERT = {
