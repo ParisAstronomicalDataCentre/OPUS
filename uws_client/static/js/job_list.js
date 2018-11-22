@@ -15,11 +15,13 @@
         'runId',  // job.runId
         'creationTime',
         'phase',
-        //'details',
-        'results',
+        'details',
+        //'results',
         'control',
         //'delete',
     ];
+
+    var jobnames = [];
 
     function get_jobnames() {
         // Get jobnames from server
@@ -30,10 +32,13 @@
             dataType: "json",
             success : function(json) {
                 console.log(json['jobnames']);
+                jobnames = json['jobnames'];
                 // Fill select
                 for (var jn in json['jobnames']) {
                     $('.selectpicker').append('<option>' + json['jobnames'][jn] + '</option>')
                 };
+                $('.selectpicker').append('<option disabled>─────</option>');
+                $('.selectpicker').append('<option>all</option>');
                 $('.selectpicker').selectpicker('refresh');
                 // Check if jobname is set in DOM
                 var jobname = $('#jobname').attr('value');
@@ -51,8 +56,18 @@
 
     function load_job_list() {
         var jobname = $('select[name=jobname]').val();
+        var col_sort = job_list_columns.indexOf('creationTime');
+        if (jobname == 'all') {
+            var cols = Array.from(job_list_columns);
+            if (cols.indexOf('jobName') == -1) {
+                cols.splice(0, 0, "jobName");
+            }
+            col_sort = cols.indexOf('creationTime');
+            uws_client.initClient(client_url, server_url, jobnames, cols);
+        } else {
+            uws_client.initClient(client_url, server_url, [jobname], job_list_columns);
+        };
         // init UWS Client
-        uws_client.initClient(client_url, server_url, [jobname]);
         // write new url in browser bar
         history.pushState({ jobname: jobname }, '', client_url + uws_client.client_url_jobs + "/" + jobname);
         // Prepare job list
@@ -61,6 +76,14 @@
             uws_client.selectJob($( "#jobid" ).attr('value'));
         }
         $('button.actions').removeAttr('disabled');
+        $("#job_list").tablesorter({
+            theme : "bootstrap",
+            headerTemplate : '{content} {icon}',
+            sortReset: true,
+            widgets : [ "uitheme", "zebra" ],
+            sortList: [[col_sort, 1]],
+        });
+
     };
 
     // LOAD JOB LIST AT STARTUP

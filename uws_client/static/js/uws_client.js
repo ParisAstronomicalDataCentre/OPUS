@@ -37,6 +37,7 @@ var uws_client = (function($) {
         //'jobName',  // job.jobName
         'jobId',  // job.jobId
         'runId',  // job.runId
+        //'owner',  // job.runId
         'creationTime',
         'phase',
         'details',
@@ -48,6 +49,7 @@ var uws_client = (function($) {
         jobName: 'Job Name',
         jobId: 'jobId',
         runId: 'runId',
+        owner: 'Owner',
         creationTime: 'Creation Time',
         phase: 'Phase',
         details: 'Details',
@@ -158,12 +160,22 @@ var uws_client = (function($) {
     // PREPARE TABLE
 
     var prepareTable = function() {
+        $('#job_list').attr('class', 'table table-bordered table-condensed tablesorter');
         var tcontent = '\
             <thead>\
                 <tr>';
         for (var col in job_list_columns) {
+            var col_code = job_list_columns[col];
+            var col_name = job_list_column_names[col_code];
+            var nosort = ['details', 'results', 'control', 'delete']
+            var col_class = 'text-center';
+            console.log(nosort.indexOf(col_code));
+            if (nosort.indexOf(col_code) != -1) {
+                col_class += ' sorter-false';
+            };
+            console.log(col_class);
             tcontent = tcontent + '\
-                    <th class="text-center">' + job_list_column_names[job_list_columns[col]] + '</th>';
+                    <th class="' + col_class + '">' + col_name + '</th>';
         };
         tcontent = tcontent + '\
                 </tr>\
@@ -326,6 +338,7 @@ var uws_client = (function($) {
             jobName: '<td class="text-center" style="vertical-align: middle;" title="' + param_list + '">' + job.jobName + '</td>',
             jobId: '<td class="text-center" style="vertical-align: middle;">' + job.jobId + '</td>',
             runId: '<td class="text-center" style="vertical-align: middle;">' + job.runId + '</td>',
+            owner: '<td class="text-center" style="vertical-align: middle;">' + job.owner + '</td>',
             creationTime: '<td class="text-center" style="vertical-align: middle;" title="' + times + '">' + creation_time + '</td>',
             phase: '\
                 <td class="text-center" style="vertical-align: middle;">\
@@ -1120,6 +1133,7 @@ var uws_client = (function($) {
         };
     };
     var getJobListSuccess = function(jobs) {
+        $('#div_loading').hide();
         if (jobs.length == 0){
             //$('#job_list').html(' ');
             logger('INFO', 'Job list is empty');
@@ -1131,10 +1145,10 @@ var uws_client = (function($) {
                     displayJob(job);
                 };
             };
-            //$( "#job_list" ).tablesorter({sortList: [[1,1]]});
+            // Use tablesorter
+            $("#job_list").trigger("updateAll");
             logger('INFO', 'Job list loaded');
         };
-        $('#div_loading').hide();
         $('#div_table').show();
     };
     var getJobListError = function(xhr, status, exception) {

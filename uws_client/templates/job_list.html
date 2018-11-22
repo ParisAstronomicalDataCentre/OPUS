@@ -1,9 +1,13 @@
 {% extends "skeleton.html" %}
 {% block js %}
     <script type="text/javascript" src="/static/js/jquery.tablesorter.js" defer></script> 
+    <script type="text/javascript" src="/static/js/jquery.tablesorter.widgets.js" defer></script>
     <script type="text/javascript" src="/static/js/uwsLib.js" defer></script>
     <script type="text/javascript" src="/static/js/uws_client.js" defer></script>
     <script type="text/javascript" src="/static/js/job_list.js" defer></script>
+{% endblock %}
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/static/css/tablesorter.theme.bootstrap.css" />
 {% endblock %}
 {% block variables %}
     <div id="jobname" style="display:none" value="{{ jobname }}"></div>
