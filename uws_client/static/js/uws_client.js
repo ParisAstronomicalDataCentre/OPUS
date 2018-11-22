@@ -160,7 +160,7 @@ var uws_client = (function($) {
     // PREPARE TABLE
 
     var prepareTable = function() {
-        $('#job_list').attr('class', 'table table-bordered table-condensed tablesorter');
+        $('#job_list').attr('class', 'table table-bordered table-condensed');
         var tcontent = '\
             <thead>\
                 <tr>';
@@ -175,7 +175,7 @@ var uws_client = (function($) {
             };
             console.log(col_class);
             tcontent = tcontent + '\
-                    <th class="' + col_class + '">' + col_name + '</th>';
+                    <th id="' + col_code + '" class="' + col_class + '">' + col_name + '</th>';
         };
         tcontent = tcontent + '\
                 </tr>\
@@ -1145,10 +1145,18 @@ var uws_client = (function($) {
                     displayJob(job);
                 };
             };
-            // Use tablesorter
-            $("#job_list").trigger("updateAll");
-            logger('INFO', 'Job list loaded');
         };
+        // Use tablesorter
+        //var col_sort = job_list_columns.indexOf('creationTime');
+        var col_sort = $("th").index($("#creationTime"));
+        $("#job_list").tablesorter({
+            theme : "bootstrap",
+            headerTemplate : '{content} {icon}',
+            sortReset: true,
+            widgets : [ "uitheme", "zebra" ],
+        });
+        $("#job_list").trigger("updateAll");
+        logger('INFO', 'Job list loaded ');
         $('#div_table').show();
     };
     var getJobListError = function(xhr, status, exception) {

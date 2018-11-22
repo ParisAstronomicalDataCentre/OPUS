@@ -72,18 +72,10 @@
         history.pushState({ jobname: jobname }, '', client_url + uws_client.client_url_jobs + "/" + jobname);
         // Prepare job list
         uws_client.getJobList();
-        if ( $( "#job_id" ).length ) {
-            uws_client.selectJob($( "#jobid" ).attr('value'));
-        }
+        //if ( $( "#job_id" ).length ) {
+        //    uws_client.selectJob($( "#jobid" ).attr('value'));
+        //}
         $('button.actions').removeAttr('disabled');
-        $("#job_list").tablesorter({
-            theme : "bootstrap",
-            headerTemplate : '{content} {icon}',
-            sortReset: true,
-            widgets : [ "uitheme", "zebra" ],
-            sortList: [[col_sort, 1]],
-        });
-
     };
 
     // LOAD JOB LIST AT STARTUP
