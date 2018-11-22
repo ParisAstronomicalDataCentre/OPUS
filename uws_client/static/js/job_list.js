@@ -13,6 +13,7 @@
         //'jobName',  // job.jobName
         'jobId',  // job.jobId
         'runId',  // job.runId
+        'ownerId',
         'creationTime',
         'phase',
         'details',

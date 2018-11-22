@@ -37,7 +37,7 @@ var uws_client = (function($) {
         //'jobName',  // job.jobName
         'jobId',  // job.jobId
         'runId',  // job.runId
-        //'owner',  // job.runId
+        //'ownerId',  // job.runId
         'creationTime',
         'phase',
         'details',
@@ -49,7 +49,7 @@ var uws_client = (function($) {
         jobName: 'Job Name',
         jobId: 'jobId',
         runId: 'runId',
-        owner: 'Owner',
+        ownerId: 'Owner',
         creationTime: 'Creation Time',
         phase: 'Phase',
         details: 'Details',
@@ -338,7 +338,7 @@ var uws_client = (function($) {
             jobName: '<td class="text-center" style="vertical-align: middle;" title="' + param_list + '">' + job.jobName + '</td>',
             jobId: '<td class="text-center" style="vertical-align: middle;">' + job.jobId + '</td>',
             runId: '<td class="text-center" style="vertical-align: middle;">' + job.runId + '</td>',
-            owner: '<td class="text-center" style="vertical-align: middle;">' + job.owner + '</td>',
+            ownerId: '<td class="text-center" style="vertical-align: middle;">' + job.ownerId + '</td>',
             creationTime: '<td class="text-center" style="vertical-align: middle;" title="' + times + '">' + creation_time + '</td>',
             phase: '\
                 <td class="text-center" style="vertical-align: middle;">\
