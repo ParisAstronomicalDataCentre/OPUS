@@ -20,13 +20,13 @@
                             <!--<a href="/job_list"><span class="glyphicon glyphicon-cog"></span>-->
                             <!--Available jobs</a>-->
                         <!--</li>-->
+                        <li{{ ' class=active' if 'jobs' in url }}>
+                            <a href="{{ url_for('job_list') }}"><span class="glyphicon glyphicon-list"></span>
+                                Job List</a>
+                        </li>
                         <li{{ ' class=active' if 'job_definition' in url }}>
                             <a href="{{ url_for('job_definition') }}"><span class="glyphicon glyphicon-edit"></span>
                                 Job Definition</a>
-                        </li>
-                        <li{{ ' class=active' if 'job_list' in url }}>
-                            <a href="{{ url_for('job_list') }}"><span class="glyphicon glyphicon-list"></span>
-                                Job List</a>
                         </li>
                     </ul>
                     <ul class="nav navbar-nav navbar-right">
@@ -44,14 +44,14 @@
                                 </li>
                                 <li><a href="{{ url_for('user.index_view') }}">
                                     <span class="glyphicon glyphicon-user"></span>
-                                    Client Users</a>
+                                    Client Accounts</a>
                                 </li>
                                 <li><a href="{{ url_for('server_accounts') }}">
                                     <span class="glyphicon glyphicon-user"></span>
-                                    Server Users</a>
+                                    Server Accounts</a>
                                 </li>
                                 <li><a href="{{ url_for('server_jobs') }}">
-                                    <span class="glyphicon glyphicon-user"></span>
+                                    <span class="glyphicon glyphicon-edit"></span>
                                     Server Jobs</a>
                                 </li>
                                 <li class="divider"></li>
