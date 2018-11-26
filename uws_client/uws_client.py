@@ -70,7 +70,7 @@ SECURITY_PASSWORD_SALT = 'test'
 SECURITY_USER_IDENTITY_ATTRIBUTES = 'email'
 SECURITY_POST_LOGIN_VIEW = APPLICATION_ROOT
 SECURITY_POST_LOGOUT_VIEW = APPLICATION_ROOT + SECURITY_URL_PREFIX + '/login'
-SECURITY_REGISTERABLE = False
+SECURITY_REGISTERABLE = True
 SECURITY_SEND_REGISTER_EMAIL = False
 SECURITY_CHANGEABLE = True
 SECURITY_SEND_PASSWORD_CHANGE_EMAIL = False
@@ -197,8 +197,7 @@ def get_or_create(session, model, **kwargs):
 
 # Setup Flask-Security
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
-security = Security(app, user_datastore , login_form=ExtendedLoginForm)
-#, register_form=ExtendedRegisterForm)
+security = Security(app, user_datastore , login_form=ExtendedLoginForm, register_form=ExtendedRegisterForm)
 
 
 # ----------
@@ -358,7 +357,7 @@ def profile():
     return render_template('profile.html', order=order, profile=profile)
 
 
-@app.route('/preferences', methods=['GET', 'POST'])
+@app.route('/admin/preferences', methods=['GET', 'POST'])
 @login_required
 @roles_required('admin')
 def preferences():
@@ -373,27 +372,46 @@ def preferences():
     return render_template('preferences.html')
 
 
-@app.route('/server_accounts', methods=['GET', 'POST'])
+@app.route('/admin/server_accounts', methods=['GET'])
 @login_required
 @roles_required('admin')
 def server_accounts():
-    if request.method == 'POST':
-        logger.debug('Modify user on server')
-        # send patch request to scim endpoint for user
-        flash('User successfully updated', 'info')
-        return redirect(url_for('server_accounts'), 303)
     # Get users from server
     return render_template('server_accounts.html')
 
 
-@app.route('/server_jobs', methods=['GET', 'POST'])
+@app.route('/admin/add_client_user', methods=['POST'])
+@login_required
+@roles_required('admin')
+def import_server_account():
+    email = request.form.get('name', None)
+    token = request.form.get('token', None)
+    if email and token:
+        if not user_datastore.get_user(email):
+            user = user_datastore.create_user(
+                email=email,
+                token=token,
+                active=True,
+                roles=['user'],
+            )
+            db.session.commit()
+            logger.info('User {} added'.format(email))
+            flash('User added, please enter new password and save record', 'success')
+            return user.get_id(), 200
+        # Already exist
+        logger.warning('Cannot create user (already exists)')
+        abort(409)
+    else:
+        # Missing email/token
+        logger.warning('Cannot create user (missing email/token)')
+        abort(400)
+
+
+@app.route('/admin/server_jobs', methods=['GET'])
 @login_required
 @roles_required('admin')
 def server_jobs():
-    if request.method == 'POST':
-        flash('User successfully updated', 'info')
-        return redirect(url_for('server_jobs'), 303)
-    # Get users from server
+    # Get jobs from server
     return render_template('server_jobs.html')
 
 

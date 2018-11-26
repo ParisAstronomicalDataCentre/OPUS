@@ -94,8 +94,7 @@
                             <span class="glyphicon glyphicon-trash"></span>\
                             <span class="hidden-xs hidden-sm hidden-md">Delete</span>\
                         </button>\
-                        <button id="button_import_' + user_label + '" type="button" class="import btn btn-default"\
-                         disabled>\
+                        <button id="button_import_' + user_label + '" type="button" class="import btn btn-default">\
                             <span class="glyphicon glyphicon-import"></span>\
                             <span class="hidden-xs hidden-sm hidden-md">Import to client</span>\
                         </button>\
@@ -114,6 +113,7 @@
             $('#button_roles_' + user_label).click({name: user.userName, key: 'roles'}, patch_user);
             $('#button_token_' + user_label).click({name: user.userName, key: 'token'}, patch_user);
             $('#button_delete_' + user_label).click({name: user.userName}, delete_user);
+            $('#button_import_' + user_label).click({name: user.userName, token: user.token}, import_user);
         }
         // add form
         var row = '\
@@ -223,6 +223,32 @@
             });
         };
     }
+
+    function import_user(event) {
+        var name = event.data.name;
+        var token = event.data.token;
+        $.ajax({
+			url : client_url + '/admin/add_client_user',
+			type : 'POST',
+			data:{
+                name: name,
+                token: token,
+            },
+			dataType: "json",
+			success : function(user_id) {
+                window.location.href = client_url + "/admin/user/edit/?id=" + user_id +
+                "&url=%2Fopus_client%2Fadmin%2Fserver_accounts";
+			},
+            error : function(xhr, status, exception) {
+				console.log(xhr);
+				var msg = 'Cannot create user';
+				if (xhr.status == 400) { msg += ' (missing email/token)'; }
+				if (xhr.status == 409) { msg += ' (already exists)'; }
+				global.showMessage(msg, 'warning');
+			}
+		});
+    }
+
 
     $(document).ready( function() {
     
