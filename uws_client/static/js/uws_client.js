@@ -169,11 +169,9 @@ var uws_client = (function($) {
             var col_name = job_list_column_names[col_code];
             var nosort = ['details', 'results', 'control', 'delete']
             var col_class = 'text-center';
-            console.log(nosort.indexOf(col_code));
             if (nosort.indexOf(col_code) != -1) {
                 col_class += ' sorter-false';
             };
-            console.log(col_class);
             tcontent = tcontent + '\
                     <th id="' + col_code + '" class="' + col_class + '">' + col_name + '</th>';
         };
@@ -231,9 +229,11 @@ var uws_client = (function($) {
                 break;
             case 'ERROR':
                 phase_class = 'btn-danger';
+                $('#'+jobId+' td button.results').removeAttr("disabled");
                 break;
             case 'ABORTED':
                 phase_class = 'btn-danger';
+                $('#'+jobId+' td button.results').removeAttr("disabled");
                 break;
             case 'UNKNOWN':
                 phase_class = 'btn-danger';
@@ -349,15 +349,15 @@ var uws_client = (function($) {
                     <div class="btn-group">\
                         <button type="button" class="properties btn btn-default btn-sm">\
                             <span class="glyphicon glyphicon-info-sign"></span>\
-                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;Properties</span>\
+                            <span class="hidden-xs hidden-sm hidden-md hidden-lg">&nbsp;Properties</span>\
                         </button>\
                         <button type="button" class="parameters btn btn-default btn-sm">\
                             <span class="glyphicon glyphicon-edit"></span>\
-                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;&nbsp;Parameters</span>\
+                            <span class="hidden-xs hidden-sm hidden-md hidden-lg">&nbsp;&nbsp;Parameters</span>\
                         </button>\
                         <button type="button" class="results btn btn-default btn-sm">\
                             <span class="glyphicon glyphicon-save"></span>\
-                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;Results</span>\
+                            <span class="hidden-xs hidden-sm hidden-md hidden-lg">&nbsp;Results</span>\
                         </button>\
                     </div>\
                 </td>',
@@ -373,15 +373,15 @@ var uws_client = (function($) {
                     <div class="btn-group">\
                         <button type="button" class="start btn btn-default btn-sm">\
                             <span class="glyphicon glyphicon-play"></span>\
-                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;Start</span>\
+                            <span class="hidden-xs hidden-sm hidden-md hidden-lg">&nbsp;Start</span>\
                         </button>\
                         <button type="button" class="abort btn btn-default btn-sm">\
                             <span class="glyphicon glyphicon-off"></span>\
-                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;Abort</span>\
+                            <span class="hidden-xs hidden-sm hidden-md hidden-lg">&nbsp;Abort</span>\
                         </button>\
                         <button type="button" class="delete btn btn-default btn-sm">\
                             <span class="glyphicon glyphicon-trash"></span>\
-                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;Delete</span>\
+                            <span class="hidden-xs hidden-sm hidden-md hidden-lg">&nbsp;Delete</span>\
                         </button>\
                     </div>\
                 </td>',
@@ -1010,16 +1010,19 @@ var uws_client = (function($) {
     //----------
     // DISPLAY SINGLE JOB INFO
 
-    var displaySingleJob = function(jobName, jobId){
+    var displaySingleJobOk = function(jobName, jobId){
         prepareTable();
         clients[jobName].getJobInfos(jobId, displaySingleJobSuccess, displaySingleJobError);
+    };
+    var displaySingleJob = function(jobName, jobId){
+        wait_for_jdl(jobName, displaySingleJobOk, [jobName, jobId]);
     };
     var displaySingleJobSuccess = function(job){
         displayJobRow(job);
         // Display properties in table prop_list
         displayProps(job);
         // Display parameters in id_* fields
-        displayParams(job);
+        displayParamFormOkFilled(job);
         // Display results as panels in div results
         displayResultsOk(job);
         // Show div_job
