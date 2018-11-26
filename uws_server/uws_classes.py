@@ -513,7 +513,8 @@ class Job(object):
             if pdict.get('value', False):
                 value = pdict['value']
                 # Check if parameter is referencing an entity
-                if pdict.get('entity_id', 0):
+                eid = pdict.get('entity_id', 0)
+                if eid and eid != '0':
                     # Convert to URL for XML output
                     url = ARCHIVE_URL.format(ID=pdict['entity_id'])
                     if url.startswith('/'):
