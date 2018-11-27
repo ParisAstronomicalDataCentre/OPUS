@@ -919,7 +919,8 @@ class JobList(object):
             })
             ETree.SubElement(xml_job, 'uws:phase').text = job['phase']
             ETree.SubElement(xml_job, 'uws:runId').text = job['run_id']
-            ETree.SubElement(xml_job, 'uws:ownerId').text = job['owner']
+            if self.user.check_admin():
+                ETree.SubElement(xml_job, 'uws:ownerId').text = job['owner']
             ETree.SubElement(xml_job, 'uws:creationTime').text = job['creation_time']
         try:
             return ETree.tostring(xml_jobs)

@@ -37,13 +37,13 @@ var uws_client = (function($) {
         //'jobName',  // job.jobName
         'jobId',  // job.jobId
         'runId',  // job.runId
-        //'ownerId',  // job.runId
         'creationTime',
         'phase',
         'details',
         //'results',
         'control',
         //'delete',
+        //'ownerId',
     ];
     var job_list_column_names = {
         jobName: 'Job Name',
@@ -347,15 +347,15 @@ var uws_client = (function($) {
             details: '\
                 <td class="text-center" style="vertical-align: middle;">\
                     <div class="btn-group">\
-                        <button type="button" class="properties btn btn-default btn-sm">\
+                        <button type="button" class="properties btn btn-default btn-sm" title="Properties">\
                             <span class="glyphicon glyphicon-info-sign"></span>\
                             <span class="hidden-xs hidden-sm hidden-md hidden-lg">&nbsp;Properties</span>\
                         </button>\
-                        <button type="button" class="parameters btn btn-default btn-sm">\
+                        <button type="button" class="parameters btn btn-default btn-sm" title="Parameters">\
                             <span class="glyphicon glyphicon-edit"></span>\
                             <span class="hidden-xs hidden-sm hidden-md hidden-lg">&nbsp;&nbsp;Parameters</span>\
                         </button>\
-                        <button type="button" class="results btn btn-default btn-sm">\
+                        <button type="button" class="results btn btn-default btn-sm" title="Results">\
                             <span class="glyphicon glyphicon-save"></span>\
                             <span class="hidden-xs hidden-sm hidden-md hidden-lg">&nbsp;Results</span>\
                         </button>\
@@ -363,7 +363,7 @@ var uws_client = (function($) {
                 </td>',
             results: '\
                 <td class="text-center" style="vertical-align: middle;">\
-                    <button type="button" class="results btn btn-default btn-sm">\
+                    <button type="button" class="results btn btn-default btn-sm" title="Results">\
                         <span class="glyphicon glyphicon-save"></span>\
                         <span class="hidden-xs hidden-sm hidden-md">&nbsp;Results</span>\
                     </button>\
@@ -371,15 +371,15 @@ var uws_client = (function($) {
             control: '\
                 <td class="text-center" style="vertical-align: middle;">\
                     <div class="btn-group">\
-                        <button type="button" class="start btn btn-default btn-sm">\
+                        <button type="button" class="start btn btn-default btn-sm" title="Start">\
                             <span class="glyphicon glyphicon-play"></span>\
                             <span class="hidden-xs hidden-sm hidden-md hidden-lg">&nbsp;Start</span>\
                         </button>\
-                        <button type="button" class="abort btn btn-default btn-sm">\
+                        <button type="button" class="abort btn btn-default btn-sm" title="Abort">\
                             <span class="glyphicon glyphicon-off"></span>\
                             <span class="hidden-xs hidden-sm hidden-md hidden-lg">&nbsp;Abort</span>\
                         </button>\
-                        <button type="button" class="delete btn btn-default btn-sm">\
+                        <button type="button" class="delete btn btn-default btn-sm" title="Delete">\
                             <span class="glyphicon glyphicon-trash"></span>\
                             <span class="hidden-xs hidden-sm hidden-md hidden-lg">&nbsp;Delete</span>\
                         </button>\
@@ -387,14 +387,33 @@ var uws_client = (function($) {
                 </td>',
             delete: '\
                 <td class="text-center" style="vertical-align: middle;">\
-                    <button type="button" class="delete btn btn-default btn-sm">\
+                    <button type="button" class="delete btn btn-default btn-sm" title="Delete">\
                         <span class="glyphicon glyphicon-trash"></span>\
                         <span class="hidden-xs hidden-sm hidden-md">&nbsp;Delete</span>\
                     </button>\
                 </td>',
         };
         for (var col in job_list_columns) {
-            row = row + col_content[job_list_columns[col]];
+            var col_code = job_list_columns[col];
+            row = row + col_content[col_code];
+        };
+        var col_code = 'ownerId';
+        var col_name = job_list_column_names[col_code];
+        if ($.inArray(col_code, job_list_columns) == -1) {
+            if (job.ownerId.length > 0) {
+                var headers = [];
+                $('#job_list > thead > tr > th').each(function(){
+                    headers.push($(this).text());
+                });
+                if ($.inArray(col_name, headers) == -1) {
+                    logger('INFO', 'Adding Owner column');
+                    // Add column 'Owner', add 'ownerId' to job_list_columns
+                    job_list_columns.push(col_code);
+                    $('#job_list > thead > tr').append('<<th id="' + col_code +'" class="text-center">' + col_name +
+                    '</th>');
+                };
+                row = row + col_content[col_code];
+            };
         };
         row = row + '</tr>';
 //        var row = '\

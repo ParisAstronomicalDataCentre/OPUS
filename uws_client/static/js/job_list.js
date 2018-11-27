@@ -13,13 +13,13 @@
         //'jobName',  // job.jobName
         'jobId',  // job.jobId
         'runId',  // job.runId
-        'ownerId',
         'creationTime',
         'phase',
         'details',
         //'results',
         'control',
         //'delete',
+        //'ownerId',
     ];
 
     var jobnames = [];
