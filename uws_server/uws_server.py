@@ -771,6 +771,8 @@ def get_script(jobname):
             abort_403()
     except UserWarning as e:
         abort_404(e.args[0])
+    except:
+        abort_500_except()
 
 
 @app.get('/jdl/<jobname:path>/json')
@@ -793,6 +795,8 @@ def get_jdl_json(jobname):
             abort_403()
     except UserWarning as e:
         abort_404(e.args[0])
+    except:
+        abort_500_except()
 
 
 #@app.get('/jdl/<jobname:path>/votable')
