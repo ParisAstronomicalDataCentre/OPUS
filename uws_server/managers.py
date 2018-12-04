@@ -176,10 +176,6 @@ class Manager(object):
             #'echo "[`timestamp`] Prepare input files"',
             #'for filename in $up/*; do [ -f "$filename" ] && cp $filename $wd; done',
             # Load variables from params file
-            '### PREPARE INPUT PARAMETERS',
-            'echo "[`timestamp`] Set input parameters"',
-            'cat $jd/parameters.sh',
-            '. $jd/parameters.sh',
         ])
         # Move/Get input files
         if get_input_files:
@@ -193,6 +189,10 @@ class Manager(object):
             ])
         # Execution
         batch.extend([
+            '### PREPARE INPUT PARAMETERS',
+            'echo "[`timestamp`] Set input parameters"',
+            'cat $jd/parameters.sh',
+            '. $jd/parameters.sh',
             '### EXECUTION',
             'job_event "EXECUTING"',
             'echo "[`timestamp`] Start job *****"',
