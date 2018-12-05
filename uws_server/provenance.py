@@ -97,7 +97,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
             'prov:role': 'owner'
         })
 
-    # Plan = ActivityDescription
+    # ActivityDescription = Plan
     if depth != 0:
         plan = pdoc.entity('opus_jdl:' + job.jobname)
         plan.add_attributes({
@@ -110,15 +110,22 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
         pdoc.influence(act, plan, other_attributes={
             'prov:type': 'voprov:hadDescription',
         })
-
     # Agent: contact for the job in ActivityDescription
     if agent:
         contact_name = job.jdl.content.get('contact_name')
         contact_email = job.jdl.content.get('contact_email')
-        if not contact_name:
+        if contact_email and not contact_name:
             contact_name = contact_email
         if contact_name:
-            contact = pdoc.agent(contact_name)
+            # Is contact name in the server user list?
+            contact_id = contact_name
+            users_dicts = job.storage.get_users()
+            users = users = [u['name'] for u in users_dicts]
+            logger.debug(contact_name)
+            logger.debug('{}'.format(users))
+            if contact_id in users:
+                contact_id = 'opus_user:' + contact_id
+            contact = pdoc.agent(contact_id)
             contact.add_attributes({
                 'prov:label': contact_name,
                 #'foaf:name': contact_name,
@@ -127,7 +134,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                 contact.add_attributes({
                     'foaf:mbox': "<mailto:{}>".format(contact_email)
                 })
-            act.wasAssociatedWith(contact, attributes={
+            plan.wasAttributedTo(contact, attributes={
                 'prov:role': 'contact'
             })
 
