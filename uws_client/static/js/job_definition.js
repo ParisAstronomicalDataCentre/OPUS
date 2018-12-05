@@ -301,6 +301,7 @@
     // Load/Read
 
 	function load_jdl() {
+        $('#loading').show();
         var jobname = $('input[name=name]').val();
         // ajax command to get JDL from UWS server
         $.ajax({
@@ -309,6 +310,7 @@
 			type : 'GET',
 			dataType: "json",
 			success : function(jdl) {
+                $('#loading').hide();
 			    console.log(jdl);
                 global.showMessage('JDL loaded.', 'info')
                 //$('#load_msg').attr('class', 'text-info');
@@ -431,6 +433,7 @@
 //                });
 			},
 			error : function(xhr, status, exception) {
+                $('#loading').hide();
                 console.log(exception);
                 editor.setValue('');
                 editor.refresh();
@@ -443,6 +446,7 @@
     }
 
 	function save_jdl() {
+        $('#loading').show();
         var jobname = $('input[name=name]').val();
         // ajax command to save_jdl from UWS server
         $.ajax({
@@ -450,6 +454,7 @@
 			type : 'GET',
 			dataType: "text",
 			success : function(jdl) {
+                $('#loading').hide();
 				var blob = new Blob([jdl], {type: "text/xml;charset=utf-8"});
 				var filename = jobname + ".xml";
                 //saveAs(blob, jobname + ".jdl");
@@ -461,6 +466,7 @@
                 document.body.removeChild(link);
 			},
 			error : function(xhr, status, exception) {
+                $('#loading').hide();
 				console.log(exception);
                 global.showMessage(exception, 'alert')
 				//$('#load_msg').text(exception);
@@ -471,12 +477,14 @@
 
     function get_jobnames() {
         // Get jobnames from server
+        $('#loading').show();
         $.ajax({
             url : server_url + '/jdl',
             cache : false,
             type : 'GET',
             dataType: "json",
             success : function(json) {
+                $('#loading').hide();
                 console.log(json['jobnames']);
                 $('input[name=name]').typeahead({
                     source: json['jobnames'],
@@ -484,6 +492,7 @@
                 });
             },
             error : function(xhr, status, exception) {
+                $('#loading').hide();
                 console.log(exception);
             }
         });

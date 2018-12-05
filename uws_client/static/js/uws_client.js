@@ -630,6 +630,7 @@ var uws_client = (function($) {
         };
     };
     var displayParamFormOk = function(jobName, init_params){
+        $('#loading').hide();
         // Run displayParamForm before to check that jdl is defined
         var jdl = clients[jobName].jdl;
         // First field is the runId
@@ -716,6 +717,7 @@ var uws_client = (function($) {
         });
     };
     var displayParamFormOkFilled = function(job){
+        $('#loading').hide();
         var jdl = clients[job.jobName].jdl;
         // Create form fields from JDL
         // list all used entities
@@ -829,9 +831,11 @@ var uws_client = (function($) {
 
     };
     var displayParamForm = function(jobName, init_params){
+        $('#loading').show();
         wait_for_jdl(jobName, displayParamFormOk, [jobName, init_params]);
     };
     var displayParams = function(job){
+        $('#loading').show();
         wait_for_jdl(job.jobName, displayParamFormOkFilled, [job]);
     };
 
@@ -924,12 +928,18 @@ var uws_client = (function($) {
                                 </textarea>\
                             </div>\
                         ');
+                        $('#loading').show();
                         $.ajax({
                             url : r_url_auth,
                             dataType: "text",
                             context: r_id,  // Set this=r_id for success function
-                            success : function (txt) {
+                            success: function (txt) {
+                                $('#loading').hide();
                                 $('#' + this + ' div.panel-body textarea').html(txt);
+                            },
+                            error: function(xhr, status, exception) {
+                                $('#loading').hide();
+                                console.log(exception);
                             }
                         });
                         $(this).html(txt.replace('Show', 'Hide').replace('open', 'close'));
@@ -962,6 +972,7 @@ var uws_client = (function($) {
         };
     };
     var displayResultsOk = function(job){
+        $('#loading').hide();
         var jdl = clients[job.jobName].jdl;
         var serviceUrl = clients[job.jobName].serviceUrl;
         var details_keys =['stdout','stderr','provjson','provxml','provsvg'];
@@ -985,7 +996,7 @@ var uws_client = (function($) {
         for (var r in job.results) {
             if (jdl.generated_keys.includes(r) == false) {
                 if (details_keys.includes(r) == false) {
-                    console.log('additional result found: ' + r);
+                    logger('INFO', 'additional result found: ' + r);
                     var r_url = job.results[r].href;
                     var r_type = job.results[r].mimetype;
                     var r_url_auth = r_url.split('?').pop();
@@ -1000,7 +1011,6 @@ var uws_client = (function($) {
         for (var rkey in details_keys) {
             var r = details_keys[rkey];
             if ($.inArray(r, Object.keys(job.results)) !== -1) {
-                console.log(r);
                 var r_url = serviceUrl + '/' + job.jobId + '/' + r;
                 var r_url_auth = client_url + client_url_proxy + server_url_jobs + job.jobName + '/' + job.jobId + '/' + r;
                 var r_type = 'text/plain';
@@ -1022,6 +1032,7 @@ var uws_client = (function($) {
         };
     };
     var displayResults = function(job){
+        $('#loading').show();
         wait_for_jdl(job.jobName, displayResultsOk, [job]);
     };
 
@@ -1030,13 +1041,16 @@ var uws_client = (function($) {
     // DISPLAY SINGLE JOB INFO
 
     var displaySingleJobOk = function(jobName, jobId){
+        $('#loading').show();
         prepareTable();
         clients[jobName].getJobInfos(jobId, displaySingleJobSuccess, displaySingleJobError);
     };
     var displaySingleJob = function(jobName, jobId){
+        $('#loading').show();
         wait_for_jdl(jobName, displaySingleJobOk, [jobName, jobId]);
     };
     var displaySingleJobSuccess = function(job){
+        $('#loading').hide();
         displayJobRow(job);
         // Display properties in table prop_list
         displayProps(job);
@@ -1089,6 +1103,7 @@ var uws_client = (function($) {
         });
     };
     var displaySingleJobError = function(jobId, xhr, status, exception){
+        $('#loading').hide();
         $("#div_job").hide();
         var msg = '<strong>Job does not exist</strong>: ' + jobId + ', going back to job list'
         global.showMessage(msg, 'warning');
@@ -1103,15 +1118,18 @@ var uws_client = (function($) {
     // REFRESH PROPS
 
     var refreshProps = function(jobId){
+        $('#loading').show();
         var jobName = $('#'+jobId).attr('jobname');
         clients[jobName].getJobInfos(jobId, refreshPropsSuccess, refreshPropsError);
     };
     var refreshPropsSuccess = function(job){
+        $('#loading').hide();
         $("#prop_list").html('');
         displayProps(job);
         logger('DEBUG', 'Properties refreshed');
     };
     var refreshPropsError = function(jobId, xhr, status, exception){
+        $('#loading').hide();
         logger('ERROR', 'refreshProps '+ jobId, exception);
         var msg = 'Cannot refresh properties of job ' + jobId;
         global.showMessage(msg, 'danger');
@@ -1122,14 +1140,17 @@ var uws_client = (function($) {
     // REFRESH RESULTS
 
     var refreshResults = function(jobId){
+        $('#loading').show();
         var jobName = $('#'+jobId).attr('jobname');
         clients[jobName].getJobInfos(jobId, refreshResultsSuccess, refreshResultsError);
     };
     var refreshResultsSuccess = function(job){
+        $('#loading').hide();
         displayResults(job);
         logger('DEBUG', 'Results refreshed');
     };
     var refreshResultsError = function(jobId, xhr, status, exception){
+        $('#loading').hide();
         logger('ERROR', 'refreshResults '+ jobId, exception);
         var msg = 'Cannot refresh results of job ' + jobId;
         global.showMessage(msg, 'danger');
@@ -1146,6 +1167,7 @@ var uws_client = (function($) {
     // GET JOB LIST
 
     var getJobList = function() {
+        $('#loading').show();
         prepareTable();
         for (var i in jobNames) {
             var jobName = jobNames[i];
@@ -1155,7 +1177,7 @@ var uws_client = (function($) {
         };
     };
     var getJobListSuccess = function(jobs) {
-        $('#div_loading').hide();
+        $('#loading').hide();
         if (jobs.length == 0){
             //$('#job_list').html(' ');
             logger('INFO', 'Job list is empty');
@@ -1182,7 +1204,7 @@ var uws_client = (function($) {
         $('#div_table').show();
     };
     var getJobListError = function(xhr, status, exception) {
-
+        $('#loading').hide();
         //var responseJSON = $.parseJSON( xhr.responseText );
         //var dataHtml = $($.parseHTML(xhr.responseText)).children('html');
         //$('pre', $(dataHtml)).each( function() {
@@ -1194,7 +1216,6 @@ var uws_client = (function($) {
             msg = msg[0].replace(/<\/?pre>/g,'');
         }
         logger('ERROR', 'getJobList', msg);
-        $('#div_loading').hide();
         global.showMessage(msg, 'danger');
     };
 
@@ -1248,13 +1269,16 @@ var uws_client = (function($) {
     // GET JOB INFO
 
     var getJobInfos = function(jobId){
+        $('#loading').show();
         var jobName = $('#'+jobId).attr('jobname');
         clients[jobName].getJobInfos(jobId,getJobInfosSuccess, getJobInfosError);
     };
     var getJobInfosSuccess = function(job){
+        $('#loading').hide();
         alert(JSON.stringify(job, null, 4));
     };
     var getJobInfosError = function(jobId, xhr, status, exception){
+        $('#loading').hide();
         logger('ERROR', 'getJobInfos '+ jobId, exception);
         var msg = xhr.responseText.match(/<pre>[\s\S]*<\/pre>/g)
         if (msg && msg.length != 0) {
@@ -1269,13 +1293,16 @@ var uws_client = (function($) {
 
     // GET JOB RESULTS
     var getJobResults = function(jobId){
+        $('#loading').show();
         var jobName = $('#'+jobId).attr('jobname');
         clients[jobName].getJobResults(jobId, getJobResultsSuccess, getJobResultsError);
     };
     var getJobResultsSuccess = function(jobId, results){
+        $('#loading').hide();
         alert('Results for job '+ jobId + ' :\n' + JSON.stringify(results, null, 4));
     };
     var getJobResultsError = function(jobId, xhr, status, exception){
+        $('#loading').hide();
         logger('ERROR', 'getJobResults '+ jobId, exception);
         var msg = xhr.responseText.match(/<pre>[\s\S]*<\/pre>/g)
         if (msg && msg.length != 0) {
@@ -1296,15 +1323,18 @@ var uws_client = (function($) {
     // CREATE JOB
 
     var createJob = function(jobName, jobParams) {
+        $('#loading').show();
         var csrf_token = $('#csrf_token').attr('value');
         clients[jobName].createJob(jobParams, createJobSuccess, createJobError, csrf_token);
     };
     var createJobSuccess = function(job) {
+        $('#loading').hide();
         logger('INFO', 'Job created with id='+job.jobId+' jobname='+job.jobName);
         // redirect to URL + job_id
         window.location.href = client_url + client_url_job_edit + "/" + job.jobName + "/" + job.jobId;
     };
     var createJobError = function(xhr, status, exception){
+        $('#loading').hide();
         logger('ERROR', 'createJob', exception);
         var msg = xhr.responseText.match(/<pre>[\s\S]*<\/pre>/g)
         if (msg && msg.length != 0) {
@@ -1323,6 +1353,7 @@ var uws_client = (function($) {
         clients[jobName].createJob(jobParams, createTestJobSuccess, createJobError, csrf_token);
     };
     var createTestJobSuccess = function(job) {
+        $('#loading').hide();
         logger('INFO', 'Test job created with id='+job.jobId+' jobname='+job.jobName);
         displayJob(job);
     };
@@ -1332,15 +1363,18 @@ var uws_client = (function($) {
     // START JOB
 
     var startJob = function(jobId, csrf_token='') {
+        $('#loading').show();
         var jobName = $('#'+jobId).attr('jobname');
         var csrf_token = $('#csrf_token').attr('value');
         clients[jobName].startJob(jobId, startJobSuccess, startJobError, csrf_token);
     };
     var startJobSuccess = function(jobId) {
+        $('#loading').hide();
         logger('INFO', 'Job started '+jobId);
         getJobPhase(jobId);
     };
     var startJobError = function(jobId, xhr, status, exception){
+        $('#loading').hide();
         logger('ERROR', 'startJob '+jobId, exception);
         var msg = xhr.responseText.match(/<pre>[\s\S]*<\/pre>/g)
         if (msg && msg.length != 0) {
@@ -1355,16 +1389,19 @@ var uws_client = (function($) {
     // ABORT JOB
 
     var abortJob = function (jobId){
+        $('#loading').show();
         var jobName = $('#'+jobId).attr('jobname');
         var csrf_token = $('#csrf_token').attr('value');
         clients[jobName].abortJob(jobId, abortJobSuccess, abortJobError, csrf_token);
     };
     var abortJobSuccess = function(jobId){
+        $('#loading').hide();
         clearTimeout(refreshPhaseTimeout[jobId]);
         logger('INFO', 'Job aborted '+jobId);
         getJobPhase(jobId);
     };
     var abortJobError = function(jobId, xhr, status, exception){
+        $('#loading').hide();
         logger('ERROR', 'abortJob '+ jobId, exception);
         var msg = xhr.responseText.match(/<pre>[\s\S]*<\/pre>/g)
         if (msg && msg.length != 0) {
@@ -1379,11 +1416,13 @@ var uws_client = (function($) {
     // DESTROY JOB
 
     var destroyJob = function (jobId){
+        $('#loading').show();
         var jobName = $('#'+jobId).attr('jobname');
         var csrf_token = $('#csrf_token').attr('value');
         clients[jobName].destroyJob(jobId, destroyJobSuccess, destroyJobError, csrf_token);
     };
     var destroyJobSuccess = function(jobId, jobs){
+        $('#loading').hide();
         try {
             var msg = '<strong>Job deleted</strong>: '+jobId+', going back to job list';
             global.showMessage(msg, 'info');
@@ -1395,6 +1434,7 @@ var uws_client = (function($) {
         }
     };
     var destroyJobError = function(jobId, xhr, status, exception){
+        $('#loading').hide();
         logger('ERROR', 'destroyJob '+jobId, exception);
         var msg = xhr.responseText.match(/<pre>[\s\S]*<\/pre>/g)
         if (msg && msg.length != 0) {

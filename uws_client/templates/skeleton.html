@@ -27,6 +27,12 @@
     <!-- Messages -->
 {% block message %}
     {% with messages = get_flashed_messages(with_categories=true) %}
+    <div id="loading_div"
+         style="position: fixed; top:5px; left:5px; width:2%; z-index: 10; opacity: 0.8;">
+        <div id="loading" class="col-md-12" style="display:none;">
+            <img src="/static/images/loading.png" alt="loading" height="50" width="50"/>
+        </div>
+    </div>
     <div id="messages_div"
          style="position: fixed; top:40px; left:25%; width:50%; z-index: 10; text-align: center; opacity: 0.8;">
         <div id="messages" class="col-md-12">

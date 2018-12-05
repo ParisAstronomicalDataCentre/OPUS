@@ -12,12 +12,14 @@
 
     function get_jobnames() {
         // Get jobnames from server
+        $('#loading').show();
         $.ajax({
             url : server_url + '/jdl',
             cache : false,
             type : 'GET',
             dataType: "json",
             success : function(json) {
+                $('#loading').hide();
                 console.log(json['jobnames']);
                 // Fill select
                 for (var jn in json['jobnames']) {
@@ -27,6 +29,7 @@
                 get_users();
             },
             error : function(xhr, status, exception) {
+                $('#loading').hide();
                 console.log(exception);
             }
         });
@@ -35,12 +38,14 @@
     function get_users() {
         //var jobname = $('input[name=name]').val();
         // ajax command to get_users on UWS server
+        $('#loading').show();
         $.ajax({
 			url : server_url + '/scim/v2/Users',
 			type : 'GET',
 			dataType: "json",
 			success : get_users_success,
 			error : function(xhr, status, exception) {
+                $('#loading').hide();
 				console.log(exception);
 				global.showMessage('Cannot get users list from server');
 				// $("#messages").append('<div class="fadeOut alert alert-' + category + ' text-center">' + msg + '</div>').delay(2000).fadeOut();
@@ -50,6 +55,7 @@
 
     function get_users_success(json) {
         // Display user list with update button
+        $('#loading').hide();
         var users = json['Resources'];
         $('#server_accounts_table').empty();
         for (var u in users) {
@@ -145,6 +151,7 @@
     }
 
     function patch_user(event) {
+        $('#loading').show();
         var name = event.data.name;
         var key = event.data.key;
         var user_label = name.replace(/\./g, "_").replace(/@/g, "_");
@@ -166,10 +173,12 @@
             },
 			dataType: "json",
 			success : function(json) {
+                $('#loading').hide();
 				global.showMessage('User ' + json.userName + ' patched (' + key + ')', 'info');
                 get_users();
 			},
             error : function(xhr, status, exception) {
+                $('#loading').hide();
 				console.log(exception);
 				global.showMessage('Cannot patch user', 'danger');
 			}
@@ -177,6 +186,7 @@
     }
 
     function add_user() {
+        $('#loading').show();
         var name = $('#name').val();
         var roles = $('#roles').val();
         if (roles != null) {
@@ -195,10 +205,12 @@
             },
 			dataType: "json",
 			success : function(json) {
+                $('#loading').hide();
 				global.showMessage('User ' + json.userName + ' created', 'info');
                 get_users();
 			},
             error : function(xhr, status, exception) {
+                $('#loading').hide();
 				console.log(exception);
 				global.showMessage('Cannot create user', 'danger');
 			}
@@ -206,6 +218,7 @@
     }
 
     function delete_user(event) {
+        $('#loading').show();
         var name = event.data.name;
         var isOk = window.confirm("Delete user" + name + "\nAre you sure?");
         if (isOk) {
@@ -213,10 +226,12 @@
                 url : server_url + '/scim/v2/Users/' + name,
                 type : 'DELETE',
                 success : function() {
+                    $('#loading').hide();
                     global.showMessage('User ' + name + ' deleted', 'info');
                     get_users();
                 },
                 error : function(xhr, status, exception) {
+                    $('#loading').hide();
                     console.log(exception);
                     global.showMessage('Cannot delete user', 'danger');
                 }
@@ -225,6 +240,7 @@
     }
 
     function import_user(event) {
+        $('#loading').show();
         var name = event.data.name;
         var token = event.data.token;
         $.ajax({
@@ -236,10 +252,12 @@
             },
 			dataType: "json",
 			success : function(user_id) {
+                $('#loading').hide();
                 window.location.href = client_url + "/admin/user/edit/?id=" + user_id +
                 "&url=%2Fopus_client%2Fadmin%2Fserver_accounts";
 			},
             error : function(xhr, status, exception) {
+                $('#loading').hide();
 				console.log(xhr);
 				var msg = 'Cannot create user';
 				if (xhr.status == 400) { msg += ' (missing email/token)'; }

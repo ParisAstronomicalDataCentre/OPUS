@@ -11,17 +11,20 @@
 
     function get_jobnames() {
         // Get jobnames from server
+        $('#loading').show();
         $.ajax({
             url : server_url + '/jdl',
             cache : false,
             type : 'GET',
             dataType: "json",
             success : function(json) {
+                $('#loading').hide();
                 console.log(json['jobnames']);
                 // Fill table
                 get_jobnames_success(json['jobnames'])
             },
             error : function(xhr, status, exception) {
+                $('#loading').hide();
                 console.log(exception);
             }
         });
@@ -68,6 +71,7 @@
     }
 
 	function save_jdl(event) {
+        $('#loading').show();
         var jobname = event.data.name;
         // ajax command to save_jdl from UWS server
         $.ajax({
@@ -75,6 +79,7 @@
 			type : 'GET',
 			dataType: "text",
 			success : function(jdl) {
+                $('#loading').hide();
 				var blob = new Blob([jdl], {type: "text/xml;charset=utf-8"});
 				var filename = jobname + ".xml";
                 //saveAs(blob, jobname + ".jdl");
@@ -86,6 +91,7 @@
                 document.body.removeChild(link);
 			},
 			error : function(xhr, status, exception) {
+                $('#loading').hide();
 				console.log(exception);
                 global.showMessage('Cannot download job', 'danger');
 			}
@@ -93,6 +99,7 @@
 	}
 
     function delete_job(event) {
+        $('#loading').show();
         var name = event.data.name;
         var isOk = window.confirm("Delete job" + name + "\nAre you sure?");
         if (isOk) {
@@ -100,10 +107,12 @@
                 url : server_url + '/jdl/' + name,
                 type : 'DELETE',
                 success : function() {
+                    $('#loading').hide();
                     global.showMessage('Job ' + name + ' deleted', 'info');
                     get_jobnames();
                 },
                 error : function(xhr, status, exception) {
+                    $('#loading').hide();
                     console.log(exception);
                     global.showMessage('Cannot delete job', 'danger');
                 }

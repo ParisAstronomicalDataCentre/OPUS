@@ -26,12 +26,14 @@
 
     function get_jobnames() {
         // Get jobnames from server
+        $('#loading').show();
         $.ajax({
             url : server_url + '/jdl',
             cache : false,
             type : 'GET',
             dataType: "json",
             success : function(json) {
+                $('#loading').hide();
                 console.log(json['jobnames']);
                 jobnames = json['jobnames'];
                 // Fill select
@@ -50,6 +52,7 @@
                 };
             },
             error : function(xhr, status, exception) {
+                $('#loading').hide();
                 console.log(exception);
             }
         });
