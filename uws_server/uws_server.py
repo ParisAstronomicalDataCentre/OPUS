@@ -10,6 +10,7 @@ import traceback
 import glob
 import re
 import io
+import copy
 import threading
 from subprocess import CalledProcessError
 from bottle import Bottle, request, response, abort, redirect, run, static_file
@@ -607,7 +608,13 @@ def get_jobnames():
             roles = db.get_roles(user)
             jobnames = [j for j in jobnames_all if j in roles]
         jobnames.sort()
-        jobnames_json = {'jobnames': jobnames}
+        details = {}
+        for j in jobnames:
+            # Get JDL
+            jdl.read(j)
+            # map some information
+            details[j] = copy.copy(jdl.content)
+        jobnames_json = {'jobnames': jobnames, 'details': details}
         return jobnames_json
     except UserWarning as e:
         abort_404(e.args[0])
