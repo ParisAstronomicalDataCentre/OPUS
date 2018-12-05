@@ -23,7 +23,7 @@
         'image/fits',
         'application/x-cdf',
         'video/mp4',
-    ]
+    ];
     var type_options = {
         'param': [
             'xs:string',
@@ -47,7 +47,7 @@
         'contact_email',
         'executionDuration',
         'quote',
-    ]
+    ];
     var elt_fields = [
         'name',
         'datatype',
@@ -59,7 +59,7 @@
         'attributes',
         'isfile',
         'url',
-    ]
+    ];
 
     // ----------
     // Item list numbered
@@ -215,7 +215,7 @@
                 break;
         }
         return row;
-	}
+	};
 
 	function add_item(type) {
 	    var list_table = $('#' + type + '_list tbody');
@@ -248,7 +248,7 @@
             console.log(f_type + '_' + f_ii);
             move_item_down(f_type, f_ii);
         });
-	}
+	};
 
 	function reset_item_numbers(type) {
 	    var list_table = $('#' + type + '_list > tbody');
@@ -265,214 +265,222 @@
                     console.log(type + '_' + attr + '_' + i);
                     $(this).find('.' + type + '_' + attr).attr('name', type + '_' + attr + '_' + i);
                 };
-            }
+            };
         });
         $('.selectpicker').selectpicker('refresh');
-	}
+	};
 
 	function move_item_up(type, ii) {
 	    var $node = $('#' + type + '_' + ii)
         $node.prev().before($node);
         reset_item_numbers(type);
-	}
+	};
 
 	function move_item_down(type, ii) {
 	    var $node = $('#' + type + '_' + ii)
         $node.next().after($node);
         reset_item_numbers(type);
-	}
+	};
 
 	function remove_item(type, ii) {
         $('#' + type + '_' + ii).remove();
         reset_item_numbers(type);
-    }
+    };
 
 	function remove_last_item(type) {
 	    var list_table = $('#' + type + '_list tbody');
 	    list_table.children().last().remove();
-    }
+    };
 
 	function remove_all_items(type) {
 	    var list_table = $('#' + type + '_list tbody');
 	    list_table.children().remove();
-    }
+    };
 
     // ----------
     // Load/Read
 
 	function load_jdl() {
-        $('#loading').show();
         var jobname = $('input[name=name]').val();
-        // ajax command to get JDL from UWS server
-        $.ajax({
-			url : server_url + '/jdl/' + jobname + '/json',  //.split("/").pop(),  // to remove new/ (not needed here)
-			async : true,
-			type : 'GET',
-			dataType: "json",
-			success : function(jdl) {
-                $('#loading').hide();
-			    console.log(jdl);
-                global.showMessage('JDL loaded.', 'info')
-                //$('#load_msg').attr('class', 'text-info');
-                //$('#load_msg').text('JDL loaded.');
-                //$('#load_msg').show().delay(3000).fadeOut();
-                for (var attr in job_fields) {
-                    attr = job_fields[attr];
-    				$('[name=' + attr + ']').val(jdl[attr]);
-    			};
-    			editor.setValue(jdl['script']);
-    			editor.refresh();
-				// $('[name=contact_name]').val(jdl.contact_name);
-				// $('[name=contact_email]').val(jdl['contact_email']);
-				// $('[name=executionDuration]').val(jdl.executionDuration);
-				// $('[name=quote]').val(jdl.quote);
-				// $('[name=annotation]').val(jdl.annotation);
-				// Fill param_list table
-				remove_all_items('param');
-				var i = 0;
-				for (var param in jdl.parameters_keys) {
-				    param = jdl.parameters_keys[param];
-				    add_item('param');
-				    i++;  // = jdl.parameters[param]['order'];
-				    var attributes = "";
-				    var att = ['unit', 'ucd', 'utype', 'min', 'max'];
-				    for (var j in att) {
-				        var attv = jdl.parameters[param][att[j]]
-				        if (attv) {
-				            attributes = attributes.concat(att[j] + '=' + new String(attv) + " ");
-				        }
-				    }
-				    var attr_mapping = {
-				        'name': param,
-				        'datatype': jdl.parameters[param]['datatype'],
-				        'default': jdl.parameters[param]['default'],
-				        'annotation': jdl.parameters[param]['annotation'],
-				        'options': jdl.parameters[param]['options'],
-				        'attributes': attributes,
-				    };
-                    for (var attr in attr_mapping) {
-                        $('input[name=param_' + attr + '_' + i + ']').val(attr_mapping[attr]);
-                    }
-				    $('input[name=param_required_' + i + ']').prop("checked", jdl.parameters[param]['required'].toString().toLowerCase() == "true");
-//				    $('input[name=param_name_' + i + ']').val(param);
-//				    $('select[name=param_datatype_' + i + ']').val(jdl.parameters[param]['datatype']);
-//				    $('input[name=param_default_' + i + ']').val(jdl.parameters[param]['default']);
-//				    $('input[name=param_annotation_' + i + ']').val(jdl.parameters[param]['annotation']);
-//				    $('input[name=param_options_' + i + ']').val(jdl.parameters[param]['options']);
-//				    $('input[name=param_attributes_' + i + ']').val(attributes);
-				};
-				// Fill used_list table
-				remove_all_items('used');
-				var i = 0;
-				for (var used in jdl.used_keys) {
-				    used = jdl.used_keys[used];
-                    add_item('used');
-				    i++;
-				    var attr_mapping = {
-				        'name': used,
-				        'type': jdl.used[used]['content_type'],
-				        'default': jdl.used[used]['default'],
-				        'annotation': jdl.used[used]['annotation'],
-				    };
-                    for (var attr in attr_mapping) {
-                        $('[name=used_' + attr + '_' + i + ']').val(attr_mapping[attr]);
-                    }
-				    // TODO: used_type_ is an array of values (comma separated)
-//				    $('input[name=used_name_' + i + ']').val(used);
-//				    $('select[name=used_type_' + i + ']').val(jdl.used[used]['content_type']);
-//				    $('input[name=used_default_' + i + ']').val(jdl.used[used]['default']);
-//				    $('input[name=used_annotation_' + i + ']').val(jdl.used[used]['annotation']);
-				    if (jdl.used[used]['url'].indexOf('file://') == -1) {
-    				    $('input[name=used_isfile_' + i + '][value=ID]').prop("checked", true);
-                        $('input[name=used_url_' + i + ']').val(jdl.used[used]['url']);
-				    }
-				};
-                $('.selectpicker').selectpicker('refresh');
-				// Fill generated_list table
-				remove_all_items('generated');
-				var i = 0;
-				for (var result in jdl.generated_keys) {
-				    result = jdl.generated_keys[result];
-                    add_item('generated');
-				    i++;
-				    var attr_mapping = {
-				        'name': result,
-				        'type': jdl.generated[result]['content_type'],
-				        'default': jdl.generated[result]['default'],
-				        'annotation': jdl.generated[result]['annotation'],
-				    };
-                    for (var attr in attr_mapping) {
-                        $('[name=generated_' + attr + '_' + i + ']').val(attr_mapping[attr]);
-                    }
-//				    $('input[name=generated_name_' + i + ']').val(result);
-//				    $('select[name=generated_type_' + i + ']').val(jdl.generated[result]['content_type']);
-//				    $('input[name=generated_default_' + i + ']').val(jdl.generated[result]['default']);
-//				    $('input[name=generated_annotation_' + i + ']').val(jdl.generated[result]['annotation']);
-				};
-                $('.selectpicker').selectpicker('refresh');
-                // ajax command to get_script from UWS server
-//                $.ajax({
-//                    url : server_url + '/jdl/' + jobname + '/script', //.split("/").pop(),
-//                    async : true,
-//                    cache : false,
-//                    type : 'GET',
-//                    dataType: "text",
-//                    success : function(script) {
-//                        // $('textarea[name=script]').val(script);
-//                        editor.setValue(script);
-//                        editor.refresh();
-//                    },
-//                    error : function(xhr, status, exception) {
-//                        editor.setValue('');
-//                        editor.refresh();
-//                        console.log(exception);
-//                        $('#load_msg').attr('class', 'text-danger');
-//                        $('#load_msg').text(exception);
-//                        $('#load_msg').show().delay(2000).fadeOut();
-//                    }
-//                });
-			},
-			error : function(xhr, status, exception) {
-                $('#loading').hide();
-                console.log(exception);
-                editor.setValue('');
-                editor.refresh();
-                global.showMessage(exception, 'alert')
-                //$('#load_msg').attr('class', 'text-danger');
-                //$('#load_msg').text(exception);
-				//$('#load_msg').show().delay(2000).fadeOut();
-			}
-		});
+        if (jobname.length > 0) {
+            $('#loading').show();
+            // ajax command to get JDL from UWS server
+            $.ajax({
+                url : server_url + '/jdl/' + jobname + '/json',  //.split("/").pop(),  // to remove new/ (not needed here)
+                async : true,
+                type : 'GET',
+                dataType: "json",
+                success : function(jdl) {
+                    $('#loading').hide();
+                    console.log(jdl);
+                    //global.showMessage('JDL loaded.', 'info')
+                    //$('#load_msg').attr('class', 'text-info');
+                    //$('#load_msg').text('JDL loaded.');
+                    //$('#load_msg').show().delay(3000).fadeOut();
+                    for (var attr in job_fields) {
+                        attr = job_fields[attr];
+                        $('[name=' + attr + ']').val(jdl[attr]);
+                    };
+                    editor.setValue(jdl['script']);
+                    editor.refresh();
+                    // $('[name=contact_name]').val(jdl.contact_name);
+                    // $('[name=contact_email]').val(jdl['contact_email']);
+                    // $('[name=executionDuration]').val(jdl.executionDuration);
+                    // $('[name=quote]').val(jdl.quote);
+                    // $('[name=annotation]').val(jdl.annotation);
+                    // Fill param_list table
+                    remove_all_items('param');
+                    var i = 0;
+                    for (var param in jdl.parameters_keys) {
+                        param = jdl.parameters_keys[param];
+                        add_item('param');
+                        i++;  // = jdl.parameters[param]['order'];
+                        var attributes = "";
+                        var att = ['unit', 'ucd', 'utype', 'min', 'max'];
+                        for (var j in att) {
+                            var attv = jdl.parameters[param][att[j]]
+                            if (attv) {
+                                attributes = attributes.concat(att[j] + '=' + new String(attv) + " ");
+                            }
+                        }
+                        var attr_mapping = {
+                            'name': param,
+                            'datatype': jdl.parameters[param]['datatype'],
+                            'default': jdl.parameters[param]['default'],
+                            'annotation': jdl.parameters[param]['annotation'],
+                            'options': jdl.parameters[param]['options'],
+                            'attributes': attributes,
+                        };
+                        for (var attr in attr_mapping) {
+                            $('input[name=param_' + attr + '_' + i + ']').val(attr_mapping[attr]);
+                        }
+                        $('input[name=param_required_' + i + ']').prop("checked", jdl.parameters[param]['required'].toString().toLowerCase() == "true");
+    //				    $('input[name=param_name_' + i + ']').val(param);
+    //				    $('select[name=param_datatype_' + i + ']').val(jdl.parameters[param]['datatype']);
+    //				    $('input[name=param_default_' + i + ']').val(jdl.parameters[param]['default']);
+    //				    $('input[name=param_annotation_' + i + ']').val(jdl.parameters[param]['annotation']);
+    //				    $('input[name=param_options_' + i + ']').val(jdl.parameters[param]['options']);
+    //				    $('input[name=param_attributes_' + i + ']').val(attributes);
+                    };
+                    // Fill used_list table
+                    remove_all_items('used');
+                    var i = 0;
+                    for (var used in jdl.used_keys) {
+                        used = jdl.used_keys[used];
+                        add_item('used');
+                        i++;
+                        var attr_mapping = {
+                            'name': used,
+                            'type': jdl.used[used]['content_type'],
+                            'default': jdl.used[used]['default'],
+                            'annotation': jdl.used[used]['annotation'],
+                        };
+                        for (var attr in attr_mapping) {
+                            $('[name=used_' + attr + '_' + i + ']').val(attr_mapping[attr]);
+                        }
+                        // TODO: used_type_ is an array of values (comma separated)
+    //				    $('input[name=used_name_' + i + ']').val(used);
+    //				    $('select[name=used_type_' + i + ']').val(jdl.used[used]['content_type']);
+    //				    $('input[name=used_default_' + i + ']').val(jdl.used[used]['default']);
+    //				    $('input[name=used_annotation_' + i + ']').val(jdl.used[used]['annotation']);
+                        if (jdl.used[used]['url'].indexOf('file://') == -1) {
+                            $('input[name=used_isfile_' + i + '][value=ID]').prop("checked", true);
+                            $('input[name=used_url_' + i + ']').val(jdl.used[used]['url']);
+                        }
+                    };
+                    $('.selectpicker').selectpicker('refresh');
+                    // Fill generated_list table
+                    remove_all_items('generated');
+                    var i = 0;
+                    for (var result in jdl.generated_keys) {
+                        result = jdl.generated_keys[result];
+                        add_item('generated');
+                        i++;
+                        var attr_mapping = {
+                            'name': result,
+                            'type': jdl.generated[result]['content_type'],
+                            'default': jdl.generated[result]['default'],
+                            'annotation': jdl.generated[result]['annotation'],
+                        };
+                        for (var attr in attr_mapping) {
+                            $('[name=generated_' + attr + '_' + i + ']').val(attr_mapping[attr]);
+                        }
+    //				    $('input[name=generated_name_' + i + ']').val(result);
+    //				    $('select[name=generated_type_' + i + ']').val(jdl.generated[result]['content_type']);
+    //				    $('input[name=generated_default_' + i + ']').val(jdl.generated[result]['default']);
+    //				    $('input[name=generated_annotation_' + i + ']').val(jdl.generated[result]['annotation']);
+                    };
+                    $('.selectpicker').selectpicker('refresh');
+                    // ajax command to get_script from UWS server
+    //                $.ajax({
+    //                    url : server_url + '/jdl/' + jobname + '/script', //.split("/").pop(),
+    //                    async : true,
+    //                    cache : false,
+    //                    type : 'GET',
+    //                    dataType: "text",
+    //                    success : function(script) {
+    //                        // $('textarea[name=script]').val(script);
+    //                        editor.setValue(script);
+    //                        editor.refresh();
+    //                    },
+    //                    error : function(xhr, status, exception) {
+    //                        editor.setValue('');
+    //                        editor.refresh();
+    //                        console.log(exception);
+    //                        $('#load_msg').attr('class', 'text-danger');
+    //                        $('#load_msg').text(exception);
+    //                        $('#load_msg').show().delay(2000).fadeOut();
+    //                    }
+    //                });
+                },
+                error : function(xhr, status, exception) {
+                    $('#loading').hide();
+                    console.log(exception);
+                    editor.setValue('');
+                    editor.refresh();
+                    global.showMessage(exception, 'danger')
+                    //$('#load_msg').attr('class', 'text-danger');
+                    //$('#load_msg').text(exception);
+                    //$('#load_msg').show().delay(2000).fadeOut();
+                };
+            });
+        } else {
+            global.showMessage('No job name given', 'warning');
+        };
     }
 
 	function save_jdl() {
-        $('#loading').show();
         var jobname = $('input[name=name]').val();
-        // ajax command to save_jdl from UWS server
-        $.ajax({
-			url : server_url + '/jdl/' + jobname,  //.split("/").pop(),  // to remove new/ (not needed here)
-			type : 'GET',
-			dataType: "text",
-			success : function(jdl) {
-                $('#loading').hide();
-				var blob = new Blob([jdl], {type: "text/xml;charset=utf-8"});
-				var filename = jobname + ".xml";
-                //saveAs(blob, jobname + ".jdl");
-                var link = document.createElement('a');
-                link.href = window.URL.createObjectURL(blob);
-                link.download = filename;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-			},
-			error : function(xhr, status, exception) {
-                $('#loading').hide();
-				console.log(exception);
-                global.showMessage(exception, 'alert')
-				//$('#load_msg').text(exception);
-				//$('#load_msg').show().delay(2000).fadeOut();
-			}
-		});
+        if (jobname.length > 0) {
+            $('#loading').show();
+            // ajax command to save_jdl from UWS server
+            $.ajax({
+                url : server_url + '/jdl/' + jobname,  //.split("/").pop(),  // to remove new/ (not needed here)
+                type : 'GET',
+                dataType: "text",
+                success : function(jdl) {
+                    $('#loading').hide();
+                    var blob = new Blob([jdl], {type: "text/xml;charset=utf-8"});
+                    var filename = jobname + ".xml";
+                    //saveAs(blob, jobname + ".jdl");
+                    var link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(blob);
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                },
+                error : function(xhr, status, exception) {
+                    $('#loading').hide();
+                    console.log(exception);
+                    global.showMessage(exception, 'danger');
+                    //$('#load_msg').text(exception);
+                    //$('#load_msg').show().delay(2000).fadeOut();
+                }
+            });
+        } else {
+            global.showMessage('No job name given', 'warning');
+        };
 	}
 
     function get_jobnames() {
@@ -493,8 +501,8 @@
             },
             error : function(xhr, status, exception) {
                 $('#loading').hide();
-                console.log(exception);
-            }
+                global.showMessage('Cannot get job names from server', 'danger');
+            };
         });
     }
 
@@ -528,15 +536,17 @@
             jobname = $('input[name=name]').val().split("/").pop();  // remove 'new/'
             if (jobname) {
                 window.location = client_url + uws_client.client_url_jdl + '/' + jobname + '/validate';
+            } else {
+                global.showMessage('No job name given', 'warning');
             };
-            console.log('no jobname given');
         });
         $('#cp_script').click( function() {
             jobname = $('input[name=name]').val().split("/").pop();
             if (jobname) {
                 window.location = client_url + uws_client.client_url_jdl + '/' + jobname + '/copy_script';
-            }
-            console.log('no jobname given');
+            } else {
+                global.showMessage('No job name given', 'warning');
+            };
         });
         $('#add_parameter').click( function() {
             add_item('param');
@@ -562,7 +572,7 @@
                 //$('.ui-autocomplete').hide();
                 event.preventDefault();
                 setTimeout(function(){load_jdl();}, 200);
-            }
+            };
         });
 	}); // end ready
 

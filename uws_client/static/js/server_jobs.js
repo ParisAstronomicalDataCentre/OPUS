@@ -19,9 +19,9 @@
             dataType: "json",
             success : function(json) {
                 $('#loading').hide();
-                console.log(json['jobnames']);
+                console.log(json);
                 // Fill table
-                get_jobnames_success(json['jobnames'])
+                get_jobnames_success(json)
             },
             error : function(xhr, status, exception) {
                 $('#loading').hide();
@@ -30,38 +30,61 @@
         });
     }
 
-    function get_jobnames_success(jobnames) {
+    function get_jobnames_success(json) {
         // Display user list with update button
         $('#server_jobs_table').empty();
+        var jobnames = json['jobnames']
+        var details = json['details']
+        var row = '\
+            <tr>\
+                <th class="text-center">Job name</th>\
+                <th class="text-center">Version</th>\
+                <th class="text-center">Contact</th>\
+                <th class="text-center">Type</th>\
+                <th class="text-center">Subtype</th>\
+                <th class="text-center">Actions</th>\
+            </tr>';
+        $('#server_jobs_tbody').append(row);
         for (var j in jobnames) {
-            var job = jobnames[j]
+            var jobname = jobnames[j]
+            var jdetails = details[jobname]
             //console.log(user.userName);
             var row = '\
-            <tr id="' + job + '">\
-                <td class="text-left" style="vertical-align: middle;">\
-                    ' + job + '\
-                </td>\
+            <tr id="' + jobname + '">\
+                <td class="text-center" style="vertical-align: middle;"><b>' + jobname + '</b></td>\
+                <td class="text-center" style="vertical-align: middle;">' + jdetails.version + '</td>\
+                <td class="text-center" style="vertical-align: middle;">' + jdetails.contact_name + '</td>\
+                <td class="text-center" style="vertical-align: middle;">' + jdetails.type + '</td>\
+                <td class="text-center" style="vertical-align: middle;">' + jdetails.subtype + '</td>\
                 <td class="text-center" style="vertical-align: middle;">\
                     <div class="input-group-btn">\
-                        <button id="button_edit_' + job + '" type="button" class="btn btn-default btn-sm">\
+                        <button id="button_edit_' + jobname + '" type="button" class="btn btn-default btn-sm" \
+                        title="Edit">\
                             <span class="glyphicon glyphicon-edit"></span>\
-                            <span class="hidden-xs hidden-sm hidden-md">Edit</span>\
+                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;Edit</span>\
                         </button>\
-                        <button id="button_download_' + job + '" type="button" class="btn btn-default btn-sm">\
-                            <span class="glyphicon glyphicon-download"></span>\
-                            <span class="hidden-xs hidden-sm hidden-md">Download</span>\
+                        <button id="button_rename_' + jobname + '" type="button" class="btn btn-default btn-sm" \
+                        title="Rename">\
+                            <span class="glyphicon glyphicon-font"></span>\
+                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;Rename</span>\
                         </button>\
-                        <button id="button_delete_' + job + '" type="button" class="btn btn-default btn-sm">\
+                        <button id="button_download_' + jobname + '" type="button" class="btn btn-default btn-sm" \
+                        title="Download">\
+                            <span class="glyphicon glyphicon-export"></span>\
+                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;Export</span>\
+                        </button>\
+                        <button id="button_delete_' + jobname + '" type="button" class="btn btn-default btn-sm" \
+                        title="Delete">\
                             <span class="glyphicon glyphicon-trash"></span>\
-                            <span class="hidden-xs hidden-sm hidden-md">Delete</span>\
+                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;Delete</span>\
                         </button>\
                     </div>\
                 </td>\
             </tr>';
-            $('#server_jobs_table').append(row);
-            $('#button_edit_' + job).click({name: job}, edit_jdl);
-            $('#button_download_' + job).click({name: job}, save_jdl);
-            $('#button_delete_' + job).click({name: job}, delete_job);
+            $('#server_jobs_tbody').append(row);
+            $('#button_edit_' + jobname).click({name: jobname}, edit_jdl);
+            $('#button_download_' + jobname).click({name: jobname}, save_jdl);
+            $('#button_delete_' + jobname).click({name: jobname}, delete_job);
         }
     }
 
