@@ -15,7 +15,8 @@
         'runId',  // job.runId
         'creationTime',
         'phase',
-        'details',
+        'edit',
+        //'details',
         //'results',
         'control',
         //'delete',

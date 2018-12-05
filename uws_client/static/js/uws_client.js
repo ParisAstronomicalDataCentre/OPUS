@@ -40,6 +40,7 @@ var uws_client = (function($) {
         'creationTime',
         'phase',
         'details',
+        //'edit',
         //'results',
         'control',
         //'delete',
@@ -52,11 +53,13 @@ var uws_client = (function($) {
         ownerId: 'Owner',
         creationTime: 'Creation Time',
         phase: 'Phase',
+        edit: 'Edit Job',
         details: 'Details',
         results: 'Results',
         control: 'Control',
         delete: 'Delete',
     };
+    var job_list_columns_nosort = ['details', 'edit', 'results', 'control', 'delete']
 
     // Internal
     var jobNames;
@@ -167,9 +170,8 @@ var uws_client = (function($) {
         for (var col in job_list_columns) {
             var col_code = job_list_columns[col];
             var col_name = job_list_column_names[col_code];
-            var nosort = ['details', 'results', 'control', 'delete']
             var col_class = 'text-center';
-            if (nosort.indexOf(col_code) != -1) {
+            if (job_list_columns_nosort.indexOf(col_code) != -1) {
                 col_class += ' sorter-false';
             };
             tcontent = tcontent + '\
@@ -343,6 +345,13 @@ var uws_client = (function($) {
             phase: '\
                 <td class="text-center" style="vertical-align: middle;">\
                     <button type="button" class="phase btn btn-default">PHASE...</button>\
+                </td>',
+            edit: '\
+                <td class="text-center" style="vertical-align: middle;">\
+                    <button type="button" class="properties btn btn-default btn-sm" title="Edit">\
+                        <span class="glyphicon glyphicon-info-sign"></span>\
+                        <span class="hidden-xs hidden-sm hidden-md">&nbsp;Edit Job</span>\
+                    </button>\
                 </td>',
             details: '\
                 <td class="text-center" style="vertical-align: middle;">\
