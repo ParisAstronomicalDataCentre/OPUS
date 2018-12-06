@@ -35,15 +35,15 @@
 {% endif %}
             </div>
             <div class="panel-body">
-                <form class="form-horizontal">
+                <form action="{{ url_for('import_jdl') }}" method="post"  class="form-horizontal" enctype="multipart/form-data">
                     <div class="row">
                         <div class="col-md-12 form-group">
                             <label class="col-md-2 control-label">Import</label>
                             <div class="col-md-6 controls">
                                 <div class="input-group">
-                                    <input id="jdl_file" class="form-control" name="file" type="file" disabled/>
+                                    <input id="jdl_file" class="form-control" name="jdl_file" type="file"/>
                                     <span class="input-group-btn">
-                                        <button id="import_jdl" class="btn btn-default" type="button" disabled>
+                                        <button id="import_jdl" class="btn btn-default" type="submit">
                                             <span class="glyphicon glyphicon-import"></span>
                                             &nbsp;Import JDL</button>
                                     </span>

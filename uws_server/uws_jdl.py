@@ -478,14 +478,13 @@ class VOTFile(JDLFile):
             try:
                 with open(fname, 'r') as f:
                     jdl_string = f.read()
-                #print jdl_string
                 jdl_tree = ETree.fromstring(jdl_string)
                 #print jdl_tree
                 # Get default namespace
                 xmlns = '{' + jdl_tree.nsmap[None] + '}'
                 #print xmlns
                 # Read parameters description
-                resource_block = jdl_tree.find(".//{}RESOURCE[@ID='{}']".format(xmlns, raw_jobname))
+                resource_block = jdl_tree.find(".//{}RESOURCE".format(xmlns))
                 #print resource_block
                 job_def = {
                     'name': resource_block.get('name'),
@@ -615,9 +614,9 @@ class VOTFile(JDLFile):
             # Load script in job_def
             if 'script' not in self.content:
                 self.read_script(jobname)
-            logger.info('JDL loaded for job: {} {}'.format(jobname, jobid))
-        else:
-            logger.debug('JDL already loaded for job: {} {}'.format(jobname, jobid))
+            #logger.info('JDL loaded for job: {} {}'.format(jobname, jobid))
+        #else:
+            #logger.debug('JDL already loaded for job: {} {}'.format(jobname, jobid))
 
 
     def save_old(self, jobname):

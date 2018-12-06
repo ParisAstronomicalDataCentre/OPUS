@@ -645,6 +645,46 @@ def create_new_job_definition():
     # redirect('/client/job_definition?jobname=new/{}&msg=new'.format(jobname), 303)
 
 
+@app.post('/jdl/import_jdl')
+@is_client_trusted
+def import_job_definition():
+    """Use posted parameters to create a new JDL file for the given job"""
+    # No need to authenticate, users can propose new jobs that will have to be validated
+    # Check if client is trusted? not really needed
+    jobname = ''
+    try:
+        user = set_user()
+        # Save JDL file as new for this jobname
+        f = request.files.get('jdl_file', None)
+        if f:
+            #now = dt.datetime.now().isoformat()
+            # Get jobname from file name (?)
+            jdl = getattr(uws_jdl, JDL)()
+            jobname = f.filename.split(jdl.extension)[0]
+            if jobname == f.filename:
+                jobname = os.path.splitext(os.path.basename(f.filename))[0]
+            logger.debug(jobname)
+            fname_temp = jdl._get_filename('new/' + jobname)
+            logger.debug(fname_temp)
+            if os.path.isfile(fname_temp):
+                os.remove(fname_temp)
+            f.save(fname_temp)
+            # Read JDL
+            logger.debug('new/' + jobname)
+            jdl.read('new/' + jobname)
+            if jdl.content['name'] != jobname:
+                logger.warning('Jobname and Filename not matching: {} {} ({})'.format(
+                    jdl.content['name'], jobname, f.filename))
+                jobname = jdl.content['name']
+                fname_mv = jdl._get_filename('new/' + jobname)
+                shutil.move(fname_temp, fname_mv)
+    except:
+        abort_500_except()
+    # Return code 200 and jobname
+    return {'jobname': jobname}
+    # redirect('/client/job_definition?jobname={}&msg=validated'.format(jobname), 303)
+
+
 #@app.get('/config/validate_job/<jobname>')
 @app.post('/jdl/<jobname:path>/validate')
 @is_client_trusted
@@ -656,6 +696,7 @@ def validate_job_definition(jobname):
         # Copy script and jdl from new
         #jdl = uws_jdl.__dict__[JDL]()
         jdl = getattr(uws_jdl, JDL)()
+        jdl.read(jobname)
         jdl_src = '{}/new/{}{}'.format(jdl.jdl_path, jobname, jdl.extension)
         jdl_dst = '{}/{}{}'.format(jdl.jdl_path, jobname, jdl.extension)
         script_src = '{}/new/{}.sh'.format(jdl.scripts_path, jobname)
@@ -663,9 +704,10 @@ def validate_job_definition(jobname):
         # Save, then copy from new/
         if os.path.isfile(jdl_src):
             if os.path.isfile(jdl_dst):
-                # Save file with time stamp
+                # Save file with version and time stamp
                 mt = dt.datetime.fromtimestamp(os.path.getmtime(jdl_dst)).isoformat()
-                jdl_dst_save = '{}/saved/{}_{}{}'.format(jdl.jdl_path, jobname, mt, jdl.extension)
+                jdl_dst_save = '{}/saved/{}_v{}_{}{}'.format(
+                    jdl.jdl_path, jobname, jdl.content['version'], mt, jdl.extension)
                 os.rename(jdl_dst, jdl_dst_save)
                 logger.info('Previous job JDL saved: ' + jdl_dst_save)
             shutil.copy(jdl_src, jdl_dst)
@@ -678,7 +720,8 @@ def validate_job_definition(jobname):
             if os.path.isfile(script_dst):
                 # Save file with time stamp
                 mt = dt.datetime.fromtimestamp(os.path.getmtime(script_dst)).isoformat()
-                script_dst_save = '{}/saved/{}_{}.sh'.format(SCRIPTS_PATH, jobname, mt)
+                script_dst_save = '{}/saved/{}_v{}_{}.sh'.format(
+                    SCRIPTS_PATH, jobname, jdl.content['version'], mt)
                 os.rename(script_dst, script_dst_save)
                 logger.info('Previous job script saved: ' + script_dst_save)
             shutil.copy(script_src, script_dst)
@@ -796,7 +839,7 @@ def get_jdl_json(jobname):
             # Get JDL content
             jdl = getattr(uws_jdl, JDL)()
             jdl.read(jobname)
-            logger.info('JDL downloaded: {}'.format(jobname))
+            logger.info('JDL downloaded ad JSON: {}'.format(jobname))
             return jdl.content
         else:
             abort_403()
@@ -806,7 +849,6 @@ def get_jdl_json(jobname):
         abort_500_except()
 
 
-#@app.get('/jdl/<jobname:path>/votable')
 @app.get('/jdl/<jobname>')
 def get_jdl(jobname):
     """
@@ -815,14 +857,30 @@ def get_jdl(jobname):
     :return: WADL file
     """
     #logger.info(jobname)
-    fname = '{}/votable/{}_vot.xml'.format(JDL_PATH, jobname)
-    #logger.info(fname)
-    if os.path.isfile(fname):
-        with open(fname) as f:
-            jdl = f.readlines()
-        response.content_type = 'text/xml; charset=UTF-8'
-        return jdl
-    abort_404('No VOTable file found for ' + jobname)
+    try:
+        user = set_user()
+        db = getattr(storage, STORAGE + 'JobStorage')()
+        if not CHECK_PERMISSIONS or db.has_access(user, jobname):
+            # Get JDL content
+            jdl = getattr(uws_jdl, JDL)()
+            fname = jdl._get_filename(jobname)
+            download_dir, download_fname = os.path.split(fname)
+            logger.debug(download_fname)
+            if os.path.isfile(fname):
+                with open(fname) as f:
+                    jdl = f.readlines()
+                logger.info('JDL file downloaded: {}'.format(fname))
+                return static_file(download_fname, root=download_dir, download=download_fname)
+                #response.content_type = 'text/xml; charset=UTF-8'
+                #return jdl
+            else:
+                abort_404('No VOTable file found for ' + jobname)
+        else:
+            abort_403()
+    except UserWarning as e:
+        abort_404(e.args[0])
+    except:
+        abort_500_except()
 
 
 # ----------

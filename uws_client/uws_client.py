@@ -476,7 +476,7 @@ def job_definition(jobname):
             return redirect(url_for('job_definition', jobname='new/{}'.format(jobname)), 303)
         else:
             flash('Error during creation of job definition for {jn}'.format(jn=jobname),
-              category='alert')
+              category='danger')
     # Show form
     # Set is_admin (will show validate buttons)
     is_admin = False
@@ -485,10 +485,26 @@ def job_definition(jobname):
     return render_template('job_definition.html', jobname=jobname, is_admin=is_admin)
 
 
+@app.route('/jdl/import_jdl', methods=['POST'])
+@login_required
+def import_jdl():
+    """Validate job on server"""
+    # Send request to UWS Server
+    response = uws_server_request('/jdl/import_jdl', method='POST', init_request=request)
+    # redirect to job_definition with message
+    if response.status_code == 200:
+        jobname = response.json().get('jobname', None)
+        if jobname:
+            flash('Job definition has been imported as "new/{jn}"'.format(jn=jobname))
+            return redirect(url_for('job_definition', jobname='new/' + jobname), 303)
+    flash('Error during import of job definition', category='danger')
+    return redirect(url_for('job_definition'), 303)
+
+
 @app.route('/jdl/<path:jobname>/validate')
 @login_required
 @roles_required('admin')
-def validate_job(jobname):
+def validate_jdl(jobname):
     """Validate job on server"""
     logger.info(jobname)
     # Send request to UWS Server
@@ -500,8 +516,7 @@ def validate_job(jobname):
     elif response.status_code == 403:
         flash('Forbidden: insufficient rights to validate job definition for new/{jn}'.format(jn=jobname), category='warning')
     else:
-        flash('Error during validation of job definition for {jn}'.format(jn=jobname),
-              category='alert')
+        flash('Error during validation of job definition for {jn}'.format(jn=jobname), category='danger')
     return redirect(url_for('job_definition', jobname='new/' + jobname), 303)
 
 
@@ -528,7 +543,7 @@ def cp_script(jobname):
 @app.route('/proxy/<path:uri>', methods=['GET', 'POST', 'DELETE'])
 def proxy(uri):
     response = uws_server_request('/' + uri, method=request.method, init_request=request)
-    logger.debug(response.headers.__dict__)
+    #logger.debug(response.headers.__dict__)
     # def generate():
     #     for chunk in r.iter_content(CHUNK_SIZE):
     #         yield chunk
@@ -558,17 +573,16 @@ def uws_server_request(uri, method='GET', init_request=None):
         post={}
         for key in list(init_request.form.keys()):
             value = init_request.form.getlist(key)
+            logger.debug('POST {}: {}'.format(key, value))
             if len(value) == 1:
                 post[key] = value[0]
             else:
                 post[key] = value
         files = {}
-        if init_request.files:
-            logger.debug('POST has files')
-            for fname in list(init_request.files.keys()):
-                logger.debug('file: ' + fname)
-                fp = init_request.files[fname]
-                files[fname] = (fp.filename, fp.stream, fp.content_type, fp.headers)
+        for fname in list(init_request.files.keys()):
+            logger.debug('file: ' + fname)
+            fp = init_request.files[fname]
+            files[fname] = (fp.filename, fp.stream, fp.content_type, fp.headers)
         response = requests.post('{}{}'.format(server_url, uri), data=post, files=files, auth=auth)
     else:
         response = requests.get('{}{}'.format(server_url, uri), params=init_request.args, auth=auth)
