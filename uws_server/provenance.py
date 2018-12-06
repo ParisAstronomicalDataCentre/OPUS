@@ -120,9 +120,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
             # Is contact name in the server user list?
             contact_id = contact_name
             users_dicts = job.storage.get_users()
-            users = users = [u['name'] for u in users_dicts]
-            logger.debug(contact_name)
-            logger.debug('{}'.format(users))
+            users = [u['name'] for u in users_dicts]
             if contact_id in users:
                 contact_id = 'opus_user:' + contact_id
             contact = pdoc.agent(contact_id)
@@ -147,7 +145,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
         # Assuming that used entity is a file or a URL (not a value or an ID)
         value = job.parameters.get(pname, {}).get('value', '')
         entity_id = job.parameters.get(pname, {}).get('entity_id', None)
-        logger.debug('Search for entity: {}'.format(entity_id))
+        logger.debug('Search for entity {} (pname={}, value={})'.format(entity_id, pname, value))
         # entity_id = os.path.splitext(os.path.basename(value))[0]
         entity = job.storage.get_entity(entity_id, silent=True)
         if entity:

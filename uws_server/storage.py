@@ -342,7 +342,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
     def _save_parameter(self, job, pname):
         # Save job parameter to db
         eid = job.parameters[pname]['entity_id']
-        if not eid or eid != '0':
+        if not eid or eid == '0':
             eid = None
         d = {
             'jobid': job.jobid,
@@ -499,12 +499,14 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                     if str(row.entity_id) in kwargs['file_name']:
                         # Entity has the expected entity_id in its name
                         entity = dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
-                        logger.info('Entity found for {} with same hash, and file_name contains entity_id: {}'.format(kwargs['file_name'], str(entity)))
+                        logger.info('Entity found for {} with same hash, and file_name contains entity_id'.format(
+                            kwargs['file_name']))
                         entity_id = entity['entity_id']
                     elif str(row.jobid) in kwargs['file_name']:
                         # Entity has the jobid that generated it in its name
                         entity = dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
-                        logger.info('Entity found for {} with same hash, and file_name contains jobid: {}'.format(kwargs['file_name'], str(entity)))
+                        logger.info('Entity found for {} with same hash, and file_name contains jobid'.format(
+                            kwargs['file_name']))
                         entity_id = entity['entity_id']
                     else:
                         used = self.session.query(self.Used).filter_by(entity_id=row.entity_id, jobid=kwargs.get(
@@ -512,7 +514,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                         if used and (getattr(row, 'file_name') == kwargs['file_name']):
                             # Entity has already been used by the same job (and is now exposed as a UWS result)
                             entity = dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
-                            logger.info('Entity found for {} with same hash, was used by the same job and is now exposed as a UWS result: {}'.format(kwargs['file_name'], str(entity)))
+                            logger.info('Entity found for {} with same hash, was used by the same job and is now exposed as a UWS result'.format(kwargs['file_name']))
                             entity_id = entity['entity_id']
 
         if 'value' in kwargs:
@@ -559,6 +561,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             return kwargs
         else:
             # Return existing entity attributes
+            logger.info('Existing entity found: {}'.format(str(entity)))
             return entity
 
     def remove_entity(self, entity_id=None, jobid=None, owner='anonymous'):
