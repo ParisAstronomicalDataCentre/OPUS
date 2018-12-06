@@ -442,7 +442,7 @@
                     //$('#load_msg').attr('class', 'text-danger');
                     //$('#load_msg').text(exception);
                     //$('#load_msg').show().delay(2000).fadeOut();
-                };
+                }
             });
         } else {
             global.showMessage('No job name given', 'warning');
@@ -458,10 +458,20 @@
                 url : server_url + '/jdl/' + jobname,  //.split("/").pop(),  // to remove new/ (not needed here)
                 type : 'GET',
                 dataType: "text",
-                success : function(jdl) {
+                success : function(response, status, xhr) {
+                    // check for a filename
+                    var filename = "";
+                    var disposition = xhr.getResponseHeader('Content-Disposition');
+                    if (disposition && disposition.indexOf('attachment') !== -1) {
+                        var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                        var matches = filenameRegex.exec(disposition);
+                        if (matches != null && matches[1]) filename = matches[1].replace(/['"]/g, '');
+                    };
+                    var type = xhr.getResponseHeader('Content-Type');
+                    var blob = new Blob([response], { type: type });
                     $('#loading').hide();
-                    var blob = new Blob([jdl], {type: "text/xml;charset=utf-8"});
-                    var filename = jobname + ".xml";
+                    //var blob = new Blob([jdl], {type: "text/xml;charset=utf-8"});
+                    //var filename = jobname + ".xml";
                     //saveAs(blob, jobname + ".jdl");
                     var link = document.createElement('a');
                     link.href = window.URL.createObjectURL(blob);
@@ -502,7 +512,7 @@
             error : function(xhr, status, exception) {
                 $('#loading').hide();
                 global.showMessage('Cannot get job names from server', 'danger');
-            };
+            }
         });
     }
 
