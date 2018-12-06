@@ -47,10 +47,11 @@
         $('#server_jobs_tbody').append(row);
         for (var j in jobnames) {
             var jobname = jobnames[j]
+            var jobname_label = jobname.replace(/\./g, "_").replace(/@/g, "_");
             var jdetails = details[jobname]
             //console.log(user.userName);
             var row = '\
-            <tr id="' + jobname + '">\
+            <tr id="' + jobname_label + '">\
                 <td class="text-center" style="vertical-align: middle;"><b>' + jobname + '</b></td>\
                 <td class="text-center" style="vertical-align: middle;">' + jdetails.version + '</td>\
                 <td class="text-center" style="vertical-align: middle;">' + jdetails.contact_name + '</td>\
@@ -58,22 +59,22 @@
                 <td class="text-center" style="vertical-align: middle;">' + jdetails.subtype + '</td>\
                 <td class="text-center" style="vertical-align: middle;">\
                     <div class="input-group-btn">\
-                        <button id="button_edit_' + jobname + '" type="button" class="btn btn-default btn-sm" \
+                        <button id="button_edit_' + jobname_label + '" type="button" class="btn btn-default btn-sm" \
                         title="Edit">\
                             <span class="glyphicon glyphicon-edit"></span>\
                             <span class="hidden-xs hidden-sm hidden-md">&nbsp;Edit</span>\
                         </button>\
-                        <button id="button_rename_' + jobname + '" type="button" class="btn btn-default btn-sm" \
+                        <button id="button_rename_' + jobname_label + '" type="button" class="btn btn-default btn-sm" \
                         title="Rename">\
                             <span class="glyphicon glyphicon-font"></span>\
                             <span class="hidden-xs hidden-sm hidden-md">&nbsp;Rename</span>\
                         </button>\
-                        <button id="button_export_' + jobname + '" type="button" class="btn btn-default btn-sm" \
+                        <button id="button_export_' + jobname_label + '" type="button" class="btn btn-default btn-sm" \
                         title="Export">\
                             <span class="glyphicon glyphicon-export"></span>\
                             <span class="hidden-xs hidden-sm hidden-md">&nbsp;Export</span>\
                         </button>\
-                        <button id="button_delete_' + jobname + '" type="button" class="btn btn-default btn-sm" \
+                        <button id="button_delete_' + jobname_label + '" type="button" class="btn btn-default btn-sm" \
                         title="Delete">\
                             <span class="glyphicon glyphicon-trash"></span>\
                             <span class="hidden-xs hidden-sm hidden-md">&nbsp;Delete</span>\
@@ -82,9 +83,9 @@
                 </td>\
             </tr>';
             $('#server_jobs_tbody').append(row);
-            $('#button_edit_' + jobname).click({name: jobname}, edit_jdl);
-            $('#button_export_' + jobname).click({name: jobname}, export_jdl);
-            $('#button_delete_' + jobname).click({name: jobname}, delete_job);
+            $('#button_edit_' + jobname_label).click({name: jobname}, edit_jdl);
+            $('#button_export_' + jobname_label).click({name: jobname}, export_jdl);
+            $('#button_delete_' + jobname_label).click({name: jobname}, delete_job);
         }
     }
 
