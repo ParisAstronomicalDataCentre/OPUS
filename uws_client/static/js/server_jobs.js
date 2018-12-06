@@ -68,8 +68,8 @@
                             <span class="glyphicon glyphicon-font"></span>\
                             <span class="hidden-xs hidden-sm hidden-md">&nbsp;Rename</span>\
                         </button>\
-                        <button id="button_download_' + jobname + '" type="button" class="btn btn-default btn-sm" \
-                        title="Download">\
+                        <button id="button_export_' + jobname + '" type="button" class="btn btn-default btn-sm" \
+                        title="Export">\
                             <span class="glyphicon glyphicon-export"></span>\
                             <span class="hidden-xs hidden-sm hidden-md">&nbsp;Export</span>\
                         </button>\
@@ -83,7 +83,7 @@
             </tr>';
             $('#server_jobs_tbody').append(row);
             $('#button_edit_' + jobname).click({name: jobname}, edit_jdl);
-            $('#button_download_' + jobname).click({name: jobname}, save_jdl);
+            $('#button_export_' + jobname).click({name: jobname}, export_jdl);
             $('#button_delete_' + jobname).click({name: jobname}, delete_job);
         }
     }
@@ -93,33 +93,53 @@
         window.location = client_url + '/job_definition/' + jobname;
     }
 
-	function save_jdl(event) {
-        $('#loading').show();
+	function export_jdl(event) {
         var jobname = event.data.name;
-        // ajax command to save_jdl from UWS server
-        $.ajax({
-			url : server_url + '/jdl/' + jobname,  //.split("/").pop(),  // to remove new/ (not needed here)
-			type : 'GET',
-			dataType: "text",
-			success : function(jdl) {
-                $('#loading').hide();
-				var blob = new Blob([jdl], {type: "text/xml;charset=utf-8"});
-				var filename = jobname + ".xml";
-                //saveAs(blob, jobname + ".jdl");
-                var link = document.createElement('a');
-                link.href = window.URL.createObjectURL(blob);
-                link.download = filename;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-			},
-			error : function(xhr, status, exception) {
-                $('#loading').hide();
-				console.log(exception);
-                global.showMessage('Cannot download job', 'danger');
-			}
-		});
-	}
+        if (jobname.length > 0) {
+            if (jobname.search("new/") == -1) {
+                $('#loading').show();
+                // ajax command to get JDL file from UWS server
+                $.ajax({
+                    url : server_url + '/jdl/' + jobname,  //.split("/").pop(),  // to remove new/ (not needed here)
+                    type : 'GET',
+                    dataType: "text",
+                    success : function(response, status, xhr) {
+                        // check for a filename
+                        var filename = "";
+                        var disposition = xhr.getResponseHeader('Content-Disposition');
+                        if (disposition && disposition.indexOf('attachment') !== -1) {
+                            var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                            var matches = filenameRegex.exec(disposition);
+                            if (matches != null && matches[1]) filename = matches[1].replace(/['"]/g, '');
+                        };
+                        var type = xhr.getResponseHeader('Content-Type');
+                        var blob = new Blob([response], { type: type });
+                        $('#loading').hide();
+                        //var blob = new Blob([jdl], {type: "text/xml;charset=utf-8"});
+                        //var filename = jobname + ".xml";
+                        //saveAs(blob, jobname + ".jdl");
+                        var link = document.createElement('a');
+                        link.href = window.URL.createObjectURL(blob);
+                        link.download = filename;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    },
+                    error : function(xhr, status, exception) {
+                        $('#loading').hide();
+                        console.log(exception);
+                        global.showMessage(exception, 'danger');
+                        //$('#load_msg').text(exception);
+                        //$('#load_msg').show().delay(2000).fadeOut();
+                    }
+                });
+            } else {
+                global.showMessage('Cannot export non-validated job', 'warning');
+            };
+        } else {
+            global.showMessage('No job name given', 'warning');
+        };
+	};
 
     function delete_job(event) {
         $('#loading').show();
@@ -131,13 +151,13 @@
                 type : 'DELETE',
                 success : function() {
                     $('#loading').hide();
-                    global.showMessage('Job ' + name + ' deleted', 'info');
+                    global.showMessage('Job definition "' + name + '" has been deleted', 'info');
                     get_jobnames();
                 },
                 error : function(xhr, status, exception) {
                     $('#loading').hide();
                     console.log(exception);
-                    global.showMessage('Cannot delete job', 'danger');
+                    global.showMessage('Cannot delete job definition', 'danger');
                 }
             });
         };

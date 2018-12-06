@@ -61,6 +61,29 @@
         'url',
     ];
 
+    function get_jobnames() {
+        // Get jobnames from server
+        $('#loading').show();
+        $.ajax({
+            url : server_url + '/jdl',
+            cache : false,
+            type : 'GET',
+            dataType: "json",
+            success : function(json) {
+                $('#loading').hide();
+                console.log(json['jobnames']);
+                $('input[name=name]').typeahead({
+                    source: json['jobnames'],
+                    autoSelect: false,
+                });
+            },
+            error : function(xhr, status, exception) {
+                $('#loading').hide();
+                global.showMessage('Cannot get job names from server', 'danger');
+            }
+        });
+    };
+
     // ----------
     // Item list numbered
 
@@ -301,6 +324,7 @@
     // Load/Read
 
 	function load_jdl() {
+        // Load jdl file from sserver and fill jdl_form
         var jobname = $('input[name=name]').val();
         if (jobname.length > 0) {
             $('#loading').show();
@@ -447,74 +471,154 @@
         } else {
             global.showMessage('No job name given', 'warning');
         };
-    }
+    };
 
-	function save_jdl() {
+	function export_jdl() {
         var jobname = $('input[name=name]').val();
         if (jobname.length > 0) {
+            if (jobname.search("new/") == -1) {
+                $('#loading').show();
+                // ajax command to get JDL file from UWS server
+                $.ajax({
+                    url : server_url + '/jdl/' + jobname,  //.split("/").pop(),  // to remove new/ (not needed here)
+                    type : 'GET',
+                    dataType: "text",
+                    success : function(response, status, xhr) {
+                        // check for a filename
+                        var filename = "";
+                        var disposition = xhr.getResponseHeader('Content-Disposition');
+                        if (disposition && disposition.indexOf('attachment') !== -1) {
+                            var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                            var matches = filenameRegex.exec(disposition);
+                            if (matches != null && matches[1]) filename = matches[1].replace(/['"]/g, '');
+                        };
+                        var type = xhr.getResponseHeader('Content-Type');
+                        var blob = new Blob([response], { type: type });
+                        $('#loading').hide();
+                        //var blob = new Blob([jdl], {type: "text/xml;charset=utf-8"});
+                        //var filename = jobname + ".xml";
+                        //saveAs(blob, jobname + ".jdl");
+                        var link = document.createElement('a');
+                        link.href = window.URL.createObjectURL(blob);
+                        link.download = filename;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    },
+                    error : function(xhr, status, exception) {
+                        $('#loading').hide();
+                        console.log(exception);
+                        global.showMessage(exception, 'danger');
+                        //$('#load_msg').text(exception);
+                        //$('#load_msg').show().delay(2000).fadeOut();
+                    }
+                });
+            } else {
+                global.showMessage('Cannot export non-validated job', 'warning');
+            };
+        } else {
+            global.showMessage('No job name given', 'warning');
+        };
+	};
+
+	function submit_jdl() {
+        var jobname = $('input[name=name]').val();
+        var csrf_token = $('#csrf_token').attr('value');
+        var myForm = document.getElementById('jdl_form');
+        var formData = new FormData(myForm);
+        formData['script'] = editor.getValue();
+        if (jobname.length > 0) {
             $('#loading').show();
-            // ajax command to save_jdl from UWS server
+            // ajax command to get JDL file from UWS server
             $.ajax({
-                url : server_url + '/jdl/' + jobname,  //.split("/").pop(),  // to remove new/ (not needed here)
-                type : 'GET',
-                dataType: "text",
+                url : server_url + '/jdl',
+                type : 'POST',
+                headers: { "X-CSRFToken": csrf_token },
+                data : formData,
                 success : function(response, status, xhr) {
-                    // check for a filename
-                    var filename = "";
-                    var disposition = xhr.getResponseHeader('Content-Disposition');
-                    if (disposition && disposition.indexOf('attachment') !== -1) {
-                        var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-                        var matches = filenameRegex.exec(disposition);
-                        if (matches != null && matches[1]) filename = matches[1].replace(/['"]/g, '');
-                    };
-                    var type = xhr.getResponseHeader('Content-Type');
-                    var blob = new Blob([response], { type: type });
                     $('#loading').hide();
-                    //var blob = new Blob([jdl], {type: "text/xml;charset=utf-8"});
-                    //var filename = jobname + ".xml";
-                    //saveAs(blob, jobname + ".jdl");
-                    var link = document.createElement('a');
-                    link.href = window.URL.createObjectURL(blob);
-                    link.download = filename;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+                    var jobname = response.jobname;
+                    global.showMessage('Job definition has been saved as "new/' + jobname + '"', 'success');
+                    $('input[name=name]').val('new/' + jobname);
+                    load_jdl();
                 },
                 error : function(xhr, status, exception) {
                     $('#loading').hide();
                     console.log(exception);
-                    global.showMessage(exception, 'danger');
-                    //$('#load_msg').text(exception);
-                    //$('#load_msg').show().delay(2000).fadeOut();
-                }
+                    global.showMessage('Error while submitting job definition', 'danger');
+                },
+    			processData: false,  // tell jQuery not to process the data
+                contentType: false
             });
         } else {
             global.showMessage('No job name given', 'warning');
         };
-	}
+	};
 
-    function get_jobnames() {
-        // Get jobnames from server
-        $('#loading').show();
-        $.ajax({
-            url : server_url + '/jdl',
-            cache : false,
-            type : 'GET',
-            dataType: "json",
-            success : function(json) {
-                $('#loading').hide();
-                console.log(json['jobnames']);
-                $('input[name=name]').typeahead({
-                    source: json['jobnames'],
-                    autoSelect: false,
-                });
-            },
-            error : function(xhr, status, exception) {
-                $('#loading').hide();
-                global.showMessage('Cannot get job names from server', 'danger');
-            }
-        });
-    }
+	function import_jdl() {
+        var fname = $('input[name=jdl_file]').val();
+        var csrf_token = $('#csrf_token').attr('value');
+        var myForm = document.getElementById('import_jdl');
+        var formData = new FormData(myForm);
+        if (fname.length > 0) {
+            $('#loading').show();
+            // ajax command to get JDL file from UWS server
+            $.ajax({
+                url : server_url + '/jdl/import_jdl',
+                type : 'POST',
+                headers: { "X-CSRFToken": csrf_token },
+                data : formData,
+                success : function(response, status, xhr) {
+                    $('#loading').hide();
+                    var jobname = response.jobname;
+                    global.showMessage('Job definition has been successfully imported as "new/' + jobname + '"',
+                    'success');
+                    $('input[name=name]').val('new/' + jobname);
+                    load_jdl();
+                },
+                error : function(xhr, status, exception) {
+                    $('#loading').hide();
+                    console.log(exception);
+                    global.showMessage('Cannot import JDL file (check that JDL file is valid)', 'danger');
+                },
+    			processData: false,  // tell jQuery not to process the data
+                contentType: false
+            });
+        } else {
+            global.showMessage('No file selected', 'warning');
+        };
+	};
+
+	function validate_jdl() {
+        var jobname = $('input[name=name]').val().split("/").pop();  // remove 'new/'
+        var csrf_token = $('#csrf_token').attr('value');
+        if (jobname.length > 0) {
+            $('#loading').show();
+            // ajax command to get JDL file from UWS server
+            $.ajax({
+                url : server_url + '/jdl/' + jobname + '/validate',
+                type : 'POST',
+                headers: { "X-CSRFToken": csrf_token },
+                success : function(response, status, xhr) {
+                    $('#loading').hide();
+                    var jobname = response.jobname;
+                    global.showMessage('Job definition for "new/' + jobname + '" has been successfully validated and \
+                    renamed "' + jobname + '"', 'success');
+                    $('input[name=name]').val(jobname);
+                    load_jdl();
+                },
+                error : function(xhr, status, exception) {
+                    $('#loading').hide();
+                    console.log(exception);
+                    global.showMessage('Cannot validate JDL file', 'danger');
+                },
+    			processData: false,  // tell jQuery not to process the data
+                contentType: false
+            });
+        } else {
+            global.showMessage('No file selected', 'warning');
+        };
+	};
 
     // ----------
     // ready()
@@ -536,28 +640,27 @@
             load_jdl();
         };
         // Add event functions
+        $('#import_jdl').submit(function(event) {
+            event.preventDefault();
+            import_jdl();
+        });
         $('#load_jdl').click( function() {
             load_jdl();
         });
-        $('#save_jdl').click( function() {
-            save_jdl();
+        $('#export_jdl').click( function() {
+            export_jdl();
         });
-        $('#validate_job').click( function() {
-            jobname = $('input[name=name]').val().split("/").pop();  // remove 'new/'
-            if (jobname) {
-                window.location = client_url + uws_client.client_url_jdl + '/' + jobname + '/validate';
-            } else {
-                global.showMessage('No job name given', 'warning');
-            };
+        $('#jdl_form').submit(function(event) {
+            event.preventDefault();
+            submit_jdl();
         });
-        $('#cp_script').click( function() {
-            jobname = $('input[name=name]').val().split("/").pop();
-            if (jobname) {
-                window.location = client_url + uws_client.client_url_jdl + '/' + jobname + '/copy_script';
-            } else {
-                global.showMessage('No job name given', 'warning');
-            };
+        $('#submit_jdl').click( function() {
+            $('#jdl_form_submit').click();
         });
+        $('#validate_jdl').click( function() {
+            validate_jdl();
+        });
+        // Internal form buttons
         $('#add_parameter').click( function() {
             add_item('param');
         });

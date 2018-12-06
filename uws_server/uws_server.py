@@ -640,8 +640,7 @@ def create_new_job_definition():
     except:
         abort_500_except()
     # Response
-    response.content_type = 'text/plain; charset=UTF-8'
-    return 'New job created: new/{}'.format(jobname)
+    return {'jobname': jobname}
     # redirect('/client/job_definition?jobname=new/{}&msg=new'.format(jobname), 303)
 
 
@@ -678,6 +677,8 @@ def import_job_definition():
                 jobname = jdl.content['name']
                 fname_mv = jdl._get_filename('new/' + jobname)
                 shutil.move(fname_temp, fname_mv)
+            jdl.save('new/' + jobname)
+
     except:
         abort_500_except()
     # Return code 200 and jobname
@@ -738,8 +739,7 @@ def validate_job_definition(jobname):
     except:
         abort_500_except()
     # Return code 200
-    response.content_type = 'text/plain; charset=UTF-8'
-    return 'Job {} validated'.format(jobname)
+    return {'jobname': jobname}
     # redirect('/client/job_definition?jobname={}&msg=validated'.format(jobname), 303)
 
 

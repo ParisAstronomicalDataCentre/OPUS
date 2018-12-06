@@ -16,9 +16,15 @@
     <div class="container bs-docs-container">
         <div id="new_job_form" class="panel panel-default">
             <div class="panel-heading clearfix">
-{% if is_admin  %}
                 <div class="btn-group pull-right">
-                    <button id="validate_job" type="button" class="actions btn btn-default">
+                    <button id="submit_jdl" type="button" class="actions btn btn-primary"
+                            title="Submission will create a new JDL file based on the form inputs. This new JDL file needs to be validated by an administrator">
+                        <span class="glyphicon glyphicon-send"></span>
+                        &nbsp;Submit JDL form
+                    </button>
+{% if is_admin  %}
+                    <button id="validate_jdl" type="button" class="actions btn btn-default"
+                            title="Validates new/<jobname> and creates <jobname>">
                         <span class="glyphicon glyphicon-ok"></span>
                         &nbsp;Validate Job
                     </button>
@@ -28,14 +34,13 @@
                         &nbsp;Copy script to server
                     </button>
 -->
-                </div>
-                <span class="panel-title pull-left" style="padding-top: 6px; padding-right: 6px;">Job Definition</span>
-{% else %}
-                <span class="panel-title">Job Definition</span>
 {% endif %}
+                </div>
+                <span class="panel-title pull-left" style="padding-top: 6px; padding-right: 6px;">Job Definition Editor</span>
             </div>
             <div class="panel-body">
-                <form action="{{ url_for('import_jdl') }}" method="post"  class="form-horizontal" enctype="multipart/form-data">
+                <form id="import_jdl" class="form-horizontal"
+                      enctype="multipart/form-data">
                     <div class="row">
                         <div class="col-md-12 form-group">
                             <label class="col-md-2 control-label">Import</label>
@@ -43,7 +48,7 @@
                                 <div class="input-group">
                                     <input id="jdl_file" class="form-control" name="jdl_file" type="file"/>
                                     <span class="input-group-btn">
-                                        <button id="import_jdl" class="btn btn-default" type="submit">
+                                        <button id="import_jdl_submit" class="btn btn-default" type="submit">
                                             <span class="glyphicon glyphicon-import"></span>
                                             &nbsp;Import JDL</button>
                                     </span>
@@ -54,19 +59,19 @@
                     </div>
                 </form>
                 <hr>
-                <form action="{{ url_for('job_definition') }}" method="post" class="form-horizontal">
+                <form id='jdl_form' class="form-horizontal">
                     <div class="row">
                         <div class="col-md-12 form-group">
-                            <label class="col-md-2 control-label">Name</label>
+                            <label class="col-md-2 control-label">Job name</label>
                             <div class="col-md-6 controls">
                                 <div class="input-group">
                                     <input class="form-control name_typeahead" name="name" type="text" placeholder="Enter job name" value="" autocomplete="off"/>
                                     <span class="input-group-btn">
                                         <button id="load_jdl" class="btn btn-default" type="button">
                                             <span class="glyphicon glyphicon-play-circle"></span>
-                                            &nbsp;Read JDL
+                                            &nbsp;Load JDL
                                         </button>
-                                        <button id="save_jdl" class="btn btn-default" type="button">
+                                        <button id="export_jdl" class="btn btn-default" type="button">
                                             <span class="glyphicon glyphicon-export"></span>
                                             &nbsp;Export JDL
                                         </button>
@@ -269,7 +274,8 @@
                         <div class="col-md-12 form-group">
                             <label class="col-md-2 control-label">&nbsp;</label>
                             <div class="col-md-6 controls">
-                                <input value="Save JDL and script" type="submit" class="btn btn-primary" />
+                                <input id="jdl_form_submit" value="Submit JDL form" type="submit"
+                                       class="btn btn-primary" />
                             </div>
                         </div>
                     </div>

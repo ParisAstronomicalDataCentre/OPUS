@@ -467,16 +467,16 @@ def job_definition(jobname):
     """Show form for new job definition"""
     logger.info(jobname)
     # No need to authenticate, users can propose new jobs that will be validated
-    if request.method == 'POST':
-        jobname = request.form.get('name').split('/')[-1]
-        logger.info('Create new/{}'.format(jobname))
-        response = uws_server_request('/jdl', method='POST', init_request=request)
-        if response.status_code == 200:
-            flash('New job definition has been saved as new/{}'.format(jobname), 'info')
-            return redirect(url_for('job_definition', jobname='new/{}'.format(jobname)), 303)
-        else:
-            flash('Error during creation of job definition for {jn}'.format(jn=jobname),
-              category='danger')
+    # if request.method == 'POST':
+    #     jobname = request.form.get('name').split('/')[-1]
+    #     logger.info('Create new/{}'.format(jobname))
+    #     response = uws_server_request('/jdl', method='POST', init_request=request)
+    #     if response.status_code == 200:
+    #         flash('New job definition has been saved as new/{}'.format(jobname), 'info')
+    #         return redirect(url_for('job_definition', jobname='new/{}'.format(jobname)), 303)
+    #     else:
+    #         flash('Error during creation of job definition for {jn}'.format(jn=jobname),
+    #           category='danger')
     # Show form
     # Set is_admin (will show validate buttons)
     is_admin = False
@@ -485,55 +485,55 @@ def job_definition(jobname):
     return render_template('job_definition.html', jobname=jobname, is_admin=is_admin)
 
 
-@app.route('/jdl/import_jdl', methods=['POST'])
-@login_required
-def import_jdl():
-    """Validate job on server"""
-    # Send request to UWS Server
-    response = uws_server_request('/jdl/import_jdl', method='POST', init_request=request)
-    # redirect to job_definition with message
-    if response.status_code == 200:
-        jobname = response.json().get('jobname', None)
-        if jobname:
-            flash('Job definition has been imported as "new/{jn}"'.format(jn=jobname))
-            return redirect(url_for('job_definition', jobname='new/' + jobname), 303)
-    flash('Error during import of job definition', category='danger')
-    return redirect(url_for('job_definition'), 303)
+# @app.route('/jdl/import_jdl', methods=['POST'])
+# @login_required
+# def import_jdl():
+#     """Validate job on server"""
+#     # Send request to UWS Server
+#     response = uws_server_request('/jdl/import_jdl', method='POST', init_request=request)
+#     # redirect to job_definition with message
+#     if response.status_code == 200:
+#         jobname = response.json().get('jobname', None)
+#         if jobname:
+#             flash('Job definition has been imported as "new/{jn}"'.format(jn=jobname))
+#             return redirect(url_for('job_definition', jobname='new/' + jobname), 303)
+#     flash('Error during import of job definition', category='danger')
+#     return redirect(url_for('job_definition'), 303)
 
 
-@app.route('/jdl/<path:jobname>/validate')
-@login_required
-@roles_required('admin')
-def validate_jdl(jobname):
-    """Validate job on server"""
-    logger.info(jobname)
-    # Send request to UWS Server
-    response = uws_server_request('/jdl/{}/validate'.format(jobname), method='POST', init_request=request)
-    # redirect to job_definition with message
-    if response.status_code == 200:
-        flash('Job definition for new/{jn} has been validated and renamed {jn}'.format(jn=jobname))
-        return redirect(url_for('job_definition', jobname=jobname), 303)
-    elif response.status_code == 403:
-        flash('Forbidden: insufficient rights to validate job definition for new/{jn}'.format(jn=jobname), category='warning')
-    else:
-        flash('Error during validation of job definition for {jn}'.format(jn=jobname), category='danger')
-    return redirect(url_for('job_definition', jobname='new/' + jobname), 303)
+# @app.route('/jdl/<path:jobname>/validate')
+# @login_required
+# @roles_required('admin')
+# def validate_jdl(jobname):
+#     """Validate job on server"""
+#     logger.info(jobname)
+#     # Send request to UWS Server
+#     response = uws_server_request('/jdl/{}/validate'.format(jobname), method='POST', init_request=request)
+#     # redirect to job_definition with message
+#     if response.status_code == 200:
+#         flash('Job definition for new/{jn} has been validated and renamed {jn}'.format(jn=jobname), category='success')
+#         return redirect(url_for('job_definition', jobname=jobname), 303)
+#     elif response.status_code == 403:
+#         flash('Forbidden: insufficient rights to validate job definition for new/{jn}'.format(jn=jobname), category='warning')
+#     else:
+#         flash('Error during validation of job definition for {jn}'.format(jn=jobname), category='danger')
+#     return redirect(url_for('job_definition', jobname='new/' + jobname), 303)
 
 
-@app.route('/jdl/<path:jobname>/copy_script')
-@login_required
-@roles_required('admin')
-def cp_script(jobname):
-    """Copy job script to work server"""
-    logger.info(jobname)
-    # Send request to UWS Server
-    response = uws_server_request('/jdl/{}/copy_script'.format(jobname), method='POST', init_request=request)
-    # redirect to job_definition with message
-    if response.status_code == 200:
-        flash('Job script {}.sh has been copied to work cluster'.format(jobname))
-    else:
-        flash('Job definition for {jn} was not found on the server. Cannot validate.'.format(jn=jobname))
-    return redirect(url_for('job_definition', jobname=jobname), 303)
+# @app.route('/jdl/<path:jobname>/copy_script')
+# @login_required
+# @roles_required('admin')
+# def cp_script(jobname):
+#     """Copy job script to work server"""
+#     logger.info(jobname)
+#     # Send request to UWS Server
+#     response = uws_server_request('/jdl/{}/copy_script'.format(jobname), method='POST', init_request=request)
+#     # redirect to job_definition with message
+#     if response.status_code == 200:
+#         flash('Job script {}.sh has been copied to work cluster'.format(jobname))
+#     else:
+#         flash('Job definition for {jn} was not found on the server. Cannot validate.'.format(jn=jobname))
+#     return redirect(url_for('job_definition', jobname=jobname), 303)
 
 
 # ----------
