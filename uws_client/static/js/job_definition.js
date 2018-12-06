@@ -616,7 +616,7 @@
                 contentType: false
             });
         } else {
-            global.showMessage('No file selected', 'warning');
+            global.showMessage('No job name given', 'warning');
         };
 	};
 

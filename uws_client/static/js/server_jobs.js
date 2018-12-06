@@ -174,9 +174,9 @@
 
         // Actions
         $('#refresh_list').click(get_jobnames);
-        $('#new_job_definition').click(function(){
-            window.location = client_url + '/job_definition/';
-        });
+        //$('#new_job_definition').click(function(){
+        //    window.location = client_url + '/job_definition/';
+        //});
 
     });
 
