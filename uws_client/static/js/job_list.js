@@ -27,6 +27,7 @@
 
     function get_jobnames() {
         // Get jobnames from server
+        $('#loading').show();
         $.ajax({
             url : server_url + '/jdl',
             cache : false,
