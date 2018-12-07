@@ -76,9 +76,11 @@
                     source: json['jobnames'],
                     autoSelect: false,
                 });
+                editor.refresh();
             },
             error : function(xhr, status, exception) {
                 $('#loading').hide();
+                editor.refresh();
                 global.showMessage('Cannot get job names from server', 'danger');
             }
         });
