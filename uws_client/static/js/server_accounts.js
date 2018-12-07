@@ -25,7 +25,6 @@
                 for (var jn in json['jobnames']) {
                     job_options.push('<option value="' + json['jobnames'][jn] + '">' + json['jobnames'][jn] + '</option>')
                 };
-                console.log(job_options);
                 get_users();
             },
             error : function(xhr, status, exception) {
