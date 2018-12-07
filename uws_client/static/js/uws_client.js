@@ -944,7 +944,12 @@ var uws_client = (function($) {
                             context: r_id,  // Set this=r_id for success function
                             success: function (txt) {
                                 $('#loading').hide();
-                                $('#' + this + ' div.panel-body textarea').html(txt);
+                                if (r_type == 'application/json') {
+                                    $('#' + this + ' div.panel-body textarea').html(JSON.stringify(JSON.parse(txt),
+                                    undefined, 2));
+                                } else {
+                                    $('#' + this + ' div.panel-body textarea').html(txt);
+                                }
                             },
                             error: function(xhr, status, exception) {
                                 $('#loading').hide();
