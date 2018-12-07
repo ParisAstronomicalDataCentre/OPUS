@@ -656,7 +656,7 @@ def import_job_definition():
         # Save JDL file as new for this jobname
         f = request.files.get('jdl_file', None)
         if f:
-            #now = dt.datetime.now().isoformat()
+            #now = dt.datetime.now().isoformat().split('.')[0]
             # Get jobname from file name (?)
             jdl = getattr(uws_jdl, JDL)()
             jobname = f.filename.split(jdl.extension)[0]
@@ -705,7 +705,7 @@ def validate_job_definition(jobname):
         if os.path.isfile(jdl_src):
             if os.path.isfile(jdl_dst):
                 # Save file with version and time stamp
-                mt = dt.datetime.fromtimestamp(os.path.getmtime(jdl_dst)).isoformat()
+                mt = dt.datetime.fromtimestamp(os.path.getmtime(jdl_dst)).isoformat().split('.')[0]
                 jdl.read(jobname)  # need version for saved files
                 jdl_dst_save = '{}/saved/{}_v{}_{}{}'.format(
                     jdl.jdl_path, jobname, jdl.content['version'], mt, jdl.extension)
@@ -720,7 +720,7 @@ def validate_job_definition(jobname):
         if os.path.isfile(script_src):
             if os.path.isfile(script_dst):
                 # Save file with time stamp
-                mt = dt.datetime.fromtimestamp(os.path.getmtime(script_dst)).isoformat()
+                mt = dt.datetime.fromtimestamp(os.path.getmtime(script_dst)).isoformat().split('.')[0]
                 jdl.read(jobname)  # need version for saved files
                 script_dst_save = '{}/saved/{}_v{}_{}.sh'.format(
                     SCRIPTS_PATH, jobname, jdl.content['version'], mt)
@@ -901,8 +901,8 @@ def delete_jdl(jobname):
         # Save, then copy from new/
         if os.path.isfile(jdl_src):
             # Save file with version and time stamp
-            mt = dt.datetime.fromtimestamp(os.path.getmtime(jdl_src)).isoformat()
-            jdl_dst_save = '{}/saved/{}_v{}_{}_deleted{}'.format(
+            mt = dt.datetime.fromtimestamp(os.path.getmtime(jdl_src)).isoformat().split('.')[0]
+            jdl_dst_save = '{}/saved/{}_v{}_{}_DELETED{}'.format(
                 jdl.jdl_path, jobname, jdl.content['version'], mt, jdl.extension)
             shutil.move(jdl_src, jdl_dst_save)
             logger.info('JDL file archived and deleted: ' + jdl_dst_save)
@@ -912,8 +912,8 @@ def delete_jdl(jobname):
             # redirect('/client/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
         if os.path.isfile(script_src):
             # Save file with time stamp
-            mt = dt.datetime.fromtimestamp(os.path.getmtime(script_src)).isoformat()
-            script_dst_save = '{}/saved/{}_v{}_{}_deleted.sh'.format(
+            mt = dt.datetime.fromtimestamp(os.path.getmtime(script_src)).isoformat().split('.')[0]
+            script_dst_save = '{}/saved/{}_v{}_{}_DELETED.sh'.format(
                 SCRIPTS_PATH, jobname, jdl.content['version'], mt)
             shutil.move(script_src, script_dst_save)
             logger.info('Job script archived and deleted: ' + script_dst_save)
