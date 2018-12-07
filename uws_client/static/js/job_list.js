@@ -27,37 +27,39 @@
 
     function get_jobnames() {
         // Get jobnames from server
-        $('#loading').show();
-        $.ajax({
-            url : server_url + '/jdl',
-            cache : false,
-            type : 'GET',
-            dataType: "json",
-            success : function(json) {
-                $('#loading').hide();
-                console.log(json['jobnames']);
-                jobnames = json['jobnames'];
-                // Fill select
-                for (var jn in json['jobnames']) {
-                    $('.selectpicker').append('<option>' + json['jobnames'][jn] + '</option>')
-                };
-                $('.selectpicker').append('<option disabled>─────</option>');
-                $('.selectpicker').append('<option>all</option>');
-                $('.selectpicker').selectpicker('refresh');
-                // Check if jobname is set in DOM
-                var jobname = $('#jobname').attr('value');
-                if (jobname) {
-                    $('select[name=jobname]').val(jobname);
+        if (jobname != 'all') {
+            $('#loading').show();
+            $.ajax({
+                url : server_url + '/jdl',
+                cache : false,
+                type : 'GET',
+                dataType: "json",
+                success : function(json) {
+                    $('#loading').hide();
+                    console.log(json['jobnames']);
+                    jobnames = json['jobnames'];
+                    // Fill select
+                    for (var jn in json['jobnames']) {
+                        $('.selectpicker').append('<option>' + json['jobnames'][jn] + '</option>')
+                    };
+                    $('.selectpicker').append('<option disabled>─────</option>');
+                    $('.selectpicker').append('<option>all</option>');
                     $('.selectpicker').selectpicker('refresh');
-                    load_job_list();
-                };
-            },
-            error : function(xhr, status, exception) {
-                $('#loading').hide();
-                console.log(exception);
-            }
-        });
-    }
+                    // Check if jobname is set in DOM
+                    var jobname = $('#jobname').attr('value');
+                    if (jobname) {
+                        $('select[name=jobname]').val(jobname);
+                        $('.selectpicker').selectpicker('refresh');
+                        load_job_list();
+                    };
+                },
+                error : function(xhr, status, exception) {
+                    $('#loading').hide();
+                    console.log(exception);
+                }
+            });
+        };
+    };
 
     function load_job_list() {
         var jobname = $('select[name=jobname]').val();
@@ -111,7 +113,7 @@
             var jobname = $('select[name=jobname]').val();
             if (jobname) {
                 window.location.href =  client_url + uws_client.client_url_job_form + "/" + jobname;
-            }
+            };
         });
 
     });
