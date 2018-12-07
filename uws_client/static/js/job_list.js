@@ -69,6 +69,7 @@
         var col_sort = job_list_columns.indexOf('creationTime');
         $('button.actions').removeAttr('disabled');
         if (jobname == 'all') {
+            $('#loading').hide();
             $('#create_new_job').attr("disabled", "disabled");
             var cols = Array.from(job_list_columns);
             if (cols.indexOf('jobName') == -1) {
