@@ -1176,9 +1176,9 @@ var uws_client = (function($) {
     // GET JOB LIST
 
     var getJobList = function() {
-        $('#loading').show();
         prepareTable();
         for (var i in jobNames) {
+            $('#loading').show();
             var jobName = jobNames[i];
             logger('INFO', 'Get job list for ' + jobName);
             clients[jobName].getJobList(getJobListSuccess, getJobListError);

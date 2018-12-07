@@ -27,41 +27,35 @@
 
     function get_jobnames() {
         // Get jobnames from server
-        var jobname = $('select[name=jobname]').val();
-        if (jobname == 'all') {
-            $('#loading').hide();
-        } else {
-            $('#loading').show();
-            $.ajax({
-                url : server_url + '/jdl',
-                cache : false,
-                type : 'GET',
-                dataType: "json",
-                success : function(json) {
-                    $('#loading').hide();
-                    console.log(json['jobnames']);
-                    jobnames = json['jobnames'];
-                    // Fill select
-                    for (var jn in json['jobnames']) {
-                        $('.selectpicker').append('<option>' + json['jobnames'][jn] + '</option>')
-                    };
-                    $('.selectpicker').append('<option disabled>─────</option>');
-                    $('.selectpicker').append('<option>all</option>');
+        $.ajax({
+            url : server_url + '/jdl',
+            cache : false,
+            type : 'GET',
+            dataType: "json",
+            success : function(json) {
+                $('#loading').hide();
+                console.log(json['jobnames']);
+                jobnames = json['jobnames'];
+                // Fill select
+                for (var jn in json['jobnames']) {
+                    $('.selectpicker').append('<option>' + json['jobnames'][jn] + '</option>')
+                };
+                $('.selectpicker').append('<option disabled>─────</option>');
+                $('.selectpicker').append('<option>all</option>');
+                $('.selectpicker').selectpicker('refresh');
+                // Check if jobname is set in DOM
+                var jobname = $('#jobname').attr('value');
+                if (jobname) {
+                    $('select[name=jobname]').val(jobname);
                     $('.selectpicker').selectpicker('refresh');
-                    // Check if jobname is set in DOM
-                    var jobname = $('#jobname').attr('value');
-                    if (jobname) {
-                        $('select[name=jobname]').val(jobname);
-                        $('.selectpicker').selectpicker('refresh');
-                        load_job_list();
-                    };
-                },
-                error : function(xhr, status, exception) {
-                    $('#loading').hide();
-                    console.log(exception);
-                }
-            });
-        };
+                    load_job_list();
+                };
+            },
+            error : function(xhr, status, exception) {
+                $('#loading').hide();
+                console.log(exception);
+            }
+        });
     };
 
     function load_job_list() {
