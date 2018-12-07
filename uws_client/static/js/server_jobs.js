@@ -12,6 +12,7 @@
     function get_jobnames() {
         // Get jobnames from server
         $('#loading').show();
+        $('#server_jobs_tbody').empty();
         $.ajax({
             url : server_url + '/jdl',
             cache : false,
@@ -32,7 +33,6 @@
 
     function get_jobnames_success(json) {
         // Display user list with update button
-        $('#server_jobs_table').empty();
         var jobnames = json['jobnames']
         var details = json['details']
         var row = '\
@@ -63,11 +63,6 @@
                         title="Edit">\
                             <span class="glyphicon glyphicon-edit"></span>\
                             <span class="hidden-xs hidden-sm hidden-md">&nbsp;Edit</span>\
-                        </button>\
-                        <button id="button_rename_' + jobname_label + '" type="button" class="btn btn-default btn-sm" \
-                        title="Rename">\
-                            <span class="glyphicon glyphicon-font"></span>\
-                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;Rename</span>\
                         </button>\
                         <button id="button_export_' + jobname_label + '" type="button" class="btn btn-default btn-sm" \
                         title="Export">\
@@ -152,7 +147,7 @@
                 type : 'DELETE',
                 success : function() {
                     $('#loading').hide();
-                    global.showMessage('Job definition "' + name + '" has been deleted', 'info');
+                    global.showMessage('Job definition "' + name + '" has been archived and deleted', 'success');
                     get_jobnames();
                 },
                 error : function(xhr, status, exception) {
@@ -175,9 +170,6 @@
 
         // Actions
         $('#refresh_list').click(get_jobnames);
-        //$('#new_job_definition').click(function(){
-        //    window.location = client_url + '/job_definition/';
-        //});
 
     });
 

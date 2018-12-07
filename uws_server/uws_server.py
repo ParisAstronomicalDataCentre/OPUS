@@ -697,7 +697,6 @@ def validate_job_definition(jobname):
         # Copy script and jdl from new
         #jdl = uws_jdl.__dict__[JDL]()
         jdl = getattr(uws_jdl, JDL)()
-        jdl.read(jobname)
         jdl_src = '{}/new/{}{}'.format(jdl.jdl_path, jobname, jdl.extension)
         jdl_dst = '{}/{}{}'.format(jdl.jdl_path, jobname, jdl.extension)
         script_src = '{}/new/{}.sh'.format(jdl.scripts_path, jobname)
@@ -707,20 +706,22 @@ def validate_job_definition(jobname):
             if os.path.isfile(jdl_dst):
                 # Save file with version and time stamp
                 mt = dt.datetime.fromtimestamp(os.path.getmtime(jdl_dst)).isoformat()
+                jdl.read(jobname)  # need version for saved files
                 jdl_dst_save = '{}/saved/{}_v{}_{}{}'.format(
                     jdl.jdl_path, jobname, jdl.content['version'], mt, jdl.extension)
                 os.rename(jdl_dst, jdl_dst_save)
                 logger.info('Previous job JDL saved: ' + jdl_dst_save)
             shutil.copy(jdl_src, jdl_dst)
-            logger.info('New job JDL copied: ' + jdl_dst)
+            logger.info('Job JDL file copied: ' + jdl_dst)
         else:
-            logger.info('No job JDL found for validation: ' + jdl_src)
-            abort_500('No job JDL found for ' + jobname)
+            logger.info('No JDL  found for validation: ' + jdl_src)
+            abort_500('No JDL file found for ' + jobname)
             # redirect('/client/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
         if os.path.isfile(script_src):
             if os.path.isfile(script_dst):
                 # Save file with time stamp
                 mt = dt.datetime.fromtimestamp(os.path.getmtime(script_dst)).isoformat()
+                jdl.read(jobname)  # need version for saved files
                 script_dst_save = '{}/saved/{}_v{}_{}.sh'.format(
                     SCRIPTS_PATH, jobname, jdl.content['version'], mt)
                 os.rename(script_dst, script_dst_save)
@@ -854,7 +855,7 @@ def get_jdl(jobname):
     """
     Get JDL file for jobname
     :param jobname:
-    :return: WADL file
+    :return: VOTable file
     """
     #logger.info(jobname)
     try:
@@ -881,6 +882,49 @@ def get_jdl(jobname):
         abort_404(e.args[0])
     except:
         abort_500_except()
+
+
+@app.delete('/jdl/<jobname>')
+@is_client_trusted
+@is_admin
+def delete_jdl(jobname):
+    """
+    Delete jdl with
+    :param jobname:
+    :return:
+    """
+    try:
+        jdl = getattr(uws_jdl, JDL)()
+        jdl.read(jobname)  # need version for saved files
+        jdl_src = '{}/{}{}'.format(jdl.jdl_path, jobname, jdl.extension)
+        script_src = '{}/{}.sh'.format(jdl.scripts_path, jobname)
+        # Save, then copy from new/
+        if os.path.isfile(jdl_src):
+            # Save file with version and time stamp
+            mt = dt.datetime.fromtimestamp(os.path.getmtime(jdl_src)).isoformat()
+            jdl_dst_save = '{}/saved/{}_v{}_{}_deleted{}'.format(
+                jdl.jdl_path, jobname, jdl.content['version'], mt, jdl.extension)
+            shutil.move(jdl_src, jdl_dst_save)
+            logger.info('JDL file archived and deleted: ' + jdl_dst_save)
+        else:
+            logger.warning('No JDL file found: ' + jdl_src)
+            abort_500('No JDL file found for ' + jobname)
+            # redirect('/client/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
+        if os.path.isfile(script_src):
+            # Save file with time stamp
+            mt = dt.datetime.fromtimestamp(os.path.getmtime(script_src)).isoformat()
+            script_dst_save = '{}/saved/{}_v{}_{}_deleted.sh'.format(
+                SCRIPTS_PATH, jobname, jdl.content['version'], mt)
+            shutil.move(script_src, script_dst_save)
+            logger.info('Job script archived and deleted: ' + script_dst_save)
+        else:
+            logger.warning('No job script found: ' + script_src)
+            abort_500('No job script found for ' + jobname)
+            # redirect('/client/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
+    except:
+        abort_500_except()
+    # Return code 200
+    return {'jobname': jobname}
 
 
 # ----------

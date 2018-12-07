@@ -57,7 +57,7 @@
         // Display user list with update button
         $('#loading').hide();
         var users = json['Resources'];
-        $('#server_accounts_table').empty();
+        $('#server_accounts_tbody').empty();
         for (var u in users) {
             var user = users[u]
             var user_label = user.userName.replace(/\./g, "_").replace(/@/g, "_");
@@ -107,7 +107,7 @@
                     </div>\
                 </td>\
             </tr>';
-            $('#server_accounts_table').append(row);
+            $('#server_accounts_tbody').append(row);
             var roles = user.roles.split(',');
             // console.log(roles);
             $('.selectpicker').selectpicker('refresh');
@@ -145,7 +145,7 @@
                 </button>\
             </td>\
         </tr>';
-        $('#server_accounts_table').append(row);
+        $('#server_accounts_tbody').append(row);
         $('#button_add_user').click(add_user);
         $('.selectpicker').selectpicker('refresh');
     }
@@ -174,7 +174,7 @@
 			dataType: "json",
 			success : function(json) {
                 $('#loading').hide();
-				global.showMessage('User ' + json.userName + ' patched (' + key + ')', 'info');
+				global.showMessage('User ' + json.userName + ' patched (' + key + ')', 'success');
                 get_users();
 			},
             error : function(xhr, status, exception) {
@@ -206,7 +206,7 @@
 			dataType: "json",
 			success : function(json) {
                 $('#loading').hide();
-				global.showMessage('User ' + json.userName + ' created', 'info');
+				global.showMessage('User ' + json.userName + ' created', 'success');
                 get_users();
 			},
             error : function(xhr, status, exception) {
@@ -227,7 +227,7 @@
                 type : 'DELETE',
                 success : function() {
                     $('#loading').hide();
-                    global.showMessage('User ' + name + ' deleted', 'info');
+                    global.showMessage('User ' + name + ' deleted', 'success');
                     get_users();
                 },
                 error : function(xhr, status, exception) {

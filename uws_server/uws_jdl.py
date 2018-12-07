@@ -131,7 +131,7 @@ class JDLFile(object):
 
     def set_from_post(self, post, user):
         logger.debug(post.__dict__)
-        now = dt.datetime.now()
+        #now = dt.datetime.now()
         # Read form
         keys = list(post.keys())
         jobname = post.get('name').split('/')[-1]
@@ -201,7 +201,7 @@ class JDLFile(object):
             'group': post.get('group', ''),
             'type': post.get('type', ''),
             'subtype': post.get('subtype', ''),
-            'version': post.get('version', '') or now.strftime(DT_FMT),
+            'version': post.get('version', '') or '1',  # now.strftime(DT_FMT),
             'contact_name': post.get('contact_name', '') or user.name,
             'contact_email': post.get('contact_email', ''),
             'parameters': params,
