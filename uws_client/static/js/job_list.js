@@ -62,13 +62,16 @@
     function load_job_list() {
         var jobname = $('select[name=jobname]').val();
         var col_sort = job_list_columns.indexOf('creationTime');
+        $('button.actions').removeAttr('disabled');
         if (jobname == 'all') {
+            $('#create_new_job').attr("disabled", "disabled");
             var cols = Array.from(job_list_columns);
             if (cols.indexOf('jobName') == -1) {
                 cols.splice(0, 0, "jobName");
-            }
-            col_sort = cols.indexOf('creationTime');
-            uws_client.initClient(client_url, server_url, jobnames, cols);
+            };
+            if (jobnames.length > 0) {
+                uws_client.initClient(client_url, server_url, jobnames, cols);
+            };
         } else {
             uws_client.initClient(client_url, server_url, [jobname], job_list_columns);
         };
@@ -80,7 +83,6 @@
         //if ( $( "#job_id" ).length ) {
         //    uws_client.selectJob($( "#jobid" ).attr('value'));
         //}
-        $('button.actions').removeAttr('disabled');
     };
 
     // LOAD JOB LIST AT STARTUP

@@ -33,10 +33,8 @@ LOCAL_USER = 'www'  # Appache user (may be www, _www, apache...)
 ADMIN_NAME = 'opus-admin'
 ADMIN_EMAIL = 'a@b.com'
 ADMIN_TOKEN = 'TBD_in_settings_local.py'
-# TOKEN for special user job_event, used internally
-JOB_EVENT_TOKEN = 'TBD_in_settings_local.py'
-# TOKEN for special user maintenant, used internally
-MAINTENANCE_TOKEN = 'TBD_in_settings_local.py'
+JOB_EVENT_TOKEN = 'TBD_in_settings_local.py'  # TOKEN for special user job_event, used internally
+MAINTENANCE_TOKEN = 'TBD_in_settings_local.py'  # TOKEN for special user maintenant, used internally
 
 # Access rules
 ALLOW_ANONYMOUS = True
@@ -57,7 +55,7 @@ EXECUTION_DURATION_MAX = 3600  # in seconds
 WAIT_TIME_MAX = 600  # in seconds
 
 # ARCHIVED phase (UWS1.1)
-USE_ARCHIVED_PHASE = True
+USE_ARCHIVED_PHASE = False
 
 # Copy back results
 COPY_RESULTS = True  # copy results from Manager to UWS server (may be irrelevant if Manager = Local)

@@ -130,7 +130,6 @@ class JDLFile(object):
             logger.warning('Script not found for {}'.format(jobname))
 
     def set_from_post(self, post, user):
-        logger.debug(post.__dict__)
         #now = dt.datetime.now()
         # Read form
         keys = list(post.keys())

@@ -12,7 +12,6 @@
     function get_jobnames() {
         // Get jobnames from server
         $('#loading').show();
-        $('#server_jobs_tbody').empty();
         $.ajax({
             url : server_url + '/jdl',
             cache : false,
@@ -35,6 +34,8 @@
         // Display user list with update button
         var jobnames = json['jobnames']
         var details = json['details']
+        $('#server_jobs_thead').empty();
+        $('#server_jobs_tbody').empty();
         var row = '\
             <tr>\
                 <th class="text-center">Job name</th>\
@@ -44,7 +45,7 @@
                 <th class="text-center">Subtype</th>\
                 <th class="text-center">Actions</th>\
             </tr>';
-        $('#server_jobs_tbody').append(row);
+        $('#server_jobs_thead').append(row);
         for (var j in jobnames) {
             var jobname = jobnames[j]
             var jobname_label = jobname.replace(/\./g, "_").replace(/@/g, "_");
