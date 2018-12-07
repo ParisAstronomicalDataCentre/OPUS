@@ -27,6 +27,7 @@
 
     function get_jobnames() {
         // Get jobnames from server
+        var jobname = $('select[name=jobname]').val();
         if (jobname != 'all') {
             $('#loading').show();
             $.ajax({
