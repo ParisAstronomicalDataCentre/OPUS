@@ -28,7 +28,9 @@
     function get_jobnames() {
         // Get jobnames from server
         var jobname = $('select[name=jobname]').val();
-        if (jobname != 'all') {
+        if (jobname == 'all') {
+            $('#loading').hide();
+        } else {
             $('#loading').show();
             $.ajax({
                 url : server_url + '/jdl',
