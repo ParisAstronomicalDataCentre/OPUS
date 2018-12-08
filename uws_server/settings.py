@@ -372,8 +372,8 @@ TEMP_PATH = VAR_PATH + '/temp'
 
 for p in [VAR_PATH + '/db', VAR_PATH + '/config',
           LOG_PATH, JDL_PATH, JOBDATA_PATH, WORKDIR_PATH, RESULTS_PATH, UPLOADS_PATH, TEMP_PATH,
-          JDL_PATH + '/votable', JDL_PATH + '/votable/new', JDL_PATH + '/votable/saved',
-          JDL_PATH + '/scripts', JDL_PATH + '/scripts/new', JDL_PATH + '/scripts/saved']:
+          JDL_PATH + '/votable', JDL_PATH + '/votable/tmp', JDL_PATH + '/votable/saved',
+          JDL_PATH + '/scripts', JDL_PATH + '/scripts/tmp', JDL_PATH + '/scripts/saved']:
     if not os.path.isdir(p):
         os.makedirs(p)
 
