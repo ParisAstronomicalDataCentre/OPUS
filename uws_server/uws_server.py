@@ -686,7 +686,7 @@ def import_job_definition():
 
 
 #@app.get('/config/validate_job/<jobname>')
-@app.post('/jdl/<jobname:path>/validate')
+@app.post('/jdl/tmp/<jobname>/validate')
 @is_client_trusted
 @is_admin
 def validate_job_definition(jobname):

@@ -18,13 +18,13 @@
             <div class="panel-heading clearfix">
                 <div class="btn-group pull-right">
                     <button id="submit_jdl" type="button" class="actions btn btn-primary"
-                            title="Submission will create a new JDL file based on the form inputs. This new JDL file needs to be tested and validated by an administrator to set up a new job">
+                            title="Submission will create a JDL file based on the form inputs. This JDL file is temporary and needs to be tested and validated by an administrator to set up a new job.">
                         <span class="glyphicon glyphicon-send"></span>
                         &nbsp;Submit JDL form
                     </button>
 {% if is_admin  %}
                     <button id="validate_jdl" type="button" class="actions btn btn-default"
-                            title="Validates new/<jobname> and creates <jobname>">
+                            title="Validates tmp/<jobname> and creates <jobname>" disabled>
                         <span class="glyphicon glyphicon-ok"></span>
                         &nbsp;Validate Job
                     </button>
