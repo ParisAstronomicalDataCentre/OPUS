@@ -225,7 +225,7 @@ class JSONFile(JDLFile):
 
     def save(self, jobname):
         """Save job description to file"""
-        raw_jobname = jobname.split('/')[-1]  # remove new/ prefix
+        raw_jobname = jobname.split('/')[-1]  # remove tmp/ prefix
         js = json.dumps(self.content, indent=4)
         jdl_fname = self._get_filename(jobname)
         with open(jdl_fname, 'w') as f:
@@ -236,7 +236,7 @@ class JSONFile(JDLFile):
 
     def read(self, jobname):
         """Read job description from file"""
-        raw_jobname = jobname.split('/')[-1]  # remove new/ prefix
+        raw_jobname = jobname.split('/')[-1]  # remove tmp/ prefix
         fname = self._get_filename(jobname)
         with open(fname, 'r') as f:
             #self.content = json.load(f)
@@ -289,7 +289,7 @@ class VOTFile(JDLFile):
 
     def save(self, jobname):
         """Save job description to VOTable file"""
-        raw_jobname = jobname.split('/')[-1]  # remove new/ prefix
+        raw_jobname = jobname.split('/')[-1]  # remove tmp/ prefix
         # VOTable root
         xmlns = self.xmlns_uris['xmlns']
         xsi = self.xmlns_uris['xmlns:xsi']
@@ -465,7 +465,7 @@ class VOTFile(JDLFile):
 
     def read(self, jobname, jobid=None):
         """Read job description from VOTable file"""
-        raw_jobname = jobname.split('/')[-1]  # remove new/ prefix
+        raw_jobname = jobname.split('/')[-1]  # remove tmp/ prefix
         if self.content.get('name') != jobname:
             fname = self._get_filename(jobname, jobid=jobid)
             # '{}/{}{}'.format(JDL_PATH, job.jobname, self.extension)
@@ -620,7 +620,7 @@ class VOTFile(JDLFile):
 
     def save_old(self, jobname):
         """Save job description to VOTable file"""
-        raw_jobname = jobname.split('/')[-1]  # remove new/ prefix
+        raw_jobname = jobname.split('/')[-1]  # remove tmp/ prefix
         # VOTable root
         xmlns = self.xmlns_uris['xmlns']
         xsi = self.xmlns_uris['xmlns:xsi']
@@ -748,7 +748,7 @@ class VOTFile(JDLFile):
 
     def read_old(self, jobname):
         """Read job description from VOTable file"""
-        raw_jobname = jobname.split('/')[-1]  # remove new/ prefix
+        raw_jobname = jobname.split('/')[-1]  # remove tmp/ prefix
         fname = self._get_filename(jobname)
         # '{}/{}{}'.format(JDL_PATH, job.jobname, self.extension)
         groups = {
@@ -920,7 +920,7 @@ class WADLFile(JDLFile):
     def save(self, jobname):
         """Save job description to WADL file"""
         raw_jobname = jobname
-        raw_jobname = raw_jobname.split('/')[-1]  # remove new/ prefix
+        raw_jobname = raw_jobname.split('/')[-1]  # remove tmp/ prefix
         # Prepare parameter blocks
         jdl_params = []
         jdl_popts = []

@@ -332,7 +332,7 @@
             $('#loading').show();
             // ajax command to get JDL from UWS server
             $.ajax({
-                url : server_url + '/jdl/' + jobname + '/json',  //.split("/").pop(),  // to remove new/ (not needed here)
+                url : server_url + '/jdl/' + jobname + '/json',  //.split("/").pop(),  // to remove tmp/ (not needed here)
                 async : true,
                 type : 'GET',
                 dataType: "json",
@@ -478,11 +478,11 @@
 	function export_jdl() {
         var jobname = $('input[name=name]').val();
         if (jobname.length > 0) {
-            if (jobname.search("new/") == -1) {
+            if (jobname.search("tmp/") == -1) {
                 $('#loading').show();
                 // ajax command to get JDL file from UWS server
                 $.ajax({
-                    url : server_url + '/jdl/' + jobname,  //.split("/").pop(),  // to remove new/ (not needed here)
+                    url : server_url + '/jdl/' + jobname,  //.split("/").pop(),  // to remove tmp/ (not needed here)
                     type : 'GET',
                     dataType: "text",
                     success : function(response, status, xhr) {
@@ -540,8 +540,8 @@
                 success : function(response, status, xhr) {
                     $('#loading').hide();
                     var jobname = response.jobname;
-                    global.showMessage('Job definition has been saved as "new/' + jobname + '"', 'success');
-                    $('input[name=name]').val('new/' + jobname);
+                    global.showMessage('Job definition has been saved as "tmp/' + jobname + '"', 'success');
+                    $('input[name=name]').val('tmp/' + jobname);
                     load_jdl();
                 },
                 error : function(xhr, status, exception) {
@@ -573,9 +573,9 @@
                 success : function(response, status, xhr) {
                     $('#loading').hide();
                     var jobname = response.jobname;
-                    global.showMessage('Job definition has been successfully imported as "new/' + jobname + '"',
+                    global.showMessage('Job definition has been successfully imported as "tmp/' + jobname + '"',
                     'success');
-                    $('input[name=name]').val('new/' + jobname);
+                    $('input[name=name]').val('tmp/' + jobname);
                     load_jdl();
                 },
                 error : function(xhr, status, exception) {
@@ -592,7 +592,7 @@
 	};
 
 	function validate_jdl() {
-        var jobname = $('input[name=name]').val().split("/").pop();  // remove 'new/'
+        var jobname = $('input[name=name]').val().split("/").pop();  // remove 'tmp/'
         var csrf_token = $('#csrf_token').attr('value');
         if (jobname.length > 0) {
             $('#loading').show();
@@ -604,7 +604,7 @@
                 success : function(response, status, xhr) {
                     $('#loading').hide();
                     var jobname = response.jobname;
-                    global.showMessage('Job definition for "new/' + jobname + '" has been successfully validated and \
+                    global.showMessage('Job definition for "tmp/' + jobname + '" has been successfully validated and \
                     renamed "' + jobname + '"', 'success');
                     $('input[name=name]').val(jobname);
                     load_jdl();

@@ -636,12 +636,11 @@ def create_new_job_definition():
         jdl = getattr(uws_jdl, JDL)()
         jdl.set_from_post(request.forms, user)
         # Save as a new job description
-        jdl.save('new/' + jobname)
+        jdl.save('tmp/' + jobname)
     except:
         abort_500_except()
     # Response
     return {'jobname': jobname}
-    # redirect('/client/job_definition?jobname=new/{}&msg=new'.format(jobname), 303)
 
 
 @app.post('/jdl/import_jdl')
@@ -663,21 +662,21 @@ def import_job_definition():
             if jobname == f.filename:
                 jobname = os.path.splitext(os.path.basename(f.filename))[0]
             logger.debug(jobname)
-            fname_temp = jdl._get_filename('new/' + jobname)
+            fname_temp = jdl._get_filename('tmp/' + jobname)
             logger.debug(fname_temp)
             if os.path.isfile(fname_temp):
                 os.remove(fname_temp)
             f.save(fname_temp)
             # Read JDL
-            logger.debug('new/' + jobname)
-            jdl.read('new/' + jobname)
+            logger.debug('tmp/' + jobname)
+            jdl.read('tmp/' + jobname)
             if jdl.content['name'] != jobname:
                 logger.warning('Jobname and Filename not matching: {} {} ({})'.format(
                     jdl.content['name'], jobname, f.filename))
                 jobname = jdl.content['name']
-                fname_mv = jdl._get_filename('new/' + jobname)
+                fname_mv = jdl._get_filename('tmp/' + jobname)
                 shutil.move(fname_temp, fname_mv)
-            jdl.save('new/' + jobname)
+            jdl.save('tmp/' + jobname)
 
     except:
         abort_500_except()
@@ -697,11 +696,11 @@ def validate_job_definition(jobname):
         # Copy script and jdl from new
         #jdl = uws_jdl.__dict__[JDL]()
         jdl = getattr(uws_jdl, JDL)()
-        jdl_src = '{}/new/{}{}'.format(jdl.jdl_path, jobname, jdl.extension)
+        jdl_src = '{}/tmp/{}{}'.format(jdl.jdl_path, jobname, jdl.extension)
         jdl_dst = '{}/{}{}'.format(jdl.jdl_path, jobname, jdl.extension)
-        script_src = '{}/new/{}.sh'.format(jdl.scripts_path, jobname)
+        script_src = '{}/tmp/{}.sh'.format(jdl.scripts_path, jobname)
         script_dst = '{}/{}.sh'.format(jdl.scripts_path, jobname)
-        # Save, then copy from new/
+        # Save, then copy from tmp/
         if os.path.isfile(jdl_src):
             if os.path.isfile(jdl_dst):
                 # Save file with version and time stamp
@@ -898,7 +897,6 @@ def delete_jdl(jobname):
         jdl.read(jobname)  # need version for saved files
         jdl_src = '{}/{}{}'.format(jdl.jdl_path, jobname, jdl.extension)
         script_src = '{}/{}.sh'.format(jdl.scripts_path, jobname)
-        # Save, then copy from new/
         if os.path.isfile(jdl_src):
             # Save file with version and time stamp
             mt = dt.datetime.fromtimestamp(os.path.getmtime(jdl_src)).isoformat().split('.')[0]
