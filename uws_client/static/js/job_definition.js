@@ -332,11 +332,11 @@
             $('#loading').show();
             // ajax command to get JDL from UWS server
             $.ajax({
-                url : server_url + '/jdl/' + jobname + '/json',  //.split("/").pop(),  // to remove tmp/ (not needed here)
-                async : true,
-                type : 'GET',
+                url: server_url + '/jdl/' + jobname + '/json',  //.split("/").pop(),  // to remove tmp/ (not needed here)
+                async: true,
+                type: 'GET',
                 dataType: "json",
-                success : function(jdl) {
+                success: function(jdl) {
                     $('#loading').hide();
                     console.log(jdl);
                     //global.showMessage('JDL loaded.', 'info')
@@ -458,8 +458,14 @@
     //                        $('#load_msg').show().delay(2000).fadeOut();
     //                    }
     //                });
+                    // Admin can validate this job, unless the form is modified again
+                    var jobname = $('input[name=name]').val();
+                    if (jobname.indexOf('tmp/') == 0) {
+                        $('#validate_jdl').prop('disabled', false);
+                    };
+                    $("input[name=name]").focus();
                 },
-                error : function(xhr, status, exception) {
+                error: function(xhr, status, exception) {
                     $('#loading').hide();
                     console.log(exception);
                     editor.setValue('');
@@ -482,10 +488,10 @@
                 $('#loading').show();
                 // ajax command to get JDL file from UWS server
                 $.ajax({
-                    url : server_url + '/jdl/' + jobname,  //.split("/").pop(),  // to remove tmp/ (not needed here)
-                    type : 'GET',
+                    url: server_url + '/jdl/' + jobname,  //.split("/").pop(),  // to remove tmp/ (not needed here)
+                    type: 'GET',
                     dataType: "text",
-                    success : function(response, status, xhr) {
+                    success: function(response, status, xhr) {
                         // check for a filename
                         var filename = "";
                         var disposition = xhr.getResponseHeader('Content-Disposition');
@@ -507,7 +513,7 @@
                         link.click();
                         document.body.removeChild(link);
                     },
-                    error : function(xhr, status, exception) {
+                    error: function(xhr, status, exception) {
                         $('#loading').hide();
                         console.log(exception);
                         global.showMessage(exception, 'danger');
@@ -533,18 +539,18 @@
             $('#loading').show();
             // ajax command to get JDL file from UWS server
             $.ajax({
-                url : server_url + '/jdl',
-                type : 'POST',
+                url: server_url + '/jdl',
+                type: 'POST',
                 headers: { "X-CSRFToken": csrf_token },
-                data : formData,
-                success : function(response, status, xhr) {
+                data: formData,
+                success: function(response, status, xhr) {
                     $('#loading').hide();
                     var jobname = response.jobname;
                     global.showMessage('Job definition has been saved as "tmp/' + jobname + '"', 'success');
                     $('input[name=name]').val('tmp/' + jobname);
                     load_jdl();
                 },
-                error : function(xhr, status, exception) {
+                error: function(xhr, status, exception) {
                     $('#loading').hide();
                     console.log(exception);
                     global.showMessage('Error while submitting job definition', 'danger');
@@ -566,11 +572,11 @@
             $('#loading').show();
             // ajax command to get JDL file from UWS server
             $.ajax({
-                url : server_url + '/jdl/import_jdl',
-                type : 'POST',
+                url: server_url + '/jdl/import_jdl',
+                type: 'POST',
                 headers: { "X-CSRFToken": csrf_token },
-                data : formData,
-                success : function(response, status, xhr) {
+                data: formData,
+                success: function(response, status, xhr) {
                     $('#loading').hide();
                     var jobname = response.jobname;
                     global.showMessage('Job definition has been successfully imported as "tmp/' + jobname + '"',
@@ -578,7 +584,7 @@
                     $('input[name=name]').val('tmp/' + jobname);
                     load_jdl();
                 },
-                error : function(xhr, status, exception) {
+                error: function(xhr, status, exception) {
                     $('#loading').hide();
                     console.log(exception);
                     global.showMessage('Cannot import JDL file (check that JDL file is valid)', 'danger');
@@ -592,31 +598,37 @@
 	};
 
 	function validate_jdl() {
-        var jobname = $('input[name=name]').val().split("/").pop();  // remove 'tmp/'
+        var jobname = $('input[name=name]').val();  //.split("/").pop();  // remove 'tmp/'
         var csrf_token = $('#csrf_token').attr('value');
         if (jobname.length > 0) {
-            $('#loading').show();
-            // ajax command to get JDL file from UWS server
-            $.ajax({
-                url : server_url + '/jdl/' + jobname + '/validate',
-                type : 'POST',
-                headers: { "X-CSRFToken": csrf_token },
-                success : function(response, status, xhr) {
-                    $('#loading').hide();
-                    var jobname = response.jobname;
-                    global.showMessage('Job definition for "tmp/' + jobname + '" has been successfully validated and \
-                    renamed "' + jobname + '"', 'success');
-                    $('input[name=name]').val(jobname);
-                    load_jdl();
-                },
-                error : function(xhr, status, exception) {
-                    $('#loading').hide();
-                    console.log(exception);
-                    global.showMessage('Cannot validate JDL file', 'danger');
-                },
-    			processData: false,  // tell jQuery not to process the data
-                contentType: false
-            });
+            if (jobname.indexOf('tmp/') == 0) {
+                $('#loading').show();
+                // ajax command to get JDL file from UWS server
+                $.ajax({
+                    url: server_url + '/jdl/' + jobname + '/validate',
+                    type: 'POST',
+                    headers: { "X-CSRFToken": csrf_token },
+                    success: function(response, status, xhr) {
+                        $('#loading').hide();
+                        var jobname = response.jobname;
+                        global.showMessage('Job definition for "tmp/' + jobname + '" has been successfully validated and \
+                        renamed "' + jobname + '"', 'success');
+                        $('input[name=name]').val(jobname);
+                        load_jdl();
+                        $("#validate_jdl").prop("disabled", true);
+                    },
+                    error: function(xhr, status, exception) {
+                        $('#loading').hide();
+                        console.log(exception);
+                        global.showMessage('Cannot validate JDL file', 'danger');
+                    },
+                    processData: false,  // tell jQuery not to process the data
+                    contentType: false
+                });
+            } else {
+                global.showMessage('Job definition needs to start with "tmp/". Please submit form before validation.',
+                'warning');
+            };
         } else {
             global.showMessage('No job name given', 'warning');
         };
@@ -642,7 +654,7 @@
             load_jdl();
         };
         // Add event functions
-        $('#import_jdl').submit(function(event) {
+        $('#import_jdl').submit( function(event) {
             event.preventDefault();
             import_jdl();
         });
@@ -652,7 +664,7 @@
         $('#export_jdl').click( function() {
             export_jdl();
         });
-        $('#jdl_form').submit(function(event) {
+        $('#jdl_form').submit( function(event) {
             event.preventDefault();
             submit_jdl();
         });
@@ -660,6 +672,7 @@
             $('#jdl_form_submit').click();
         });
         $('#validate_jdl').click( function() {
+            $("#validate_jdl").stop();
             validate_jdl();
         });
         // Internal form buttons
@@ -682,12 +695,15 @@
             remove_all_items('generated');
         });
         // Load JDL on return keydown for job name
-        $('input[name=name]').keydown(function (event) {
+        $('input[name=name]').keydown( function (event) {
             if (event.keyCode == 13) {
                 //$('.ui-autocomplete').hide();
                 event.preventDefault();
                 setTimeout(function(){load_jdl();}, 200);
             };
+        });
+        $("input[name=name]").focusout( function() {
+           setTimeout(function(){ $("#validate_jdl").prop("disabled", true); }, 200);
         });
 	}); // end ready
 
