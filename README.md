@@ -14,7 +14,7 @@ the provenance information of jobs and results.
 Documentation
 =============
 
-The documentation located in `docs/` can be accessed at http://opus-job-manager.readthedocs.org/ 
+The documentation located in `docs/` can be accessed at http://opus-job-manager.readthedocs.io/ 
 
 Installation
 ============
