@@ -370,6 +370,7 @@ UPLOADS_PATH = VAR_PATH + '/uploads'
 TEMP_PATH = VAR_PATH + '/temp'
 #--- Set all _PATH based on APP_PATH or VAR_PATH -----------------------------------------------------------------------
 
+# Create dirs if they do not exist yet
 for p in [VAR_PATH + '/db', VAR_PATH + '/config',
           LOG_PATH, JDL_PATH, JOBDATA_PATH, WORKDIR_PATH, RESULTS_PATH, UPLOADS_PATH, TEMP_PATH,
           JDL_PATH + '/votable', JDL_PATH + '/votable/tmp', JDL_PATH + '/votable/saved',

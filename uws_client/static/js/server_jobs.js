@@ -60,11 +60,12 @@
                 <td class="text-center" style="vertical-align: middle;">' + jdetails.subtype + '</td>\
                 <td class="text-center" style="vertical-align: middle;">\
                     <div class="input-group-btn">\
-                        <button id="button_edit_' + jobname_label + '" type="button" class="btn btn-default btn-sm" \
+                        <a href="' + client_url + '/job_definition/' + jobname + '" \
+                        id="button_edit_' + jobname_label + '" type="button" class="btn btn-default btn-sm" \
                         title="Edit">\
                             <span class="glyphicon glyphicon-edit"></span>\
                             <span class="hidden-xs hidden-sm hidden-md">&nbsp;Edit</span>\
-                        </button>\
+                        </a>\
                         <button id="button_export_' + jobname_label + '" type="button" class="btn btn-default btn-sm" \
                         title="Export">\
                             <span class="glyphicon glyphicon-export"></span>\
@@ -79,7 +80,7 @@
                 </td>\
             </tr>';
             $('#server_jobs_tbody').append(row);
-            $('#button_edit_' + jobname_label).click({name: jobname}, edit_jdl);
+            //$('#button_edit_' + jobname_label).click({name: jobname}, edit_jdl);
             $('#button_export_' + jobname_label).click({name: jobname}, export_jdl);
             $('#button_delete_' + jobname_label).click({name: jobname}, delete_job);
         }

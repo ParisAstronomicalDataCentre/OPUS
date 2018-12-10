@@ -659,6 +659,10 @@
             import_jdl();
         });
         $('#load_jdl').click( function() {
+            var jobname = $('input[name=name]').val();
+            if (jobname.indexOf('tmp/') == 0) {
+                setTimeout(function(){ $("#validate_jdl").prop("disabled", false); }, 200);
+            };
             load_jdl();
         });
         $('#export_jdl').click( function() {
@@ -672,7 +676,6 @@
             $('#jdl_form_submit').click();
         });
         $('#validate_jdl').click( function() {
-            $("#validate_jdl").stop();
             validate_jdl();
         });
         // Internal form buttons
@@ -703,7 +706,7 @@
             };
         });
         $("input[name=name]").focusout( function() {
-           setTimeout(function(){ $("#validate_jdl").prop("disabled", true); }, 200);
+            setTimeout(function(){ $("#validate_jdl").prop("disabled", true); }, 200);
         });
 	}); // end ready
 

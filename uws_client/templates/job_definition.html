@@ -23,11 +23,15 @@
                         &nbsp;Submit JDL form
                     </button>
 {% if is_admin  %}
-                    <button id="validate_jdl" type="button" class="actions btn btn-default"
+                    <button id="validate_jdl" type="button" class="actions btn btn-success"
                             title="Validates tmp/<jobname> and creates <jobname>" disabled>
                         <span class="glyphicon glyphicon-ok"></span>
-                        &nbsp;Validate Job
+                        &nbsp;Validate Job Definition
                     </button>
+                    <a href="{{ url_for('server_jobs') }}" type="button" class="actions btn btn-default">
+                        <span class="glyphicon glyphicon-edit"></span>
+                        &nbsp;Server Jobs
+                    </a>
 <!--
                     <button id="cp_script" type="button" class="actions btn btn-default">
                         <span class="glyphicon glyphicon-file"></span>

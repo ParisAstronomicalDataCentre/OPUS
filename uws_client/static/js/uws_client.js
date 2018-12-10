@@ -578,7 +578,12 @@ var uws_client = (function($) {
             };
             $('#id_'+pname).wrap('<div class="input-group"></div>');
             // Add Update buttons (possible to update params when pĥase is PENDING in UWS 1.0 - but not yet implemented)
-            $('#id_'+pname).parent().append('<span class="input-group-btn"><button id="button_'+pname+'" class="btn btn-default" type="button">X</button></span>');
+            $('#id_'+pname).parent().append('\
+                <span class="input-group-btn">\
+                    <button id="button_'+pname+'" class="btn btn-default" type="button" title="Remove item">\
+                        <span class="glyphicon glyphicon-remove"></span>\
+                    </button>\
+                </span>');
             // Add event
             $('#button_'+pname).click( function() {
                 $('#div_'+pname).parent().remove();
