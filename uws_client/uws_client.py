@@ -135,6 +135,7 @@ def git_version():
         env['LANGUAGE'] = 'C'
         env['LANG'] = 'C'
         env['LC_ALL'] = 'C'
+        logger.warning(env)
         out = subprocess.Popen(cmd, stdout = subprocess.PIPE, env=env, cwd=APP_PATH).communicate()[0]
         return out
 
