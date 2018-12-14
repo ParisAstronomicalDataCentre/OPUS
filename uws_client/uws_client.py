@@ -143,7 +143,8 @@ def git_version():
         GIT_REVISION = out.strip().decode('ascii')
         out = _minimal_ext_cmd(['git', 'log', '-1', '--date=short', '--pretty=format:%cd'])
         GIT_DATE = out.strip().decode('ascii')
-    except OSError:
+    except OSError as e:
+        logger.warning(str(e))
         GIT_REVISION = "Unknown"
         GIT_DATE = "Unknown"
 
