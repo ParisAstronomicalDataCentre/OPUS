@@ -7,6 +7,7 @@ UWS client implementation using bottle.py and javascript
 """
 
 import os
+import subprocess
 import yaml
 import uuid
 import datetime
@@ -121,6 +122,32 @@ for p in [VAR_PATH + '/logs', VAR_PATH + '/config', VAR_PATH + '/db']:
     if not os.path.isdir(p):
         os.makedirs(p)
 
+# Return the git revision as a string
+def git_version():
+    def _minimal_ext_cmd(cmd):
+        # construct minimal environment
+        env = {}
+        for k in ['SYSTEMROOT', 'PATH']:
+            v = os.environ.get(k)
+            if v is not None:
+                env[k] = v
+        # LANGUAGE is used on win32
+        env['LANGUAGE'] = 'C'
+        env['LANG'] = 'C'
+        env['LC_ALL'] = 'C'
+        out = subprocess.Popen(cmd, stdout = subprocess.PIPE, env=env).communicate()[0]
+        return out
+
+    try:
+        out = _minimal_ext_cmd(['git', 'rev-parse', 'HEAD'])
+        GIT_REVISION = out.strip().decode('ascii')
+        out = _minimal_ext_cmd(['git', 'log', '-1', '--date=short', '--pretty=format:%cd'])
+        GIT_DATE = out.strip().decode('ascii')
+    except OSError:
+        GIT_REVISION = "Unknown"
+        GIT_DATE = ""
+
+    return GIT_DATE + ' ' + GIT_REVISION
 
 # ----------
 # create the application instance :)
@@ -430,8 +457,8 @@ def home():
     # logger.debug('app.config = {}'.format(app.config))
     logger.debug('config = '.format({k: app.config[k] for k in EDITABLE_CONFIG if k in app.config}))
     logger.debug('g = {}'.format(g.__dict__))
-    logger.info('session = {}'.format(session.__dict__))
-    return render_template('home.html')
+    logger.debug('session = {}'.format(session.__dict__))
+    return render_template('home.html', git_version=git_version())
 
 
 @app.route('/jobs', defaults={'jobname': ''})
