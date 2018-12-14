@@ -101,7 +101,8 @@ class User(object):
 special_users = [
     User(ADMIN_NAME, ADMIN_TOKEN),
     User('job_event', JOB_EVENT_TOKEN),
-    User('maintenance', MAINTENANCE_TOKEN)
+    User('maintenance', MAINTENANCE_TOKEN),
+    User('test_', 'test_')
 ]
 
 
@@ -112,7 +113,7 @@ def check_permissions(job):
             # logger.debug('Permission granted for special user {} (job {}/{})'.format(job.user.name, job.jobname, job.jobid))
             pass
         else:
-            if job.jobname:
+            if job.jobname and job.jobname not in ['test_']:
                 if not job.storage.has_access(job.user, job.jobname):
                     raise JobAccessDenied('User {} does not have permission to create/edit {} jobs'.format(job.user.name, job.jobname))
     # else:
@@ -281,8 +282,6 @@ class Job(object):
 
     def set_from_post(self, post, files):
         """Set attributes and parameters from POST"""
-        logger.debug('{}'.format(post.__dict__))
-        logger.debug('{}'.format(files.keys()))
         # Read JDL
         self.jdl.read(self.jobname)
         # Pop UWS attributes keywords from POST or set by default

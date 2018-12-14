@@ -7,11 +7,17 @@ Unit tests for UWS server
 """
 
 import unittest
+import datetime as dt
 from webtest import TestApp
 
 # Redefine LOG_FILE, SQLITE_FILE, MANAGER
-SQLITE_FILE_NAME = 'job_database_test.db'
-LOG_FILE_SUFFIX = '_test'
+now = dt.datetime.now()
+now_str = now.isoformat().split('.')[0]
+ALLOW_ANONYMOUS = True
+CHECK_PERMISSIONS = False
+CHECK_OWNER = False
+SQLITE_FILE_NAME = 'job_database_test_{}.db'.format(now_str)
+LOG_FILE_SUFFIX = '_test_' + now_str
 MANAGER = ''
 
 from uws_server import uws_server
@@ -19,6 +25,7 @@ from uws_server import uws_server
 test_app = TestApp(uws_server.app)  # , extra_environ=dict(REMOTE_USER='test'))
 
 jobname = 'ctbin'
+
 
 
 class TestGet(unittest.TestCase):

@@ -8,6 +8,7 @@ Settings for the UWS server
 
 import os
 import sys
+import datetime as dt
 import uuid
 import logging
 import logging.config
@@ -326,19 +327,19 @@ if os.path.exists(APP_PATH + '/uws_server/settings_local.py'):
 #--- Include host-specific settings ------------------------------------------------------------------------------------
 
 
-#--- If imported from unittest_server.py, redefine settings -----------------------------------------------------------------------
+#--- If execution from pytest, redefine settings -----------------------------------------------------------------------
 main_dict = sys.modules['__main__'].__dict__
-if 'test_' in main_dict.get('__file__', ''):
+if 'pytest' in main_dict.get('__file__', ''):
     print('\nPerforming tests')
-    if 'LOG_FILE_SUFFIX' in main_dict:
-        LOG_FILE_SUFFIX = main_dict['LOG_FILE_SUFFIX']
-    if 'STORAGE' in main_dict:
-        STORAGE = main_dict['STORAGE']
-    if 'SQLITE_FILE_NAME' in main_dict:
-        SQLITE_FILE_NAME = main_dict['SQLITE_FILE_NAME']
-    if 'MANAGER' in main_dict:
-        MANAGER = main_dict['MANAGER']
-#--- If imported from unittest_server.py, redefine settings -----------------------------------------------------------------------
+    now = dt.datetime.now()
+    now_str = now.isoformat().split('.')[0]
+    SQLITE_FILE_NAME = 'job_database_test_{}.db'.format(now_str)
+    LOG_FILE_SUFFIX = '_test_' + now_str
+    MANAGER = ''
+    ALLOW_ANONYMOUS = True
+    CHECK_PERMISSIONS = False  # check rights to create/edit a job
+    CHECK_OWNER = False
+#--- If execution from pytest, redefine settings -----------------------------------------------------------------------
 
 
 if MANAGER == 'SLURM':

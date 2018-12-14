@@ -20,4 +20,5 @@ init:
 	chown -R $(WWWUSER) $(VAR_PATH)
 
 test:
-	./test.py
+	pytest -s
+

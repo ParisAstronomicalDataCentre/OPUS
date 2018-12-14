@@ -61,6 +61,23 @@ generated[rname] = {
 }
 '''
 
+test_job = {
+    'name': 'test',
+    'annotation': 'test annotation',
+    'version': '1.2',
+    'group': '',
+    'type': '',
+    'subtype': '',
+    'doculink': '',
+    'contact_name': 'contact name',
+    'contact_email': 'contact@email.com',
+    'parameters': {'input': {'datatype': 'xs:string', 'default': 'test_'}},
+    'generated': {'output': {'content_type': 'text/plain'}},
+    'used': {},
+    'executionduration': 1,
+    'quote': 1,
+}
+
 # ---------
 # Job Description Language
 
@@ -466,7 +483,9 @@ class VOTFile(JDLFile):
     def read(self, jobname, jobid=None):
         """Read job description from VOTable file"""
         raw_jobname = jobname.split('/')[-1]  # remove tmp/ prefix
-        if self.content.get('name') != jobname:
+        if jobname == 'test_':
+            self.content.update(test_job)
+        elif self.content.get('name') != jobname:
             fname = self._get_filename(jobname, jobid=jobid)
             # '{}/{}{}'.format(JDL_PATH, job.jobname, self.extension)
             groups = {
