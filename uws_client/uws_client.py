@@ -145,9 +145,9 @@ def git_version():
         GIT_DATE = out.strip().decode('ascii')
     except OSError:
         GIT_REVISION = "Unknown"
-        GIT_DATE = ""
+        GIT_DATE = "Unknown"
 
-    return GIT_DATE + ' ' + GIT_REVISION
+    return GIT_DATE, GIT_REVISION
 
 # ----------
 # create the application instance :)
@@ -455,10 +455,11 @@ def add_url_to_context():
 def home():
     """Home page"""
     # logger.debug('app.config = {}'.format(app.config))
+    logger.debug('session = {}'.format(session.__dict__))
     logger.debug('config = '.format({k: app.config[k] for k in EDITABLE_CONFIG if k in app.config}))
     logger.debug('g = {}'.format(g.__dict__))
-    logger.debug('session = {}'.format(session.__dict__))
-    return render_template('home.html', git_version=git_version())
+    date, version = git_version()
+    return render_template('home.html', git_date=date, git_version=version)
 
 
 @app.route('/jobs', defaults={'jobname': ''})
