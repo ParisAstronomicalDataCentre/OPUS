@@ -139,8 +139,8 @@
             </td>\
             <td class="text-center" style="vertical-align: middle;">\
                 <button id="button_add_user" type="submit" class="submit btn btn-default">\
-                    <span class="glyphicon glyphicon-send"></span>\
-                    <span class="hidden-xs hidden-sm hidden-md">&nbsp;Submit</span>\
+                    <span class="glyphicon glyphicon-plus"></span>\
+                    <span class="hidden-xs hidden-sm hidden-md">&nbsp;Add account</span>\
                 </button>\
             </td>\
         </tr>';
