@@ -335,6 +335,8 @@ def on_user_logged_in(sender, user):
     logger.info(user.email)
     #session['server_url'] = app.config['UWS_SERVER_URL_JS']
     session['auth'] = base64.b64encode((current_user.email + ':' + str(current_user.token)).encode())
+    # quick request to server (will create user on server)
+    response = uws_server_request('/jdl', method='GET')
     flash('"{}" is now logged in'.format(user.email), 'info')
 
 
@@ -593,21 +595,26 @@ def uws_server_request(uri, method='GET', init_request=None):
         response = requests.delete('{}{}'.format(server_url, uri), auth=auth)
     elif method == 'POST':
         post={}
-        for key in list(init_request.form.keys()):
-            value = init_request.form.getlist(key)
-            logger.debug('POST {}: {}'.format(key, value))
-            if len(value) == 1:
-                post[key] = value[0]
-            else:
-                post[key] = value
+        if init_request:
+            for key in list(init_request.form.keys()):
+                value = init_request.form.getlist(key)
+                logger.debug('POST {}: {}'.format(key, value))
+                if len(value) == 1:
+                    post[key] = value[0]
+                else:
+                    post[key] = value
         files = {}
-        for fname in list(init_request.files.keys()):
-            logger.debug('file: ' + fname)
-            fp = init_request.files[fname]
-            files[fname] = (fp.filename, fp.stream, fp.content_type, fp.headers)
+        if init_request:
+            for fname in list(init_request.files.keys()):
+                logger.debug('file: ' + fname)
+                fp = init_request.files[fname]
+                files[fname] = (fp.filename, fp.stream, fp.content_type, fp.headers)
         response = requests.post('{}{}'.format(server_url, uri), data=post, files=files, auth=auth)
     else:
-        response = requests.get('{}{}'.format(server_url, uri), params=init_request.args, auth=auth)
+        params = {}
+        if init_request:
+            params = init_request.args
+        response = requests.get('{}{}'.format(server_url, uri), params=params, auth=auth)
     # Return response
     logger.info("{} {}{} ({})".format(method, server_url, uri, response.status_code))
     return response

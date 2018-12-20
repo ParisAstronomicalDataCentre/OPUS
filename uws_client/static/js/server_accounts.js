@@ -122,7 +122,7 @@
         }
         // add form
         var row = '\
-        <tr id="add_user">\
+        <tr id="add_user" style="border-top: 2px solid lightgrey;">\
             <td class="text-center" style="vertical-align: middle;" width="150">\
                 <input class="form-control" id="name" name="name" type="text"/>\
             </td>\
@@ -140,7 +140,7 @@
             <td class="text-center" style="vertical-align: middle;">\
                 <button id="button_add_user" type="submit" class="submit btn btn-default">\
                     <span class="glyphicon glyphicon-plus"></span>\
-                    <span class="hidden-xs hidden-sm hidden-md">&nbsp;Add account</span>\
+                    <span class="hidden-xs hidden-sm hidden-md">&nbsp;Add new account</span>\
                 </button>\
             </td>\
         </tr>';
