@@ -248,7 +248,7 @@ def home():
     resp = requests.get(BASE_URL + '/client')
     if resp.status_code == 200:
         redirect(BASE_URL + '/client')
-    return 'OPUS - https://uws-server.readthedocs.io/'
+    return 'OPUS - https://opus-job-manager.readthedocs.io'
 
 
 @app.route('/favicon.ico')
@@ -557,12 +557,15 @@ def create_new_job_definition():
     try:
         user = set_user()
         jobname = request.forms.get('name').split('/')[-1]
-        # Create JDL file from job_jdl
-        #jdl = uws_jdl.__dict__[JDL]()
-        jdl = getattr(uws_jdl, JDL)()
-        jdl.set_from_post(request.forms, user)
-        # Save as a new job description
-        jdl.save('tmp/' + jobname)
+        if jobname:
+            # Create JDL file from job_jdl
+            #jdl = uws_jdl.__dict__[JDL]()
+            jdl = getattr(uws_jdl, JDL)()
+            jdl.set_from_post(request.forms, user)
+            # Save as a new job description
+            jdl.save('tmp/' + jobname)
+        else:
+            abort_500('No jobname given')
     except:
         abort_500_except()
     # Response
@@ -584,26 +587,34 @@ def import_job_definition():
             #now = dt.datetime.now().isoformat().split('.')[0]
             # Get jobname from file name (?)
             jdl = getattr(uws_jdl, JDL)()
-            jobname = f.filename.split(jdl.extension)[0]
-            if jobname == f.filename:
+            jobname = f.filename.split(jdl.extension)[0]  # e.g. remove _vot.xml at the end of filename
+            if jobname == f.filename:  # else remove extension
                 jobname = os.path.splitext(os.path.basename(f.filename))[0]
-            logger.debug(jobname)
-            fname_temp = jdl._get_filename('tmp/' + jobname)
-            logger.debug(fname_temp)
-            if os.path.isfile(fname_temp):
-                os.remove(fname_temp)
-            f.save(fname_temp)
-            # Read JDL
-            logger.debug('tmp/' + jobname)
-            jdl.read('tmp/' + jobname)
-            if jdl.content['name'] != jobname:
-                logger.warning('Jobname and Filename not matching: {} {} ({})'.format(
-                    jdl.content['name'], jobname, f.filename))
-                jobname = jdl.content['name']
-                fname_mv = jdl._get_filename('tmp/' + jobname)
-                shutil.move(fname_temp, fname_mv)
-            jdl.save('tmp/' + jobname)
-
+            if jobname:
+                logger.debug(jobname)
+                fname_temp = jdl._get_filename('tmp/' + jobname)
+                logger.debug(fname_temp)
+                if os.path.isfile(fname_temp):
+                    os.remove(fname_temp)
+                f.save(fname_temp)
+                # Read JDL
+                logger.debug('tmp/' + jobname)
+                jdl.read('tmp/' + jobname)
+                if jdl.content['name']:
+                    if jdl.content['name'] != jobname:
+                        logger.warning('Jobname and filename not matching, JDL renamed: {} ({})'.format(
+                            jdl.content['name'], f.filename))
+                        jobname = jdl.content['name']
+                        fname_mv = jdl._get_filename('tmp/' + jobname)
+                        shutil.move(fname_temp, fname_mv)
+                else:
+                    logger.warning('No jobname found, using filename to define jobname: {} ({})'.format(
+                        jobname, f.filename))
+                    jdl.content['name'] = jobname
+                # Save JDL
+                jdl.save('tmp/' + jobname)
+            else:
+                abort_500('No jobname found for file ' + f.filename)
     except:
         abort_500_except()
     # Return code 200 and jobname
@@ -761,7 +772,7 @@ def get_jdl_json(jobname):
     try:
         user = set_user()
         db = getattr(storage, STORAGE + 'JobStorage')()
-        if not CHECK_PERMISSIONS or db.has_access(user, jobname):
+        if not CHECK_PERMISSIONS or db.has_access(user, jobname) or 'tmp/' in jobname:
             # Get JDL content
             jdl = getattr(uws_jdl, JDL)()
             jdl.read(jobname)
