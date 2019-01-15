@@ -1,16 +1,17 @@
+
 Installation
 ============
+
 Get the code from the git repository
 ------------------------------------
-The web application code can be placed in any directory, e.g. `OPUS_DIR=/opt/OPUS`. To create the `OPUS` directory, 
-simply clone the git repository:
+The web application code can be placed in any directory, e.g. `OPUS_DIR=/opt/OPUS`. To create the `OPUS` directory, clone the git repository:
 
     $ git clone https://github.com/ParisAstronomicalDataCentre/OPUS.git
 
 Setting the environment
 -----------------------
 
-OPUS has been successfully installed on MacOS, Debian/Ubuntu and CentOS. The web application generally uses Apache 2 
+OPUS has been tested on MacOS, Debian/Ubuntu and CentOS. The web application generally uses Apache 2 
 and the WSGI module connected to a Python 3.6 environment.
 
 The following packages may be needed if not already installed in the environment: git, bzip2, graphviz, httpd-devel, 
@@ -40,11 +41,13 @@ The unit tests may be run to check the main features of the UWS server:
 
     $ make test
 
-Configure the web server
+Web server configuration
 ------------------------
 
 The `uws_server/uws_server.py` file  can be directly run to test the application on
-`localhost:8080`. With Apache 2 and mod_wsgi, use the script `uws_server/wsgi.py` or create a similar script. In the 
+`localhost:8080`. 
+
+With Apache 2 and mod_wsgi, use the script `uws_server/wsgi.py` or create a similar script. In the 
 same way, the client can be run directly (`uws_client/uws_client.py`) or using the script `uws_client/wsgi.py`. For 
 convenience, the following links can be created:
 
@@ -80,4 +83,22 @@ Then create a `opus.conf` file to define virtual hosts for the OPUS server and c
             Require all granted
         </Directory>
     </VirtualHost>
+
+
+SLURM Work Cluster configuration
+--------------------------------
+
+In order to send and manage jobs on a SLURM Work Cluster, the UWS Server must be specifically configured.
+
+A dedicated account must be defined on the SLURM Work Cluster and declared in the UWS Server settings. This account 
+must be accessible through SSH by copying the UWS Server SSH public key in the `.ssh/authorized_keys` file on the 
+SLURM Work Cluster dedicated account home directory.
+
+The oncompletion plugin can be added to SLURM to send a signal on specific SLURM events (TIMEOUT, PREEMPTED, ...). 
+This is done by adding in the dedicated script (e.g. `/usr/local/sbin/slurm_job_completion.sh`) a curl command for 
+the SLURM account (`<UID>`) that sends a signal to the `<BASE_URL>` as follow:
+
+    if [[ "$UID" -eq <UID> ]]; then
+        curl -k --max-time 10 -d jobid="$JOBID" -d phase="$JOBSTATE" <BASE_URL>/handler/job_event
+    fi
 

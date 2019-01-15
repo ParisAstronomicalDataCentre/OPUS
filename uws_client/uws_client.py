@@ -31,28 +31,37 @@ from wtforms.validators import InputRequired
 # ----------
 # Configuration
 
-# App configuration
+### Application configuration
+
 #DEBUG=False
 #TESTING=False
 #SERVER_NAME=  # (e.g.: 'myapp.dev:5000')
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 VAR_PATH = '/var/www/opus'
-LOG_FILE_SUFFIX = ''
 APPLICATION_ROOT = '/opus_client'
-UWS_SERVER_URL_JS = APPLICATION_ROOT + '/proxy'  # called by javascript, set to local url (proxy) to avoid cross-calls
-UWS_SERVER_URL = 'http://localhost'  # to be defined in settings_local.py
+# called from javascript, set to local url (proxy) to avoid cross-calls, will connect to UWS_SERVER_URL
+UWS_SERVER_URL_JS = APPLICATION_ROOT + '/proxy'
+
+### to be defined in settings_local.py
+UWS_SERVER_URL = 'http://localhost'
 UWS_AUTH = 'Basic'
+
+# Editable configuration keywords (can be modified from the preference web page)
+EDITABLE_CONFIG = [
+    'UWS_SERVER_URL',
+    'UWS_AUTH',
+]
+
+### Security configuration
 
 ADMIN_NAME = 'opus-admin'
 ADMIN_DEFAULT_PW = 'opus-admin'  # to be changed after install, or defined in settings_local.py
 TESTUSER_NAME = 'testuser'
 TESTUSER_DEFAULT_PW = 'testuser' # to be changed after install, or defined in settings_local.py
 
-# Editable configuration keywords
-EDITABLE_CONFIG = [
-    'UWS_SERVER_URL',
-    'UWS_AUTH',
-]
+### Internal configuration
+
+LOG_FILE_SUFFIX = ''
 
 # Include host-specific setting
 if os.path.exists(APP_PATH + '/uws_client/settings_local.py'):

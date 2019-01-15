@@ -1,6 +1,7 @@
 
 Overview
 ========
+
 **OPUS** (**O**bservatoire de **P**aris **U**WS **S**ystem) is a job control 
 system developed using the micro-framework bottle.py. The Universal Worker System 
 pattern v1.1 (UWS) as defined by the International Virtual Observatory Alliance 
@@ -9,10 +10,10 @@ OPUS also follows the proposed IVOA Provenance Data Model to capture and expose
 the provenance information of jobs and results.
 
 More information on the UWS pattern recommendation can be found 
-[here](http://www.ivoa.net/documents/UWS/20101010/).
+[here](http://www.ivoa.net/documents/UWS/).
 
 More information on the IVOA Provenance Data Model can be found 
-[here](http://www.ivoa.net/documents/ProvenanceDM/20181015/).
+[here](http://www.ivoa.net/documents/ProvenanceDM/).
 
 The **UWS server** is a web application composed of:
 
