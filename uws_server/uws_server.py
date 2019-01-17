@@ -472,11 +472,9 @@ def patch_user(name):
     for k in request.POST.keys():
         if k in ['token', 'roles', 'active']:
             u[k] = request.POST[k]
-        # save modified user
-        if k == 'roles':
-            # job_storage.change_roles(userid, roles=request.POST[k])
+            # save modified user
             job_storage.update_user(name, k, request.POST[k])
-    logger.info('User patched: ' + name)
+            logger.info('User patched: ' + name)
     return user2scim(u)
 
 
