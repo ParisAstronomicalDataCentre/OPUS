@@ -164,6 +164,7 @@ to ensure application security.
 | ADMIN_DEFAULT_PW    | Default password for the administrator (to be changed after install, or kept secret in `uws_client/settings_local.py`)    |
 | TESTUSER_NAME       | Login name for testuser                                                                                                   |
 | TESTUSER_DEFAULT_PW | Default password for the administrator (to be changed after install, or kept secret in `uws_client/settings_local.py`)    |
-                                                                                                                        |
+
+
 Some of those variables can be edited and modified from the UWS Client (list of variables in EDITABLE_CONFIG). In 
 particular the UWS_SERVER_URL and UWS_AUTH variables so that the client can connect to any other UWS server.
