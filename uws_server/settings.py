@@ -130,20 +130,21 @@ JDL = 'VOTFile'
 # Parameters allowed at Job creation for job control
 # either the direct name of the UWS attribute, or prefixed with 'uws:'
 UWS_PARAMETERS = {
-    'runId': 'User specific identifier for the job',  # this parameter will appear first in the form, helpful for a user to find their jobs
+    'runId': 'User specific label for the job',  # this parameter will appear first in the form, helpful for a user to
+    # find their jobs
     'executionDuration': 'Required execution duration in seconds',
     # 'uws_executionDuration': 'Required execution duration in seconds',
-    'uws_quote': 'Estimation of the duration of the job',
     'destruction': 'Date of desctruction of the job',
     #'uws_destruction': 'Date of desctruction of the job',
+    'uws_quote': 'Estimation of the duration of the job',
 }
 UWS_PARAMETERS_KEYS = [
     'runId',
     'executionDuration',
     # 'uws_executionDuration',
-    'uws_quote',
     'destruction',
     # 'uws_destruction',
+    'uws_quote',
 ]
 
 # Control parameters allowed in a form for job creation - may be extended further below

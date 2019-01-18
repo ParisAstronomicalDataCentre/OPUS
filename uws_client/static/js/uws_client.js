@@ -577,7 +577,7 @@ var uws_client = (function($) {
                 $('#job_params').append(row);
             };
             $('#id_'+pname).wrap('<div class="input-group"></div>');
-            // Add Update buttons (possible to update params when pĥase is PENDING in UWS 1.0 - but not yet implemented)
+            // Add remove button
             $('#id_'+pname).parent().append('\
                 <span class="input-group-btn">\
                     <button id="button_'+pname+'" class="btn btn-default" type="button" title="Remove item">\
@@ -799,7 +799,7 @@ var uws_client = (function($) {
                 $('#id_'+pname).attr('disabled','disabled');
             };
         };
-        // Disable button if job is not PENDING
+        // Disable Update button if job is not PENDING
         if (job.phase != 'PENDING') {
             //$('#id_'+pname).removeAttr('readonly');
             //$('#id_'+pname).removeAttr('disabled');
