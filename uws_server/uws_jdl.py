@@ -179,7 +179,7 @@ class JDLFile(object):
         while 'used_name_' + str(iused) in keys:
             pname = post.get('used_name_' + str(iused), '')
             if pname:
-                ptype = post.get('used_type_' + str(iused), '')
+                ptype = post.get('used_contenttype_' + str(iused), '')
                 # TODO: do a getall for all options
                 pisfile = post.get('used_isfile_' + str(iused), '')
                 purl = post.get('used_url_' + str(iused), '')
@@ -199,8 +199,9 @@ class JDLFile(object):
         while 'generated_name_' + str(iresult) in keys:
             rname = post.get('generated_name_' + str(iresult), '')
             if rname:
+                ptype = post.get('generated_contenttype_' + str(iresult), '')
                 results[rname] = {
-                    'content_type': post.get('generated_type_' + str(iresult), ''),
+                    'content_type': ptype,
                     'multiplicity': post.get('used_multiplicity_' + str(iresult), ''),
                     'default': post.get('generated_default_' + str(iresult), ''),
                     'annotation': post.get('generated_annotation_' + str(iresult), ''),
@@ -387,6 +388,9 @@ class VOTFile(JDLFile):
                     param_attrib['arraysize'] = '*'
                 if str(p['required']).lower() == 'false' :
                     param_attrib['type'] = 'no_query'
+                for attr in ['unit', 'ucd', 'utype']:
+                    if p.get(attr, False):
+                        param_attrib[attr] =  p[attr]
                 param = ETree.Element('PARAM', attrib=param_attrib)
                 pdesc = p.get('annotation', '')
                 # .encode(encoding='utf-8', errors='ignore')
