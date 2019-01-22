@@ -390,6 +390,7 @@
     //				    $('input[name=param_options_' + i + ']').val(jdl.parameters[param]['options']);
     //				    $('input[name=param_attributes_' + i + ']').val(attributes);
                     };
+                    $('.selectpicker').selectpicker('refresh');
                     // Fill used_list table
                     remove_all_items('used');
                     var i = 0;
