@@ -174,6 +174,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                 'prov:location': location,
                 # 'prov:type': pdict['datatype'],
             })
+            # Add Used relation
             act.used(e_in[-1], attributes={
                 'prov:role': pname
             })
@@ -267,7 +268,6 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
         for rname in job.results:
             if rname not in ['stdout', 'stderr', 'provjson', 'provxml', 'provsvg']:
                 entity_id = job.results[rname]['entity_id']
-                rdict = job.jdl.content['generated'].get(rname, {})
                 # entity_id = job.jobid + '_' + rname
                 # if entity_id:
                 entity = job.storage.get_entity(entity_id, silent=True)
@@ -279,20 +279,22 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                     entity_id = rname
                     rqn = ':' + entity_id
                     content_type = job.results[rname]['content_type']
-                # Add Entity
-                e_out.append(pdoc.entity(rqn))
-                e_out[-1].add_attributes({
-                    'prov:label': rname,
-                    'prov:location': job.results[rname]['url'],
-                    'voprov:content_type': content_type,
-                })
-                if entity:
-                    e_out[-1].add_attributes({
-                        'voprov:result_name': entity['result_name'],
-                        'voprov:file_name': entity['file_name']
-                    })
                 # Only show result if it is not already used (case of config files sometimes)
                 if entity_id not in used_entities:
+                    # Add Entity
+                    e_out.append(pdoc.entity(rqn))
+                    e_out[-1].add_attributes({
+                        'prov:label': rname,
+                        'prov:location': job.results[rname]['url'],
+                        'voprov:content_type': content_type,
+                    })
+                    if entity:
+                        e_out[-1].add_attributes({
+                            'voprov:result_name': entity['result_name'],
+                            'voprov:file_name': entity['file_name']
+                        })
+                        pdict = job.jdl.content['generated'].get(entity['result_name'], {})
+                    # Add Generation relation
                     e_out[-1].wasGeneratedBy(act, attributes={
                         'prov:role': rname,
                     })
@@ -302,6 +304,25 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                     #    e_out[-1].wasAttributedTo(owner, attributes={
                     #        'prov:role': 'owner',
                     #    })
+                    if pdict:
+                        # Add EntityDescription
+                        edattrs = {}
+                        for pkey, pvalue in pdict.items():
+                            if pvalue:
+                                edattrs['voprov:' + pkey] = pvalue
+                        if descriptions:
+                            edattrs['prov:label'] = entity['result_name']
+                            edattrs['prov:type'] = 'voprov:EntityDescription'
+                            eds.append(pdoc.entity('opus_jdl:' + job.jobname + '#' + entity['result_name']))
+                            eds[-1].add_attributes(edattrs)
+                            pdoc.influence(e_out[-1], eds[-1], other_attributes={
+                                'prov:type': 'voprov:EntityDescription',
+                            })
+                            adesc.hadMember(eds[-1])
+                        else:
+                            e_out[-1].add_attributes(edattrs)
+
+
 
     # Merge all prov documents
     for opdoc in other_pdocs:
