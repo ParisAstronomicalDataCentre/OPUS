@@ -27,13 +27,13 @@
     ];
     var datatype_options = {
         'param': [
-            'string',
-            'anyURI',
-            'float',
-            'double',
-            'int',
-            'long',
-            'boolean',
+            'xs:string',
+            'xs:anyURI',
+            'xs:float',
+            'xs:double',
+            'xs:int',
+            'xs:long',
+            'xs:boolean',
         ],
         'generated': content_types,
         'used': content_types,
@@ -372,7 +372,7 @@
                         }
                         var attr_mapping = {
                             'name': param,
-                            'datatype': jdl.parameters[param]['datatype'].split(':').pop(),
+                            'datatype': jdl.parameters[param]['datatype'],  //.split(':').pop(),
                             'default': jdl.parameters[param]['default'],
                             'annotation': jdl.parameters[param]['annotation'],
                             'options': jdl.parameters[param]['options'],
