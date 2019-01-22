@@ -25,15 +25,15 @@
         'application/x-cdf',
         'video/mp4',
     ];
-    var type_options = {
+    var datatype_options = {
         'param': [
-            'xs:string',
-            'xs:anyURI',
-            'xs:float',
-            'xs:double',
-            'xs:int',
-            'xs:long',
-            'xs:boolean',
+            'string',
+            'anyURI',
+            'float',
+            'double',
+            'int',
+            'long',
+            'boolean',
         ],
         'generated': content_types,
         'used': content_types,
@@ -95,7 +95,7 @@
 
             // Parameters
             case 'param':
-                var options = '<option>' + type_options[type].join('</option><option>') + '</option>';
+                var options = '<option>' + datatype_options[type].join('</option><option>') + '</option>';
                 var row = '\
                     <tr id="param_' + ii + '">\
                         <td>\
@@ -145,7 +145,7 @@
 
             // Used
 	        case 'used':
-                var options = '<option>' + type_options[type].join('</option><option>') + '</option>';
+                var options = '<option>' + datatype_options[type].join('</option><option>') + '</option>';
                 var row = '\
                     <tr id="used_' + ii + '">\
                         <td>\
@@ -205,7 +205,7 @@
 
             // Results
 	        case 'generated':
-                var options = '<option>' + type_options[type].join('</option><option>') + '</option>';
+                var options = '<option>' + datatype_options[type].join('</option><option>') + '</option>';
                 var row = '\
                     <tr id="generated_' + ii + '">\
                         <td>\
@@ -372,7 +372,7 @@
                         }
                         var attr_mapping = {
                             'name': param,
-                            'datatype': jdl.parameters[param]['datatype'],
+                            'datatype': jdl.parameters[param]['datatype'].split(':').pop(),
                             'default': jdl.parameters[param]['default'],
                             'annotation': jdl.parameters[param]['annotation'],
                             'options': jdl.parameters[param]['options'],
