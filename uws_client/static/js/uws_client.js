@@ -23,15 +23,15 @@ var uws_client = (function($) {
 
     // Config
     var DEBUG = true;
-    var server_url_jobs = '/rest/';
-    var server_url_jdl = '/jdl/<jobname>/json';
-    var server_url_results = '/store/';
-    var client_url = '/opus_client';
-    var client_url_jdl = '/jdl';
-    var client_url_jobs = '/jobs';
-    var client_url_job_edit = '/job_edit';
-    var client_url_job_form = '/job_form';
-    var client_url_proxy = '/proxy';
+    var server_endpoint_jobs = '/rest/';
+    var server_endpoint_jdl = '/jdl/<jobname>/json';
+    var server_endpoint_results = '/store/';
+    var client_endpoint = '/opus_client';
+    var client_endpoint_jdl = '/jdl';
+    var client_endpoint_jobs = '/jobs';
+    var client_endpoint_job_edit = '/job_edit';
+    var client_endpoint_job_form = '/job_form';
+    var client_endpoint_proxy = '/proxy';
 
     var job_list_columns = [
         //'jobName',  // job.jobName
@@ -125,20 +125,23 @@ var uws_client = (function($) {
     //----------
     // CREATE MANAGER AND CLIENTS
 
-    function initClient(clientUrl, serviceUrl, jobNames_init, set_job_list_columns=[]){
+    function initClient(serviceUrl, serverEndpoint, clientEndpoint, jobNames_init, set_job_list_columns=[]){
         jobNames = jobNames_init;
         if (set_job_list_columns.length) {
             job_list_columns = set_job_list_columns;
         };
-        if (clientUrl.length) {
-            client_url = clientUrl;
+        if (serverEndpoint.length) {
+            server_endpoint_jobs = serverEndpoint;
+        };
+        if (clientEndpoint.length) {
+            client_endpoint = clientEndpoint;
         };
         for (var i in jobNames) {
             // Init client
-            var url = serviceUrl + server_url_jobs + jobNames[i];
+            var url = serviceUrl + server_endpoint_jobs + jobNames[i];
             clients[jobNames[i]] = new uwsLib.uwsClient(url);
             // Get JDL for job
-            $.getJSON(serviceUrl + server_url_jdl.replace("<jobname>", jobNames[i]), function(jdl) {
+            $.getJSON(serviceUrl + server_endpoint_jdl.replace("<jobname>", jobNames[i]), function(jdl) {
                 clients[jobNames[i]].jdl = jdl;
             });
             logger('INFO', 'uwsClient at ' + clients[jobNames[i]].serviceUrl);
@@ -510,19 +513,19 @@ var uws_client = (function($) {
             var jobId = $(this).parents("tr").attr('id');
             var jobName = $(this).parents("tr").attr('jobname');
             selectJob(jobId);
-            window.location.href = client_url + client_url_job_edit + "/" + jobName + "/" + jobId + '#properties';
+            window.location.href = client_endpoint + client_endpoint_job_edit + "/" + jobName + "/" + jobId + '#properties';
         });
         $('#'+job.jobId+' td button.parameters').click( function() {
             var jobId = $(this).parents("tr").attr('id');
             var jobName = $(this).parents("tr").attr('jobname');
             selectJob(jobId);
-            window.location.href = client_url + client_url_job_edit + "/" + jobName + "/" + jobId + '#parameters';
+            window.location.href = client_endpoint + client_endpoint_job_edit + "/" + jobName + "/" + jobId + '#parameters';
         });
          $('#'+job.jobId+' td button.results').click( function() {
             var jobId = $(this).parents("tr").attr('id');
             var jobName = $(this).parents("tr").attr('jobname');
             selectJob(jobId);
-            window.location.href = client_url + client_url_job_edit + "/" + jobName + "/" + jobId + '#results';
+            window.location.href = client_endpoint + client_endpoint_job_edit + "/" + jobName + "/" + jobId + '#results';
         });
     };
 
@@ -1006,7 +1009,7 @@ var uws_client = (function($) {
                 var r_type = job.results[r].mimetype;
                 var r_url_auth = r_url.split('?').pop();
                 if (r_url_auth != r_url) {
-                    r_url_auth = client_url + client_url_proxy + server_url_results + '?' + r_url_auth
+                    r_url_auth = client_endpoint + client_endpoint_proxy + server_endpoint_results + '?' + r_url_auth
                 };
                 // var r_type = jdl.generated[r]['content_type']; //r_name.split('.').pop();
                 displayResult('result_list', r, r_type, r_url, r_url_auth);
@@ -1020,7 +1023,7 @@ var uws_client = (function($) {
                     var r_type = job.results[r].mimetype;
                     var r_url_auth = r_url.split('?').pop();
                     if (r_url_auth != r_url) {
-                        r_url_auth = client_url + client_url_proxy + server_url_results + '?' + r_url_auth
+                        r_url_auth = client_endpoint + client_endpoint_proxy + server_endpoint_results + '?' + r_url_auth
                     };
                     displayResult('result_list', r, r_type, r_url, r_url_auth);
                 };
@@ -1031,7 +1034,7 @@ var uws_client = (function($) {
             var r = details_keys[rkey];
             if ($.inArray(r, Object.keys(job.results)) !== -1) {
                 var r_url = serviceUrl + '/' + job.jobId + '/' + r;
-                var r_url_auth = client_url + client_url_proxy + server_url_jobs + job.jobName + '/' + job.jobId + '/' + r;
+                var r_url_auth = client_endpoint + client_endpoint_proxy + server_endpoint_jobs + job.jobName + '/' + job.jobId + '/' + r;
                 var r_type = 'text/plain';
                 switch (r) {
                     case 'provjson':
@@ -1095,7 +1098,7 @@ var uws_client = (function($) {
         $("#"+job.jobId).on('destroyed', function() {
             $("#div_job").hide();
             setTimeout(function(){
-                window.location.href = client_url + client_url_jobs + "/" + job.jobName;  // + "?msg=deleted&jobid=" + jobId;
+                window.location.href = client_endpoint + client_endpoint_jobs + "/" + job.jobName;  // + "?msg=deleted&jobid=" + jobId;
             }, 3000);
         });
         // Change click event for Details buttons
@@ -1128,7 +1131,7 @@ var uws_client = (function($) {
         global.showMessage(msg, 'warning');
         logger('WARNING', 'displaySingleJob '+ jobId, exception);
         setTimeout(function(){
-            window.location.href = client_url + client_url_jobs;  // + "?msg=missing&jobid=" + jobId;
+            window.location.href = client_endpoint + client_endpoint_jobs;  // + "?msg=missing&jobid=" + jobId;
         }, 3000);
     };
 
@@ -1350,7 +1353,7 @@ var uws_client = (function($) {
         $('#loading').hide();
         logger('INFO', 'Job created with id='+job.jobId+' jobname='+job.jobName);
         // redirect to URL + job_id
-        window.location.href = client_url + client_url_job_edit + "/" + job.jobName + "/" + job.jobId;
+        window.location.href = client_endpoint + client_endpoint_job_edit + "/" + job.jobName + "/" + job.jobId;
     };
     var createJobError = function(xhr, status, exception){
         $('#loading').hide();
@@ -1475,12 +1478,12 @@ var uws_client = (function($) {
         displaySingleJob: displaySingleJob,
         displayParamForm: displayParamForm,
         displayParamFormInput: displayParamFormInput,
-        client_url: client_url,
-        client_url_jdl: client_url_jdl,
-        client_url_jobs: client_url_jobs,
-        client_url_job_edit: client_url_job_edit,
-        client_url_job_form: client_url_job_form,
-        client_url_proxy: client_url_proxy,
+        client_endpoint: client_endpoint,
+        client_endpoint_jdl: client_endpoint_jdl,
+        client_endpoint_jobs: client_endpoint_jobs,
+        client_endpoint_job_edit: client_endpoint_job_edit,
+        client_endpoint_job_form: client_endpoint_job_form,
+        client_endpoint_proxy: client_endpoint_proxy,
     }
 
 })(jQuery);

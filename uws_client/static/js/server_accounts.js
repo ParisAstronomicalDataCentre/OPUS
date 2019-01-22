@@ -7,7 +7,8 @@
     "use strict";
 
     var server_url;
-    var client_url;
+    var server_endpoint;
+    var client_endpoint;
     var job_options = [];
 
     function get_jobnames() {
@@ -243,7 +244,7 @@
         var name = event.data.name;
         var token = event.data.token;
         $.ajax({
-			url : client_url + '/admin/add_client_user',
+			url : client_endpoint + '/admin/add_client_user',
 			type : 'POST',
 			data:{
                 name: name,
@@ -252,7 +253,7 @@
 			dataType: "json",
 			success : function(user_id) {
                 $('#loading').hide();
-                window.location.href = client_url + "/admin/user/edit/?id=" + user_id +
+                window.location.href = client_endpoint + "/admin/user/edit/?id=" + user_id +
                 "&url=%2Fopus_client%2Fadmin%2Fserver_accounts";
 			},
             error : function(xhr, status, exception) {
@@ -271,7 +272,8 @@
     
         // Get jobname/jobid
         server_url = $('#server_url').attr('value');
-        client_url = $('#client_url').attr('value');
+        server_endpoint = $('#server_endpoint').attr('value');
+        client_endpoint = $('#client_endpoint').attr('value');
 
         // Get user list
         get_jobnames();

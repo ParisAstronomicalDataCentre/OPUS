@@ -8,7 +8,8 @@
 
     var editor;  // to use codemirror
     var server_url;
-    var client_url;
+    var server_endpoint;
+    var client_endpoint;
 
     var content_types = [
         'application/octet-stream',
@@ -639,7 +640,8 @@
 
 	$(document).ready( function() {
         server_url = $('#server_url').attr('value');
-        client_url = $('#client_url').attr('value');
+        server_endpoint = $('#server_endpoint').attr('value');
+        client_endpoint = $('#client_endpoint').attr('value');
         get_jobnames();
 	    // Script editor with CodeMirror
 	    editor = CodeMirror.fromTextArea( $('textarea[name=script]')[0], {mode: "text/x-sh", lineNumbers: true } );

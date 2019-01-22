@@ -7,7 +7,8 @@
     "use strict";
 
     var server_url;
-    var client_url;
+    var server_endpoint;
+    var client_endpoint;
 
     var job_list_columns = [
         //'jobName',  // job.jobName
@@ -55,6 +56,13 @@
             error : function(xhr, status, exception) {
                 $('#loading').hide();
                 console.log(exception);
+                var jobname = $('#jobname').attr('value');
+                if (jobname) {
+                    $('.selectpicker').append('<option>' + jobname + '</option>');
+                    $('select[name=jobname]').val(jobname);
+                    $('.selectpicker').selectpicker('refresh');
+                    load_job_list();
+                };
             }
         });
     };
@@ -71,14 +79,14 @@
                 cols.splice(0, 0, "jobName");
             };
             if (jobnames.length > 0) {
-                uws_client.initClient(client_url, server_url, jobnames, cols);
+                uws_client.initClient(server_url, server_endpoint, client_endpoint, jobnames, cols);
             };
         } else {
-            uws_client.initClient(client_url, server_url, [jobname], job_list_columns);
+            uws_client.initClient(server_url, server_endpoint, client_endpoint, [jobname], job_list_columns);
         };
         // init UWS Client
         // write new url in browser bar
-        history.pushState({ jobname: jobname }, '', client_url + uws_client.client_url_jobs + "/" + jobname);
+        history.pushState({ jobname: jobname }, '', client_endpoint + uws_client.client_endpoint_jobs + "/" + jobname);
         // Prepare job list
         uws_client.getJobList();
         //if ( $( "#job_id" ).length ) {
@@ -90,7 +98,8 @@
     $(document).ready( function() {
 
         server_url = $('#server_url').attr('value');
-        client_url = $('#client_url').attr('value');
+        server_endpoint = $('#server_endpoint').attr('value');
+        client_endpoint = $('#client_endpoint').attr('value');
         get_jobnames();
         $('.selectpicker').selectpicker('deselectAll');
         $('button.actions').attr('disabled', 'disabled');
@@ -111,7 +120,7 @@
         $('#create_new_job').click( function() {
             var jobname = $('select[name=jobname]').val();
             if (jobname) {
-                window.location.href =  client_url + uws_client.client_url_job_form + "/" + jobname;
+                window.location.href =  client_endpoint + uws_client.client_endpoint_job_form + "/" + jobname;
             };
         });
 

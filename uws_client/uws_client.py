@@ -38,17 +38,19 @@ from wtforms.validators import InputRequired
 #SERVER_NAME=  # (e.g.: 'myapp.dev:5000')
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 VAR_PATH = '/var/www/opus'
-APPLICATION_ROOT = '/opus_client'
+UWS_CLIENT_ENDPOINT = '/opus_client'
 # called from javascript, set to local url (proxy) to avoid cross-calls, will connect to UWS_SERVER_URL
-UWS_SERVER_URL_JS = APPLICATION_ROOT + '/proxy'
+UWS_SERVER_URL_JS = UWS_CLIENT_ENDPOINT + '/proxy'
 
 ### to be defined in settings_local.py
 UWS_SERVER_URL = 'http://localhost'
+UWS_SERVER_ENDPOINT = '/rest'
 UWS_AUTH = 'Basic'
 
 # Editable configuration keywords (can be modified from the preference web page)
 EDITABLE_CONFIG = [
     'UWS_SERVER_URL',
+    'UWS_SERVER_ENDPOINT',
     'UWS_AUTH',
 ]
 
@@ -78,8 +80,8 @@ SECURITY_URL_PREFIX = '/accounts'
 SECURITY_FLASH_MESSAGES = True
 SECURITY_PASSWORD_SALT = 'test'
 SECURITY_USER_IDENTITY_ATTRIBUTES = 'email'
-SECURITY_POST_LOGIN_VIEW = APPLICATION_ROOT
-SECURITY_POST_LOGOUT_VIEW = APPLICATION_ROOT + SECURITY_URL_PREFIX + '/login'
+SECURITY_POST_LOGIN_VIEW = UWS_CLIENT_ENDPOINT
+SECURITY_POST_LOGOUT_VIEW = UWS_CLIENT_ENDPOINT + SECURITY_URL_PREFIX + '/login'
 SECURITY_REGISTERABLE = True
 SECURITY_SEND_REGISTER_EMAIL = False
 SECURITY_CHANGEABLE = True

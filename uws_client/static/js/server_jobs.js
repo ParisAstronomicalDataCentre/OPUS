@@ -7,7 +7,8 @@
     "use strict";
 
     var server_url;
-    var client_url;
+    var server_endpoint;
+    var client_endpoint;
 
     function get_jobnames() {
         // Get jobnames from server
@@ -60,7 +61,7 @@
                 <td class="text-center" style="vertical-align: middle;">' + jdetails.subtype + '</td>\
                 <td class="text-center" style="vertical-align: middle;">\
                     <div class="input-group-btn">\
-                        <a href="' + client_url + '/job_definition/' + jobname + '" \
+                        <a href="' + client_endpoint + '/job_definition/' + jobname + '" \
                         id="button_edit_' + jobname_label + '" type="button" class="btn btn-default btn-sm" \
                         title="Edit">\
                             <span class="glyphicon glyphicon-edit"></span>\
@@ -88,7 +89,7 @@
 
 	function edit_jdl(event) {
         var jobname = event.data.name;
-        window.location = client_url + '/job_definition/' + jobname;
+        window.location = client_endpoint + '/job_definition/' + jobname;
     }
 
 	function export_jdl(event) {
@@ -165,7 +166,8 @@
     
         // Get jobname/jobid
         server_url = $('#server_url').attr('value');
-        client_url = $('#client_url').attr('value');
+        server_endpoint = $('#server_endpoint').attr('value');
+        client_endpoint = $('#client_endpoint').attr('value');
 
         // Get user list
         get_jobnames();
