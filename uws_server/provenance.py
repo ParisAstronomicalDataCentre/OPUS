@@ -22,7 +22,7 @@ from . import uws_jdl
 # http://lists.g-vo.org/pipermail/prov-adhoc/2015-June/000025.html
 
 
-def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1, model='IVOA',
+def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1, model='IVOA', descriptions=0,
              show_parameters=True, recursive=False, show_generated=False):
     """
     Create ProvDocument based on job description
@@ -99,15 +99,16 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
 
     # ActivityDescription = Plan
     if depth != 0:
-        plan = pdoc.entity('opus_jdl:' + job.jobname)
-        plan.add_attributes({
+        adesc = pdoc.entity('opus_jdl:' + job.jobname)
+        adesc.add_attributes({
             'prov:label': job.jobname,
             'prov:type': 'voprov:ActivityDescription',
         })
-        plan.add_attributes({
-            'prov:type': 'prov:Plan'
+        adesc.add_attributes({
+            'prov:type': 'prov:Plan',
+            'prov:type': 'prov:Collection'
         })
-        pdoc.influence(act, plan, other_attributes={
+        pdoc.influence(act, adesc, other_attributes={
             'prov:type': 'voprov:hadDescription',
         })
     # Agent: contact for the job in ActivityDescription
@@ -132,7 +133,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                 contact.add_attributes({
                     'foaf:mbox': "<mailto:{}>".format(contact_email)
                 })
-            plan.wasAttributedTo(contact, attributes={
+            adesc.wasAttributedTo(contact, attributes={
                 'prov:role': 'contact'
             })
 
@@ -197,32 +198,48 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
 
     # Parameters that influence the activity (if depth > 0)
     params = []
+    pds = []
     if depth != 0 and show_parameters:
+        # Add Parameter Collection?
         # all_params = pdoc.collection('opus_job:' + job.jobname + '/' + job.jobid + '/parameters')
+        # Add Parameter
         for pname, pdict in job.jdl.content.get('parameters', {}).items():
             pqn = ns_jdl + ':' + pname
             if pname in job.parameters:
                 value = job.parameters[pname]['value']
             else:
                 value = pdict['default']
-            # act_attr[pqn] = value
             params.append(pdoc.entity('opus_job:' + job.jobname + '/' + job.jobid + '/parameters/' + pname))
             pattrs = {
                 'prov:label': pname,
                 'prov:type': 'voprov:Parameter',
                 'prov:value': value,
             }
-            for pkey, pvalue in pdict.items():
-                if pvalue:
-                    pattrs['voprov:' + pkey] = pvalue
             params[-1].add_attributes(pattrs)
+            # Activity-Parameter relation
             pdoc.influence(act, params[-1], other_attributes={
                  'prov:type': 'voprov:hadConfiguration',
             })
+            # Add ParameterDescription
+            pdattrs = {}
+            for pkey, pvalue in pdict.items():
+                if pvalue:
+                    pdattrs['voprov:' + pkey] = pvalue
+            if descriptions:
+                pdattrs['prov:label'] = pname
+                pdattrs['prov:type'] = 'voprov:ParameterDescription'
+                pds.append(pdoc.entity('opus_jdl:' + job.jobname + '#' + pname))
+                pds[-1].add_attributes(pdattrs)
+                pdoc.influence(params[-1], pds[-1], other_attributes={
+                    'prov:type': 'voprov:ParameterDescription',
+                })
+                adesc.hadMember(pds[-1])
+            else:
+                params[-1].add_attributes(pdattrs)
+            # Member of Collection
             # all_params.hadMember(params[-1])
+        # Activity-Collection relation
         # pdoc.influence(act, all_params)
-        # if len(act_attr) > 0:
-        #     act.add_attributes(act_attr)
 
     # Generated entities (if depth > 0)
     if depth != 0 or recursive or show_generated:
