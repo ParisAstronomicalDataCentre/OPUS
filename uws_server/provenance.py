@@ -64,6 +64,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
     pdoc.add_namespace('prov', 'http://www.w3.org/ns/prov#')
     pdoc.add_namespace('foaf', 'http://xmlns.com/foaf/0.1/')
     pdoc.add_namespace('voprov', 'http://www.ivoa.net/documents/ProvenanceDM#')
+    pdoc.add_namespace('uws', 'http://www.ivoa.net/xml/UWS/v1.1#')
     pdoc.add_namespace('opus_user', BASE_URL + '/user/')
     ns_result = 'opus_store'
     pdoc.add_namespace('opus_store', BASE_URL + '/store/?ID=')
@@ -112,9 +113,14 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
             'prov:type': 'voprov:hadDescription',
         })
         adattrs = {}
-        for pkey, pvalue in job.jdl.content:
+        for pkey in ['name', 'annotation', 'version', 'type', 'subtype', 'doculink']:
+            pvalue = job.jdl.content.get(pkey)
             if pvalue:
                 adattrs['voprov:' + pkey] = pvalue
+        for pkey in ['executionduration', 'quote']:
+            pvalue = job.jdl.content.get(pkey)
+            if pvalue:
+                adattrs['uws:' + pkey] = pvalue
         adesc.add_attributes(adattrs)
     # Agent: contact for the job in ActivityDescription
     if agent:
