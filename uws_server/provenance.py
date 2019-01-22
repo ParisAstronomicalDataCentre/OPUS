@@ -111,6 +111,11 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
         pdoc.influence(act, adesc, other_attributes={
             'prov:type': 'voprov:hadDescription',
         })
+        adattrs = {}
+        for pkey, pvalue in job.jdl.content:
+            if pvalue:
+                adattrs['voprov:' + pkey] = pvalue
+        adesc.add_attributes(adattrs)
     # Agent: contact for the job in ActivityDescription
     if agent:
         contact_name = job.jdl.content.get('contact_name')
