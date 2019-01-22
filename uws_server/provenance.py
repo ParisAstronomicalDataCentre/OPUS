@@ -117,7 +117,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
             pvalue = job.jdl.content.get(pkey)
             if pvalue:
                 adattrs['voprov:' + pkey] = pvalue
-        for pkey in ['executionduration', 'quote']:
+        for pkey in ['executionDuration', 'quote']:
             pvalue = job.jdl.content.get(pkey)
             if pvalue:
                 adattrs['uws:' + pkey] = pvalue
