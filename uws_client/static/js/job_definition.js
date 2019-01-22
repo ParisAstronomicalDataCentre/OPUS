@@ -379,7 +379,7 @@
                             'attributes': attributes,
                         };
                         for (var attr in attr_mapping) {
-                            $('input[name=param_' + attr + '_' + i + ']').val(attr_mapping[attr]);
+                            $('[name=param_' + attr + '_' + i + ']').val(attr_mapping[attr]);
                             console.log(attr_mapping[attr]);
                         }
                         $('input[name=param_required_' + i + ']').prop("checked", jdl.parameters[param]['required'].toString().toLowerCase() == "true");
