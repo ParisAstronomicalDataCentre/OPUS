@@ -142,6 +142,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
     e_in = []
     act_attr = {}
     used_entities = []
+    eds = []
     for pname, pdict in job.jdl.content.get('used', {}).items():
         # Assuming that used entity is a file or a URL (not a value or an ID)
         value = job.parameters.get(pname, {}).get('value', '')
@@ -163,8 +164,9 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
             if value:
                 act_attr[ns_jdl + ':' + pname] = value
 
-        # Explore used entities for the activity if depth > 0
+        # Add Explore used entities for the activity if depth > 0
         if depth != 0:
+            # Add Entity
             e_in.append(pdoc.entity(pqn))
             e_in[-1].add_attributes({
                 'prov:label': pname,
@@ -175,7 +177,25 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
             act.used(e_in[-1], attributes={
                 'prov:role': pname
             })
+            # Add EntityDescription
+            edattrs = {}
+            for pkey, pvalue in pdict.items():
+                if pvalue:
+                    edattrs['voprov:' + pkey] = pvalue
+            if descriptions:
+                edattrs['prov:label'] = pname
+                edattrs['prov:type'] = 'voprov:EntityDescription'
+                eds.append(pdoc.entity('opus_jdl:' + job.jobname + '#' + pname))
+                eds[-1].add_attributes(edattrs)
+                pdoc.influence(e_in[-1], eds[-1], other_attributes={
+                    'prov:type': 'voprov:EntityDescription',
+                })
+                adesc.hadMember(eds[-1])
+            else:
+                e_in[-1].add_attributes(edattrs)
+
             if entity:
+                # Add more attributes to Entity
                 e_in[-1].add_attributes({
                     'voprov:content_type': entity['content_type'],
                     'voprov:result_name': entity['result_name'],
@@ -247,7 +267,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
         for rname in job.results:
             if rname not in ['stdout', 'stderr', 'provjson', 'provxml', 'provsvg']:
                 entity_id = job.results[rname]['entity_id']
-                # rdict = job.jdl.content['generated'].get(rname, {})
+                rdict = job.jdl.content['generated'].get(rname, {})
                 # entity_id = job.jobid + '_' + rname
                 # if entity_id:
                 entity = job.storage.get_entity(entity_id, silent=True)
@@ -259,6 +279,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                     entity_id = rname
                     rqn = ':' + entity_id
                     content_type = job.results[rname]['content_type']
+                # Add Entity
                 e_out.append(pdoc.entity(rqn))
                 e_out[-1].add_attributes({
                     'prov:label': rname,
@@ -270,17 +291,17 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                         'voprov:result_name': entity['result_name'],
                         'voprov:file_name': entity['file_name']
                     })
-                # Only shox result if it is not already used
+                # Only show result if it is not already used (case of config files sometimes)
                 if entity_id not in used_entities:
                     e_out[-1].wasGeneratedBy(act, attributes={
                         'prov:role': rname,
                     })
                     #for e in e_in:
                     #    e_out[-1].wasDerivedFrom(e)
-                    if agent:
-                        e_out[-1].wasAttributedTo(owner, attributes={
-                            'prov:role': 'owner',
-                        })
+                    #if agent:
+                    #    e_out[-1].wasAttributedTo(owner, attributes={
+                    #        'prov:role': 'owner',
+                    #    })
 
     # Merge all prov documents
     for opdoc in other_pdocs:
