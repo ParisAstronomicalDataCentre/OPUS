@@ -168,7 +168,7 @@
                                 <div class="input-group-sm col-xs-5 nopadding">\
                                     <div class="input-group-addon nopadding"></div>\
                                     <div class="input-group-btn">\
-                                        <select name="used_type_' + ii + '" class="used_type select-small selectpicker" multiple>\
+                                        <select name="used_contenttype_' + ii + '" class="used_contenttype select-small selectpicker" multiple>\
                                             ' + options + '\
                                         </select>\
                                         <button id="moveup_used_' + ii + '" class="moveup_used btn btn-default" type="button" >\
@@ -214,7 +214,7 @@
                                 <span class="input-group-addon">=</span>\
                                 <input class="generated_default form-control" name="generated_default_' + ii + '" type="text" placeholder="Default value" />\
                                 <span class="input-group-btn">\
-                                    <select name="generated_type_' + ii + '" class="generated_type select-small selectpicker">\
+                                    <select name="generated_contenttype_' + ii + '" class="generated_contenttype select-small selectpicker">\
                                         ' + options + '\
                                     </select>\
                                 </span>\
@@ -380,6 +380,7 @@
                         };
                         for (var attr in attr_mapping) {
                             $('input[name=param_' + attr + '_' + i + ']').val(attr_mapping[attr]);
+                            console.log(attr_mapping[attr]);
                         }
                         $('input[name=param_required_' + i + ']').prop("checked", jdl.parameters[param]['required'].toString().toLowerCase() == "true");
     //				    $('input[name=param_name_' + i + ']').val(param);
@@ -398,8 +399,9 @@
                         i++;
                         var attr_mapping = {
                             'name': used,
-                            'type': jdl.used[used]['content_type'],
+                            'contenttype': jdl.used[used]['content_type'],
                             'default': jdl.used[used]['default'],
+                            'multiplicity': jdl.used[used]['multiplicity'],
                             'annotation': jdl.used[used]['annotation'],
                         };
                         for (var attr in attr_mapping) {
@@ -425,8 +427,9 @@
                         i++;
                         var attr_mapping = {
                             'name': result,
-                            'type': jdl.generated[result]['content_type'],
+                            'contenttype': jdl.generated[result]['content_type'],
                             'default': jdl.generated[result]['default'],
+                            'multiplicity': jdl.generated[result]['multiplicity'],
                             'annotation': jdl.generated[result]['annotation'],
                         };
                         for (var attr in attr_mapping) {
@@ -501,8 +504,8 @@
                             var matches = filenameRegex.exec(disposition);
                             if (matches != null && matches[1]) filename = matches[1].replace(/['"]/g, '');
                         };
-                        var type = xhr.getResponseHeader('Content-Type');
-                        var blob = new Blob([response], { type: type });
+                        var ctype = xhr.getResponseHeader('Content-Type');
+                        var blob = new Blob([response], { type: ctype });
                         $('#loading').hide();
                         //var blob = new Blob([jdl], {type: "text/xml;charset=utf-8"});
                         //var filename = jobname + ".xml";
