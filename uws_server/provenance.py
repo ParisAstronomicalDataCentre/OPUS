@@ -177,7 +177,10 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
             # Entity is a value or an ID
             location = None
             if '*' in pdict['multiplicity'] or pdict['multiplicity'] > 1:
-                pqns = value.split(' ')[-1].split(',')[-1]
+                sep = pdict.get('separator', ' ')
+                if ',' in value:
+                    sep = ','
+                pqns = value.split(sep)
             else:
                 pqns = [value]
 
