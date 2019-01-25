@@ -98,7 +98,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
             'prov:role': 'owner'
         })
 
-    # ActivityDescription = Plan
+    # ActivityDescription
     if depth != 0:
         adesc = pdoc.entity('opus_jdl:' + job.jobname)
         adesc.add_attributes({
@@ -110,7 +110,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
             'prov:type': 'prov:Collection'
         })
         pdoc.influence(act, adesc, other_attributes={
-            'prov:type': 'voprov:hadDescription',
+            'prov:type': 'voprov:Description',
         })
         adattrs = {}
         for pkey in ['name', 'annotation', 'version', 'type', 'subtype', 'doculink']:
@@ -122,6 +122,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
             if pvalue:
                 adattrs['uws:' + pkey] = pvalue
         adesc.add_attributes(adattrs)
+
     # Agent: contact for the job in ActivityDescription
     if agent:
         contact_name = job.jdl.content.get('contact_name')
@@ -148,51 +149,45 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                 'prov:role': 'contact'
             })
 
-
     # Used entities
     e_in = []
     act_attr = {}
     used_entities = []
     eds = []
+
     for pname, pdict in job.jdl.content.get('used', {}).items():
-        # Assuming that used entity is a file or a URL (not a value or an ID)
+
         value = job.parameters.get(pname, {}).get('value', '')
         entity_id = job.parameters.get(pname, {}).get('entity_id', None)
         logger.debug('Search for entity {} (pname={}, value={})'.format(entity_id, pname, value))
-        # entity_id = os.path.splitext(os.path.basename(value))[0]
         entity = job.storage.get_entity(entity_id, silent=True)
         if entity:
+            # Entity recorded in DB
             used_entities.append(entity_id)
-            pqn = ns_result + ':' + entity_id
+            pqns = [ns_result + ':' + entity_id]
             location = entity['access_url']
             logger.debug('Input entity found: {}'.format(entity))
-        else:
-            pqn = value.split('/')[-1]  # removes file:// if present, or longer path
-            used_entities.append(pqn)
+        elif '//' in value:
+            # Entity is a file or a URL (not a value or an ID)
+            pqns = [value.split('//')[-1]]  # removes file:// if present, or longer path
+            used_entities.append(pqns[0])
             location = value
-            logger.debug('No previous record for input entity {}={}'.format(pname, value))
-        if show_parameters:
-            if value:
-                act_attr[ns_jdl + ':' + pname] = value
+            logger.debug('No record found for input entity {}={}, assuming it is a file or a URL'.format(pname, value))
+        else:
+            # Entity is a value or an ID
+            location = None
+            if '*' in pdict['multiplicity'] or pdict['multiplicity'] > 1:
+                pqns = value.split(' ')[-1].split(',')[-1]
+            else:
+                pqns = [value]
 
-        # Add Explore used entities for the activity if depth > 0
+        # Explore used entities for the activity if depth > 0
         if depth != 0:
-            # Add Entity
-            e_in.append(pdoc.entity(pqn))
-            e_in[-1].add_attributes({
-                'prov:label': pname,
-                # 'prov:value': value,
-                'prov:location': location,
-                # 'prov:type': pdict['datatype'],
-            })
-            # Add Used relation
-            act.used(e_in[-1], attributes={
-                'prov:role': pname
-            })
+
             # Add EntityDescription
             edattrs = {}
             for pkey, pvalue in pdict.items():
-                if pvalue:
+                if pvalue and pkey not in ['default']:
                     edattrs['voprov:' + pkey] = pvalue
             if descriptions:
                 edattrs['prov:label'] = pname
@@ -203,39 +198,62 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                     'prov:type': 'voprov:EntityDescription',
                 })
                 adesc.hadMember(eds[-1])
-            else:
-                e_in[-1].add_attributes(edattrs)
 
-            if entity:
-                # Add more attributes to Entity
+            for pqn in pqns:
+
+                # Add Entity
+                e_in.append(pdoc.entity(pqn))
                 e_in[-1].add_attributes({
-                    'voprov:content_type': entity['content_type'],
-                    'voprov:result_name': entity['result_name'],
-                    'voprov:file_name': entity['file_name'],
+                    'prov:label': pname,
+                    # 'prov:value': value,
+                    'prov:location': location,
+                    # 'prov:type': pdict['datatype'],
                 })
-                # Explores entity origin if depth > 1
-                if depth != 1 and entity['jobid']:
-                    #other_job = copy.deepcopy(job)
-                    #other_job = uws_classes.Job('', entity['jobid'], job.user, get_attributes=True,
-                    #                            get_parameters=True, get_results=True)
-                    #job.storage.read(other_job, get_attributes=True, get_parameters=True, get_results=True)
-                    other_pdocs.append(
-                        job2prov(
-                            entity['jobid'], job.user,
-                            depth=depth-2, direction=direction, members=members, steps=steps, agent=agent, model=model,
-                            show_parameters=show_parameters,
-                            recursive=True
+
+                # Add Used relation
+                act.used(e_in[-1], attributes={
+                    'prov:role': pname
+                })
+
+                if not descriptions:
+                    # Add attributes to the entity directly
+                    e_in[-1].add_attributes(edattrs)
+
+                if entity:
+                    # Add more attributes to the entity
+                    e_in[-1].add_attributes({
+                        'voprov:content_type': entity['content_type'],
+                        'voprov:result_name': entity['result_name'],
+                        'voprov:file_name': entity['file_name'],
+                    })
+
+                    # Explores entity origin if depth > 1
+                    if depth != 1 and entity['jobid']:
+                        # other_job = copy.deepcopy(job)
+                        # other_job = uws_classes.Job('', entity['jobid'], job.user, get_attributes=True,
+                        #                             get_parameters=True, get_results=True)
+                        # job.storage.read(other_job, get_attributes=True, get_parameters=True, get_results=True)
+                        other_pdocs.append(
+                            job2prov(
+                                entity['jobid'], job.user,
+                                depth=depth-2, direction=direction, members=members, steps=steps, agent=agent, model=model,
+                                show_parameters=show_parameters,
+                                recursive=True
+                            )
                         )
-                    )
 
     # Parameters that influence the activity (if depth > 0)
     params = []
     pds = []
+
     if depth != 0 and show_parameters:
+
         # Add Parameter Collection?
         # all_params = pdoc.collection('opus_job:' + job.jobname + '/' + job.jobid + '/parameters')
-        # Add Parameter
+
         for pname, pdict in job.jdl.content.get('parameters', {}).items():
+
+            # Add Parameter
             pqn = ns_jdl + ':' + pname
             if pname in job.parameters:
                 value = job.parameters[pname]['value']
@@ -248,10 +266,12 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                 'prov:value': value,
             }
             params[-1].add_attributes(pattrs)
+
             # Activity-Parameter relation
             pdoc.influence(act, params[-1], other_attributes={
                  'prov:type': 'voprov:hadConfiguration',
             })
+
             # Add ParameterDescription
             pdattrs = {}
             for pkey, pvalue in pdict.items():
@@ -267,9 +287,12 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                 })
                 adesc.hadMember(pds[-1])
             else:
+                # Add attributes to the parameter directly
                 params[-1].add_attributes(pdattrs)
+
             # Member of Collection
             # all_params.hadMember(params[-1])
+
         # Activity-Collection relation
         # pdoc.influence(act, all_params)
 
@@ -290,8 +313,10 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                     entity_id = rname
                     rqn = ':' + entity_id
                     content_type = job.results[rname]['content_type']
+
                 # Only show result if it is not already used (case of config files sometimes)
                 if entity_id not in used_entities:
+
                     # Add Entity
                     e_out.append(pdoc.entity(rqn))
                     e_out[-1].add_attributes({
@@ -305,6 +330,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                             'voprov:file_name': entity['file_name']
                         })
                         pdict = job.jdl.content['generated'].get(entity['result_name'], {})
+
                     # Add Generation relation
                     e_out[-1].wasGeneratedBy(act, attributes={
                         'prov:role': rname,
@@ -315,6 +341,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                     #    e_out[-1].wasAttributedTo(owner, attributes={
                     #        'prov:role': 'owner',
                     #    })
+
                     if pdict:
                         # Add EntityDescription
                         edattrs = {}
@@ -333,15 +360,12 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                         else:
                             e_out[-1].add_attributes(edattrs)
 
-
-
     # Merge all prov documents
     for opdoc in other_pdocs:
         #logger.debug(opdoc.serialize())
         pdoc.update(opdoc)
     pdoc.flattened()
     pdoc.unified()
-
     return pdoc
 
 
