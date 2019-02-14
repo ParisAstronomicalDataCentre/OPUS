@@ -77,9 +77,9 @@ SECURITY_EMAIL_SENDER = 'no_reply@obspm.fr'
 MAIL_SERVER = 'smtp-int-m.obspm.fr'
 MAIL_PORT = 587
 MAIL_USE_SSL = False
-MAIL_USE_TLS = True
-MAIL_USERNAME = ''
-MAIL_PASSWORD = ''
+MAIL_USE_TLS = False
+# MAIL_USERNAME = ''
+# MAIL_PASSWORD = ''
 
 ### Internal configuration
 
