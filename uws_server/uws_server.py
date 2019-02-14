@@ -770,14 +770,14 @@ def get_jdl_json(jobname):
     try:
         user = set_user()
         db = getattr(storage, STORAGE + 'JobStorage')()
-        if not CHECK_PERMISSIONS or db.has_access(user, jobname) or 'tmp/' in jobname:
-            # Get JDL content
-            jdl = getattr(uws_jdl, JDL)()
-            jdl.read(jobname)
-            logger.info('JDL downloaded ad JSON: {}'.format(jobname))
-            return jdl.content
-        else:
-            abort_403()
+        # if not CHECK_PERMISSIONS or db.has_access(user, jobname) or 'tmp/' in jobname:
+        # Get JDL content
+        jdl = getattr(uws_jdl, JDL)()
+        jdl.read(jobname)
+        logger.info('JDL downloaded ad JSON: {}'.format(jobname))
+        return jdl.content
+        # else:
+        #     abort_403()
     except UserWarning as e:
         abort_404(e.args[0])
     except:
@@ -795,23 +795,23 @@ def get_jdl(jobname):
     try:
         user = set_user()
         db = getattr(storage, STORAGE + 'JobStorage')()
-        if not CHECK_PERMISSIONS or db.has_access(user, jobname):
-            # Get JDL content
-            jdl = getattr(uws_jdl, JDL)()
-            fname = jdl._get_filename(jobname)
-            download_dir, download_fname = os.path.split(fname)
-            logger.debug(download_fname)
-            if os.path.isfile(fname):
-                with open(fname) as f:
-                    jdl = f.readlines()
-                logger.info('JDL file downloaded: {}'.format(fname))
-                return static_file(download_fname, root=download_dir, download=download_fname)
-                #response.content_type = 'text/xml; charset=UTF-8'
-                #return jdl
-            else:
-                abort_404('No VOTable file found for ' + jobname)
+        # if not CHECK_PERMISSIONS or db.has_access(user, jobname):
+        # Get JDL content
+        jdl = getattr(uws_jdl, JDL)()
+        fname = jdl._get_filename(jobname)
+        download_dir, download_fname = os.path.split(fname)
+        logger.debug(download_fname)
+        if os.path.isfile(fname):
+            with open(fname) as f:
+                jdl = f.readlines()
+            logger.info('JDL file downloaded: {}'.format(fname))
+            return static_file(download_fname, root=download_dir, download=download_fname)
+            #response.content_type = 'text/xml; charset=UTF-8'
+            #return jdl
         else:
-            abort_403()
+            abort_404('No VOTable file found for ' + jobname)
+        # else:
+        #     abort_403()
     except UserWarning as e:
         abort_404(e.args[0])
     except:
