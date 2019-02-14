@@ -24,6 +24,7 @@ from flask_security.forms import LoginForm, RegisterForm
 from flask_login import user_logged_in, user_logged_out, current_user
 from flask_admin import Admin
 from flask_admin.contrib import sqla
+from flask_mail import Mail
 from wtforms import StringField, PasswordField
 from wtforms.validators import InputRequired
 
@@ -43,8 +44,8 @@ UWS_CLIENT_ENDPOINT = '/opus_client'
 UWS_SERVER_URL_JS = UWS_CLIENT_ENDPOINT + '/proxy'
 
 ### to be defined in settings_local.py
-UWS_SERVER_URL = 'http://localhost'
-UWS_SERVER_ENDPOINT = '/rest'
+UWS_SERVER_URL = 'http://localhost/opus_server'
+UWS_SERVER_ENDPOINT = '/rest/'
 UWS_AUTH = 'Basic'
 
 # Editable configuration keywords (can be modified from the preference web page)
@@ -85,7 +86,14 @@ SECURITY_POST_LOGOUT_VIEW = UWS_CLIENT_ENDPOINT + SECURITY_URL_PREFIX + '/login'
 SECURITY_REGISTERABLE = True
 SECURITY_SEND_REGISTER_EMAIL = False
 SECURITY_CHANGEABLE = True
-SECURITY_SEND_PASSWORD_CHANGE_EMAIL = False
+SECURITY_SEND_PASSWORD_CHANGE_EMAIL = True
+SECURITY_EMAIL_SENDER = 'mathieu.servillat@obspm.fr'
+MAIL_SERVER = 'smtp-m.obspm.fr'
+MAIL_PORT = 587
+MAIL_USE_SSL = False
+MAIL_USE_TLS = True
+MAIL_USERNAME = 'mservillat'
+MAIL_PASSWORD = 'MSId4obs!'
 
 # Set logger
 LOGGING = {
@@ -163,10 +171,11 @@ app.secret_key = b'\ttrLu\xdd\xde\x9f\xd2}\xc1\x0e\xb6\xe6}\x95\xc6\xb1\x8f\xa09
 #app.config.update(EDITABLE_CONFIG)  # Default editable config
 app.config.from_object(__name__)  # load config from this file
 
+mail = Mail(app)
+
 
 # ----------
 # User DB
-
 
 db = SQLAlchemy(app)
 
