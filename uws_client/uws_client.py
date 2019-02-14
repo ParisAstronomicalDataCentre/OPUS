@@ -62,6 +62,25 @@ ADMIN_DEFAULT_PW = 'opus-admin'  # to be changed after install, or defined in se
 TESTUSER_NAME = 'testuser'
 TESTUSER_DEFAULT_PW = 'testuser' # to be changed after install, or defined in settings_local.py
 
+### Flask-Security configuration
+
+SQLALCHEMY_TRACK_MODIFICATIONS = True
+SECURITY_URL_PREFIX = '/accounts'
+SECURITY_FLASH_MESSAGES = True
+SECURITY_PASSWORD_SALT = 'test'
+SECURITY_USER_IDENTITY_ATTRIBUTES = 'email'
+SECURITY_REGISTERABLE = True
+SECURITY_SEND_REGISTER_EMAIL = False
+SECURITY_CHANGEABLE = True
+SECURITY_SEND_PASSWORD_CHANGE_EMAIL = True
+SECURITY_EMAIL_SENDER = 'no_reply@obspm.fr'
+MAIL_SERVER = 'smtp-int-m.obspm.fr'
+MAIL_PORT = 587
+MAIL_USE_SSL = False
+MAIL_USE_TLS = True
+MAIL_USERNAME = ''
+MAIL_PASSWORD = ''
+
 ### Internal configuration
 
 LOG_FILE_SUFFIX = ''
@@ -73,27 +92,13 @@ if os.path.exists(APP_PATH + '/uws_client/settings_local.py'):
     else:
         from .settings_local import *
 
+### Set from previous variables
+
 LOG_PATH = VAR_PATH + '/logs'  # the logs dir has to be writable from the app
 CONFIG_FILE = VAR_PATH + '/config/uws_client_config.yaml'  # the config dir has to be writable from the app
 SQLALCHEMY_DATABASE_URI = 'sqlite:///{}/db/flask_login.db'.format(VAR_PATH)
-SQLALCHEMY_TRACK_MODIFICATIONS = True
-SECURITY_URL_PREFIX = '/accounts'
-SECURITY_FLASH_MESSAGES = True
-SECURITY_PASSWORD_SALT = 'test'
-SECURITY_USER_IDENTITY_ATTRIBUTES = 'email'
 SECURITY_POST_LOGIN_VIEW = UWS_CLIENT_ENDPOINT
 SECURITY_POST_LOGOUT_VIEW = UWS_CLIENT_ENDPOINT + SECURITY_URL_PREFIX + '/login'
-SECURITY_REGISTERABLE = True
-SECURITY_SEND_REGISTER_EMAIL = False
-SECURITY_CHANGEABLE = True
-SECURITY_SEND_PASSWORD_CHANGE_EMAIL = True
-SECURITY_EMAIL_SENDER = 'mathieu.servillat@obspm.fr'
-MAIL_SERVER = 'smtp-m.obspm.fr'
-MAIL_PORT = 587
-MAIL_USE_SSL = False
-MAIL_USE_TLS = True
-MAIL_USERNAME = 'opus'
-MAIL_PASSWORD = ''
 
 # Set logger
 LOGGING = {
