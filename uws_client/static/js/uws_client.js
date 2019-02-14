@@ -23,9 +23,9 @@ var uws_client = (function($) {
 
     // Config
     var DEBUG = true;
-    var server_endpoint_jobs = '/rest/';
+    var server_endpoint_jobs = '/rest';
     var server_endpoint_jdl = '/jdl/<jobname>/json';
-    var server_endpoint_results = '/store/';
+    var server_endpoint_results = '/store';
     var client_endpoint = '/opus_client';
     var client_endpoint_jdl = '/jdl';
     var client_endpoint_jobs = '/jobs';
@@ -138,7 +138,7 @@ var uws_client = (function($) {
         };
         for (var i in jobNames) {
             // Init client
-            var url = serviceUrl + server_endpoint_jobs + jobNames[i];
+            var url = serviceUrl + server_endpoint_jobs + '/' + jobNames[i];
             clients[jobNames[i]] = new uwsLib.uwsClient(url);
             // Get JDL for job
             $.getJSON(serviceUrl + server_endpoint_jdl.replace("<jobname>", jobNames[i]), function(jdl) {
@@ -1034,7 +1034,7 @@ var uws_client = (function($) {
             var r = details_keys[rkey];
             if ($.inArray(r, Object.keys(job.results)) !== -1) {
                 var r_url = serviceUrl + '/' + job.jobId + '/' + r;
-                var r_url_auth = client_endpoint + client_endpoint_proxy + server_endpoint_jobs + job.jobName + '/' + job.jobId + '/' + r;
+                var r_url_auth = client_endpoint + client_endpoint_proxy + server_endpoint_jobs + '/' + job.jobName + '/' + job.jobId + '/' + r;
                 var r_type = 'text/plain';
                 switch (r) {
                     case 'provjson':

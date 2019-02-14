@@ -45,7 +45,7 @@ UWS_SERVER_URL_JS = UWS_CLIENT_ENDPOINT + '/proxy'
 
 ### to be defined in settings_local.py
 UWS_SERVER_URL = 'http://localhost/opus_server'
-UWS_SERVER_ENDPOINT = '/rest/'
+UWS_SERVER_ENDPOINT = '/rest'
 UWS_AUTH = 'Basic'
 
 # Editable configuration keywords (can be modified from the preference web page)
