@@ -92,8 +92,8 @@ MAIL_SERVER = 'smtp-m.obspm.fr'
 MAIL_PORT = 587
 MAIL_USE_SSL = False
 MAIL_USE_TLS = True
-MAIL_USERNAME = 'mservillat'
-MAIL_PASSWORD = 'MSId4obs!'
+MAIL_USERNAME = 'opus'
+MAIL_PASSWORD = ''
 
 # Set logger
 LOGGING = {
