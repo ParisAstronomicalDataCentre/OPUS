@@ -512,8 +512,8 @@ def get_jobnames():
     Get list of available jobs on server
     :return: list of job names in json
     """
+    user = set_user()
     try:
-        user = set_user()
         # jobnames = ['copy', 'ctbin']
         # List jdl files (=available jobs)
         #jdl = uws_jdl.__dict__[JDL]()
@@ -552,8 +552,8 @@ def create_new_job_definition():
     # No need to authenticate, users can propose new jobs that will have to be validated
     # Check if client is trusted? not really needed
     jobname = ''
+    user = set_user()
     try:
-        user = set_user()
         jobname = request.forms.get('name').split('/')[-1]
         if jobname:
             # Create JDL file from job_jdl
@@ -577,8 +577,8 @@ def import_job_definition():
     # No need to authenticate, users can propose new jobs that will have to be validated
     # Check if client is trusted? not really needed
     jobname = ''
+    user = set_user()
     try:
-        user = set_user()
         # Save JDL file as new for this jobname
         f = request.files.get('jdl_file', None)
         if f:
@@ -742,8 +742,8 @@ def get_script(jobname):
     #     abort_404('No script file found for ' + jobname)
     # else:
     #     abort_403()
+    user = set_user()
     try:
-        user = set_user()
         db = getattr(storage, STORAGE + 'JobStorage')()
         if not CHECK_PERMISSIONS or db.has_access(user, jobname):
             # Get JDL content
@@ -767,8 +767,8 @@ def get_jdl_json(jobname):
     :param jobname:
     :return: json description
     """
+    user = set_user()
     try:
-        user = set_user()
         db = getattr(storage, STORAGE + 'JobStorage')()
         # if not CHECK_PERMISSIONS or db.has_access(user, jobname) or 'tmp/' in jobname:
         # Get JDL content
@@ -792,8 +792,8 @@ def get_jdl(jobname):
     :return: VOTable file
     """
     #logger.info(jobname)
+    user = set_user()
     try:
-        user = set_user()
         db = getattr(storage, STORAGE + 'JobStorage')()
         # if not CHECK_PERMISSIONS or db.has_access(user, jobname):
         # Get JDL content
@@ -875,8 +875,8 @@ def download_entity():
         404 Not Found: Entity not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
+    user = set_user()
     try:
-        user = set_user()
         if not 'ID' in request.query:
             raise UserWarning('"ID" is not specified in request')
         entity_id = request.query['ID']
@@ -926,8 +926,8 @@ def get_result_file(jobid, rname):  # , rfname):
         404 Not Found: Result not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
+    user = set_user()
     try:
-        user = set_user()
         # Get job properties from DB
         job = Job('', jobid, user, get_attributes=False, get_results=True)
         # Check if result exists
@@ -980,8 +980,8 @@ def provsap():
     """
 
     from . import provenance
+    user = set_user()
     try:
-        user = set_user()
         if not 'ID' in request.query:
             raise UserWarning('"ID" is not specified in request')
         kwargs = {}
@@ -1204,8 +1204,8 @@ def get_joblist(jobname):
         200 OK: text/xml (on success)
         500 Internal Server Error (on error)
     """
+    user = set_user()
     try:
-        user = set_user()
         logger.info('{}'.format(jobname))
         # UWS v1.1 PHASE keyword
         phase = None
@@ -1239,8 +1239,8 @@ def create_job(jobname):
         500 Internal Server Error (on error)
     """
     # Create new jobid for new job
+    user = set_user()
     try:
-        user = set_user()
         # TODO: Check if form submitted correctly, detect file size overflow?
         # Set new job description from POSTed parameters
         job = Job(jobname, '', user, from_post=request)
@@ -1277,8 +1277,8 @@ def get_job(jobname, jobid):
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
+    user = set_user()
     try:
-        user = set_user()
         logger.info('{} {}'.format(jobname, jobid))
         # Get job properties from DB
         job = Job(jobname, jobid, user,
@@ -1337,8 +1337,8 @@ def delete_job(jobname, jobid):
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
+    user = set_user()
     try:
-        user = set_user()
         logger.info('{} {}'.format(jobname, jobid))
         # Get job properties from DB
         job = Job(jobname, jobid, user)
@@ -1360,8 +1360,8 @@ def delete_job(jobname, jobid):
 @app.post('/rest/<jobname>/<jobid>')
 def post_job(jobname, jobid):
     """Alias for delete_job() if ACTION=DELETE"""
+    user = set_user()
     try:
-        user = set_user()
         logger.debug('POST: {}'.format(request.POST.__dict__))
         logger.info('deleting {} {}'.format(jobname, jobid))
         if request.forms.get('ACTION') == 'DELETE':
@@ -1399,8 +1399,8 @@ def get_phase(jobname, jobid):
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
+    user = set_user()
     try:
-        user = set_user()
         # logger.info('{} {}'.format(jobname, jobid))
         # Get job properties from DB
         job = Job(jobname, jobid, user)
@@ -1424,8 +1424,8 @@ def post_phase(jobname, jobid):
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
+    user = set_user()
     try:
-        user = set_user()
         if 'PHASE' in request.forms:
             new_phase = request.forms.get('PHASE')
             logger.info('PHASE={} {} {}'.format(new_phase, jobname, jobid))
@@ -1477,8 +1477,8 @@ def get_executionduration(jobname, jobid):
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
+    user = set_user()
     try:
-        user = set_user()
         logger.info('{} {}'.format(jobname, jobid))
         # Get job properties from DB
         job = Job(jobname, jobid, user)
@@ -1502,8 +1502,8 @@ def post_executionduration(jobname, jobid):
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
+    user = set_user()
     try:
-        user = set_user()
         logger.info('{} {}'.format(jobname, jobid))
         # Get value from POST
         if 'EXECUTIONDURATION' not in request.forms:
@@ -1549,8 +1549,8 @@ def get_destruction(jobname, jobid):
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
+    user = set_user()
     try:
-        user = set_user()
         logger.info('{} {}'.format(jobname, jobid))
         # Get job properties from DB
         job = Job(jobname, jobid, user)
@@ -1574,8 +1574,8 @@ def post_destruction(jobname, jobid):
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
+    user = set_user()
     try:
-        user = set_user()
         logger.info('{} {}'.format(jobname, jobid))
         # Get value from POST
         if 'DESTRUCTION' not in request.forms:
@@ -1622,8 +1622,8 @@ def get_error(jobname, jobid):
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
+    user = set_user()
     try:
-        user = set_user()
         logger.info('{} {}'.format(jobname, jobid))
         # Get job properties from DB
         job = Job(jobname, jobid, user)
@@ -1652,8 +1652,8 @@ def get_quote(jobname, jobid):
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
+    user = set_user()
     try:
-        user = set_user()
         logger.info('{} {}'.format(jobname, jobid))
         # Get job properties from DB
         job = Job(jobname, jobid, user)
@@ -1683,8 +1683,8 @@ def get_parameters(jobname, jobid):
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
+    user = set_user()
     try:
-        user = set_user()
         logger.info('{} {}'.format(jobname, jobid))
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_parameters=True)
@@ -1710,8 +1710,8 @@ def get_parameter(jobname, jobid, pname):
         404 Not Found: Parameter not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
+    user = set_user()
     try:
-        user = set_user()
         logger.info('param=' + pname + ' ' + jobname + ' ' + jobid)
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_parameters=True)
@@ -1738,8 +1738,8 @@ def post_parameter(jobname, jobid, pname):
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
+    user = set_user()
     try:
-        user = set_user()
         logger.info('pname={} {} {}'.format(pname, jobname, jobid))
         # Get value from POST
         if 'VALUE' not in request.forms:
@@ -1782,8 +1782,8 @@ def get_results(jobname, jobid):
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
+    user = set_user()
     try:
-        user = set_user()
         logger.info('{} {}'.format(jobname, jobid))
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_results=True)
@@ -1809,8 +1809,8 @@ def get_result(jobname, jobid, rname):
         404 Not Found: Result not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
+    user = set_user()
     try:
-        user = set_user()
         logger.info('rname={} {} {}'.format(rname, jobname, jobid))
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_results=True)
@@ -1838,8 +1838,8 @@ def get_stdout(jobname, jobid):
         404 Not Found: Result not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
+    user = set_user()
     try:
-        user = set_user()
         # Get job properties from DB
         # job = Job(jobname, jobid, user, get_results=True)
         logname = 'stdout'
@@ -1866,8 +1866,8 @@ def get_stderr(jobname, jobid):
         404 Not Found: Result not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
+    user = set_user()
     try:
-        user = set_user()
         # Get job properties from DB
         # job = Job(jobname, jobid, user, get_results=True)
         logname = 'stderr'
@@ -1894,8 +1894,8 @@ def get_prov(jobname, jobid, provtype):
         404 Not Found: Result not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
+    user = set_user()
     try:
-        user = set_user()
         # Get job properties from DB
         # job = Job(jobname, jobid, user, get_results=True)
         provname = 'provenance.' + provtype
@@ -1931,8 +1931,8 @@ def get_owner(jobname, jobid):
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
+    user = set_user()
     try:
-        user = set_user()
         logger.info('{} {}'.format(jobname, jobid))
         # Get job properties from DB
         job = Job(jobname, jobid, user)

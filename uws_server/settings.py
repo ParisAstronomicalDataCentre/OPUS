@@ -26,7 +26,7 @@ APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 VAR_PATH = '/var/www/opus'
 
 # URL an IP of the web server
-BASE_URL = 'http://localhost'
+BASE_URL = 'http://localhost/opus_server'
 BASE_IP = '127.0.0.1'
 LOCAL_USER = 'www'  # Appache user (may be www, _www, apache...)
 
@@ -331,7 +331,9 @@ LOG_FILE_SUFFIX = ''
 
 
 #--- Include host-specific settings ------------------------------------------------------------------------------------
-if os.path.exists(APP_PATH + '/uws_server/settings_local.py'):
+if os.path.exists(APP_PATH + '/settings_local.py'):
+    from settings_local import *
+elif os.path.exists(APP_PATH + '/uws_server/settings_local.py'):
     from .settings_local import *
 #--- Include host-specific settings ------------------------------------------------------------------------------------
 

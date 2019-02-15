@@ -62,6 +62,13 @@
         'url',
     ];
 
+    function logger(lvl_name, msg, exception) {
+        if (lvl_name == 'DEBUG' && !DEBUG) { return; };
+        if (lvl_name == 'OBJECT') { console.log(msg); return; };
+        console.log(lvl_name + ' ' + msg);
+        if (exception) { console.log(exception); }
+    }
+
     function get_jobnames() {
         // Get jobnames from server
         $('#loading').show();
@@ -82,7 +89,13 @@
             error : function(xhr, status, exception) {
                 $('#loading').hide();
                 editor.refresh();
-                global.showMessage('Cannot get job names from server', 'danger');
+                var msg = xhr.responseText.match(/<pre>[\s\S]*<\/pre>/g)
+                if (msg && msg.length != 0) {
+                    msg = msg[0].replace(/<\/?pre>/g,'');
+                }
+                logger('ERROR', 'get_jobnames', msg);
+                global.showMessage('Cannot get job names from server: ' + msg, 'danger');
+                //global.showMessage('Cannot get job names from server', 'danger');
             }
         });
     };
@@ -472,10 +485,16 @@
                 },
                 error: function(xhr, status, exception) {
                     $('#loading').hide();
-                    console.log(exception);
                     editor.setValue('');
                     editor.refresh();
-                    global.showMessage(exception, 'danger')
+                    var msg = xhr.responseText.match(/<pre>[\s\S]*<\/pre>/g)
+                    if (msg && msg.length != 0) {
+                        msg = msg[0].replace(/<\/?pre>/g,'');
+                    }
+                    logger('ERROR', 'load_jdl', msg);
+                    global.showMessage('Cannot load JDL: ' + msg, 'danger');
+                    //console.log(exception);
+                    //global.showMessage(exception, 'danger')
                     //$('#load_msg').attr('class', 'text-danger');
                     //$('#load_msg').text(exception);
                     //$('#load_msg').show().delay(2000).fadeOut();
@@ -520,8 +539,14 @@
                     },
                     error: function(xhr, status, exception) {
                         $('#loading').hide();
-                        console.log(exception);
-                        global.showMessage(exception, 'danger');
+                        var msg = xhr.responseText.match(/<pre>[\s\S]*<\/pre>/g)
+                        if (msg && msg.length != 0) {
+                            msg = msg[0].replace(/<\/?pre>/g,'');
+                        }
+                        logger('ERROR', 'export_jdl', msg);
+                        global.showMessage('Cannot export JDL: ' + msg, 'danger');
+                        //console.log(exception);
+                        //global.showMessage(exception, 'danger');
                         //$('#load_msg').text(exception);
                         //$('#load_msg').show().delay(2000).fadeOut();
                     }
@@ -557,8 +582,14 @@
                 },
                 error: function(xhr, status, exception) {
                     $('#loading').hide();
-                    console.log(exception);
-                    global.showMessage('Error while submitting job definition', 'danger');
+                    var msg = xhr.responseText.match(/<pre>[\s\S]*<\/pre>/g)
+                    if (msg && msg.length != 0) {
+                        msg = msg[0].replace(/<\/?pre>/g,'');
+                    }
+                    logger('ERROR', 'submit_jdl', msg);
+                    global.showMessage('Cannot submit JDL: ' + msg, 'danger');
+                    //console.log(exception);
+                    //global.showMessage('Error while submitting job definition', 'danger');
                 },
     			processData: false,  // tell jQuery not to process the data
                 contentType: false
@@ -591,8 +622,12 @@
                 },
                 error: function(xhr, status, exception) {
                     $('#loading').hide();
-                    console.log(exception);
-                    global.showMessage('Cannot import JDL file (check that JDL file is valid)', 'danger');
+                    var msg = xhr.responseText.match(/<pre>[\s\S]*<\/pre>/g)
+                    if (msg && msg.length != 0) {
+                        msg = msg[0].replace(/<\/?pre>/g,'');
+                    }
+                    logger('ERROR', 'import_jdl', msg);
+                    global.showMessage('Cannot import JDL file (check that JDL file is valid): ' + msg, 'danger');
                 },
     			processData: false,  // tell jQuery not to process the data
                 contentType: false
@@ -624,8 +659,12 @@
                     },
                     error: function(xhr, status, exception) {
                         $('#loading').hide();
-                        console.log(exception);
-                        global.showMessage('Cannot validate JDL file', 'danger');
+                        var msg = xhr.responseText.match(/<pre>[\s\S]*<\/pre>/g)
+                        if (msg && msg.length != 0) {
+                            msg = msg[0].replace(/<\/?pre>/g,'');
+                        }
+                        logger('ERROR', 'validate_jdl', msg);
+                        global.showMessage('Cannot validate JDL file: ' + msg, 'danger');
                     },
                     processData: false,  // tell jQuery not to process the data
                     contentType: false

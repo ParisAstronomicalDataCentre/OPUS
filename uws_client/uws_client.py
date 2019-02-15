@@ -86,11 +86,14 @@ MAIL_USE_TLS = False
 LOG_FILE_SUFFIX = ''
 
 # Include host-specific setting
-if os.path.exists(APP_PATH + '/uws_client/settings_local.py'):
-    if __name__ == '__main__':
-        from settings_local import *
-    else:
-        from .settings_local import *
+if os.path.exists(APP_PATH + '/settings_local.py'):
+    # if __name__ == '__main__':
+    from settings_local import *
+    # else:
+    #     from .settings_local import *
+elif os.path.exists(APP_PATH + '/uws_client/settings_local.py'):
+    from .settings_local import *
+
 
 ### Set from previous variables
 
