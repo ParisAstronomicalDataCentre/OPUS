@@ -58,6 +58,7 @@ EDITABLE_CONFIG = [
 ### Security configuration
 
 ADMIN_NAME = 'opus-admin'
+ADMIN_EMAIL = 'a@b.com'
 ADMIN_DEFAULT_PW = 'opus-admin'  # to be changed after install, or defined in settings_local.py
 TESTUSER_NAME = 'testuser'
 TESTUSER_DEFAULT_PW = 'testuser' # to be changed after install, or defined in settings_local.py

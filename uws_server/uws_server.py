@@ -620,6 +620,28 @@ def import_job_definition():
     # redirect('/client/job_definition?jobname={}&msg=validated'.format(jobname), 303)
 
 
+@app.post('/jdl/tmp/<jobname>/validation_request')
+@is_client_trusted
+def validation_request_job_definition(jobname):
+    """Use filled form to create a JDL file for the given job"""
+    # Check if client is trusted (only admin should be allowed to validate a job)
+    user = set_user()
+    try:
+        jdl = getattr(uws_jdl, JDL)()
+        jdl_src = '{}/tmp/{}{}'.format(jdl.jdl_path, jobname, jdl.extension)
+        if os.path.isfile(jdl_src):
+            # send email to admin
+            # mail.
+            logger.info('Validation request sent to admin: ' + jobname)
+        else:
+            logger.info('No JDL  found for validation: ' + jdl_src)
+            abort_500('No JDL file found for ' + jobname)
+    except:
+        abort_500_except()
+    # Return code 200
+    return {'jobname': jobname}
+
+
 #@app.get('/config/validate_job/<jobname>')
 @app.post('/jdl/tmp/<jobname>/validate')
 @is_client_trusted

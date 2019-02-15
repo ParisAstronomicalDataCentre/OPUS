@@ -38,6 +38,12 @@
                         &nbsp;Copy script to server
                     </button>
 -->
+{% else %}
+                    <button id="validation_request_jdl" type="button" class="actions btn btn-success"
+                            title="Request validation of tmp/<jobname>" disabled>
+                        <span class="glyphicon glyphicon-ok"></span>
+                        &nbsp;Request Validation
+                    </button>
 {% endif %}
                 </div>
                 <span class="panel-title pull-left" style="padding-top: 6px; padding-right: 6px;">Job Definition Editor</span>

@@ -480,6 +480,7 @@
                     var jobname = $('input[name=name]').val();
                     if (jobname.indexOf('tmp/') == 0) {
                         $('#validate_jdl').prop('disabled', false);
+                        $('#validation_request_jdl').prop('disabled', false);
                     };
                     $("input[name=name]").focus();
                 },
@@ -637,6 +638,46 @@
         };
 	};
 
+	function validation_request_jdl() {
+        var jobname = $('input[name=name]').val();  //.split("/").pop();  // remove 'tmp/'
+        var csrf_token = $('#csrf_token').attr('value');
+        if (jobname.length > 0) {
+            if (jobname.indexOf('tmp/') == 0) {
+                $('#loading').show();
+                // ajax command to get JDL file from UWS server
+                $.ajax({
+                    url: server_url + '/jdl/' + jobname + '/validation_request',
+                    type: 'POST',
+                    headers: { "X-CSRFToken": csrf_token },
+                    success: function(response, status, xhr) {
+                        $('#loading').hide();
+                        var jobname = response.jobname;
+                        global.showMessage('Validation requested for job definition for "tmp/' + jobname + '"', 'success');
+                        $('input[name=name]').val(jobname);
+                        load_jdl();
+                        $("#validation_request_jdl").prop("disabled", true);
+                    },
+                    error: function(xhr, status, exception) {
+                        $('#loading').hide();
+                        var msg = xhr.responseText.match(/<pre>[\s\S]*<\/pre>/g)
+                        if (msg && msg.length != 0) {
+                            msg = msg[0].replace(/<\/?pre>/g,'');
+                        }
+                        logger('ERROR', 'validation_request_jdl', msg);
+                        global.showMessage('Cannot request validation for JDL file: ' + msg, 'danger');
+                    },
+                    processData: false,  // tell jQuery not to process the data
+                    contentType: false
+                });
+            } else {
+                global.showMessage('Job definition needs to start with "tmp/". Please submit form before validation request.',
+                'warning');
+            };
+        } else {
+            global.showMessage('No job name given', 'warning');
+        };
+	};
+
 	function validate_jdl() {
         var jobname = $('input[name=name]').val();  //.split("/").pop();  // remove 'tmp/'
         var csrf_token = $('#csrf_token').attr('value');
@@ -707,6 +748,7 @@
             var jobname = $('input[name=name]').val();
             if (jobname.indexOf('tmp/') == 0) {
                 setTimeout(function(){ $("#validate_jdl").prop("disabled", false); }, 200);
+                setTimeout(function(){ $("#validation_request_jdl").prop("disabled", false); }, 200);
             };
             load_jdl();
         });
@@ -719,6 +761,9 @@
         });
         $('#submit_jdl').click( function() {
             $('#jdl_form_submit').click();
+        });
+        $('#validation_request_jdl').click( function() {
+            validation_request_jdl();
         });
         $('#validate_jdl').click( function() {
             validate_jdl();
@@ -752,6 +797,7 @@
         });
         $("input[name=name]").focusout( function() {
             setTimeout(function(){ $("#validate_jdl").prop("disabled", true); }, 200);
+            setTimeout(function(){ $("#validation_request_jdl").prop("disabled", true); }, 200);
         });
 	}); // end ready
 
