@@ -30,6 +30,10 @@ BASE_URL = 'http://localhost/opus_server'
 BASE_IP = '127.0.0.1'
 LOCAL_USER = 'www'  # Appache user (may be www, _www, apache...)
 
+# Mail server
+MAIL_SERVER = 'smtp-int-m.obspm.fr'
+MAIL_PORT = 25
+SENDER_EMAIL = 'no_reply@obspm.fr'
 
 ### Security settings
 

@@ -653,8 +653,6 @@
                         $('#loading').hide();
                         var jobname = response.jobname;
                         global.showMessage('Validation requested for job definition for "tmp/' + jobname + '"', 'success');
-                        $('input[name=name]').val(jobname);
-                        load_jdl();
                         $("#validation_request_jdl").prop("disabled", true);
                     },
                     error: function(xhr, status, exception) {

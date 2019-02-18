@@ -11,6 +11,8 @@ import glob
 import re
 import io
 import copy
+import smtplib
+from email.mime.text import MIMEText
 import threading
 from subprocess import CalledProcessError
 from bottle import Bottle, request, response, abort, redirect, run, static_file
@@ -255,6 +257,21 @@ def home():
 def favicon():
     return static_file('favicon.ico', root=APP_PATH)
 
+
+def send_mail(send_to, subject, msg):
+    try:
+        server = smtplib.SMTP(MAIL_SERVER, MAIL_PORT)
+        # server.starttls()
+        # server.login("YOUR EMAIL ADDRESS", "YOUR PASSWORD")
+        mail_text = MIMEText(msg, 'plain')
+        mail_text['Subject'] = subject
+        mail_text['From'] = SENDER_EMAIL
+        mail_text['To'] = send_to
+        server.sendmail(SENDER_EMAIL, send_to, mail_text.as_string())
+        server.quit()
+    except Exception:
+        logger.error('Unable to send email')
+        abort_500('Unable to send email')
 
 # ----------
 # SCIM v2 API for user management
@@ -632,6 +649,9 @@ def validation_request_job_definition(jobname):
         if os.path.isfile(jdl_src):
             # send email to admin
             # mail.
+            mail_subject = 'OPUS job validation request: {}'.format(jobname)
+            mail_text = '{}\n{}/jdl/tmp/{}/json\n(from: {})'.format(mail_subject, BASE_URL, jobname, user.name)
+            send_mail(ADMIN_EMAIL, mail_subject, mail_text)
             logger.info('Validation request sent to admin: ' + jobname)
         else:
             logger.info('No JDL  found for validation: ' + jdl_src)
