@@ -22,7 +22,8 @@ from . import uws_jdl
 # http://lists.g-vo.org/pipermail/prov-adhoc/2015-June/000025.html
 
 
-def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1, model='IVOA', descriptions=0,
+def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1, model='IVOA',
+             descriptions=0, configuration=1,
              show_parameters=True, recursive=False, show_generated=False):
     """
     Create ProvDocument based on job description
@@ -52,6 +53,10 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
     # Init
     pdoc = ProvDocument()
     other_pdocs = []
+    if configuration:
+        show_parameters = True
+    else:
+        show_parameters = False
 
     # Load job
     job = uws_classes.Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True)
@@ -241,7 +246,8 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                             job2prov(
                                 entity['jobid'], job.user,
                                 depth=depth-2, direction=direction, members=members, steps=steps, agent=agent, model=model,
-                                show_parameters=show_parameters, descriptions=descriptions,
+                                descriptions=descriptions, configuration=configuration,
+                                show_parameters=show_parameters,
                                 recursive=True
                             )
                         )

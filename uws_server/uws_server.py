@@ -1034,6 +1034,7 @@ def provsap():
         kwargs['members'] = int(request.query.get('MEMBERS', 0))
         kwargs['steps'] = int(request.query.get('STEPS', 0))
         kwargs['descriptions'] = int(request.query.get('DESCRIPTIONS', 0))
+        kwargs['configuration'] = int(request.query.get('CONFIGURATION', 1))
         if kwargs['depth'] == 'ALL':
             kwargs['depth'] = -1
         else:
