@@ -241,7 +241,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                             job2prov(
                                 entity['jobid'], job.user,
                                 depth=depth-2, direction=direction, members=members, steps=steps, agent=agent, model=model,
-                                show_parameters=show_parameters,
+                                show_parameters=show_parameters, descriptions=descriptions,
                                 recursive=True
                             )
                         )
