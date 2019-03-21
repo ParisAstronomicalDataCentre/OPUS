@@ -197,9 +197,6 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                 edattrs['prov:type'] = 'voprov:EntityDescription'
                 eds.append(pdoc.entity('opus_jdl:' + job.jobname + '#' + pname))
                 eds[-1].add_attributes(edattrs)
-                pdoc.influence(e_in[-1], eds[-1], other_attributes={
-                    'prov:type': 'voprov:EntityDescription',
-                })
                 adesc.hadMember(eds[-1])
 
             for pqn in pqns:
@@ -221,6 +218,10 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                 if not descriptions:
                     # Add attributes to the entity directly
                     e_in[-1].add_attributes(edattrs)
+                else:
+                    pdoc.influence(e_in[-1], eds[-1], other_attributes={
+                        'prov:type': 'voprov:EntityDescription',
+                    })
 
                 if entity:
                     # Add more attributes to the entity
