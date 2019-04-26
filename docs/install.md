@@ -57,13 +57,15 @@ convenience, the following links can be created:
 
 Apache should be setup by providing the necessary .conf files in the APACHE_CONF directory (e.g. for CentOS this 
 directory should be `APACHE_CONF=/etc/httpd/conf.d/`; for Debian/Ubuntu, the files should be placed in 
-`/etc/apache2/sites-available/` with a link from `/etc/apache2/sites-enabled/`). 
+`/etc/apache2/sites-available/` with a link from `/etc/apache2/sites-enabled/`, for MacOS the file can be copied 
+to `/etc/apache2/other/`). 
 
 First copy the WSG module configuration (as root):
 
     # cp wsgi.conf $APACHE_CONF
 
-Then create a `opus.conf` file to define virtual hosts for the OPUS server and client, the content would then be:
+Then create a `opus.conf` file to define virtual hosts for the OPUS server and client (in `$APACHE_CONF` for example, 
+or inside `/etc/apache2/extra/httpd-vhosts.conf` for MacOS), the content would then be:
 
     <VirtualHost *:80>
         ServerName example.com
@@ -83,6 +85,12 @@ Then create a `opus.conf` file to define virtual hosts for the OPUS server and c
             Require all granted
         </Directory>
     </VirtualHost>
+
+
+After this configuration, the server must be restarted, and logs checked:
+
+    # apachectl restart
+    # apachectl
 
 
 SLURM Work Cluster configuration

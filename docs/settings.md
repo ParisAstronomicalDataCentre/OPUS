@@ -1,26 +1,61 @@
 
-UWS Server settings
-===================
+OPUS Settings
+=============
 
 Default settings
 ----------------
 
-The file `uws_server/settings.py` contains all the variables needed by the web server with 
-their default values and descriptions. This file is part of the repository files and it is 
-recommended to keep it unchanged.
+After installation, the OPUS server and client will work with their default settings, contained in the 
+files `$OPUS_DIR/uws_server/settings.py` and `$OPUS_DIR/uws_client/uws_client.py`.
 
 
 Local settings
 --------------
 
-The file `uws_server/settings_local.py` contains local variables that are specific to an 
-installation. It is read from the file `uws_server/settings.py` and overrides the default
-values. 
+The file `$OPUS_DIR/settings_local.py` contains local variables that are specific to an 
+installation. Values in this file override the default values. 
 
-This file also contains default tokens that have to be set internally and kept secret
-to ensure application security.
+This file should also contains default tokens that have to be set internally and kept secret
+to ensure application security. The file should thus have restricted access by the web server only.
 
-Local settings should thus be set before running the application:
+Local settings should thus be set before running the application, here is an example:
+
+    # OPUS global config
+    DEBUG=False
+    BASE_URL = 'http://opus.example.com'
+    BASE_IP = '1.2.3.4'
+    VAR_PATH = '/var/www/opus'
+    LOCAL_USER = 'www'
+    ADMIN_EMAIL = 'a@b.com'
+    ADMIN_NAME = 'opus-admin'
+    MAIL_SERVER = 'smtp.example.com'
+    MAIL_PORT = 25
+    SENDER_EMAIL = 'no_reply@example.com'
+
+    # Server global config
+    ADMIN_TOKEN = 'uuid_or_any_random_string'
+    JOB_EVENT_TOKEN = 'uuid_or_any_random_string'    # TOKEN for special user job_event, used internally
+    MAINTENANCE_TOKEN = 'uuid_or_any_random_string'  # TOKEN for special user maintenant, used internally
+    # Access rules
+    ALLOW_ANONYMOUS = True    # some jobs may be run without signing in
+    CHECK_PERMISSIONS = True  # check rights to run a job
+    CHECK_OWNER = False       # only the owner of a job can access the results
+    NJOBS_MAX = 5             # 0 for no restriction
+    
+    # Client  global config
+    ADMIN_DEFAULT_PW = ''     # Define a default password for ADMIN_NAME (can then be changed in the client)
+    TESTUSER_NAME = 'testuser'
+    TESTUSER_DEFAULT_PW = ''  # Define a default password for TESTUSER_NAME (can then be changed in the client)
+
+Local settings could also contain 
+
+UWS Server settings
+===================
+
+The file `$OPUS_DIR/uws_server/settings.py` contains all the variables needed by the web server with 
+their default values and descriptions. This file is part of the repository files and it is 
+recommended to keep it unchanged, however all those variables can be overridden from the `$OPUS_DIR/settings_local.py` file.
+
 
 ### General settings
 
@@ -45,6 +80,8 @@ Local settings should thus be set before running the application:
 | ALLOW_ANONYMOUS   | Anonymous user allowed on server (True/False)                   |
 | CHECK_PERMISSIONS | Check permission to create/edit a job  (True/False)             |
 | CHECK_OWNER       | Check ownership on data or job information access  (True/False) |
+| JOB_SERVERS       | IPs of servers that are allowed to send job events              |
+| TRUSTED_CLIENTS   | IPs of client that can access critical admin features           |
 
 
 ### Internal settings
@@ -140,16 +177,9 @@ The various path defined are build from VAR_PATH by default.
 UWS Client settings
 ===================
 
-The file `uws_client/uws_client.py` contains all the variables needed by the web client with 
+The file `$OPUS_DIR/uws_client/uws_client.py` contains all the variables needed by the web client with 
 their default values and descriptions. This file is part of the repository files and it is 
-recommended to keep it unchanged.
-
-The file `uws_client/settings_local.py` should contain local variables that are specific to an 
-installation. It is read from the file `uws_client/uws_client.py` and overrides the default
-values. 
-
-This file also contains default tokens that have to be set internally and kept secret
-to ensure application security.
+recommended to keep it unchanged, however all those variables can be overridden from the `$OPUS_DIR/settings_local.py` file.
 
 
 | Variable            | Description                                                                                                               |
