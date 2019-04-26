@@ -12,13 +12,12 @@ files `$OPUS_DIR/uws_server/settings.py` and `$OPUS_DIR/uws_client/uws_client.py
 Local settings
 --------------
 
-The file `$OPUS_DIR/settings_local.py` contains local variables that are specific to an 
-installation. Values in this file override the default values. 
+The file `$OPUS_DIR/settings_local.py`, if present, is read by OPUS to override the default values.
 
-This file should also contains default tokens that have to be set internally and kept secret
-to ensure application security. The file should thus have restricted access by the web server only.
+This file also contains default tokens that have to be set internally and kept secret
+to ensure application security. This file should thus have restricted access by the web server only.
 
-Local settings should thus be set before running the application, here is an example:
+Local settings are to be set before running the application, here is an example:
 
     # OPUS global config
     DEBUG=False
@@ -47,14 +46,14 @@ Local settings should thus be set before running the application, here is an exa
     TESTUSER_NAME = 'testuser'
     TESTUSER_DEFAULT_PW = ''  # Define a default password for TESTUSER_NAME (can then be changed in the client)
 
-Local settings could also contain 
+Local settings could also contain other relevant variables, depending on the desired setting for a server or client.
 
 UWS Server settings
 ===================
 
 The file `$OPUS_DIR/uws_server/settings.py` contains all the variables needed by the web server with 
 their default values and descriptions. This file is part of the repository files and it is 
-recommended to keep it unchanged, however all those variables can be overridden from the `$OPUS_DIR/settings_local.py` file.
+recommended to keep it unchanged. However, all those variables can be overridden from the `$OPUS_DIR/settings_local.py` file.
 
 
 ### General settings
@@ -179,7 +178,7 @@ UWS Client settings
 
 The file `$OPUS_DIR/uws_client/uws_client.py` contains all the variables needed by the web client with 
 their default values and descriptions. This file is part of the repository files and it is 
-recommended to keep it unchanged, however all those variables can be overridden from the `$OPUS_DIR/settings_local.py` file.
+recommended to keep it unchanged. However, all those variables can be overridden from the `$OPUS_DIR/settings_local.py` file.
 
 
 | Variable            | Description                                                                                                               |
@@ -196,5 +195,5 @@ recommended to keep it unchanged, however all those variables can be overridden 
 | TESTUSER_DEFAULT_PW | Default password for the administrator (to be changed after install, or kept secret in `uws_client/settings_local.py`)    |
 
 
-Some of those variables can be edited and modified from the UWS Client (list of variables in EDITABLE_CONFIG). In 
-particular the UWS_SERVER_URL and UWS_AUTH variables so that the client can connect to any other UWS server.
+Some of those variables can be edited and modified from the UWS Client without having to restart the web server (list of variables in EDITABLE_CONFIG). 
+In particular the UWS_SERVER_URL and UWS_AUTH variables, so that the client can connect to any other UWS server.
