@@ -379,6 +379,9 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
     return pdoc
 
 
+
+
+
 def prov2json(prov_doc, fname):
     """
     Write ProvDocument as an JSON file
@@ -405,7 +408,7 @@ def prov2dot(prov_doc):
     :param prov_doc:
     :return:
     """
-    dot = prov_to_dot(prov_doc, use_labels=True, show_element_attributes=True, show_relation_attributes=False)
+    dot = prov_to_dot(prov_doc, use_labels=True, show_element_attributes=True, show_relation_attributes=True)
     return dot
 
 
