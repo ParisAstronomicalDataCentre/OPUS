@@ -8,7 +8,7 @@
                     {% for key in config.EDITABLE_CONFIG %}
                     <div class="form-group">
                         <label class="col-md-4 control-label">{{ key }}</label>
-                        <div id="div_' + pname + '" class="col-md-8 controls">
+                        <div id="div_{{ key }}" class="col-md-8 controls">
                             <input class="form-control" name="{{ key }}" type="text" value="{{ config[key] }}"/>
                         </div>
                     </div>
