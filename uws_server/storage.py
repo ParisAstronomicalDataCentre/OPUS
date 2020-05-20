@@ -183,7 +183,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             name = Column(String(255), primary_key=True)
             value = Column(String(255), nullable=True)
             byref = Column(myBoolean, default=False, nullable=True)
-            # is_entity = Column(myBoolean, default=False, nullable=True)
+            # from_entity = Column(myBoolean, default=False, nullable=True)
             entity_id = Column(String(255), ForeignKey("entities.entity_id"), nullable=True)
 
         class Result(self.Base):
@@ -212,6 +212,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             file_name = Column(String(255), nullable=True)
             file_dir = Column(String(255), nullable=True)
             hash = Column(String(255), nullable=True)
+            # hash_type = Column(String(255), nullable=True)
             creation_time = Column(myDateTime)
             content_type = Column(String(255), nullable=True)
             access_url = Column(String(255), nullable=True)
@@ -220,6 +221,8 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             jobid = Column(String(80), ForeignKey("jobs.jobid"), nullable=True)  # uuid: max=36
             result_name = Column(String(255), nullable=True)
             result_value = Column(String(255), nullable=True)
+            # derivation
+            from_entity = Column(String(80), nullable=True)
 
         class Used(self.Base):
             __tablename__ = 'used'
@@ -467,17 +470,20 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
     # EntityStorage methods
 
     def register_entity(self, **kwargs):
-        # jobid, result_name, file_name, file_dir=None, access_url=None, hash=None, content_type=None, owner='anonymous', owner_token='anonymous'):
-        """Add entity, store hash and properties, return entity_id"""
-        # Check for required attributes in kwargs
+        # jobid, result_name, file_name, file_dir=None, access_url=None, hash=None, content_type=None,
+        # owner='anonymous', owner_token='anonymous'):
+        """Find or add entity, store hash and properties, return entity_id"""
         entity = {}
-        for k in ['owner']:
-            if not k in kwargs:
-                raise UserWarning('Attribute {} is missing to register an entity'.format(k))
+        # Check for required attributes in kwargs
+        # for k in ['owner']:
+        #     if not k in kwargs:
+        #         raise UserWarning('Attribute {} is missing to register an entity'.format(k))
+
+        # Files
         if 'file_name' in kwargs:
-            for k in ['file_dir']:
-                if not k in kwargs:
-                    raise UserWarning('Attribute {} is missing to register an entity'.format(k))
+            if not 'file_dir' in kwargs:
+                logger.warning('No file_dir given for file entity: {}'.format(kwargs))
+                kwargs['file_dir'] = '.'
             # Redefine file_dir if ARCHIVE is Local (the generated file has been copied to RESULTS_PATH)
             if ARCHIVE == 'Local':
                 if 'result_name' in kwargs:
@@ -485,38 +491,44 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                 elif 'used_jobid' in kwargs:
                     kwargs['file_dir'] = os.path.join(UPLOADS_PATH, kwargs['used_jobid'])
             # Compute hash if not given (look for file in file_dir)
-            if not 'hash' in kwargs:
-                kwargs['hash'] = self.get_hash(os.path.join(kwargs['file_dir'], kwargs['file_name']))
-            # Set creation_time if not given
-            # if not 'creation_time' in kwargs:
-            #     now = dt.datetime.now()
-            #     kwargs['creation_time'] = now.strftime(DT_FMT)
+            if 'hash' not in kwargs:
+                full_path = os.path.join(kwargs['file_dir'], kwargs['file_name'])
+                if os.path.isfile(full_path):
+                    kwargs['hash'] = self.get_hash(full_path)
 
             # Check if file already exists --> first hash, then test if filename contains entity_id or jobid if found
-            elist = self.session.query(self.Entity).filter_by(hash=kwargs['hash']).all()
-            if elist:
-                for row in elist:
-                    if str(row.entity_id) in kwargs['file_name']:
-                        # Entity has the expected entity_id in its name
-                        entity = dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
-                        logger.info('Entity found for {} with same hash, and file_name contains entity_id'.format(
-                            kwargs['file_name']))
-                        entity_id = entity['entity_id']
-                    elif str(row.jobid) in kwargs['file_name']:
-                        # Entity has the jobid that generated it in its name
-                        entity = dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
-                        logger.info('Entity found for {} with same hash, and file_name contains jobid'.format(
-                            kwargs['file_name']))
-                        entity_id = entity['entity_id']
-                    else:
-                        used = self.session.query(self.Used).filter_by(entity_id=row.entity_id, jobid=kwargs.get(
-                            'jobid')).first()
-                        if used and (getattr(row, 'file_name') == kwargs['file_name']):
-                            # Entity has already been used by the same job (and is now exposed as a UWS result)
+            if 'hash' in kwargs:
+                elist = self.session.query(self.Entity).filter_by(hash=kwargs['hash']).all()
+                if elist:
+                    for row in elist:
+                        if str(row.entity_id) in kwargs['file_name']:
+                            # Entity has the expected entity_id in its name
                             entity = dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
-                            logger.info('Entity found for {} with same hash, was used by the same job and is now exposed as a UWS result'.format(kwargs['file_name']))
                             entity_id = entity['entity_id']
+                            logger.info('Entity found for {} with same hash, and file_name contains entity_id'.format(
+                                kwargs['file_name']))
+                        elif 'jobid' in kwargs and str(row.jobid) == str(kwargs.get('jobid')):
+                            # Entity has the jobid that generated it in its name
+                            entity = dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
+                            entity_id = entity['entity_id']
+                            logger.info('Entity found for {} with same hash, and file_name contains jobid'.format(
+                                kwargs['file_name']))
+                        elif str(row.jobid) in kwargs['file_name']:
+                            # Entity has the jobid that generated it in its name
+                            entity = dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
+                            entity_id = entity['entity_id']
+                            logger.info('Entity found for {} with same hash, and file_name contains jobid'.format(
+                                kwargs['file_name']))
+                        else:
+                            used = self.session.query(self.Used).filter_by(entity_id=row.entity_id, jobid=kwargs.get(
+                                'jobid')).first()
+                            if used and (getattr(row, 'file_name') == kwargs['file_name']):
+                                # Entity has already been used by the same job (and is now exposed as a UWS result)
+                                entity = dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
+                                entity_id = entity['entity_id']
+                                logger.info('Entity found for {} with same hash, was used by the same job and is now exposed as a UWS result'.format(kwargs['file_name']))
 
+        # Value (may be an identifier)
         if 'value' in kwargs:
             for k in ['name']:
                 if not k in kwargs:
@@ -525,16 +537,25 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             row = self.session.query(self.Entity).filter_by(entity_id=kwargs['value']).first()
             if row:
                 entity_id = kwargs['value']
+                entity = dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
                 logger.info('Entity found with value=entity_id={}'.format(entity_id))
             else:
                 # Not found in entity store, is it an entity_id or a simple value ?
                 pass
 
+        # Unknown entity, use existing entity_id or generate a new one
         if not entity:
-            # Generate unique identifier for the new entity
-            entity_id = ENTITY_ID_GEN(**kwargs)
+            if 'entity_id' in kwargs:
+                # Store given identifier for the new entity
+                row = self.session.query(self.Entity).filter_by(entity_id=entity_id).first()
+                if row:
+                    entity = dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
+                    logger.info('Entity found from given entity_id={}'.format(entity_id))
+            else:
+                # Generate unique identifier for the new entity
+                entity_id = ENTITY_ID_GEN(**kwargs)
 
-        # Check if used (pop used_jobid and used_role and add Used entry)
+        # Check if entity is being used (pop used_jobid and used_role and add Used entry)
         if 'used_jobid' in kwargs:
             jobid = kwargs.pop('used_jobid')
             role = kwargs.pop('used_role', None)
@@ -543,6 +564,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             self.session.commit()
             logger.info('Adding Used relation for file_name={} (entity_id={}, jobid={})'.format(kwargs['file_name'], entity_id, jobid))
 
+        # Register new entity
         if not entity:
             # Store new entity and return attributes
             kwargs['entity_id'] = entity_id
@@ -562,6 +584,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         else:
             # Return existing entity attributes
             logger.info('Existing entity found: {}'.format(str(entity)))
+            # TODO: update entity with kwargs?
             return entity
 
     def remove_entity(self, entity_id=None, jobid=None, owner='anonymous'):
@@ -588,15 +611,25 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
     def search_entity(self, entity_id=None, jobid=None, result_name=None, file_name=None, hash=None, owner='anonymous', owner_token='anonymous'):
         """Search entity, return all entity attributes, maybe for several entities"""
         if entity_id:
-            pass
+            return self.get_entity(entity_id, silent=True)
         elif jobid and result_name:
             query = self.session.query(self.Entity).filter_by(jobid=jobid, result_name=result_name)
             row = query.first()
             if not row:
-                raise NotFoundWarning('Result "{}" NOT FOUND'.format(entity_id))
+                raise NotFoundWarning('Entity with jobid={} and result_name={} NOT FOUND'.format(jobid, result_name))
             return dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
         elif file_name and hash:
-            pass
+            query = self.session.query(self.Entity).filter_by(file_name=file_name, hash=hash)
+            row = query.first()
+            if not row:
+                raise NotFoundWarning('Entity with file_name={} and hash={} NOT FOUND'.format(file_name, hash))
+            return dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
+        elif hash:
+            query = self.session.query(self.Entity).filter_by(hash=hash)
+            row = query.first()
+            if not row:
+                raise NotFoundWarning('Entity with hash={} NOT FOUND'.format(hash))
+            return dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
         else:
             pass
         pass

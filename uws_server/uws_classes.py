@@ -249,11 +249,9 @@ class Job(object):
         if not self.jobname:
             logger.debug('Attribute jobname not given for jobid {}'.format(self.jobid))
 
-
     # ----------
     # Method to read job description from JDL file
     # ----------
-
 
     def get_result_filename(self, rname):
         """Get the filename corresponding to the result name"""
@@ -274,11 +272,9 @@ class Job(object):
         logger.debug('Result filename for {} is {}'.format(rname, fname))
         return fname
 
-
     # ----------
     # Method to get job attributes from storage or POST
     # ----------
-
 
     def set_from_post(self, post, files):
         """Set attributes and parameters from POST"""
@@ -412,11 +408,9 @@ class Job(object):
         # Save to storage
         self.storage.save(self, save_attributes=True, save_parameters=True)
 
-
     # ----------
     # Method to set a job attribute or parameter
     # ----------
-
 
     def set_attribute(self, attr, value):
         """Set job attribute and save to storage"""
@@ -434,11 +428,9 @@ class Job(object):
         #self.save_description()
         self.storage.save(self, save_attributes=False, save_parameters=pname, save_results=False)
 
-
     # ----------
     # Methods to export a job description
     # ----------
-
 
     def parameters_to_bash(self, separator='\n', get_files=False):
         """Make parameter file content for given job
@@ -601,7 +593,6 @@ class Job(object):
         except:
             raise UserWarning('Cannot serialize job {}'.format(self.jobid))
 
-
     # ----------
     # Metadata management
     # ----------
@@ -610,9 +601,37 @@ class Job(object):
         self.results[rid] = {'url': url, 'content_type': content_type, 'entity_id': entity_id}
 
     def add_results(self):
+        now = dt.datetime.now()
+        # TODO: retrieve entity identifiers from internal provenance if present
+        pf_name = os.path.join(JOBDATA_PATH, self.jobid, 'internal_provenance.json')
+        if os.path.isfile(pf_name):
+            with open(pf_name, 'r') as f:
+                pdoc = yaml.load(f)
+            if "entity" in pdoc:
+                for eid in pdoc["entity"]:
+                    eattr = pdoc["entity"][eid]
+                    einfo = {}
+                    if "prov:location" in eattr:
+                        fdir, fname = os.path.split(eattr["prov:location"])
+                        einfo["file_name"] = fname
+                        if os.path.isfile(os.path.join(RESULTS_PATH, self.jobid, fname)):
+                            einfo["file_dir"] = os.path.join(RESULTS_PATH, self.jobid)
+                        elif os.path.isfile(os.path.join(UPLOADS_PATH, self.jobid, fname)):
+                            einfo['file_dir'] = os.path.join(UPLOADS_PATH, self.jobid)
+                        elif fdir:
+                            einfo["file_dir"] = fdir
+                        else:
+                            einfo["file_dir"] = "."
+                        # register entity from name, file_name, include jobid
+                        # einfo["file_name"] = self.jobid + "_" + fname
+                        entity = self.storage.register_entity(
+                            from_entity=eid,
+                            jobid=self.jobid,
+                            **einfo,
+                        )
+                        logger.info('Entity added to job {}: {}'.format(self.jobid, str(entity)))
         # Read results.yml to know generated results (those that are located in the results directory)
         rf_name = os.path.join(JOBDATA_PATH, self.jobid, 'results.yml')
-        now = dt.datetime.now()
         result_list = {}
         if os.path.isfile(rf_name):
             with open(rf_name, 'r') as rf:
@@ -621,9 +640,9 @@ class Job(object):
             rinfo = dict(result_list[rname])
             logger.debug(rinfo)
             entity = self.storage.register_entity(
-                jobid = self.jobid,
-                creation_time = now.strftime(DT_FMT),
-                owner = self.owner,
+                jobid=self.jobid,
+                creation_time=now.strftime(DT_FMT),
+                owner=self.owner,
                 # result_name = rinfo['result_name'],
                 # result_value = rinfo['result_value'],
                 # hash = rinfo['hash'],
@@ -678,6 +697,7 @@ class Job(object):
             try:
                 # TODO: check input entities and retrieve their provenance...
                 pdoc = provenance.job2prov(self.jobid, self.user, show_generated=True)
+                # TODO: merge with internal provenance (retrieve entity identifiers and save them instead ?
                 provenance.prov2json(pdoc, rfdir + 'provenance.json')
                 provenance.prov2xml(pdoc, rfdir + 'provenance.xml')
                 provenance.prov2svg(pdoc, rfdir + 'provenance.svg')
@@ -693,7 +713,6 @@ class Job(object):
                     self.add_result_entry(rname, url, content_types[ptype], None)
                 else:
                     logger.warning('Provenance file missing: {}'.format(rfname))
-
 
     # ----------
     # Actions on a job

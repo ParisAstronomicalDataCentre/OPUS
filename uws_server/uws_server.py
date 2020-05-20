@@ -1035,6 +1035,8 @@ def provsap():
         kwargs['steps'] = int(request.query.get('STEPS', 0))
         kwargs['descriptions'] = int(request.query.get('DESCRIPTIONS', 0))
         kwargs['configuration'] = int(request.query.get('CONFIGURATION', 1))
+        attributes = int(request.query.get('ATTRIBUTES', 1))
+        gd = request.query.get('GD', 'BT')
         if kwargs['depth'] == 'ALL':
             kwargs['depth'] = -1
         else:
@@ -1069,7 +1071,7 @@ def provsap():
         pdoc.unified()
 
         if format == 'PROV-SVG':
-            svg_content = provenance.prov2svg_content(pdoc)
+            svg_content = provenance.prov2svg_content(pdoc, attributes=attributes, direction=gd)
             response.content_type = 'text/xml; charset=UTF-8'
             return svg_content
         elif format == 'PROV-XML':

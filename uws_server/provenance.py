@@ -8,7 +8,8 @@ Export UWS job description to a ProvDocument following the W3C PROV standard
 
 import os
 import copy
-from prov.model import ProvDocument
+import prov
+from prov.model import ProvDocument, ProvBundle
 from prov.dot import prov_to_dot
 from pydotplus.graphviz import InvocationException
 
@@ -23,7 +24,7 @@ from . import uws_jdl
 
 
 def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1, model='IVOA',
-             descriptions=0, configuration=1,
+             descriptions=0, configuration=1, attributes=1,
              show_parameters=True, recursive=False, show_generated=False):
     """
     Create ProvDocument based on job description
@@ -81,16 +82,17 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
     # pdoc.add_namespace(ns_job, BASE_URL + '/jdl/' + job.jobname + '/votable#')
 
     # Activity
-    act = pdoc.activity('opus_job:' + job.jobname + '/' + job.jobid, job.start_time, job.end_time)
+    act_id = 'opus_job:' + job.jobname + '/' + job.jobid
+    act = pdoc.activity(act_id, job.start_time, job.end_time)
     act.add_attributes({
-        'prov:label': job.jobname + '/' + job.jobid,
+        'prov:label': job.jobname,  # + '/' + job.jobid,
     })
-    for attr in ['doculink', 'type', 'subtype', 'version']:
-        value = job.jdl.content.get(attr, None)
-        if value:
-            act.add_attributes({
-                'voprov:' + attr: value,
-            })
+    #for attr in ['doculink', 'type', 'subtype', 'version']:
+    #    value = job.jdl.content.get(attr, None)
+    #    if value:
+    #        act.add_attributes({
+    #            'voprov:' + attr: value,
+    #        })
 
     # Agent: owner of the job
     if agent:
@@ -104,24 +106,27 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
         })
 
     # ActivityDescription
-    if depth != 0:
+    if depth != 0 and descriptions:
         adesc = pdoc.entity('opus_jdl:' + job.jobname)
         adesc.add_attributes({
-            'prov:label': job.jobname,
+            'prov:label': job.jobname + " description",
             'prov:type': 'voprov:ActivityDescription',
         })
         adesc.add_attributes({
             'prov:type': 'prov:Plan',
             'prov:type': 'prov:Collection'
         })
-        pdoc.influence(act, adesc, other_attributes={
-            'prov:type': 'voprov:Description',
-        })
+        pdoc.influence(act, adesc)  #, other_attributes={
+        #    'prov:type': 'voprov:Description',
+        #})
         adattrs = {}
         for pkey in ['name', 'annotation', 'version', 'type', 'subtype', 'doculink']:
             pvalue = job.jdl.content.get(pkey)
             if pvalue:
-                adattrs['voprov:' + pkey] = pvalue
+                if pkey == 'annotation':
+                    adattrs['voprov:description'] = pvalue
+                else:
+                    adattrs['voprov:' + pkey] = pvalue
         for pkey in ['executionDuration', 'quote']:
             pvalue = job.jdl.content.get(pkey)
             if pvalue:
@@ -150,9 +155,10 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                 contact.add_attributes({
                     'foaf:mbox': "<mailto:{}>".format(contact_email)
                 })
-            adesc.wasAttributedTo(contact, attributes={
-                'prov:role': 'contact'
-            })
+            if descriptions:
+                adesc.wasAttributedTo(contact, attributes={
+                    'prov:role': 'contact'
+                })
 
     # Used entities
     e_in = []
@@ -163,6 +169,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
     for pname, pdict in job.jdl.content.get('used', {}).items():
 
         value = job.parameters.get(pname, {}).get('value', '')
+        label = pname
         entity_id = job.parameters.get(pname, {}).get('entity_id', None)
         logger.debug('Search for entity {} (pname={}, value={})'.format(entity_id, pname, value))
         entity = job.storage.get_entity(entity_id, silent=True)
@@ -170,6 +177,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
             # Entity recorded in DB
             used_entities.append(entity_id)
             pqns = [ns_result + ':' + entity_id]
+            label = entity['file_name']
             location = entity['access_url']
             logger.debug('Input entity found: {}'.format(entity))
         elif '//' in value:
@@ -181,7 +189,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
         else:
             # Entity is a value or an ID
             location = None
-            if '*' in pdict['multiplicity'] or pdict['multiplicity'] > 1:
+            if '*' in pdict['multiplicity'] or int(pdict['multiplicity']) > 1:
                 sep = pdict.get('separator', ' ')
                 if ',' in value:
                     sep = ','
@@ -197,7 +205,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
             for pkey, pvalue in pdict.items():
                 if pvalue and pkey not in ['default']:
                     edattrs['voprov:' + pkey] = pvalue
-            if descriptions:
+            if descriptions > 1:
                 edattrs['prov:label'] = pname
                 edattrs['prov:type'] = 'voprov:EntityDescription'
                 eds.append(pdoc.entity('opus_jdl:' + job.jobname + '#' + pname))
@@ -209,7 +217,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                 # Add Entity
                 e_in.append(pdoc.entity(pqn))
                 e_in[-1].add_attributes({
-                    'prov:label': pname,
+                    'prov:label': label,
                     # 'prov:value': value,
                     'prov:location': location,
                     # 'prov:type': pdict['datatype'],
@@ -222,8 +230,10 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
 
                 if not descriptions:
                     # Add attributes to the entity directly
-                    e_in[-1].add_attributes(edattrs)
-                else:
+                    for attrkey in ['voprov:content_type', 'voprov:file_name', 'voprov:result_name']:
+                        if attrkey in edattrs:
+                            e_in[-1].add_attributes({attrkey: edattrs[attrkey]})
+                elif descriptions > 1:
                     pdoc.influence(e_in[-1], eds[-1], other_attributes={
                         'prov:type': 'voprov:EntityDescription',
                     })
@@ -278,17 +288,17 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
             params[-1].add_attributes(pattrs)
 
             # Activity-Parameter relation
-            pdoc.influence(act, params[-1], other_attributes={
-                 'prov:type': 'voprov:hadConfiguration',
-            })
+            pdoc.influence(act, params[-1])  #, other_attributes={
+            #     'prov:type': 'voprov:wasConfiguredBy',
+            #})
 
             # Add ParameterDescription
             pdattrs = {}
             for pkey, pvalue in pdict.items():
                 if pvalue:
                     pdattrs['voprov:' + pkey] = pvalue
-            if descriptions:
-                pdattrs['prov:label'] = pname
+            if descriptions > 1:
+                pdattrs['prov:label'] = pname + "description"
                 pdattrs['prov:type'] = 'voprov:ParameterDescription'
                 pds.append(pdoc.entity('opus_jdl:' + job.jobname + '#' + pname))
                 pds[-1].add_attributes(pdattrs)
@@ -308,6 +318,21 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
 
     # Generated entities (if depth > 0)
     if depth != 0 or recursive or show_generated:
+        # Check if internal provenance is given, add as a generated bundle? or directly?
+        inpfile = os.path.join(JOBDATA_PATH, jobid, "internal_provenance.json")
+        if os.path.isfile(inpfile):
+            inpdoc = prov.read(inpfile)
+            inpbundle = ProvBundle(namespaces=inpdoc.namespaces, identifier="bundle_" + job.jobid + "_prov")
+            #inpbundle._identifier = "id:" + job.jobid + "_prov"
+            inpbundle.update(inpdoc)
+            #inpprov = inpdoc.bundle(job.jobid + "_prov")
+            pdoc.add_bundle(inpbundle)
+            pdoc.wasGeneratedBy(inpbundle.identifier, act)
+            #pdoc.update(inpdoc)
+            #for rec in inpdoc.get_records():
+            #    if "Activity" in str(rec.get_type()):
+            #        inf_act = pdoc.get_record(rec.identifier)[0]
+            #        inf_act.wasInformedBy(act)
         e_out = []
         for rname in job.results:
             if rname not in ['stdout', 'stderr', 'provjson', 'provxml', 'provsvg']:
@@ -329,17 +354,18 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
 
                     # Add Entity
                     e_out.append(pdoc.entity(rqn))
-                    e_out[-1].add_attributes({
-                        'prov:label': rname,
+                    eattrs = {
                         'prov:location': job.results[rname]['url'],
                         'voprov:content_type': content_type,
-                    })
+                    }
                     if entity:
-                        e_out[-1].add_attributes({
-                            'voprov:result_name': entity['result_name'],
-                            'voprov:file_name': entity['file_name']
-                        })
+                        eattrs['prov:label'] = entity['file_name']
+                        eattrs['voprov:result_name'] = entity['result_name']
+                        eattrs['voprov:file_name'] = entity['file_name']
                         pdict = job.jdl.content['generated'].get(entity['result_name'], {})
+                    if not 'prov:label' in eattrs:
+                        eattrs['prov:label'] = rname
+                    e_out[-1].add_attributes(eattrs)
 
                     # Add Generation relation
                     e_out[-1].wasGeneratedBy(act, attributes={
@@ -351,6 +377,13 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                     #    e_out[-1].wasAttributedTo(owner, attributes={
                     #        'prov:role': 'owner',
                     #    })
+                    if entity.get("from_entity", None):
+                        e_from = inpbundle.get_record(entity["from_entity"])[0]
+                        e_out[-1].wasDerivedFrom(e_from)
+                        #copy_act = pdoc.activity(act_id + '_copy_to_datastore', other_attributes={"prov:label": "copy_to_datastore"})
+                        #copy_act.wasInformedBy(act)
+                        #copy_act.used(entity["from_entity"])
+                        #e_out[-1].wasGeneratedBy(copy_act)
 
                     if pdict:
                         # Add EntityDescription
@@ -358,7 +391,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                         for pkey, pvalue in pdict.items():
                             if pvalue:
                                 edattrs['voprov:' + pkey] = pvalue
-                        if descriptions:
+                        if descriptions > 1:
                             edattrs['prov:label'] = entity['result_name']
                             edattrs['prov:type'] = 'voprov:EntityDescription'
                             eds.append(pdoc.entity('opus_jdl:' + job.jobname + '#' + entity['result_name']))
@@ -367,8 +400,8 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                                 'prov:type': 'voprov:EntityDescription',
                             })
                             adesc.hadMember(eds[-1])
-                        else:
-                            e_out[-1].add_attributes(edattrs)
+                        #else:
+                        #    e_out[-1].add_attributes(edattrs)
 
     # Merge all prov documents
     for opdoc in other_pdocs:
@@ -402,13 +435,13 @@ def prov2xml(prov_doc, fname):
     prov_doc.serialize(fname, format='xml')
 
 
-def prov2dot(prov_doc):
+def prov2dot(prov_doc, attributes=True, direction='BT'):
     """
     Convert ProvDocument to dot graphical format
     :param prov_doc:
     :return:
     """
-    dot = prov_to_dot(prov_doc, use_labels=True, show_element_attributes=True, show_relation_attributes=True)
+    dot = prov_to_dot(prov_doc, use_labels=True, show_element_attributes=attributes, show_relation_attributes=attributes, direction=direction)
     return dot
 
 
@@ -434,7 +467,7 @@ def prov2svg(prov_doc, fname):
         f.write(svg_content)
 
 
-def prov2svg_content(prov_doc):
+def prov2svg_content(prov_doc, attributes=True, direction='BT'):
     """
     Convert ProvDocument to dot graphical format
     :param prov_doc:
@@ -442,7 +475,7 @@ def prov2svg_content(prov_doc):
     :return:
     """
     try:
-        dot = prov2dot(prov_doc)
+        dot = prov2dot(prov_doc, attributes=attributes, direction=direction)
         svg_content = dot.create(format="svg")
     except InvocationException as e:
         svg_content = '''
