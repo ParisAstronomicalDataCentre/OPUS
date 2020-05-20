@@ -4,4 +4,11 @@
     <div id="git_version" style="display:none" value="{{ git_version }}"></div>
 {% endblock %}
 {% block content %}
+<div class="container bs-docs-container">
+    <div class="col-md-12">
+{% if config.HOME_CONTENT is defined %}
+        {{ config.HOME_CONTENT|safe }}
+{% endif %}
+    </div>
+</div>
 {% endblock %}

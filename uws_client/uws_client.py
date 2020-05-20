@@ -47,6 +47,8 @@ UWS_SERVER_URL_JS = UWS_CLIENT_ENDPOINT + '/proxy'
 UWS_SERVER_URL = 'http://localhost/opus_server'
 UWS_SERVER_ENDPOINT = '/rest'
 UWS_AUTH = 'Basic'
+CLIENT_TITLE = "OPUS"
+HOME_CONTENT = ""
 
 # Editable configuration keywords (can be modified from the preference web page)
 EDITABLE_CONFIG = [
