@@ -685,6 +685,7 @@ class Job(object):
 
     def add_provenance(self):
         # Create PROV files (added as a result)
+        logger.debug('Adding provenance')
         if GENERATE_PROV:
             from . import provenance
             rfdir = '{}/{}/'.format(JOBDATA_PATH, self.jobid)
