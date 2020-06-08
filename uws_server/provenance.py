@@ -297,7 +297,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
             for pkey, pvalue in pdict.items():
                 if pvalue:
                     if pkey == 'annotation':
-                        adattrs['voprov:description'] = pvalue
+                        pdattrs['voprov:description'] = pvalue
                     else:
                         pdattrs['voprov:' + pkey] = pvalue
             if descriptions > 1:
