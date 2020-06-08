@@ -30,8 +30,15 @@ Local settings are to be set before running the application, here is an example:
     MAIL_SERVER = 'smtp.example.com'
     MAIL_PORT = 25
     SENDER_EMAIL = 'no_reply@example.com'
+    
+    # Client config
+    ADMIN_DEFAULT_PW = ''     # Define a default password for ADMIN_NAME (can then be changed in the client)
+    TESTUSER_NAME = 'testuser'
+    TESTUSER_DEFAULT_PW = ''  # Define a default password for TESTUSER_NAME (can then be changed in the client)
+    CLIENT_TITLE = "OPUS"     # Title shown on webpages
+    HOME_CONTENT = ""         # Content of the home page (HTML accepted)
 
-    # Server global config
+    # Server config
     ADMIN_TOKEN = 'uuid_or_any_random_string'
     JOB_EVENT_TOKEN = 'uuid_or_any_random_string'    # TOKEN for special user job_event, used internally
     MAINTENANCE_TOKEN = 'uuid_or_any_random_string'  # TOKEN for special user maintenant, used internally
@@ -40,11 +47,6 @@ Local settings are to be set before running the application, here is an example:
     CHECK_PERMISSIONS = True  # check rights to run a job
     CHECK_OWNER = False       # only the owner of a job can access the results
     NJOBS_MAX = 5             # 0 for no restriction
-    
-    # Client  global config
-    ADMIN_DEFAULT_PW = ''     # Define a default password for ADMIN_NAME (can then be changed in the client)
-    TESTUSER_NAME = 'testuser'
-    TESTUSER_DEFAULT_PW = ''  # Define a default password for TESTUSER_NAME (can then be changed in the client)
 
 Local settings could also contain other relevant variables, depending on the desired setting for a server or client.
 
@@ -193,6 +195,8 @@ recommended to keep it unchanged. However, all those variables can be overridden
 | ADMIN_DEFAULT_PW    | Default password for the administrator (to be changed after install, or kept secret in `uws_client/settings_local.py`)    |
 | TESTUSER_NAME       | Login name for testuser                                                                                                   |
 | TESTUSER_DEFAULT_PW | Default password for the administrator (to be changed after install, or kept secret in `uws_client/settings_local.py`)    |
+| CLIENT_TITLE        | Title shown on webpages                                                                                           |
+| HOME_CONTENT        | Content of the home page (HTML accepted)                                                                                         |
 
 
 Some of those variables can be edited and modified from the UWS Client without having to restart the web server (list of variables in EDITABLE_CONFIG). 
