@@ -204,9 +204,13 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
             edattrs = {}
             for pkey, pvalue in pdict.items():
                 if pvalue and pkey not in ['default']:
-                    edattrs['voprov:' + pkey] = pvalue
+                    if pvalue:
+                        if pkey == 'annotation':
+                            edattrs['voprov:description'] = pvalue
+                        else:
+                            edattrs['voprov:' + pkey] = pvalue
             if descriptions > 1:
-                edattrs['prov:label'] = pname
+                edattrs['prov:label'] = pname + "_description"
                 edattrs['prov:type'] = 'voprov:EntityDescription'
                 eds.append(pdoc.entity('opus_jdl:' + job.jobname + '#' + pname))
                 eds[-1].add_attributes(edattrs)
@@ -393,9 +397,12 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
                         edattrs = {}
                         for pkey, pvalue in pdict.items():
                             if pvalue:
-                                edattrs['voprov:' + pkey] = pvalue
+                                if pkey == 'annotation':
+                                    edattrs['voprov:description'] = pvalue
+                                else:
+                                    edattrs['voprov:' + pkey] = pvalue
                         if descriptions > 1:
-                            edattrs['prov:label'] = entity['result_name']
+                            edattrs['prov:label'] = entity['result_name'] + "_description"
                             edattrs['prov:type'] = 'voprov:EntityDescription'
                             eds.append(pdoc.entity('opus_jdl:' + job.jobname + '#' + entity['result_name']))
                             eds[-1].add_attributes(edattrs)
