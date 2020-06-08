@@ -109,7 +109,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
     if depth != 0 and descriptions:
         adesc = pdoc.entity('opus_jdl:' + job.jobname)
         adesc.add_attributes({
-            'prov:label': job.jobname + " description",
+            'prov:label': job.jobname + "_description",
             'prov:type': 'voprov:ActivityDescription',
         })
         adesc.add_attributes({
@@ -296,9 +296,12 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, steps=0, agent=1
             pdattrs = {}
             for pkey, pvalue in pdict.items():
                 if pvalue:
-                    pdattrs['voprov:' + pkey] = pvalue
+                    if pkey == 'annotation':
+                        adattrs['voprov:description'] = pvalue
+                    else:
+                        pdattrs['voprov:' + pkey] = pvalue
             if descriptions > 1:
-                pdattrs['prov:label'] = pname + "description"
+                pdattrs['prov:label'] = pname + "_description"
                 pdattrs['prov:type'] = 'voprov:ParameterDescription'
                 pds.append(pdoc.entity('opus_jdl:' + job.jobname + '#' + pname))
                 pds[-1].add_attributes(pdattrs)
