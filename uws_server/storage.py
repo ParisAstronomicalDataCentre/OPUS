@@ -146,7 +146,6 @@ class EntityStorage(object):
 # SQLAlchemy
 
 
-
 class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
 
     def __init__(self, db_string=SQLALCHEMY_DB):
