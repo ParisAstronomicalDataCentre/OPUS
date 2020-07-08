@@ -1028,13 +1028,13 @@ def provsap():
             raise UserWarning('"ID" is not specified in request')
         kwargs = {}
         kwargs['depth'] = request.query.get('DEPTH', 1)
-        format = request.query.get('RESPONSEFORMAT', 'PROV-SVG')
+        kwargs['model'] = request.query.get('MODEL', 'IVOA')
         kwargs['direction'] = request.query.get('DIRECTION', 'BACK')
-        kwargs['agent'] = int(request.query.get('AGENT', 1))
+        kwargs['agents'] = int(request.query.get('AGENTS', 1))
         kwargs['members'] = int(request.query.get('MEMBERS', 0))
-        kwargs['steps'] = int(request.query.get('STEPS', 0))
         kwargs['descriptions'] = int(request.query.get('DESCRIPTIONS', 0))
         kwargs['configuration'] = int(request.query.get('CONFIGURATION', 1))
+        respformat = request.query.get('RESPONSEFORMAT', 'PROV-SVG')
         attributes = int(request.query.get('ATTRIBUTES', 1))
         gd = request.query.get('GD', 'BT')
         if kwargs['depth'] == 'ALL':
@@ -1044,7 +1044,7 @@ def provsap():
         ids = request.query.getall('ID')
         pdocs = []
         for id in ids:
-            show_generated = False
+            show_generated = True
             # Test if ID is an entity_id, and get the related jobid (that generated the entity)
             job_storage = getattr(storage, STORAGE + 'JobStorage')()
             entity = job_storage.get_entity(id, silent=True)
@@ -1054,7 +1054,7 @@ def provsap():
                 if kwargs['depth'] > 0:
                     kwargs['depth'] -= 1
             else:
-                # Then it is a jobid
+                # Then it must be a jobid
                 jobid = id
             # Get job properties from DB
             #job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True)
@@ -1066,25 +1066,33 @@ def provsap():
         # Merge all pdocs
         pdoc = pdocs.pop()
         for opdoc in pdocs:
-            logger.debug(opdoc.serialize())
             pdoc.update(opdoc)
         pdoc.unified()
 
-        if format == 'PROV-SVG':
+        filename_base = "provsap_" + "_".join(ids)
+        if respformat == 'PROV-SVG':
             svg_content = provenance.prov2svg_content(pdoc, attributes=attributes, direction=gd)
-            response.content_type = 'text/xml; charset=UTF-8'
+            response.content_type = 'text/xml'
+            response.headers[u"Content-Disposition"] = u'filename="' + filename_base + '.svg"'
             return svg_content
-        elif format == 'PROV-XML':
+        elif respformat == 'PROV-PNG':
+            png_content = provenance.prov2png_content(pdoc, attributes=attributes, direction=gd)
+            response.content_type = 'image/png'
+            response.headers[u"Content-Disposition"] = u'filename="' + filename_base + '.png"'
+            return png_content
+        elif respformat == 'PROV-XML':
             result = io.BytesIO()
             pdoc.serialize(result, format='xml')
             result.seek(0)
             response.content_type = 'text/xml; charset=UTF-8'
+            response.headers[u"Content-Disposition"] = u'filename="' + filename_base + '.xml"'
             return b'\n'.join(result.readlines())
-        elif format == 'PROV-JSON':  # return PROV-JSON as default
+        elif respformat == 'PROV-JSON':  # return PROV-JSON as default
             result = io.BytesIO()
             pdoc.serialize(result, format='json')
             result.seek(0)
             response.content_type = 'application/json; charset=UTF-8'
+            response.headers[u"Content-Disposition"] = u'filename="' + filename_base + '.json"'
             return b'\n'.join(result.readlines())
         else:
             raise BadRequest('Bad value for RESPONSEFORMAT ({}).\nAvailable values are (\'PROV-JSON\', \'PROV-XML\', \'PROV-SVG\').'.format(format))
