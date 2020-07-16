@@ -1136,20 +1136,20 @@ def maintenance(jobname):
                 job = Job(jobname, j['jobid'], user, get_attributes=True, get_parameters=True, get_results=True)
                 report.append('[{} {} {} {}]'.format(jobname, job.jobid, job.creation_time, job.phase))
                 # Check consistency of dates (destruction_time > end_time > start_time > creation_time)
-                creation_time = dt.datetime.strptime(job.creation_time, DT_FMT) if not None else None
-                start_time = dt.datetime.strptime(job.start_time, DT_FMT) if not None else None
-                end_time = dt.datetime.strptime(job.end_time, DT_FMT) if not None else None
-                destruction_time = dt.datetime.strptime(job.destruction_time, DT_FMT) if not None else None
-                if creation_time > start_time:
+                creation_time = None if not job.creation_time else dt.datetime.strptime(job.creation_time, DT_FMT)
+                start_time = None if not job.start_time else dt.datetime.strptime(job.start_time, DT_FMT)
+                end_time = None if not job.end_time else dt.datetime.strptime(job.end_time, DT_FMT)
+                destruction_time = None if not job.destruction_time else dt.datetime.strptime(job.destruction_time, DT_FMT)
+                if creation_time and start_time and (creation_time > start_time):
                     report.append('  creation_time > start_time')
-                if start_time > end_time:
+                if start_time and end_time and (start_time > end_time):
                     report.append('  start_time > end_time')
-                if end_time > destruction_time:
+                if end_time and destruction_time and (end_time > destruction_time):
                     report.append('  end_time > destruction_time')
                 # Check if start_time is set
-                if not job.start_time and job.phase not in ['PENDING', 'QUEUED']:
+                if not start_time and job.phase not in ['PENDING', 'QUEUED']:
                     report.append('  Start time not set')
-                if not job.end_time and job.phase not in TERMINAL_PHASES:
+                if not end_time and job.phase not in TERMINAL_PHASES:
                     report.append('  End time not set')
                 # Check status if phase is not terminal (or for all jobs?)
                 if job.phase not in TERMINAL_PHASES:
@@ -1159,7 +1159,7 @@ def maintenance(jobname):
                     if new_phase != phase:
                         report.append('  Status has been updated: {} --> {}'.format(phase, new_phase))
                 # If destruction time is passed, delete or archive job
-                if destruction_time < now:
+                if destruction_time and (destruction_time < now):
                     report.append('  Job should be deleted/archived (destruction_time={})'.format(job.destruction_time))
                     # TODO: effective deletion or archiving of job
         report.append('Done')
