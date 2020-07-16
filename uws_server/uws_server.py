@@ -1136,10 +1136,10 @@ def maintenance(jobname):
                 job = Job(jobname, j['jobid'], user, get_attributes=True, get_parameters=True, get_results=True)
                 report.append('[{} {} {} {}]'.format(jobname, job.jobid, job.creation_time, job.phase))
                 # Check consistency of dates (destruction_time > end_time > start_time > creation_time)
-                creation_time = dt.datetime.strptime(job.creation_time, DT_FMT)
-                start_time = dt.datetime.strptime(job.start_time, DT_FMT)
-                end_time = dt.datetime.strptime(job.end_time, DT_FMT)
-                destruction_time = dt.datetime.strptime(job.destruction_time, DT_FMT)
+                creation_time = dt.datetime.strptime(job.creation_time, DT_FMT) if not None else None
+                start_time = dt.datetime.strptime(job.start_time, DT_FMT) if not None else None
+                end_time = dt.datetime.strptime(job.end_time, DT_FMT) if not None else None
+                destruction_time = dt.datetime.strptime(job.destruction_time, DT_FMT) if not None else None
                 if creation_time > start_time:
                     report.append('  creation_time > start_time')
                 if start_time > end_time:
