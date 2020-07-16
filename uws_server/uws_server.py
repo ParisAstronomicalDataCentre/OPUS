@@ -533,12 +533,8 @@ def get_jobnames():
     try:
         # jobnames = ['copy', 'ctbin']
         # List jdl files (=available jobs)
-        #jdl = uws_jdl.__dict__[JDL]()
         jdl = getattr(uws_jdl, JDL)()
-        flist = glob.glob('{}/*{}'.format(jdl.jdl_path, jdl.extension))
-        # Check if JDL file exists on server?
-        jobnames_jdl = [f.split('/')[-1].split(jdl.extension)[0] for f in flist]
-        jobnames_all = [j for j in jobnames_jdl if os.path.isfile('{}/{}.sh'.format(jdl.scripts_path, j))]
+        jobnames_all = jdl.get_jobnames()
         jobnames = []
         if not CHECK_PERMISSIONS or user.check_admin():
             jobnames = jobnames_all
@@ -1122,38 +1118,50 @@ def maintenance(jobname):
     global logger
     report = []
     try:
+        # ["activity1", "activity2", "copy", "ctbin", "dummy", "dummy2", "dummy3", "gammapy_analysis", "gammapy_maps", "gammastart", "make_RGB_image", "serpe", "test"]
         user = User('maintenance', MAINTENANCE_TOKEN)
         logger = logger_init
-        logger.info('Maintenance checks for {}'.format(jobname))
-        # Get joblist
-        joblist = JobList(jobname, user, where_owner=False)
-        now = dt.datetime.now()
-        for j in joblist.jobs:
-            # For each job:
-            job = Job(jobname, j['jobid'], user, get_attributes=True, get_parameters=True, get_results=True)
-            report.append('[{} {} {} {}]'.format(jobname, job.jobid, job.creation_time, job.phase))
-            # Check consistency of dates (destruction_time > end_time > start_time > creation_time)
-            if job.creation_time > job.start_time:
-                report.append('  creation_time > start_time')
-            if job.start_time > job.end_time:
-                report.append('  start_time > end_time')
-            if job.end_time > job.destruction_time:
-                report.append('  end_time > destruction_time')
-            # Check if start_time is set
-            if not job.start_time and job.phase not in ['PENDING', 'QUEUED']:
-                report.append('  Start time not set')
-            # Check status if phase is not terminal (or for all jobs?)
-            if job.phase not in TERMINAL_PHASES:
-                phase = job.phase
-                new_phase = job.get_status()  # will update the phase from manager
-                if new_phase != phase:
-                    report.append('  Status has change: {} --> {}'.format(phase, new_phase))
-            # If destruction time is passed, delete or archive job
-            destruction_time = dt.datetime.strptime(job.destruction_time, DT_FMT)
-            if destruction_time < now:
-                report.append('  Job should be deleted/archived (destruction_time={})'.format(job.destruction_time))
-                # TODO: effective deletion or achiving of job
-        pass
+        if jobname != "__all__":
+            jobnames = [jobname]
+        else:
+            jdl = getattr(uws_jdl, JDL)()
+            jobnames = jdl.get_jobnames()
+        for jobname in jobnames:
+            report.append('Maintenance checks for {}...'.format(jobname))
+            # Get joblist
+            joblist = JobList(jobname, user, where_owner=False)
+            now = dt.datetime.now()
+            for j in joblist.jobs:
+                # For each job:
+                job = Job(jobname, j['jobid'], user, get_attributes=True, get_parameters=True, get_results=True)
+                report.append('[{} {} {} {}]'.format(jobname, job.jobid, job.creation_time, job.phase))
+                # Check consistency of dates (destruction_time > end_time > start_time > creation_time)
+                creation_time = dt.datetime.strptime(job.creation_time, DT_FMT)
+                start_time = dt.datetime.strptime(job.start_time, DT_FMT)
+                end_time = dt.datetime.strptime(job.end_time, DT_FMT)
+                destruction_time = dt.datetime.strptime(job.destruction_time, DT_FMT)
+                if creation_time > start_time:
+                    report.append('  creation_time > start_time')
+                if start_time > end_time:
+                    report.append('  start_time > end_time')
+                if end_time > destruction_time:
+                    report.append('  end_time > destruction_time')
+                # Check if start_time is set
+                if not job.start_time and job.phase not in ['PENDING', 'QUEUED']:
+                    report.append('  Start time not set')
+                if not job.end_time and job.phase not in TERMINAL_PHASES:
+                    report.append('  End time not set')
+                # Check status if phase is not terminal (or for all jobs?)
+                if job.phase not in TERMINAL_PHASES:
+                    report.append('  Job is not in a terminal phase')
+                    phase = job.phase
+                    new_phase = job.get_status()  # will update the phase from manager
+                    if new_phase != phase:
+                        report.append('  Status has been updated: {} --> {}'.format(phase, new_phase))
+                # If destruction time is passed, delete or archive job
+                if destruction_time < now:
+                    report.append('  Job should be deleted/archived (destruction_time={})'.format(job.destruction_time))
+                    # TODO: effective deletion or archiving of job
         report.append('Done')
         for line in report:
             logger.warning(line)
