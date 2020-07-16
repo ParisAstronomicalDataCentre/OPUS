@@ -474,13 +474,14 @@ class SLURMManager(Manager):
         ]
         # Insert server/job specific sbatch commands
         for k in SLURM_PARAMETERS:
-            if k in SLURM_SBATCH_DEFAULT:
+            subk = k.split('slurm_')[-1]
+            if subk in SLURM_SBATCH_DEFAULT:
                 # Check if parameter is given in job.parameters or use default
-                v = job.parameters.get('slurm_'+k, {'value': SLURM_SBATCH_DEFAULT[k]})
-                sbatch.append('#SBATCH --{}={}'.format(k, v['value']))
-            elif 'slurm_'+k in job.parameters:
-                v = job.parameters.get('slurm_'+k)
-                sbatch.append('#SBATCH --{}={}'.format(k, v['value']))
+                v = job.parameters.get(k, {'value': SLURM_SBATCH_DEFAULT[subk]})
+                sbatch.append('#SBATCH --{}={}'.format(subk, v['value']))
+            elif k in job.parameters:
+                v = job.parameters.get(k)
+                sbatch.append('#SBATCH --{}={}'.format(subk, v['value']))
         # Script init and execution
         sbatch.extend(
             self._make_batch(job, jobid_var='$SLURM_JOBID', get_input_files=get_input_files)
