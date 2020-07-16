@@ -12,6 +12,7 @@ import copy
 import json
 import yaml
 import lxml.etree as ETree
+import glob
 import datetime as dt
 from .settings import *
 
@@ -113,6 +114,13 @@ class JDLFile(object):
                 fn = fn_jobid
         # logger.info('JDL filename: ' + fn)
         return fn
+
+    def get_jobnames(self):
+        flist = glob.glob('{}/*{}'.format(self.jdl_path, self.extension))
+        # Check if JDL file exists on server?
+        jobnames_jdl = [f.split('/')[-1].split(self.extension)[0] for f in flist]
+        jobnames_all = [j for j in jobnames_jdl if os.path.isfile('{}/{}.sh'.format(self.scripts_path, j))]
+        return jobnames_all
 
     def save(self, jobname):
         """Save job description to file"""
