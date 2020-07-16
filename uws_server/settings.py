@@ -82,7 +82,7 @@ EXECUTION_DURATION_MAX = 3600  # in seconds
 WAIT_TIME_MAX = 600  # in seconds
 
 # ARCHIVED phase (UWS1.1)
-USE_ARCHIVED_PHASE = False
+USE_ARCHIVED_PHASE = True
 
 # Add the provenance files to the results of the jobs
 GENERATE_PROV = True

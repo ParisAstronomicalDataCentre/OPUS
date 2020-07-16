@@ -1118,7 +1118,6 @@ def maintenance(jobname):
     global logger
     report = []
     try:
-        # ["activity1", "activity2", "copy", "ctbin", "dummy", "dummy2", "dummy3", "gammapy_analysis", "gammapy_maps", "gammastart", "make_RGB_image", "serpe", "test"]
         user = User('maintenance', MAINTENANCE_TOKEN)
         logger = logger_init
         if jobname != "__all__":
@@ -1160,9 +1159,23 @@ def maintenance(jobname):
                         report.append('  Status has been updated: {} --> {}'.format(phase, new_phase))
                 # If destruction time is passed, delete or archive job
                 if destruction_time and (destruction_time < now):
-                    report.append('  Job should be deleted/archived (destruction_time={})'.format(job.destruction_time))
                     # TODO: effective deletion or archiving of job
-        report.append('Done')
+                    if USE_ARCHIVED_PHASE:
+                        if job.phase in ['COMPLETED', 'ABORTED', 'ERROR']:
+                            job.archive()
+                            report.append(
+                                '  Job has been archived (destruction_time={})'.format(job.destruction_time))
+                        else:
+                            # job.delete()
+                            report.append(
+                                '  Job has been deleted (destruction_time={})'.format(job.destruction_time))
+                            pass
+                    else:
+                        # job.delete()
+                        report.append(
+                            '  Job has been deleted (destruction_time={})'.format(job.destruction_time))
+                        pass
+        report.append('Done\n')
         for line in report:
             logger.warning(line)
     except JobAccessDenied as e:

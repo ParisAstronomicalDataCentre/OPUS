@@ -453,6 +453,8 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         query = self.session.query(self.Job).filter_by(jobname=joblist.jobname)
         if phase:
             query = query.filter(self.Job.phase.in_(phase))
+        else:
+            query = query.filter(self.Job.phase.notin_(["ARCHIVED"]))
         if after:
             query = query.filter(self.Job.creation_time >= after)
         if where_owner:

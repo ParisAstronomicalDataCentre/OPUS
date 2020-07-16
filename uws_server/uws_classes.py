@@ -764,6 +764,13 @@ class Job(object):
         # Change phase to ABORTED
         self.change_status('ABORTED', 'Job aborted by user ' + self.user.name)
 
+    def archive(self):
+        """Archive job
+
+        Job can be archived at any time.
+        """
+        self.change_status('ARCHIVED', 'Job archived (phase was {})'.format(self.phase))
+
     def delete(self):
         """Delete job
 
@@ -811,73 +818,76 @@ class Job(object):
         - QUEUED / HELD / SUSPENDED
         - EXECUTING
         """
-        if self.phase in ['PENDING', 'QUEUED', 'EXECUTING', 'HELD', 'SUSPENDED', 'ERROR']:
-            # Change phase
-            now = dt.datetime.now()
-            # logger.info('now={}'.format(now))
-            # destruction = dt.timedelta(DESTRUCTION_INTERVAL)
-            if new_phase not in ['QUEUED', 'HELD', 'SUSPENDED', 'EXECUTING', 'COMPLETED', 'ABORTED', 'ERROR']:
+        now = dt.datetime.now()
+        if self.phase in ['PENDING', 'QUEUED', 'EXECUTING', 'HELD', 'SUSPENDED', 'ERROR', 'UNKNOWN']:
+            if new_phase not in ['QUEUED', 'EXECUTING', 'HELD', 'SUSPENDED', 'ABORTED', 'ERROR', 'COMPLETED', 'ARCHIVED']:
                 raise UserWarning('Phase change not allowed: {} --> {}'.format(self.phase, new_phase))
-            # Set start_time
-            if new_phase in ['QUEUED']:
-                self.start_time = now.strftime(DT_FMT)
-            if self.phase not in ['ERROR']:
-                # Get results, logs
-                if new_phase in ['COMPLETED', 'ABORTED', 'ERROR']:
-                    try:
-                        self.end_time = now.strftime(DT_FMT)
-                        self.manager.get_jobdata(self)
-                        # Add results, logs, provenance (if they exist...) to job control db
-                        self.add_results()
-                        self.add_logs()
-                    except Exception as e:
-                        self.phase = 'ERROR'
-                        error = 'Cannot get jobdata for job {}'.format(self.jobid)
-                        logger.error(error)
-                        if self.error:
-                            self.error += '. ' + error
-                        else:
-                            self.error = error
-                        self.end_time = now.strftime(DT_FMT)
-                        self.storage.save(self)
-                        change_status_signal = signal('job_status')
-                        result = change_status_signal.send('change_status', sig_jobid=self.jobid, sig_phase=self.phase)
-                        raise
-            # Increment error message is needed
-            if new_phase in ['ERROR', 'ABORTED']:
-                # Set job.error or add
-                if self.error:
-                    self.error += '. ' + error
-                else:
-                    self.error = error
-                # If phase is already ABORTED, keep it
-                if self.phase == 'ABORTED':
-                    new_phase = 'ABORTED'
-            # Set end_time
-            if new_phase in ['COMPLETED', 'ABORTED']:
-                self.end_time = now.strftime(DT_FMT)
-            if new_phase == 'ERROR' and self.phase != 'ERROR':
-                self.end_time = now.strftime(DT_FMT)
-            # Update phase
-            previous_phase = self.phase
-            self.phase = new_phase
-            # Save job description
-            self.storage.save(self)
-            # Add provenance files
-            if new_phase in ['COMPLETED']:
-                try:
-                    self.add_provenance()
-                    self.storage.save(self)
-                except Exception as e:
-                    error = 'Cannot generate provenance files for job {}'.format(self.jobid)
-                    logger.warning(error)
-            # Send signal (e.g. if WAIT command expecting signal)
-            change_status_signal = signal('job_status')
-            result = change_status_signal.send('change_status', sig_jobid=self.jobid, sig_phase=self.phase)
-            # logger.debug('Signal sent for status change ({} --> {}). Results: \n{}'.format(previous_phase, self.phase, str(result)))
         else:
-            raise UserWarning('Job {} cannot be updated to {} while in phase {}'
-                              ''.format(self.jobid, new_phase, self.phase))
+            # phase is in ['COMPLETED', 'ABORTED', 'ARCHIVED']
+            if new_phase in ['ARCHIVED']:
+                if self.phase not in ['COMPLETED', 'ABORTED', 'ERROR']:
+                    raise UserWarning('Job {} cannot be updated to {} while in phase {}'
+                                      ''.format(self.jobid, new_phase, self.phase))
+            else:
+                raise UserWarning('Job {} cannot be updated to {} while in terminal phase {}'
+                                  ''.format(self.jobid, new_phase, self.phase))
+        # Set start_time
+        if new_phase in ['QUEUED']:
+            self.start_time = now.strftime(DT_FMT)
+        if new_phase in ['COMPLETED', 'ABORTED', 'ERROR']:
+            if self.phase not in ['ERROR']:
+            # Get results, logs
+                try:
+                    self.end_time = now.strftime(DT_FMT)
+                    self.manager.get_jobdata(self)
+                    # Add results, logs, provenance (if they exist...) to job control db
+                    self.add_results()
+                    self.add_logs()
+                except Exception as e:
+                    self.phase = 'ERROR'
+                    error = 'Cannot get jobdata for job {}'.format(self.jobid)
+                    logger.error(error)
+                    if self.error:
+                        self.error += '. ' + error
+                    else:
+                        self.error = error
+                    self.end_time = now.strftime(DT_FMT)
+                    self.storage.save(self)
+                    change_status_signal = signal('job_status')
+                    result = change_status_signal.send('change_status', sig_jobid=self.jobid, sig_phase=self.phase)
+                    raise
+        # Increment error message if needed
+        if new_phase in ['ERROR', 'ABORTED', 'ARCHIVED']:
+            # Set job.error or add
+            if self.error:
+                self.error += '. ' + error
+            else:
+                self.error = error
+            # If phase is already ABORTED, keep it
+            if self.phase == 'ABORTED':
+                new_phase = 'ABORTED'
+        # Set end_time
+        if new_phase in ['COMPLETED', 'ABORTED']:
+            self.end_time = now.strftime(DT_FMT)
+        if new_phase == 'ERROR' and self.phase != 'ERROR':
+            self.end_time = now.strftime(DT_FMT)
+        # Update phase
+        previous_phase = self.phase
+        self.phase = new_phase
+        # Save job description
+        self.storage.save(self)
+        # Send signal (e.g. if WAIT command expecting signal)
+        change_status_signal = signal('job_status')
+        result = change_status_signal.send('change_status', sig_jobid=self.jobid, sig_phase=self.phase)
+        # logger.debug('Signal sent for status change ({} --> {}). Results: \n{}'.format(previous_phase, self.phase, str(result)))
+        # Add provenance files
+        if new_phase in ['COMPLETED']:
+            try:
+                self.add_provenance()
+                self.storage.save(self)
+            except Exception as e:
+                error = 'Cannot generate provenance files for job {}'.format(self.jobid)
+                logger.warning(error)
 
 
 # -------------
