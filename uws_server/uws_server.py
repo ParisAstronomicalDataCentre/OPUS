@@ -1149,7 +1149,7 @@ def maintenance(jobname):
                 # Check if start_time is set
                 if not start_time and job.phase not in ['PENDING', 'QUEUED']:
                     report.append('  Start time not set')
-                if not end_time and job.phase not in TERMINAL_PHASES:
+                if not end_time and job.phase in TERMINAL_PHASES:
                     report.append('  End time not set')
                 # Check status if phase is not terminal (or for all jobs?)
                 if job.phase not in TERMINAL_PHASES:
