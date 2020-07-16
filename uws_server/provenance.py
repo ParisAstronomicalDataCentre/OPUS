@@ -462,7 +462,6 @@ def prov2dot(prov_doc, attributes=True, direction='BT'):
     :return:
     """
     dot = prov_to_dot(prov_doc, use_labels=True, show_element_attributes=attributes, show_relation_attributes=attributes, direction=direction)
-    logger.debug(dot)
     return dot
 
 
