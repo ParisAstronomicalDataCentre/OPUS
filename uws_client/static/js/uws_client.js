@@ -897,19 +897,21 @@ var uws_client = (function($) {
         switch (r_type) {
             // FITS files can be SAMPed
             case 'image/fits':
+                // Show image preview
+                $('#'+r_id+' div.panel-heading div.btn-group a.preview').hide();
+                //$('#'+r_id+' div.panel-body').html('\
+                //    <img class="img-thumbnail" src="/static/images/crab_cta.png" />\
+                //');
+                // Add SAMP button
                 $('#'+r_id+' div.panel-heading div.btn-group').append('\
-                    <button type="button" class="samp btn btn-default btn-sm">SAMP</button>'
+                    <button type="button" class="samp btn btn-default btn-sm"><span class="glyphicon glyphicon-send"></span> SAMP</button>'
                 );
                 // Add event on SAMP button click
-                $('#'+r_id+' div.panel-heading div.btn-group a.samp').click(function() {
+                $('#'+r_id+' div.panel-heading div.btn-group button.samp').click(function() {
                     // var url = $(this).parents(".panel").attr('value');
                     //var name = url.split('/').pop();
                     samp_client.samp_image(r_url_auth);
                 });
-                // Show image preview
-                //$('#'+r_id+' div.panel-body').html('\
-                //    <img class="img-thumbnail" src="/static/images/crab_cta.png" />\
-                //');
                 break;
             // Show images
             case 'image/jpeg':
@@ -1006,6 +1008,9 @@ var uws_client = (function($) {
                     };
                 });
                 break;
+            // Unknown content_type
+            default:
+                $('#'+r_id+' div.panel-heading div.btn-group a.preview').hide();
         };
     };
     var displayResultsOk = function(job){
