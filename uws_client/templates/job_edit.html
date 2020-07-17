@@ -26,6 +26,14 @@
                             <span class="glyphicon glyphicon-arrow-left"></span>
                             Back to job list
                         </a>
+                        <a id="edit_jdl" class="btn btn-default" href="{{ url_for('job_definition', jobname=jobname) }}">
+                            <span class="glyphicon glyphicon-edit"></span>
+                            Edit job definition
+                        </a>
+                        <button id="provsap" class="btn btn-default">
+                            <span class="glyphicon glyphicon-tree-deciduous"></span>
+                            Provenance graph
+                        </button>
                         <button id="rerun_job" class="btn btn-default">
                             <span class="glyphicon glyphicon-repeat"></span>
                             Rerun job

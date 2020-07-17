@@ -33,6 +33,9 @@
             var query_string = $.param(all_params);
             location.href = client_endpoint + uws_client.client_endpoint_job_form + "/" + jobname + '?' + query_string;
         })
+        $('#provsap').click( function() {
+            location.href = server_url + "/provsap?ID=" + jobid;
+        })
     });
 
 })(jQuery);
