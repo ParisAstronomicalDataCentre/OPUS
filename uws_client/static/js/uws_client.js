@@ -23,6 +23,7 @@ var uws_client = (function($) {
 
     // Config
     var DEBUG = true;
+    var host_root = location.protocol + '//' + location.host;
     var server_endpoint_jobs = '/rest';
     var server_endpoint_jdl = '/jdl/<jobname>/json';
     var server_endpoint_results = '/store';
@@ -910,7 +911,9 @@ var uws_client = (function($) {
                 $('#'+r_id+' div.panel-heading div.btn-group button.samp').click(function() {
                     // var url = $(this).parents(".panel").attr('value');
                     //var name = url.split('/').pop();
-                    samp_client.samp_image(r_url_auth);
+                    var url_result = r_url + "&filename=" + r + ".fits";
+                    console.log(url_result);
+                    samp_client.samp_fits(url_result, r + ".fits");
                 });
                 break;
             // Show images
