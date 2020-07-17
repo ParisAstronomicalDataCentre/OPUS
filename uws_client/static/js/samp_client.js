@@ -150,14 +150,6 @@ var samp_client = ( function($) {
 		sender.send();
 	}
 
-	function samp_image(url) {
-		var msg = new samp.Message("image.load.fits", {
-			"url" : url
-		});
-		msgs = [msg];
-		send();
-	}
-
 	function samp_fits(fits_url, fits_name) {
 		var MSG = new samp.Message(MTYPE_FITS, {
 			"url" : fits_url,

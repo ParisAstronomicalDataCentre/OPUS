@@ -864,7 +864,9 @@ var uws_client = (function($) {
     var displayResult = function(list, r, r_type, r_url, r_url_auth){
         var rsplit = r.replace(/\./g, '_')
         var r_id = 'result_'+rsplit
+        var r_url_base = r_url.split('?ID=')[0];
         var r_name = r_url.split('/').pop();
+        var r_eid = r_name.split('?ID=').pop();
         var r_panel = '\
             <div id="'+r_id+'" class="panel panel-default" value="'+r_url+'">\
                 <div class="panel-heading clearfix">\
@@ -911,7 +913,7 @@ var uws_client = (function($) {
                 $('#'+r_id+' div.panel-heading div.btn-group button.samp').click(function() {
                     // var url = $(this).parents(".panel").attr('value');
                     //var name = url.split('/').pop();
-                    var url_result = r_url + "&filename=" + r + ".fits";
+                    var url_result = r_url_base + "/" + r_eid + "/" + r + ".fits";
                     console.log(url_result);
                     samp_client.samp_fits(url_result, r + ".fits");
                 });

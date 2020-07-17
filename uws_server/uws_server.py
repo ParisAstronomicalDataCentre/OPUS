@@ -903,6 +903,11 @@ def delete_jdl(jobname):
 # ----------
 
 
+@app.route('/store/<eid>/<fname>')
+def get_result_file(eid, fname):
+    redirect(BASE_URL + '/store?ID=' + eid, 303)
+
+
 @app.route('/store')
 def download_entity():
     """Get entity file corresponding to ID=entity_id
@@ -954,7 +959,7 @@ def download_entity():
 
 
 # TODO: function will be deprecated (replaced by /store)
-@app.route('/store/<jobid>/<rname>')  # /<rfname>')
+@app.route('/store_old/<jobid>/<rname>')  # /<rfname>')
 def get_result_file(jobid, rname):  # , rfname):
     """Get result file <rname> for job <jobid>
 
