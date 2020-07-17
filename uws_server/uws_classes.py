@@ -603,9 +603,9 @@ class Job(object):
     def add_results(self):
         now = dt.datetime.now()
         # TODO: retrieve entity identifiers from internal provenance if present
-        pf_name = os.path.join(JOBDATA_PATH, self.jobid, 'internal_provenance.json')
-        if os.path.isfile(pf_name):
-            with open(pf_name, 'r') as f:
+        ip_name = os.path.join(JOBDATA_PATH, self.jobid, 'internal_provenance.json')
+        if os.path.isfile(ip_name):
+            with open(ip_name, 'r') as f:
                 pdoc = yaml.load(f)
             if "entity" in pdoc:
                 for eid in pdoc["entity"]:
@@ -626,7 +626,6 @@ class Job(object):
                         # einfo["file_name"] = self.jobid + "_" + fname
                         entity = self.storage.register_entity(
                             from_entity=eid,
-                            jobid=self.jobid,
                             **einfo,
                         )
                         logger.info('Entity added to job {}: {}'.format(self.jobid, str(entity)))
