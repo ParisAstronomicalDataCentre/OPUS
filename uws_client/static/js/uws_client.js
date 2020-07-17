@@ -887,12 +887,12 @@ var uws_client = (function($) {
             <a class="download btn btn-default btn-sm" href="' + r_url_auth + '">\
                 <span class="glyphicon glyphicon-save"></span>\
                 Download\
-            </a>\
-            <a class="adownload btn btn-default btn-sm" href="' + r_url + '">\
-                <span class="glyphicon glyphicon-save"></span>\
-                Anonymous Download\
             </a>'
         );
+//            <a class="adownload btn btn-default btn-sm" href="' + r_url + '">\
+//                <span class="glyphicon glyphicon-save"></span>\
+//                Anonymous Download\
+//            </a>'
         // Show preview according to result type (file extension)
         switch (r_type) {
             // FITS files can be SAMPed
@@ -918,15 +918,20 @@ var uws_client = (function($) {
                 // Show image preview
                 $('#'+r_id+' div.panel-heading div.btn-group a.preview').click(function() {
                     var txt = $(this).html();
-                    if (txt.indexOf('Show') !== -1) {
+                    if (!($('#'+r_id).hasClass('preview_loaded'))) {
                         $('#'+r_id).append('\
                             <div class="panel-body">\
                                 <img class="img-thumbnail" src="' + r_url_auth + '" />\
                             </div>\
                         ');
+                        $('#'+r_id).addClass('preview_loaded');
+                        console.log('Preview loaded for ' + r_id);
+                    };
+                    if (txt.indexOf('Show') !== -1) {
+                        $('#'+r_id+' div.panel-body').show();
                         $(this).html(txt.replace('Show', 'Hide').replace('open', 'close'));
                     } else {
-                        $('#'+r_id+' div.panel-body').remove();
+                        $('#'+r_id+' div.panel-body').hide();
                         $(this).html(txt.replace('Hide', 'Show').replace('close', 'open'));
                     };
                 });
@@ -938,7 +943,7 @@ var uws_client = (function($) {
                 // show textarea with log
                 $('#'+r_id+' div.panel-heading div.btn-group a.preview').click(function() {
                     var txt = $(this).html();
-                    if (txt.indexOf('Show') !== -1) {
+                    if (!($('#'+r_id).hasClass('preview_loaded'))) {
                         $('#'+r_id).append('\
                             <div class="panel-body">\
                                 <textarea class="log form-control" rows="10" style="font-family: monospace;" readonly>\
@@ -958,15 +963,20 @@ var uws_client = (function($) {
                                 } else {
                                     $('#' + this + ' div.panel-body textarea').html(txt);
                                 }
+                                $('#'+r_id).addClass('preview_loaded');
+                                console.log('Preview loaded for ' + this);
                             },
                             error: function(xhr, status, exception) {
                                 $('#loading').hide();
                                 console.log(exception);
                             }
                         });
+                    };
+                    if (txt.indexOf('Show') !== -1) {
+                        $('#'+r_id+' div.panel-body').show();
                         $(this).html(txt.replace('Show', 'Hide').replace('open', 'close'));
                     } else {
-                        $('#'+r_id+' div.panel-body').remove();
+                        $('#'+r_id+' div.panel-body').hide();
                         $(this).html(txt.replace('Hide', 'Show').replace('close', 'open'));
                     };
                 });
@@ -975,7 +985,7 @@ var uws_client = (function($) {
             case 'image/svg+xml':
                 $('#'+r_id+' div.panel-heading div.btn-group a.preview').click(function() {
                     var txt = $(this).html();
-                    if (txt.indexOf('Show') !== -1) {
+                    if (!($('#'+r_id).hasClass('preview_loaded'))) {
                         $('#'+r_id).append('\
                             <div class="panel-body">\
                             </div>\
@@ -984,9 +994,14 @@ var uws_client = (function($) {
                         $('#'+r_id+' div.panel-body').load(r_url_auth, function() {
                             $('#' + r_id_svg + ' > div.panel-body > svg').attr('width', '100%');
                         });
+                        $('#'+r_id).addClass('preview_loaded');
+                        console.log('Preview loaded for ' + r_id);
+                    };
+                    if (txt.indexOf('Show') !== -1) {
+                        $('#'+r_id+' div.panel-body').show();
                         $(this).html(txt.replace('Show', 'Hide').replace('open', 'close'));
                     } else {
-                        $('#'+r_id+' div.panel-body').remove();
+                        $('#'+r_id+' div.panel-body').hide();
                         $(this).html(txt.replace('Hide', 'Show').replace('close', 'open'));
                     };
                 });
@@ -997,7 +1012,7 @@ var uws_client = (function($) {
         $('#loading').hide();
         var jdl = clients[job.jobName].jdl;
         var serviceUrl = clients[job.jobName].serviceUrl;
-        var details_keys =['stdout','stderr','provjson','provxml','provsvg'];
+        var details_keys =['jdl', 'stdout','stderr','provjson','provxml','provsvg'];
         var final_phase = ['COMPLETED', 'ABORTED', 'ERROR']
         $('#result_list').html('');
         //var generated_keys = jdl.generated_keys.concat(['stdout','stderr','provjson','provxml','provsvg']);
