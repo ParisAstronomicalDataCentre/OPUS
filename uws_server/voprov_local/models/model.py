@@ -17,10 +17,10 @@ from prov.model import (ProvException, ProvDocument, ProvBundle, ProvActivity,
                         PROV_REC_CLS, DEFAULT_NAMESPACES, NamespaceManager, first)
 from six.moves.urllib.parse import urlparse
 
-from voprov import serializers
-from voprov.models.voprovDescriptions import *
-from voprov.models.voprovConfigurations import *
-from voprov.models.voprovRelations import *
+from .. import serializers
+from .voprovDescriptions import *
+from .voprovConfigurations import *
+from .voprovRelations import *
 
 __author__ = 'Jean-Francois Sornay'
 __email__ = 'jeanfrancois.sornay@gmail.com'
