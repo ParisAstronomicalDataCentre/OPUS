@@ -2,7 +2,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-from prov.model import (ProvElement, ProvBundle, ProvEntity)
+from .model import (ProvElement, ProvBundle, ProvEntity)
 from voprov.models.constants import *
 
 __author__ = 'Jean-Francois Sornay'
