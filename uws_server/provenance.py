@@ -11,7 +11,7 @@ import copy
 import prov
 from .voprov_local.models.model import VOProvDocument, VOProvBundle, VOPROV, PROV
 from prov.model import ProvDocument, ProvBundle
-from prov.dot import prov_to_dot
+from .voprov_local.visualization.dot import prov_to_dot
 from pydotplus.graphviz import InvocationException
 
 from .settings import *
