@@ -2,7 +2,8 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-from prov.dot import *
+from prov.dot import GENERIC_NODE_STYLE, DOT_PROV_STYLE
+
 from .graph import *
 
 __author__ = 'Jean-Francois Sornay'
