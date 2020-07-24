@@ -17,7 +17,7 @@ class VOProvConfig(ProvElement):
         if bundle is None:
             bundle = ProvBundle()
         w3c_record = ProvEntity(bundle, self.identifier, self.attributes)
-        w3c_record.add_asserted_type(self.__class__.__name__)
+        w3c_record.add_asserted_type(self._prov_type)  # self.__class__.__name__)
         return bundle.add_record(w3c_record)
 
 

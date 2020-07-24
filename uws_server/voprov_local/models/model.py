@@ -186,7 +186,7 @@ class VOProvEntity(ProvEntity):
         if bundle is None:
             bundle = ProvBundle()
         entity = ProvEntity(bundle, self.identifier, self.attributes)
-        entity.add_asserted_type(self.__class__.__name__)
+        entity.add_asserted_type(self._prov_type)  # self.__class__.__name__)
         return bundle.add_record(entity)
 
 
@@ -358,7 +358,7 @@ class VOProvActivity(ProvActivity):
             bundle = ProvBundle()
 
         activity = ProvActivity(bundle, self.identifier, self.extra_attributes)
-        activity.add_asserted_type('VOProvActivity')
+        activity.add_asserted_type(self._prov_type)  # self.__class__.__name__)
 
         for formal in self.formal_attributes:
             local_part = formal[0].localpart
@@ -452,7 +452,7 @@ class VOProvAgent(ProvAgent):
             bundle = ProvBundle()
 
         agent = ProvAgent(bundle, self.identifier, self.attributes)
-        agent.add_asserted_type('VOProvAgent')
+        agent.add_asserted_type(self._prov_type)  # self.__class__.__name__)
 
         return bundle.add_record(agent)
 
@@ -483,7 +483,7 @@ class VOProvUsage(ProvUsage):
             bundle = ProvBundle()
 
         usage = ProvUsage(bundle, self.identifier, self.extra_attributes)
-        usage.add_asserted_type('VOProvUsage')
+        usage.add_asserted_type(self._prov_type)  # self.__class__.__name__)
 
         for formal in self.formal_attributes:
             local_part = formal[0].localpart
@@ -522,7 +522,7 @@ class VOProvGeneration(ProvGeneration):
             bundle = ProvBundle()
 
         generation = ProvGeneration(bundle, self.identifier, self.extra_attributes)
-        generation.add_asserted_type('VOProvGeneration')
+        generation.add_asserted_type(self._prov_type)  # self.__class__.__name__)
 
         for formal in self.formal_attributes:
             local_part = formal[0].localpart
@@ -548,7 +548,7 @@ class VOProvCommunication(ProvCommunication):
             bundle = ProvBundle()
 
         communication = ProvCommunication(bundle, self.identifier, self.extra_attributes)
-        communication.add_asserted_type('VOProvCommunication')
+        communication.add_asserted_type(self._prov_type)  # self.__class__.__name__)
 
         for formal in self.formal_attributes:
             local_part = formal[0].localpart
@@ -575,7 +575,7 @@ class VOProvStart(ProvStart):
             bundle = ProvBundle()
 
         start = ProvStart(bundle, self.identifier, self.extra_attributes)
-        start.add_asserted_type('VOProvStart')
+        start.add_asserted_type(self._prov_type)  # self.__class__.__name__)
 
         for formal in self.formal_attributes:
             local_part = formal[0].localpart
@@ -602,7 +602,7 @@ class VOProvEnd(ProvEnd):
             bundle = ProvBundle()
 
         end = ProvEnd(bundle, self.identifier, self.extra_attributes)
-        end.add_asserted_type('VOProvEnd')
+        end.add_asserted_type(self._prov_type)  # self.__class__.__name__)
 
         for formal in self.formal_attributes:
             local_part = formal[0].localpart
@@ -628,7 +628,7 @@ class VOProvInvalidation(ProvInvalidation):
             bundle = ProvBundle()
 
         invalidation = ProvInvalidation(bundle, self.identifier, self.extra_attributes)
-        invalidation.add_asserted_type('VOProvInvalidation')
+        invalidation.add_asserted_type(self._prov_type)  # self.__class__.__name__)
 
         for formal in self.formal_attributes:
             local_part = formal[0].localpart
@@ -656,7 +656,7 @@ class VOProvDerivation(ProvDerivation):
             bundle = ProvBundle()
 
         derivation = ProvDerivation(bundle, self.identifier, self.extra_attributes)
-        derivation.add_asserted_type('VOProvDerivation')
+        derivation.add_asserted_type(self._prov_type)  # self.__class__.__name__)
 
         for formal in self.formal_attributes:
             local_part = formal[0].localpart
@@ -682,7 +682,7 @@ class VOProvAttribution(ProvAttribution):
             bundle = ProvBundle()
 
         attribution = ProvAttribution(bundle, self.identifier, self.extra_attributes)
-        attribution.add_asserted_type('VOProvAttribution')
+        attribution.add_asserted_type(self._prov_type)  # self.__class__.__name__)
 
         for formal in self.formal_attributes:
             local_part = formal[0].localpart
@@ -708,7 +708,7 @@ class VOProvAssociation(ProvAssociation):
             bundle = ProvBundle()
 
         association = ProvAssociation(bundle, self.identifier, self.extra_attributes)
-        association.add_asserted_type('VOProvAssociation')
+        association.add_asserted_type(self._prov_type)  # self.__class__.__name__)
 
         for formal in self.formal_attributes:
             local_part = formal[0].localpart
@@ -734,7 +734,7 @@ class VOProvDelegation(ProvDelegation):
             bundle = ProvBundle()
 
         delegation = ProvDelegation(bundle, self.identifier, self.extra_attributes)
-        delegation.add_asserted_type('VOProvDelegation')
+        delegation.add_asserted_type(self._prov_type)  # self.__class__.__name__)
 
         for formal in self.formal_attributes:
             local_part = formal[0].localpart
@@ -760,7 +760,7 @@ class VOProvInfluence(ProvInfluence):
             bundle = ProvBundle()
 
         influence = ProvInfluence(bundle, self.identifier, self.extra_attributes)
-        influence.add_asserted_type('VOProvInfluence')
+        influence.add_asserted_type(self._prov_type)  # self.__class__.__name__)
 
         for formal in self.formal_attributes:
             local_part = formal[0].localpart
@@ -786,7 +786,7 @@ class VOProvSpecialization(ProvSpecialization):
             bundle = ProvBundle()
 
         specialization = ProvSpecialization(bundle, self.identifier, self.extra_attributes)
-        specialization.add_asserted_type('VOProvSpecialization')
+        specialization.add_asserted_type(self._prov_type)  # self.__class__.__name__)
 
         for formal in self.formal_attributes:
             local_part = formal[0].localpart
@@ -812,7 +812,7 @@ class VOProvAlternate(ProvAlternate):
             bundle = ProvBundle()
 
         alternate = ProvAlternate(bundle, self.identifier, self.extra_attributes)
-        alternate.add_asserted_type('VOProvAlternate')
+        alternate.add_asserted_type(self._prov_type)  # self.__class__.__name__)
 
         for formal in self.formal_attributes:
             local_part = formal[0].localpart
@@ -839,7 +839,7 @@ class VOProvMention(ProvMention, VOProvSpecialization):
             bundle = ProvBundle()
 
         mention = ProvMention(bundle, self.identifier, self.extra_attributes)
-        mention.add_asserted_type('VOProvMention')
+        mention.add_asserted_type(self._prov_type)  # self.__class__.__name__)
 
         for formal in self.formal_attributes:
             local_part = formal[0].localpart
@@ -865,7 +865,7 @@ class VOProvMembership(ProvMembership):
             bundle = ProvBundle()
 
         membership = ProvMembership(bundle, self.identifier, self.extra_attributes)
-        membership.add_asserted_type('VOProvMembership')
+        membership.add_asserted_type(self._prov_type)  # self.__class__.__name__)
 
         for formal in self.formal_attributes:
             local_part = formal[0].localpart
@@ -934,7 +934,7 @@ class VOProvBundle(ProvBundle):
 
     def unified(self):
         """
-        Unifies all records in the bundle that haves same identifiers
+        Unifies all records in the bundle that have same identifiers
 
         :returns: :py:class:`VOProvBundle` -- the new unified bundle.
         """
@@ -943,6 +943,28 @@ class VOProvBundle(ProvBundle):
             records=unified_records, identifier=self.identifier
         )
         return bundle
+
+    def unified_relations(self):
+        """
+        Unifies all relations in the bundle that have same __repr__ (i.e. type, identifier if set, e1, e2)
+
+        :returns: :py:class:`VOProvBundle` -- the new unified bundle.
+        """
+        hash_records = []
+        if self.is_document():
+            for bundle in self._bundles:
+                self._bundles[bundle] = self._bundles[bundle].unified_relations()
+        for record in self._records:
+            if record.is_relation():
+                hash_records.append(hash(str(record)))
+            else:
+                hash_records.append(hash(record))
+        for hash_record in list(set(hash_records)):
+            while hash_records.count(hash_record) > 1:
+                rec_index = hash_records.index(hash_record)
+                self._records.pop(rec_index)
+                hash_records.pop(rec_index)
+        return self
 
     def get_w3c(self, document=None):
         """get this element in the prov version which is an implementation of the W3C PROV-DM standard"""

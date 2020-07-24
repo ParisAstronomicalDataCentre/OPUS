@@ -416,13 +416,15 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, agents=1, model=
         pdoc = pdoc.get_w3c()
     pdoc = pdoc.unified()
     # Filter similar relations
-    for bundle in pdoc._bundles:
-        pdoc._bundles[bundle] = unified_relations(pdoc._bundles[bundle])
-    pdoc = unified_relations(pdoc)
+    pdoc = pdoc.unified_relations()
     return pdoc
+
 
 def unified_relations(bundle):
     hash_records = []
+    if bundle.is_document():
+        for subbundle in bundle._bundles:
+            bundle._bundles[subbundle] = unified_relations(bundle._bundles[subbundle])
     for record in bundle._records:
         if record.is_relation():
             hash_records.append(hash(str(record)))
@@ -434,6 +436,7 @@ def unified_relations(bundle):
             bundle._records.pop(rec_index)
             hash_records.pop(rec_index)
     return bundle
+
 
 def prov2json(prov_doc, fname):
     """
