@@ -428,6 +428,8 @@ def unified_relations(bundle):
     hash_records = []
     if bundle.is_document():
         for subbundle in bundle._bundles:
+            if not hasattr(bundle._bundles[subbundle], "label"):
+                setattr(bundle._bundles[subbundle], "label", "")
             bundle._bundles[subbundle] = unified_relations(bundle._bundles[subbundle])
     for record in bundle._records:
         if record.is_relation():
