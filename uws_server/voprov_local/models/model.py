@@ -953,6 +953,8 @@ class VOProvBundle(ProvBundle):
         hash_records = []
         if self.is_document():
             for bundle in self._bundles:
+                if not hasattr(self._bundles[bundle], "label"):
+                    setattr(self._bundles[bundle], "label", "")
                 self._bundles[bundle] = self._bundles[bundle].unified_relations()
         for record in self._records:
             if record.is_relation():
