@@ -330,7 +330,9 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, agents=1, model=
         ipfile = os.path.join(JOBDATA_PATH, jobid, INTERNAL_PROVENANCE_FILENAME)
         if os.path.isfile(ipfile):
             ipdoc = prov.read(ipfile)
-            ipbundle = VOProvBundle(namespaces=ipdoc.namespaces, identifier="#" + job.jobid + "#internal_provenance")
+            ipid = "#" + job.jobid + "#internal_provenance"
+            ipbundle = VOProvBundle(namespaces=ipdoc.namespaces, identifier=ipid)
+            setattr(ipbundle, ipid)
             #inpbundle._identifier = "id:" + job.jobid + "_prov"
             ipbundle.update(ipdoc)
             #inpprov = inpdoc.bundle(job.jobid + "_prov")
