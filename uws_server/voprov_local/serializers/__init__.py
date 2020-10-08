@@ -28,8 +28,8 @@ class Registry:
     def load_serializers():
         """Loads all available serializers into the registry."""
         from prov.serializers.provjson import ProvJSONSerializer
-        from voprov.serializers.provn import VOProvNSerializer
-        from voprov.serializers.xml import VOProvXMLSerializer
+        from provn import VOProvNSerializer
+        from xml import VOProvXMLSerializer
         from prov.serializers.provrdf import ProvRDFSerializer
 
         Registry.serializers = {
