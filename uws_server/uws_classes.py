@@ -606,7 +606,7 @@ class Job(object):
         ip_name = os.path.join(JOBDATA_PATH, self.jobid, 'internal_provenance.json')
         if os.path.isfile(ip_name):
             with open(ip_name, 'r') as f:
-                pdoc = yaml.load(f)
+                pdoc = yaml.safe_load(f)
             if "entity" in pdoc:
                 for eid in pdoc["entity"]:
                     eattr = pdoc["entity"][eid]
@@ -634,7 +634,7 @@ class Job(object):
         result_list = {}
         if os.path.isfile(rf_name):
             with open(rf_name, 'r') as rf:
-                result_list = yaml.load(rf)
+                result_list = yaml.safe_load(rf)
         for rname in result_list:
             rinfo = dict(result_list[rname])
             logger.debug(rinfo)
