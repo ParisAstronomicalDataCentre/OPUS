@@ -268,7 +268,7 @@ def load_config():
     logger.debug('Load editable config')
     if os.path.isfile(CONFIG_FILE):
         with open(CONFIG_FILE, 'r') as cf:
-            econf = yaml.load(cf)
+            econf = yaml.safe_load(cf)
             app.config.update(econf)
     else:
         save_config()
