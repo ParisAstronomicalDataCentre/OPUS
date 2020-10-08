@@ -93,6 +93,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, agents=1, model=
     if descriptions:
         adescid = '#' + job.jobname + "#description"
         adescbundle = pdoc.bundle(adescid)
+        setattr(adescbundle, "label", adescid)
         # ActivityDescription
         adesc = adescbundle.activityDescription('opus_jdl:' + job.jobname, job.jobname)
         adesc.add_attributes({
@@ -219,6 +220,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, agents=1, model=
         # all_params = pdoc.collection('opus_job:' + job.jobname + '/' + job.jobid + '/parameters')
         aconfid = '#' + job.jobid + '#configuration'  # + '/' + job.jobid + '/parameters'
         aconfbundle = pdoc.bundle(aconfid)
+        setattr(aconfbundle, "label", aconfid)
         params = []
         for pname, pdict in job.jdl.content.get('parameters', {}).items():
             # Add Parameter
