@@ -931,7 +931,7 @@ class VOProvBundle(ProvBundle):
             namespaces,
             parent=(document._namespaces if document is not None else None)
         )
-        self.label = ""
+        self.label = identifier
 
     def unified(self):
         """
