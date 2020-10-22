@@ -6,11 +6,9 @@
 Export UWS job description to a ProvDocument following the W3C PROV standard
 """
 
-import os
-import copy
 import prov
 from .voprov_local.models.model import VOProvDocument, VOProvBundle, VOPROV, PROV
-from prov.model import ProvDocument, ProvBundle
+# from prov.model import ProvDocument, ProvBundle
 from .voprov_local.visualization.dot import prov_to_dot
 from pydotplus.graphviz import InvocationException
 
@@ -29,7 +27,8 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, agents=1, model=
              show_used=False, show_generated=False):
     """
     Create ProvDocument based on job description
-    :param job: UWS job
+    :param jobid: UWS job
+    :param user: current user
     :return: ProvDocument
     """
 
@@ -93,7 +92,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, agents=1, model=
     if descriptions:
         adescid = '#' + job.jobname + "#description"
         adescbundle = pdoc.bundle(adescid)
-        setattr(adescbundle, "label", adescid)
+        setattr(adescbundle, "_label", adescid)
         # ActivityDescription
         adesc = adescbundle.activityDescription('opus_jdl:' + job.jobname, job.jobname)
         adesc.add_attributes({
@@ -220,7 +219,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, agents=1, model=
         # all_params = pdoc.collection('opus_job:' + job.jobname + '/' + job.jobid + '/parameters')
         aconfid = '#' + job.jobid + '#configuration'  # + '/' + job.jobid + '/parameters'
         aconfbundle = pdoc.bundle(aconfid)
-        setattr(aconfbundle, "label", aconfid)
+        setattr(aconfbundle, "_label", aconfid)
         params = []
         for pname, pdict in job.jdl.content.get('parameters', {}).items():
             # Add Parameter
@@ -330,11 +329,12 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, agents=1, model=
     if (depth != 0 and direction == 'FORWARD') or show_generated:
         # Check if internal provenance is given, add as a generated bundle? or directly?
         ipfile = os.path.join(JOBDATA_PATH, jobid, INTERNAL_PROVENANCE_FILENAME)
+        ipbundle = None
         if os.path.isfile(ipfile):
             ipdoc = prov.read(ipfile)
             ipid = "#" + job.jobid + "#internal_provenance"
             ipbundle = VOProvBundle(namespaces=ipdoc.namespaces, identifier=ipid)
-            setattr(ipbundle, "label", ipid)
+            setattr(ipbundle, "_label", ipid)
             #inpbundle._identifier = "id:" + job.jobid + "_prov"
             ipbundle.update(ipdoc)
             #inpprov = inpdoc.bundle(job.jobid + "_prov")
@@ -369,6 +369,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, agents=1, model=
                         'prov:location': job.results[rname]['url'],
                         'voprov:content_type': content_type,
                     }
+                    pdict = {}
                     if entity:
                         eattrs['prov:label'] = entity['file_name']
                         eattrs['voprov:result_name'] = entity['result_name']
@@ -387,7 +388,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, agents=1, model=
                     #        'prov:role': 'owner',
                     #    })
                     # Add derivation link from internal provenance
-                    if entity.get("from_entity", None):
+                    if entity.get("from_entity", None) and ipbundle:
                         e_from = ipbundle.get_record(entity["from_entity"])[0]
                         e_out[-1].wasDerivedFrom(e_from)
                         #copy_act = pdoc.activity(act_id + '_copy_to_datastore', other_attributes={"prov:label": "copy_to_datastore"})
@@ -428,8 +429,8 @@ def unified_relations(bundle):
     hash_records = []
     if bundle.is_document():
         for subbundle in bundle._bundles:
-            if not hasattr(bundle._bundles[subbundle], "label"):
-                setattr(bundle._bundles[subbundle], "label", "")
+            if not hasattr(bundle._bundles[subbundle], "_label"):
+                setattr(bundle._bundles[subbundle], "_label", "")
             bundle._bundles[subbundle] = unified_relations(bundle._bundles[subbundle])
     for record in bundle._records:
         if record.is_relation():
@@ -500,7 +501,6 @@ def prov2svg_content(prov_doc, attributes=True, direction='BT'):
     """
     Convert ProvDocument to dot graphical format then svg
     :param prov_doc:
-    :param fname: file name
     :return:
     """
     try:
@@ -521,7 +521,6 @@ def prov2png_content(prov_doc, attributes=True, direction='BT'):
     """
     Convert ProvDocument to dot graphical format then png
     :param prov_doc:
-    :param fname: file name
     :return:
     """
     try:
