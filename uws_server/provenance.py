@@ -417,11 +417,11 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, agents=1, model=
     # Merge all prov documents
     for opdoc in other_pdocs:
         pdoc.update(opdoc)
-    if w3c:
-        pdoc = pdoc.get_w3c()
     pdoc = pdoc.unified()
     # Filter similar relations
     pdoc = pdoc.unified_relations()
+    if w3c:
+        pdoc = pdoc.get_w3c()
     return pdoc
 
 
