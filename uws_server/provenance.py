@@ -7,9 +7,9 @@ Export UWS job description to a ProvDocument following the W3C PROV standard
 """
 
 import prov
-from .voprov_local.models.model import VOProvDocument, VOProvBundle, VOPROV, PROV
+from voprov.models.model import VOProvDocument, VOProvBundle, VOPROV, PROV
 # from prov.model import ProvDocument, ProvBundle
-from .voprov_local.visualization.dot import prov_to_dot
+from voprov.visualization.dot import prov_to_dot
 from pydotplus.graphviz import InvocationException
 
 from .settings import *
