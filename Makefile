@@ -1,5 +1,5 @@
-WWWUSER ?= www
-VAR_PATH ?= var_data
+WWWUSER ?= www-data
+VAR_PATH ?= /var/opt/opus
 
 init:
 	mkdir -p $(VAR_PATH)/config
