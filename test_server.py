@@ -19,6 +19,7 @@ print('{}/server{}_debug.log'.format(uws_server.LOG_PATH, uws_server.LOG_FILE_SU
 # server must have a test job (does nothing)
 jobname = 'test_'
 
+
 def create_job():
     request = type('MyClass', (object,), {'POST': {'runId': 'test_'}, 'files': {}})()
     job = uws_server.Job(jobname, '', uws_server.User('test_', 'test_'), from_post=request)
@@ -26,9 +27,11 @@ def create_job():
     print('\n\nFill db with job test_ {}\n'.format(job.jobid))
     return job.jobid
 
+
 @pytest.fixture
 def jobid():
     return create_job()
+
 
 @pytest.mark.webtest
 class TestGet(object):
