@@ -156,8 +156,12 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         # dt_regexp = u'(\d+)/(\d+)/(\d+)T(\d+):(\d+):(\d+)'
         # myDateTime = DateTime().with_variant(sqlite.DATETIME(storage_format=dt_format, regexp=dt_regexp), 'sqlite')
         # myDateTime = DateTime().with_variant(sqlite.TIMESTAMP(), 'sqlite')
-        myDateTime = DateTime().with_variant(String(19), 'sqlite')
-        myBoolean = Boolean().with_variant(String(5), 'sqlite')
+        if STORAGE_TYPE == 'SQLite':
+            myDateTime = DateTime().with_variant(String(19), 'sqlite')
+            myBoolean = Boolean().with_variant(String(5), 'sqlite')
+        else:
+            myDateTime = DateTime()
+            myBoolean = Boolean()
 
         class Job(self.Base):
             __tablename__ = 'jobs'
@@ -443,9 +447,9 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
 
     def delete(self, job):
         """Delete job information from storage"""
-        self.session.query(self.Job).filter_by(jobid=job.jobid).delete()
         self.session.query(self.Parameter).filter_by(jobid=job.jobid).delete()
         self.session.query(self.Result).filter_by(jobid=job.jobid).delete()
+        self.session.query(self.Job).filter_by(jobid=job.jobid).delete()
         self.session.commit()
 
     def get_list(self, joblist, phase=None, after=None, last=None, where_owner=True):

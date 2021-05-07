@@ -305,11 +305,11 @@ var uws_client = (function($) {
 
     var displayJobRow = function(job){
         logger('OBJECT', job);
-        var creation_time = job.creationTime.split("T");
+        var creation_time = job.creationTime;  //.split("T");
         if (creation_time.length == 1) {
             creation_time = "";
-        } else {
-            creation_time = creation_time[0]+' '+creation_time[1].split('+')[0];
+        //} else {
+        //    creation_time = creation_time[0]+' '+creation_time[1].split('+')[0];
         };
         var times = '';
         var param_list = '';

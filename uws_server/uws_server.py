@@ -422,8 +422,8 @@ def user2scim(u):
         'userName': u['name'],
         'meta': {
             "resourceType": "User",
-            "created": u['first_connection'],
-            "lastModified": u['first_connection'],
+            "created": str(u['first_connection']),
+            "lastModified": str(u['first_connection']),
             "location": "scim/v2/Users/" + u['name'],
         }
     }
@@ -667,7 +667,7 @@ def validate_job_definition(jobname):
     # Check if client is trusted (only admin should be allowed to validate a job)
     try:
         # Copy script and jdl from new
-        #jdl = uws_jdl.__dict__[JDL]()
+        # jdl = uws_jdl.__dict__[JDL]()
         jdl = getattr(uws_jdl, JDL)()
         jdl_src = '{}/tmp/{}{}'.format(jdl.jdl_path, jobname, jdl.extension)
         jdl_dst = '{}/{}{}'.format(jdl.jdl_path, jobname, jdl.extension)
@@ -2033,4 +2033,4 @@ def get_owner(jobname, jobid):
 
 if __name__ == '__main__':
     # Run local web server
-    run(app, host='localhost', port=8080, debug=False, reloader=True)
+    run(app, host='localhost', port=8082, debug=False, reloader=True)

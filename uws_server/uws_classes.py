@@ -298,6 +298,8 @@ class Job(object):
                     pname = upper2underscore(pname.split('uws_')[-1])  # remove the prefix uws_ to update the class attribute
                     #self.parameters[pname] = {'value': value, 'byref': False}
                     setattr(self, pname, value)
+        # Save job as is for now
+        self.storage.save(self, save_attributes=True, save_parameters=True)
         # Search input entities in POST/files
         upload_dir = os.path.join(UPLOADS_PATH, self.jobid)
         for pname in self.jdl.content.get('used', {}):
@@ -590,8 +592,8 @@ class Job(object):
         # logger.debug(self.jobid)
         try:
             return ETree.tostring(xml_job)
-        except:
-            raise UserWarning('Cannot serialize job {}'.format(self.jobid))
+        except Exception as e:
+            raise UserWarning('Cannot serialize job {}: {}'.format(self.jobid, e))
 
     # ----------
     # Metadata management
@@ -949,11 +951,11 @@ class JobList(object):
             ETree.SubElement(xml_job, 'uws:runId').text = job['run_id']
             if self.user.check_admin():
                 ETree.SubElement(xml_job, 'uws:ownerId').text = job['owner']
-            ETree.SubElement(xml_job, 'uws:creationTime').text = job['creation_time']
+            ETree.SubElement(xml_job, 'uws:creationTime').text = str(job['creation_time'])
         try:
             return ETree.tostring(xml_jobs)
-        except:
-            raise UserWarning('Cannot serialize joblist')
+        except Exception as e:
+            raise UserWarning('Cannot serialize joblist: {}'.format(e))
 
     def to_html(self):
         """Returns the HTML representation of jobs"""
