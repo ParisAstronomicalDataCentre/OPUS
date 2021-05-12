@@ -1,0 +1,35 @@
+version: "3.9"
+
+services:
+
+  db:
+    image: postgres
+    restart: always
+    volumes:
+      - /var/lib/postgresql/data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=opus
+      - POSTGRES_USER=opus
+      - POSTGRES_PASSWORD=opus
+    ports:
+      - 5432:5432
+
+  web:
+    build:
+      context: .
+      args:
+        - WWW_UID=$WWW_UID
+    restart: always
+    volumes:
+      - /var/opt/opus:/var/opt/opus
+    ports:
+      - 8443:443
+      - 8080:80
+    depends_on:
+      - db
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8081:8080

@@ -1,0 +1,12 @@
+#.dockerignore
+.DS_Store
+.cache
+.pytest_cache
+.idea
+Dockerfile*
+# Allow files for specific files with an !
+!.git/HEAD
+!.git/logs
+!.git/config
+!.git/refs
+
