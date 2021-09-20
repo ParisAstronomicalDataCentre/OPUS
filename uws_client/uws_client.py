@@ -20,7 +20,14 @@ from flask import Flask, request, abort, redirect, url_for, session, g, current_
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import Security, SQLAlchemyUserDatastore, UserMixin, RoleMixin, login_required, roles_required, utils
 from flask_security.forms import LoginForm, RegisterForm
-from flask_login import user_logged_in, user_logged_out, current_user
+from flask_login import user_logged_in, user_logged_out, current_user, LoginManager
+from flask_oauthlib.provider import OAuth2Provider
+from flask_oauthlib.client import OAuth
+from flask_security import AnonymousUser
+from flask_security.core import (
+    _user_loader as _flask_security_user_loader,
+    _request_loader as _flask_security_request_loader)
+from flask_security.utils import config_value as security_config_value
 from flask_admin import Admin
 from flask_admin.contrib import sqla
 from flask_mail import Mail
@@ -49,9 +56,10 @@ def git_version():
         return out
 
     try:
-        out = _minimal_ext_cmd(['git', 'rev-parse', 'HEAD'])
+        # out = _minimal_ext_cmd(['git', 'rev-parse', 'HEAD'])
+        out = _minimal_ext_cmd(['git', 'log', '-1', '--format=%H'])
         GIT_REVISION = out.strip().decode('ascii')
-        out = _minimal_ext_cmd(['git', 'log', '-1', '--date=short', '--pretty=format:%cd'])
+        out = _minimal_ext_cmd(['git', 'log', '-1', '--date=short', '--format=%cd'])
         GIT_DATE = out.strip().decode('ascii')
     except OSError as e:
         logger.warning(str(e))
@@ -111,6 +119,7 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(255))
     token = db.Column(db.String(255), default=gen_token)
     active = db.Column(db.Boolean())
+    fs_uniquifier = db.Column(db.String(255), unique=True, nullable=False, default=gen_token)
     confirmed_at = db.Column(db.DateTime(), default=datetime.datetime.now)
     roles = db.relationship('Role', secondary=roles_users, backref=db.backref('users', lazy='dynamic'))
 
@@ -136,11 +145,81 @@ def get_or_create(session, model, **kwargs):
         session.commit()
         return instance
 
-
-# Setup Flask-Security
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
-security = Security(app, user_datastore , login_form=ExtendedLoginForm, register_form=ExtendedRegisterForm)
 
+
+# Setup Flask-Security with OAuth2
+
+#oauth = OAuth2Provider(app)
+oauth = OAuth()
+twitter = oauth.remote_app(
+    'twitter',
+    app_key='TWITTER'
+)
+app.config['TWITTER'] = dict(
+    consumer_key='a random key',
+    consumer_secret='a random secret',
+    base_url='https://api.twitter.com/1/',
+    request_token_url='https://api.twitter.com/oauth/request_token',
+    access_token_url='https://api.twitter.com/oauth/access_token',
+    authorize_url='https://api.twitter.com/oauth/authenticate',
+)
+oauth.init_app(app)
+
+def _request_loader(request):
+    """
+    Load user from OAuth2 Authentication header or using
+    Flask-Security's request loader.
+    """
+    user = None
+
+    if hasattr(request, 'oauth'):
+        user = request.oauth.user
+    else:
+        # Need this try stmt in case oauthlib sometimes throws:
+        # AttributeError: dict object has no attribute startswith
+        try:
+            is_valid, oauth_request = oauth.verify_request(scopes=[])
+            if is_valid:
+                user = oauth_request.user
+        except AttributeError:
+            pass
+
+    if not user:
+        user = _flask_security_request_loader(request)
+
+    return user
+
+
+def _get_login_manager(app, anonymous_user):
+    """Prepare a login manager for Flask-Security to use."""
+    login_manager = LoginManager()
+
+    login_manager.anonymous_user = anonymous_user or AnonymousUser
+    login_manager.login_view = '{0}.login'.format(
+        security_config_value('BLUEPRINT_NAME', app=app))
+    login_manager.user_loader(_flask_security_user_loader)
+    login_manager.request_loader(_request_loader)
+
+    # if security_config_value('FLASH_MESSAGES', app=app):
+    #     (login_manager.login_message,
+    #      login_manager.login_message_category) = (
+    #         security_config_value('MSG_LOGIN', app=app))
+    #     (login_manager.needs_refresh_message,
+    #      login_manager.needs_refresh_message_category) = (
+    #         security_config_value('MSG_REFRESH', app=app))
+    # else:
+    #     login_manager.login_message = None
+    #     login_manager.needs_refresh_message = None
+
+    login_manager.init_app(app)
+    return login_manager
+
+
+security = Security(app, user_datastore,
+                    login_form=ExtendedLoginForm, register_form=ExtendedRegisterForm)\
+    # ,
+    #                 login_manager=_get_login_manager(app, anonymous_user=None))
 
 # ----------
 # Load/store editable config
@@ -228,6 +307,7 @@ class UserView(sqla.ModelView):
     # form_excluded_columns = ('password',)
     column_auto_select_related = True
     form_overrides = dict(password=PasswordField)
+
     def is_accessible(self):
         return current_user.has_role('admin')
 
@@ -235,6 +315,7 @@ class UserView(sqla.ModelView):
 # Customized Role model for SQL-Admin
 class RoleView(sqla.ModelView):
     # Prevent administration of Roles unless the currently logged-in user has the "admin" role
+
     def is_accessible(self):
         return current_user.has_role('admin')
 
@@ -246,6 +327,11 @@ admin = Admin(app, template_mode='bootstrap3', url='/admin')
 admin.add_view(UserView(User, db.session))
 admin.add_view(RoleView(Role, db.session))
 
+
+# ----------
+# https://flask-security-too.readthedocs.io/en/stable/customizing.html#authorization-with-oauth2
+# see also: https://realpython.com/flask-google-login/
+# https://www.codeflow.site/fr/article/flask-google-login
 
 # ----------
 # Manage user accounts using flask_security (flask_login)

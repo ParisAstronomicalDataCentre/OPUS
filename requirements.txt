@@ -3,6 +3,7 @@ bottle
 bottle-cork
 beaker
 blinker
+bleach
 requests
 lxml
 webtest
@@ -11,9 +12,11 @@ prov==1.5.3
 voprov
 flask
 flask-sqlalchemy
-flask-security
+flask-security-too
+flask-oauthlib
 email_validator
 flask-admin
+flask-mail
 bcrypt
 graphviz
 pydot

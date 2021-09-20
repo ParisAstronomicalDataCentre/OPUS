@@ -54,8 +54,9 @@ CHECK_OWNER = False
 # The IP can be truncated to allow to refer to a set of IPs
 # TO BE PLACED and completed in settings_local.py
 JOB_SERVERS = {
-    '::1':       'localhost',
+    '::1': 'localhost',
     '127.0.0.1': 'localhost',
+    BASE_IP: 'base_ip',
 }
 
 # The server will allow db and jdl access only from trusted clients (while waiting for an auth system)
@@ -64,6 +65,7 @@ JOB_SERVERS = {
 TRUSTED_CLIENTS = {
     '::1':       'localhost',
     '127.0.0.1': 'localhost',
+    BASE_IP: 'base_ip',
 }
 
 

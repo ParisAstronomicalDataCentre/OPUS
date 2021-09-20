@@ -4,6 +4,7 @@
 # Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
 
 import os
+import bleach
 
 # ----------
 # Configuration
@@ -44,11 +45,21 @@ TESTUSER_DEFAULT_PW = 'testuser' # to be changed after install, or defined in se
 
 ### Flask-Security configuration
 
+
+def uia_username_mapper(identity):
+    # we allow pretty much anything - but we bleach it.
+    return bleach.clean(identity, strip=True)
+
+
 SQLALCHEMY_TRACK_MODIFICATIONS = True
-SECURITY_URL_PREFIX = '/accounts'
+SECURITY_BLUEPRINT_NAME = "security"
 SECURITY_FLASH_MESSAGES = True
+SECURITY_URL_PREFIX = '/accounts'
+SECURITY_FLASH_MESSAGES = False
 SECURITY_PASSWORD_SALT = 'test'
-SECURITY_USER_IDENTITY_ATTRIBUTES = 'email'
+SECURITY_USER_IDENTITY_ATTRIBUTES = [
+    {"email": {"mapper": uia_username_mapper, "case_insensitive": True}},
+]
 SECURITY_REGISTERABLE = True
 SECURITY_SEND_REGISTER_EMAIL = False
 SECURITY_CHANGEABLE = True

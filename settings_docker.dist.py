@@ -21,6 +21,20 @@ MAINTENANCE_TOKEN = ''  # TOKEN for special user maintenance, used internally
 ALLOW_ANONYMOUS = True
 CHECK_PERMISSIONS = False  # check rights to run/edit a job
 CHECK_OWNER = False  # only owner can access their files
+# job servers can have access to /job_event/<jobid_manager> to change the phase or report an error
+# The IP can be truncated to allow to refer to a set of IPs (e.g. '127.' for 127.*.*.*)
+JOB_SERVERS = {
+    '::1': 'localhost',
+    '127.0.0.1': 'localhost',
+    BASE_IP: 'base_ip',
+}
+# trusted clients can have access to /db and /jdl (while waiting for an A&A system)
+# e.g. /db/init, /jdl/validate...
+TRUSTED_CLIENTS = {
+    '::1':       'localhost',
+    '127.0.0.1': 'localhost',
+    BASE_IP: 'base_ip',
+}
 
 # Client global config
 
