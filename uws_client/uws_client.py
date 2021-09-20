@@ -58,10 +58,17 @@ def git_version():
     try:
         # out = _minimal_ext_cmd(['git', 'rev-parse', 'HEAD'])
         out = _minimal_ext_cmd(['git', 'log', '-1', '--format=%H'])
+        if not out:
+            logger.warning("Revision id not found, try to read git logs directly")
+            out = _minimal_ext_cmd(['tail', '-1', '.git/logs/HEAD'])
+            out = out.split(" ")[1]
         GIT_REVISION = out.strip().decode('ascii')
         out = _minimal_ext_cmd(['git', 'log', '-1', '--date=short', '--format=%cd'])
+        if not out:
+            logger.warning("Revision date not found, try to get from index")
+            out = _minimal_ext_cmd(['date', '-r', '.git/index', '+"%Y-%m-%d"'])
         GIT_DATE = out.strip().decode('ascii')
-    except OSError as e:
+    except Exception as e:
         logger.warning(str(e))
         GIT_REVISION = "Unknown"
         GIT_DATE = "Unknown"
