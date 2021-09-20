@@ -102,11 +102,16 @@ def set_user(jobname=None):
     return user
 
 
+def get_real_ip():
+    ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+    return ip
+
+
 def is_job_server(func):
     """Test if request comes from a job server"""
     def is_job_server_wrapper(*args, **kwargs):
         # IP or part of an IP has to be in the JOB_SERVERS list
-        ip = request.environ.get('REMOTE_ADDR', '')
+        ip = get_real_ip()
         matching = [x for x in JOB_SERVERS if x in ip]
         if matching:
             logger.debug('Access authorized to {} for {} ({})'.format(request.urlparts.path, ip, JOB_SERVERS[matching[
@@ -122,7 +127,7 @@ def is_client_trusted(func):
     """Test if request comes from a trusted client"""
     def is_client_trusted_wrapper(*args, **kwargs):
         # IP or part of an IP has to be in the TRUSTED_CLIENTS list
-        ip = request.environ.get('REMOTE_ADDR', '')
+        ip = get_real_ip()
         matching = [x for x in TRUSTED_CLIENTS if x in ip]
         if matching:
             logger.debug('Access authorized to {} for {} ({})'.format(request.urlparts.path, ip, TRUSTED_CLIENTS[
@@ -137,7 +142,7 @@ def is_client_trusted(func):
 def is_localhost(func):
     """Test if localhost"""
     def is_localhost_wrapper(*args, **kwargs):
-        ip = request.environ.get('REMOTE_ADDR', '')
+        ip = get_real_ip()
         if ip != BASE_IP and ip != '::1' and ip != '127.0.0.1':
             abort_403('{} is not localhost'.format(ip, request.urlparts.path))
         return func(*args, **kwargs)
