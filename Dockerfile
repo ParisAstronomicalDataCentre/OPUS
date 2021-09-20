@@ -17,6 +17,7 @@ WORKDIR /opt/opus
 COPY favicon* ./
 COPY requirements.txt ./
 COPY .git ./.git
+COPY .htaccess ./.htaccess
 COPY uws_client ./uws_client
 COPY uws_server ./uws_server
 COPY uws_client/wsgi.py ./wsgi_client.py

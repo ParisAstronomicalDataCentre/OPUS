@@ -3,10 +3,10 @@
 .cache
 .pytest_cache
 .idea
+#.git
 Dockerfile*
 # Allow files for specific files with an !
 !.git/HEAD
 !.git/logs
 !.git/config
 !.git/refs
-
