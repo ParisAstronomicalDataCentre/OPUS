@@ -6,7 +6,5 @@
 #.git
 Dockerfile*
 # Allow files for specific files with an !
-!.git/HEAD
+!.git/index
 !.git/logs
-!.git/config
-!.git/refs
