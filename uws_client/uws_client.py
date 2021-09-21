@@ -152,6 +152,7 @@ def get_or_create(session, model, **kwargs):
         session.commit()
         return instance
 
+
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 
 
@@ -172,6 +173,7 @@ app.config['TWITTER'] = dict(
     authorize_url='https://api.twitter.com/oauth/authenticate',
 )
 oauth.init_app(app)
+
 
 def _request_loader(request):
     """
@@ -224,9 +226,9 @@ def _get_login_manager(app, anonymous_user):
 
 
 security = Security(app, user_datastore,
-                    login_form=ExtendedLoginForm, register_form=ExtendedRegisterForm)\
-    # ,
-    #                 login_manager=_get_login_manager(app, anonymous_user=None))
+                    login_form=ExtendedLoginForm, register_form=ExtendedRegisterForm)
+#                 login_manager=_get_login_manager(app, anonymous_user=None))
+
 
 # ----------
 # Load/store editable config
@@ -281,7 +283,7 @@ def create_db():
             description='Access to job list',
         )
         # Create admin user
-        if not user_datastore.get_user(ADMIN_NAME):
+        if not user_datastore.find_user(id=ADMIN_NAME):
             user_datastore.create_user(
                 email=ADMIN_NAME,
                 password=ADMIN_DEFAULT_PW,
@@ -289,7 +291,7 @@ def create_db():
                 roles=['admin','job_definition','job_list'],
             )
         # Create demo user
-        if not user_datastore.get_user(TESTUSER_NAME):
+        if not user_datastore.find_user(id=TESTUSER_NAME):
             user_datastore.create_user(
                 email=TESTUSER_NAME,
                 password=TESTUSER_DEFAULT_PW,
@@ -424,7 +426,7 @@ def import_server_account():
     email = request.form.get('name', None)
     token = request.form.get('token', None)
     if email and token:
-        if not user_datastore.get_user(email):
+        if not user_datastore.find_user(email=email):
             user = user_datastore.create_user(
                 email=email,
                 token=token,
