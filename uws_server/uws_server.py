@@ -117,7 +117,7 @@ def is_job_server(func):
         ip = get_real_ip()
         matching = [x for x in JOB_SERVERS if x in ip]
         if matching:
-            logger.debug('Access authorized to {} for {} ({})'.format(request.urlparts.path, ip, JOB_SERVERS[matching[
+            logger.info('Access authorized to {} for {} ({})'.format(request.urlparts.path, ip, JOB_SERVERS[matching[
                 0]]))
             pass
         else:
@@ -133,7 +133,7 @@ def is_client_trusted(func):
         ip = get_real_ip()
         matching = [x for x in TRUSTED_CLIENTS if x in ip]
         if matching:
-            logger.debug('Access authorized to {} for {} ({})'.format(request.urlparts.path, ip, TRUSTED_CLIENTS[
+            logger.info('Access authorized to {} for {} ({})'.format(request.urlparts.path, ip, TRUSTED_CLIENTS[
                 matching[0]]))
             pass
         else:
@@ -820,7 +820,7 @@ def get_jdl_json(jobname):
         # Get JDL content
         jdl = getattr(uws_jdl, JDL)()
         jdl.read(jobname)
-        logger.info('JDL downloaded ad JSON: {}'.format(jobname))
+        logger.debug('JDL downloaded ad JSON: {}'.format(jobname))
         return jdl.content
         # else:
         #     abort_403()
@@ -850,7 +850,7 @@ def get_jdl(jobname):
         if os.path.isfile(fname):
             with open(fname) as f:
                 jdl = f.readlines()
-            logger.info('JDL file downloaded: {}'.format(fname))
+            logger.debug('JDL file downloaded: {}'.format(fname))
             return static_file(download_fname, root=download_dir, download=download_fname)
             #response.content_type = 'text/xml; charset=UTF-8'
             #return jdl
@@ -1227,7 +1227,7 @@ def job_event():
     try:
         user = User('job_event', JOB_EVENT_TOKEN)
         logger = logger_init
-        logger.info('with POST={}'.format(str(request.POST.dict)))
+        logger.debug('with POST={}'.format(str(request.POST.dict)))
         if 'jobid' in request.POST:
             process_id = request.POST['jobid']
             # Get job properties from DB based on process_id

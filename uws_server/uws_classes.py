@@ -51,7 +51,7 @@ def is_downloadable(url):
     header = h.headers
     content_type = header.get('content-type')
     if 'html' in content_type.lower():
-        logger.warning('Fiund HTML page, nothing to download')
+        logger.warning('Found HTML page, nothing to download')
         return False
     content_length = header.get('content-length', None)
     if content_length and content_length > 2e8:  # 200 mb approx

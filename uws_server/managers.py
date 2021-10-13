@@ -324,7 +324,7 @@ class LocalManager(Manager):
                 threading.Timer(self.poll_interval, self._poll_process, [popen, job]).start()
             else:
                 # Let the process run
-                logger.info('process {} running'.format(process_id))
+                logger.debug('process {} running'.format(process_id))
                 # Rerun _poll_process after some time
                 threading.Timer(self.poll_interval, self._poll_process, [popen, job]).start()
         # Handle killed processes
