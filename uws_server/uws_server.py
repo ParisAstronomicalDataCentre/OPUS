@@ -103,7 +103,10 @@ def set_user(jobname=None):
 
 
 def get_real_ip():
-    ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+    # logger.debug(request.remote_addr)
+    # logger.debug(request.environ.get('HTTP_X_REAL_IP'))
+    # logger.debug(request.environ.get('HTTP_X_FORWARDED_FOR'))
+    ip = request.environ.get('HTTP_X_REAL_IP', request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr))
     return ip
 
 
