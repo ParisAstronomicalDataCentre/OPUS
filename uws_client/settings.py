@@ -22,7 +22,7 @@ UWS_SERVER_URL_JS = UWS_CLIENT_ENDPOINT + '/proxy'
 
 ### to be defined in settings_local.py
 BASE_URL = 'http://localhost/opus_server'
-UWS_SERVER_URL = BASE_URL
+UWS_SERVER_URL = None
 UWS_SERVER_ENDPOINT = '/rest'
 UWS_AUTH = 'Basic'
 CLIENT_TITLE = "OPUS"
@@ -87,6 +87,9 @@ elif os.path.exists(APP_PATH + '/uws_client/settings_local.py'):
 
 
 ### Set from previous variables
+
+if UWS_SERVER_URL is None:
+    UWS_SERVER_URL = BASE_URL
 
 LOG_PATH = VAR_PATH + '/logs'  # the logs dir has to be writable from the app
 CONFIG_FILE = VAR_PATH + '/config/uws_client_config.yaml'  # the config dir has to be writable from the app
