@@ -880,7 +880,7 @@ var uws_client = (function($) {
         var r_eid = r_name.split('?ID=').pop();
         var r_fname_display = "";
         if (r_fname && r_fname.length != 0) {
-            r_fname_display = ": +r_fname";
+            r_fname_display = ": " + r_fname;
         }
         var r_panel = '\
             <div id="'+r_id+'" class="panel panel-default" value="'+r_url+'">\
