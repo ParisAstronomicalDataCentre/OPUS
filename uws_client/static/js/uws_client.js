@@ -388,6 +388,10 @@ var uws_client = (function($) {
                             <span class="glyphicon glyphicon-play"></span>\
                             <span class="hidden-xs hidden-sm hidden-md hidden-lg">&nbsp;Start</span>\
                         </button>\
+                        <button type="button" class="log btn btn-default btn-sm" title="Get log">\
+                            <span class="glyphicon glyphicon-question-sign"></span>\
+                            <span class="hidden-xs hidden-sm hidden-md hidden-lg">&nbsp;Start</span>\
+                        </button>\
                         <button type="button" class="abort btn btn-default btn-sm" title="Abort">\
                             <span class="glyphicon glyphicon-off"></span>\
                             <span class="hidden-xs hidden-sm hidden-md hidden-lg">&nbsp;Abort</span>\
@@ -483,6 +487,21 @@ var uws_client = (function($) {
         $('#'+job.jobId+' td button.start').click( function() {
             var jobId = $(this).parents("tr").attr('id');
             startJob(jobId);
+        });
+        // Get log button
+        $('#'+job.jobId+' td button.log').click( function() {
+            var jobId = $(this).parents("tr").attr('id');
+            $.ajax({
+                url : this.serviceUrl + "/" + id + "/stdout",
+                type: 'GET',
+                dataType: "txt",
+                success : function(xml) {
+                    successCallback(id, log);
+                },
+                error : function(xhr, status, exception) {
+                    errorCallback(id, xhr, status, exception);
+                },
+            });
         });
         // Abort job button
         $('#'+job.jobId+' td button.abort').click( function() {
@@ -1332,6 +1351,40 @@ var uws_client = (function($) {
             msg = msg[0].replace(/<\/?pre>/g,'');
         }
         var msg = 'Cannot get info of job ' + jobId + ': ' + msg;
+        global.showMessage(msg, 'danger');
+    };
+
+
+    //----------
+
+    // GET JOB LOG
+    var getJobLog = function(jobId){
+        $('#loading').show();
+        var jobName = $('#'+jobId).attr('jobname');
+		$.ajax({
+			url : this.serviceUrl + "/" + id + "/stdout",
+			type: 'GET',
+			dataType: "text",
+			success : function(stdout) {
+				getJobLogSuccess(id, stdout);
+			},
+			error : function(xhr, status, exception) {
+				getJobLogError(id, xhr, status, exception);
+			},
+		});
+    };
+    var getJobLogSuccess = function(jobId, log){
+        $('#loading').hide();
+        alert('Log stdout for job '+ jobId + ' :\n' + JSON.stringify(log, null, 4));
+    };
+    var getJobLogError = function(jobId, xhr, status, exception){
+        $('#loading').hide();
+        logger('ERROR', 'getJobLog '+ jobId, exception);
+        var msg = xhr.responseText.match(/<pre>[\s\S]*<\/pre>/g)
+        if (msg && msg.length != 0) {
+            msg = msg[0].replace(/<\/?pre>/g,'');
+        }
+        var msg = 'Cannot get log for job' + jobId + ': ' + msg;
         global.showMessage(msg, 'danger');
     };
 
