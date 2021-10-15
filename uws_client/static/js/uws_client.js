@@ -12,8 +12,8 @@
 // The properties are listed in a table with id=prop_list
 // <table id='prop_list' class="table table-bordered table-striped table-condensed"></table>
 
-// The results are shown as bootstrap panels in a div block with id=result_list
-// <div id='result_list' class='text-center'></div>
+// The results are shown as bootstrap panels in a div block with id=results_list
+// <div id='results_list' class='text-center'></div>
 
 // Some results (stdout, stderr, provxml, provsvg) are shown as bootstrap panels in a div block with id=details_list
 // <div id='details_list' class='text-center'></div>
@@ -291,7 +291,7 @@ var uws_client = (function($) {
             };
         };
         // Display results as panels in div results
-        if ($("#result_list").length) {
+        if ($("#results_list").length) {
             refreshResults(jobId);
         };
         if (phase == 'COMPLETED') {
@@ -1043,7 +1043,7 @@ var uws_client = (function($) {
         var serviceUrl = clients[job.jobName].serviceUrl;
         var details_keys =['jdl', 'stdout','stderr','provjson','provxml','provsvg'];
         var final_phase = ['COMPLETED', 'ABORTED', 'ERROR']
-        $('#result_list').html('');
+        $('#results_list').html('');
         //var generated_keys = jdl.generated_keys.concat(['stdout','stderr','provjson','provxml','provsvg']);
         for (var rkey in jdl.generated_keys) {
             var r = jdl.generated_keys[rkey];
@@ -1056,7 +1056,7 @@ var uws_client = (function($) {
                     r_url_auth = client_endpoint + client_endpoint_proxy + server_endpoint_results + '?' + r_url_auth
                 };
                 // var r_type = jdl.generated[r]['content_type']; //r_name.split('.').pop();
-                displayResult('result_list', r, r_type, r_url, r_url_auth);
+                displayResult('results_list', r, r_type, r_url, r_url_auth);
             };
         };
         for (var r in job.results) {
@@ -1069,7 +1069,7 @@ var uws_client = (function($) {
                     if (r_url_auth != r_url) {
                         r_url_auth = client_endpoint + client_endpoint_proxy + server_endpoint_results + '?' + r_url_auth
                     };
-                    displayResult('result_list', r, r_type, r_url, r_url_auth);
+                    displayResult('results_list', r, r_type, r_url, r_url_auth);
                 };
             };
         };
