@@ -878,11 +878,15 @@ var uws_client = (function($) {
         var r_url_base = r_url.split('?ID=')[0];
         var r_name = r_url.split('/').pop();
         var r_eid = r_name.split('?ID=').pop();
+        var r_fname_display = "";
+        if (r_fname && r_fname.length != 0) {
+            r_fname_display = ": '+r_fname";
+        }
         var r_panel = '\
             <div id="'+r_id+'" class="panel panel-default" value="'+r_url+'">\
                 <div class="panel-heading clearfix">\
                     <span class="pull-left" style="padding-top: 4px;">\
-                        <span class="panel-title"><strong>'+r+'</strong>: '+r_fname+'</span> ['+r_type+']\
+                        <span class="panel-title"><strong>'+r+'</strong>'+r_fname_display+'</span> ['+r_type+']\
                     </span>\
                     <div class="btn-group pull-right">\
                     </div>\
