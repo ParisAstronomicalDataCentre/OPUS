@@ -493,7 +493,7 @@ var uws_client = (function($) {
             var jobId = $(this).parents("tr").attr('id');
             var jobName = $(this).parents("tr").attr('jobname');
             var logURL = clients[jobName].serviceUrl + "/" + jobId + "/stdout"
-            window.open(logURL, "_blank", "width=300, height=300");
+            window.open(logURL, "_blank", "width=800, height=400");
             //getJobLog(jobId);
         });
         // Abort job button
