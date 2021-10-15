@@ -1352,7 +1352,7 @@ var uws_client = (function($) {
         $('#loading').show();
         var jobName = $('#'+jobId).attr('jobname');
 		$.ajax({
-			url : this.serviceUrl + "/" + id + "/stdout",
+			url : clients[jobName].serviceUrl + "/" + id + "/stdout",
 			type: 'GET',
 			dataType: "text",
 			success : function(stdout) {
