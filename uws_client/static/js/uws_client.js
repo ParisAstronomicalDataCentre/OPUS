@@ -1047,7 +1047,7 @@ var uws_client = (function($) {
             if ($.inArray(r, Object.keys(job.results)) !== -1) {
                 var r_url = job.results[r].href;
                 var r_type = job.results[r].mimetype;
-                var r_fname = job.results[r].name;
+                var r_fname = job.results[r].filename;
                 var r_url_auth = r_url.split('?').pop();
                 if (r_url_auth != r_url) {
                     r_url_auth = client_endpoint + client_endpoint_proxy + server_endpoint_results + '?' + r_url_auth

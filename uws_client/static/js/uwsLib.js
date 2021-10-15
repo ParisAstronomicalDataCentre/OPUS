@@ -26,6 +26,8 @@ var uwsLib = (function() {
 			results[elementName] = new Object() ;
 			results[elementName].href = $(this).attr("xlink:href");
 			results[elementName].mimetype = $(this).attr("mime-type");
+			results[elementName].filename = $(this).attr("name");
+			results[elementName].hash = $(this).attr("hash");
 		});
 		return results;
 	};
