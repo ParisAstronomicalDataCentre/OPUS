@@ -537,6 +537,8 @@ class Job(object):
                     'id': rname,
                     'xlink:href': r['url'],
                     'mime-type': r['content_type'] or 'text/plain',
+                    'name': r['file_name'] or 'text/plain',
+                    'hash': r['hash'] or 'text/plain',
                 }
                 ETree.SubElement(xml_results, 'uws:result', attrib=attrib)
 
@@ -599,8 +601,16 @@ class Job(object):
     # Metadata management
     # ----------
 
-    def add_result_entry(self, rid, url, content_type, entity_id):
-        self.results[rid] = {'url': url, 'content_type': content_type, 'entity_id': entity_id}
+    def add_result_entry(self, rid, entity):
+        # url, content_type, entity_id):
+        #             # ['access_url'], entity['content_type'], entity['entity_id'])
+        self.results[rid] = {
+            'url': entity['access_url'],
+            'content_type': entity['content_type'],
+            'entity_id': entity['entity_id'],
+            'file_name': entity['file_name'],
+            'hash': entity['hash'],
+        }
 
     def add_results(self):
         now = dt.datetime.now()
@@ -655,7 +665,8 @@ class Job(object):
             rid = rinfo['result_name']
             if '*' in rinfo['result_value']:
                 rid = rname
-            self.add_result_entry(rid, entity['access_url'], entity['content_type'], entity['entity_id'])
+            self.add_result_entry(rid, entity)
+            # ['access_url'], entity['content_type'], entity['entity_id'])
             logger.info('Result added to job {}: {}'.format(self.jobid, rid))
 
         # access_url computed for UWS server (retrieve endpoint with entity_id)
@@ -680,7 +691,14 @@ class Job(object):
             rfname = rname + '.log'
             if os.path.isfile(rfdir + rfname):
                 url = '{}//rest/{}/{}/{}'.format(BASE_URL, self.jobname, self.jobid, rname)
-                self.add_result_entry(rname, url, 'text/plain', None)
+                rattr = {
+                    'access_url': url,
+                    'content_type': 'text/plain',
+                    'entity_id': None,
+                    'file_name': rname,
+                    'hash': None,
+                }
+                self.add_result_entry(rname, rattr)
             else:
                 logger.warning('Log file missing: {}'.format(rfname))
 
@@ -712,7 +730,14 @@ class Job(object):
                 rfname = 'provenance.' + ptype
                 if os.path.isfile(rfdir + rfname):
                     url = '{}//rest/{}/{}/prov{}'.format(BASE_URL, self.jobname, self.jobid, ptype)
-                    self.add_result_entry(rname, url, content_types[ptype], None)
+                    rattr = {
+                        'access_url': url,
+                        'content_type': content_types[ptype],
+                        'entity_id': None,
+                        'file_name': rfname,
+                        'hash': None,
+                    }
+                    self.add_result_entry(rname, rattr)
                 else:
                     logger.warning('Provenance file missing: {}'.format(rfname))
 
