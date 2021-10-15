@@ -1352,14 +1352,14 @@ var uws_client = (function($) {
         $('#loading').show();
         var jobName = $('#'+jobId).attr('jobname');
 		$.ajax({
-			url : clients[jobName].serviceUrl + "/" + id + "/stdout",
+			url : clients[jobName].serviceUrl + "/" + jobId + "/stdout",
 			type: 'GET',
 			dataType: "text",
 			success : function(stdout) {
-				getJobLogSuccess(id, stdout);
+				getJobLogSuccess(jobId, stdout);
 			},
 			error : function(xhr, status, exception) {
-				getJobLogError(id, xhr, status, exception);
+				getJobLogError(jobId, xhr, status, exception);
 			},
 		});
     };
