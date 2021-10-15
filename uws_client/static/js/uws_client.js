@@ -491,7 +491,9 @@ var uws_client = (function($) {
         // Get log button
         $('#'+job.jobId+' td button.log').click( function() {
             var jobId = $(this).parents("tr").attr('id');
-            getJobLog(jobId);
+            var logURL = clients[jobName].serviceUrl + "/" + jobId + "/stdout"
+            window.open(logURL, "_blank", "width=300, height=300");
+            //getJobLog(jobId);
         });
         // Abort job button
         $('#'+job.jobId+' td button.abort').click( function() {
