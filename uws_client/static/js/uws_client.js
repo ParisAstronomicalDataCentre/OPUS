@@ -872,7 +872,7 @@ var uws_client = (function($) {
     //----------
     // DISPLAY RESULTS
 
-    var displayResult = function(list, r, r_type, r_url, r_url_auth){
+    var displayResult = function(list, r, r_fname, r_type, r_url, r_url_auth){
         var rsplit = r.replace(/\./g, '_')
         var r_id = 'result_'+rsplit
         var r_url_base = r_url.split('?ID=')[0];
@@ -882,7 +882,7 @@ var uws_client = (function($) {
             <div id="'+r_id+'" class="panel panel-default" value="'+r_url+'">\
                 <div class="panel-heading clearfix">\
                     <span class="pull-left" style="padding-top: 4px;">\
-                        <span class="panel-title"><strong>'+r+'</strong></span> ['+r_type+']\
+                        <span class="panel-title"><strong>'+r+'</strong>: '+r_fname+'</span> ['+r_type+']\
                     </span>\
                     <div class="btn-group pull-right">\
                     </div>\
@@ -1043,12 +1043,13 @@ var uws_client = (function($) {
             if ($.inArray(r, Object.keys(job.results)) !== -1) {
                 var r_url = job.results[r].href;
                 var r_type = job.results[r].mimetype;
+                var r_fname = job.results[r].name;
                 var r_url_auth = r_url.split('?').pop();
                 if (r_url_auth != r_url) {
                     r_url_auth = client_endpoint + client_endpoint_proxy + server_endpoint_results + '?' + r_url_auth
                 };
                 // var r_type = jdl.generated[r]['content_type']; //r_name.split('.').pop();
-                displayResult('results_list', r, r_type, r_url, r_url_auth);
+                displayResult('results_list', r, r_fname, r_type, r_url, r_url_auth);
             };
         };
         for (var r in job.results) {
@@ -1057,11 +1058,12 @@ var uws_client = (function($) {
                     logger('INFO', 'additional result found: ' + r);
                     var r_url = job.results[r].href;
                     var r_type = job.results[r].mimetype;
+                    var r_fname = job.results[r].name;
                     var r_url_auth = r_url.split('?').pop();
                     if (r_url_auth != r_url) {
                         r_url_auth = client_endpoint + client_endpoint_proxy + server_endpoint_results + '?' + r_url_auth
                     };
-                    displayResult('results_list', r, r_type, r_url, r_url_auth);
+                    displayResult('results_list', r, r_fname, r_type, r_url, r_url_auth);
                 };
             };
         };
@@ -1084,7 +1086,7 @@ var uws_client = (function($) {
                         break;
                 };
                 if (final_phase.includes(job.phase)) {
-                    displayResult('details_list', r, r_type, r_url, r_url_auth);
+                    displayResult('details_list', r, r, r_type, r_url, r_url_auth);
                 };
             };
         };
