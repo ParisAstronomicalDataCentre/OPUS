@@ -361,7 +361,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         self.session.merge(p)
 
     def _save_result(self, job, rname):
-        # Save job parameter to db
+        # Save job result to db
         d = {
             'jobid': job.jobid,
             'name': rname,
@@ -433,14 +433,19 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         if get_results:
             # Query db for job results
             results = self.session.query(self.Result).filter_by(jobid=job.jobid).all()
-            results_dict = {
-                row.name: {
-                    'url': row.url,
-                    'content_type': row.content_type,
-                    'entity_id': row.entity_id,
+            results_dict = {}
+            for rrow in results:
+                rrow_dict = {
+                    'url': rrow.url,
+                    'content_type': rrow.content_type,
+                    'entity_id': rrow.entity_id,
                 }
-                for row in results
-            }
+                entity = self.session.query(self.Entity).filter_by(entity_id=rrow.entity_id).first()
+                if entity:
+                    logger.debug(entity)
+                    rrow_dict['file_name'] = entity.entity_id + '_' + entity.file_name
+                    rrow_dict['hash'] = entity.hash
+                results_dict[rrow.name] = rrow_dict
             job.results = results_dict
         else:
             job.results = {}
