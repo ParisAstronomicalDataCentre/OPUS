@@ -388,7 +388,7 @@ var uws_client = (function($) {
                             <span class="glyphicon glyphicon-play"></span>\
                             <span class="hidden-xs hidden-sm hidden-md hidden-lg">&nbsp;Start</span>\
                         </button>\
-                        <button type="button" class="log btn btn-default btn-sm" title="Get log">\
+                        <button type="button" class="log btn btn-default btn-sm" title="Get current log">\
                             <span class="glyphicon glyphicon-question-sign"></span>\
                             <span class="hidden-xs hidden-sm hidden-md hidden-lg">&nbsp;Start</span>\
                         </button>\
@@ -494,7 +494,6 @@ var uws_client = (function($) {
             var jobName = $(this).parents("tr").attr('jobname');
             var logURL = clients[jobName].serviceUrl + "/" + jobId + "/stdout"
             window.open(logURL, "_blank", "width=800, height=400");
-            //getJobLog(jobId);
         });
         // Abort job button
         $('#'+job.jobId+' td button.abort').click( function() {
@@ -1344,43 +1343,6 @@ var uws_client = (function($) {
             msg = msg[0].replace(/<\/?pre>/g,'');
         }
         var msg = 'Cannot get info of job ' + jobId + ': ' + msg;
-        global.showMessage(msg, 'danger');
-    };
-
-
-    //----------
-
-    // GET JOB LOG
-    var getJobLog = function(jobId){
-        $('#loading').show();
-        var jobName = $('#'+jobId).attr('jobname');
-		$.ajax({
-			url : clients[jobName].serviceUrl + "/" + jobId + "/stdout",
-			type: 'GET',
-			dataType: "text",
-			success : function(stdout) {
-				getJobLogSuccess(jobId, stdout);
-			},
-			error : function(xhr, status, exception) {
-				getJobLogError(jobId, xhr, status, exception);
-			},
-		});
-    };
-    var getJobLogSuccess = function(jobId, log){
-        $('#loading').hide();
-        // alert('Log stdout for job '+ jobId + ' :\n' + log);
-        var tab = window.open("text/plain", '_blank');
-        tab.document.write(log);
-        tab.document.close();
-    };
-    var getJobLogError = function(jobId, xhr, status, exception){
-        $('#loading').hide();
-        logger('ERROR', 'getJobLog '+ jobId, exception);
-        var msg = xhr.responseText.match(/<pre>[\s\S]*<\/pre>/g)
-        if (msg && msg.length != 0) {
-            msg = msg[0].replace(/<\/?pre>/g,'');
-        }
-        var msg = 'Cannot get log for job' + jobId + ': ' + msg;
         global.showMessage(msg, 'danger');
     };
 
