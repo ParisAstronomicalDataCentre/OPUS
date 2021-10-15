@@ -491,17 +491,7 @@ var uws_client = (function($) {
         // Get log button
         $('#'+job.jobId+' td button.log').click( function() {
             var jobId = $(this).parents("tr").attr('id');
-            $.ajax({
-                url : this.serviceUrl + "/" + jobId + "/stdout",
-                type: 'GET',
-                dataType: "txt",
-                success : function(xml) {
-                    successCallback(jobId, log);
-                },
-                error : function(xhr, status, exception) {
-                    errorCallback(jobId, xhr, status, exception);
-                },
-            });
+            getJobLog(jobId);
         });
         // Abort job button
         $('#'+job.jobId+' td button.abort').click( function() {
