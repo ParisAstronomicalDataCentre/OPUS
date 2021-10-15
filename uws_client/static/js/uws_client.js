@@ -1366,7 +1366,7 @@ var uws_client = (function($) {
     var getJobLogSuccess = function(jobId, log){
         $('#loading').hide();
         // alert('Log stdout for job '+ jobId + ' :\n' + log);
-        var tab = window.open('about:blank', '_blank');
+        var tab = window.open("text/plain", '_blank');
         tab.document.write(log);
         tab.document.close();
     };
