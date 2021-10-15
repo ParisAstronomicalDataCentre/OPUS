@@ -1932,6 +1932,7 @@ def get_stdout(jobname, jobid):
         logname = 'stdout'
         logroot = '{}/{}'.format(JOBDATA_PATH, jobid)
         if not os.path.isfile(os.path.join(logroot, logname + '.log')):
+            # TODO: get from manager if not available, only available when EXECUTING
             raise storage.NotFoundWarning('Log "{}" NOT FOUND for job "{}"'.format(logname, jobid))
         # Return file
         return static_file(logname + '.log', root=logroot, mimetype='text')
@@ -1960,6 +1961,7 @@ def get_stderr(jobname, jobid):
         logname = 'stderr'
         logroot = '{}/{}'.format(JOBDATA_PATH, jobid)
         if not os.path.isfile(os.path.join(logroot, logname + '.log')):
+            # TODO: get from manager if not available, only available when EXECUTING
             raise storage.NotFoundWarning('Log "{}" NOT FOUND for job "{}"'.format(logname, jobid))
         # Return file
         return static_file(logname + '.log', root=logroot, mimetype='text')
