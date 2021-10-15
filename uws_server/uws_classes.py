@@ -537,7 +537,7 @@ class Job(object):
                     'id': rname,
                     'xlink:href': r['url'],
                     'mime-type': r['content_type'] or 'text/plain',
-                    'name': r.get('file_name', 'TEST'),
+                    'name': r.get('file_name', ''),
                     'hash': r.get('hash', ''),
                 }
                 ETree.SubElement(xml_results, 'uws:result', attrib=attrib)
