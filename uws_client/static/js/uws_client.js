@@ -605,14 +605,25 @@ var uws_client = (function($) {
             });
         } else {
             $('#job_params').append(row);
-        }
+        };
     };
     var displayParamFormInputType = function(pname, p){
-        if (p.datatype == 'file') {
+        if (p.datatype == 'file'  || p.url == 'file://$ID') {
             $('#id_'+pname).attr('type', 'file');
-        };
-        if (p.url == 'file://$ID') {
-            $('#id_'+pname).attr('type', 'file');
+            $('#id_'+pname).wrap('<div class="input-group"></div>');
+            $('#id_'+pname).parent().append('\
+                <span class="input-group-btn">\
+                    <button id="button_'+pname+'" class="btn btn-default" type="button" title="Remove item">\
+                        File <span class="glyphicon glyphicon-transfer"></span> URL\
+                    </button>\
+                </span>');
+            $('#button_'+pname).click( function() {
+                if ($('#id_'+pname).attr('type') == 'file') {
+                    $('#id_'+pname).attr('type', 'url');
+                } else {
+                    $('#id_'+pname).attr('type', 'file');
+                };
+            });
         };
         if ((p.datatype.indexOf('long') > -1)
             || (p.datatype.indexOf('int') > -1)
@@ -666,6 +677,7 @@ var uws_client = (function($) {
         if (jdl.control_parameters_keys.indexOf('runId') > -1) {
             displayParamFormInput('runId', {'default': jobName, 'annotation': 'User specific identifier for the job', 'control': 'true'});
         };
+        $('#job_params').append('<hr>');
         // Create form fields from JDL
         for (var pkey in jdl.used_keys) {
             var pname = jdl.used_keys[pkey];
@@ -676,6 +688,7 @@ var uws_client = (function($) {
                 displayParamFormInputType(pname, p)
             };
         };
+        $('#job_params').append('<hr>');
         for (var pkey in jdl.parameters_keys) {
             var pname = jdl.parameters_keys[pkey];
             if ($('#id_' + pname).length == 0) {
@@ -697,9 +710,14 @@ var uws_client = (function($) {
                 };
                 // Update form fields
                 $('#id_' + pname).attr('value', pvalue);
+                // If type=file, and url is given, then switch type to urk
+                if ($('#id_'+pname).attr('type') == 'file' && pvalue.indexOf('http') !== -1) {
+                    $('#id_'+pname).attr('type', 'url');
+                };
             };
         };
         // Add buttons
+        $('#job_params').append('<hr>');
         var elt = '\
             <div id="add_control" class=" form-group">\n\
                 <label class="col-md-3 control-label">Add control parameters</label>\n\
@@ -755,13 +773,14 @@ var uws_client = (function($) {
             if ($.inArray(pname, Object.keys(jdl.parameters)) == -1) {
                 var p = jdl.used[pname];
                 displayParamFormInput(pname, p);
-                if (p.url == 'file') {
+                if (p.url != 'file://$ID') {
                     $('#id_'+pname).wrap('<div class="input-group"></div>');
                     // Add Update buttons (possible to update params when pĥase is PENDING in UWS 1.0 - but not yet implemented)
                     $('#id_'+pname).parent().append('<span class="input-group-btn"><button id="button_'+pname+'" class="btn btn-default" type="button">Update</button></span>');
                     // Change input type
                     displayParamFormInputType(pname, p);
                 } else {
+                    // param is a file, but only a text is shown
                     $('#id_'+pname).attr('disabled','disabled');
                     if (!(pname in job.parameters)) {
                         $('#id_'+pname).wrap('<div class="input-group"></div>');
@@ -789,6 +808,7 @@ var uws_client = (function($) {
                 // Change input type
                 displayParamFormInputType(pname, p);
             } else {
+                // param is a file, but only a text is shown
                 $('#id_'+pname).attr('disabled','disabled');
                 if (!(pname in job.parameters)) {
                     $('#id_'+pname).wrap('<div class="input-group"></div>');

@@ -335,7 +335,7 @@ class Job(object):
                 if pname in post:
                     # Get value from post
                     value = post.pop(pname)
-                    logger.info('Input "{}" is a value (or an identifier): {}'.format(pname, value))
+                    logger.info('Input "{}" is a value (or an identifier, or a URL): {}'.format(pname, value))
                 else:
                     # Set value to its default
                     value = self.jdl.content['used'][pname]['default']
@@ -343,8 +343,12 @@ class Job(object):
                 # 3/ Try to convert value/ID to a URL and upload
                 url = self.jdl.content['used'][pname]['url']
                 if url:
-                    furl = url.replace('$ID', value)
-                    if furl != 'file://':
+                    if url == 'file://$ID':
+                        # expecting a file, is value an URL already ?
+                        furl = value
+                    else:
+                        furl = url.replace('$ID', value)
+                    try:
                         r = requests.get(furl, allow_redirects=True)
                         if r.status_code == 200:
                             cd = r.headers.get('content-disposition')
@@ -368,8 +372,9 @@ class Job(object):
                             #     url = '{}{}'.format(BASE_URL, url)
                             # value = url
                             value = 'file://' + filename
-                        else:
-                            logger.warning('Cannot upload URL for input "{}": {}'.format(pname, furl))
+                    except Exception as e:
+                        logger.warning('Cannot upload URL for input "{}": {}\n{}'.format(pname, furl, e))
+                        raise UserWarning('cannot upload URL for input "{}": {}'.format(pname, furl))
                 # TODO: 4/ check if value is an ID that already exists in the entity store ? other attribute ?
                 if not entity:
                     pass
