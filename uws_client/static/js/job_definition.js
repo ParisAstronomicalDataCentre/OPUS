@@ -342,7 +342,7 @@
     // Load/Read
 
 	function load_jdl() {
-        // Load jdl file from sserver and fill jdl_form
+        // Load jdl file from server and fill jdl_form
         var jobname = $('input[name=name]').val();
         if (jobname.length > 0) {
             $('#loading').show();
