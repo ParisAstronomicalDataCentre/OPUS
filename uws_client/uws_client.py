@@ -21,7 +21,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_security import Security, SQLAlchemyUserDatastore, UserMixin, RoleMixin, login_required, roles_required, utils
 from flask_security.forms import LoginForm, RegisterForm
 from flask_login import user_logged_in, user_logged_out, current_user, LoginManager, login_user, logout_user
-from oauthlib.oauth2 import WebApplicationClient
+from authlib.integrations.flask_client import OAuth
 from flask_security import AnonymousUser
 from flask_security.core import (
     _user_loader as _flask_security_user_loader,
@@ -141,14 +141,14 @@ class ExtendedRegisterForm(RegisterForm):
     email = StringField('Username or Email Address', [InputRequired()])
 
 
-def get_or_create(session, model, **kwargs):
-    instance = session.query(model).filter_by(**kwargs).first()
+def get_or_create(db_session, model, **kwargs):
+    instance = db_session.query(model).filter_by(**kwargs).first()
     if instance:
         return instance
     else:
         instance = model(**kwargs)
-        session.add(instance)
-        session.commit()
+        db_session.add(instance)
+        db_session.commit()
         return instance
 
 
@@ -159,82 +159,45 @@ security = Security(app, user_datastore,
 #                 login_manager=_get_login_manager(app, anonymous_user=None))
 
 
-# Setup Flask-Security with OIDC (oauthlib)
+# Setup Flask-Security with OIDC (authlib)
 
-oidc_client = WebApplicationClient(OIDC_CLIENT_ID)
+# https://flask-security-too.readthedocs.io/en/stable/customizing.html#authorization-with-oauth2 -> complex...
+# https://realpython.com/flask-google-login/
+# https://www.codeflow.site/fr/article/flask-google-login -> almost, but issue with prepare_token_request (client_id should not appear in request body)
+# https://github.com/authlib/demo-oauth-client/blob/master/flask-google-login/app.py -> works smoothly !
+
+oauth = OAuth(app)
+oauth.register(
+    name='oidc',
+    client_id=OIDC_CLIENT_ID,
+    client_secret=OIDC_CLIENT_SECRET,
+    server_metadata_url=OIDC_DISCOVERY_URL,
+    client_kwargs={
+        'scope': 'openid email profile'
+    }
+)
 
 
-def get_provider_cfg():
-    return requests.get(OIDC_DISCOVERY_URL).json()
-
-
-@app.route("/oidc/login")
+@app.route('/accounts/oidc/login')
 def oidc_login():
-    logger.debug('Start OIDC login')
-    # Find out what URL to hit for Google login
-    google_provider_cfg = get_provider_cfg()
-    authorization_endpoint = google_provider_cfg["authorization_endpoint"]
-
-    # Use library to construct the request for Google login and provide
-    # scopes that let you retrieve user's profile from Google
-    request_uri = oidc_client.prepare_request_uri(
-        authorization_endpoint,
-        redirect_uri=request.base_url + "/callback",
-        scope=["openid", "email", "profile"],
-    )
-    return redirect(request_uri)
+    redirect_uri = url_for('oidc_callback', _external=True)
+    return oauth.oidc.authorize_redirect(redirect_uri)
 
 
-@app.route("/oidc/login/callback")
+@app.route('/accounts/oidc/callback')
 def oidc_callback():
-    logger.debug('Start OIDC callback')
-    # Get authorization code Google sent back to you
-    code = request.args.get("code")
-    # Find out what URL to hit to get tokens that allow you to ask for
-    # things on behalf of a user
-    provider_cfg = get_provider_cfg()
-    logger.debug(provider_cfg)
-    token_endpoint = provider_cfg["token_endpoint"]
-    # Prepare and send a request to get tokens! Yay tokens!
-    # token_url, headers, body = oidc_client.prepare_token_request(
-    #     token_endpoint,
-    #     authorization_response=request.url,
-    #     redirect_url=request.base_url,
-    #     code=code
-    # )
-    body = oidc_client.prepare_request_body('authorization_code', code=code, body='', redirect_uri=request.base_url)
-    logger.debug(body)
-    token_response = requests.post(
-        token_endpoint,
-        headers={'Content-Type': 'application/x-www-form-urlencoded'},
-        data=body,
-        auth=(OIDC_CLIENT_ID, OIDC_CLIENT_SECRET),
-    )
-    logger.debug(json.dumps(token_response.json()))
-    # Parse the tokens!
-    oidc_token = oidc_client.parse_request_body_response(json.dumps(token_response.json()))
-    logger.debug(oidc_token)
-    # Now that you have tokens (yay) let's find and hit the URL
-    # from Google that gives you the user's profile information,
-    # including their Google profile image and email
-    userinfo_endpoint = provider_cfg["userinfo_endpoint"]
-    uri, headers, body = oidc_client.add_token(userinfo_endpoint)
-    userinfo_response = requests.get(uri, headers=headers, data=body)
-    # You want to make sure their email is verified.
-    # The user authenticated with Google, authorized your
-    # app, and now you've verified their email through Google!
-    if userinfo_response.json().get("email_verified"):
-        oidc_id = userinfo_response.json()["sub"]
-        oidc_email = userinfo_response.json()["email"]
-    else:
-        return "User email not available or not verified by Google.", 400
+    token = oauth.oidc.authorize_access_token()
+    user = token.get('userinfo')
+    logger.debug(user)
+    session['oidc_user'] = user
+    oidc_email = user["email"]
     # Doesn't exist? Add it to the database.
     oidc_user = user_datastore.find_user(email=oidc_email)
     if not oidc_user:
         user_datastore.create_user(
             email=oidc_email,
             active=True,
-            roles=['user','job_definition','job_list'],
+            roles=['user', 'oidc', 'job_definition', 'job_list'],
         )
         db.session.commit()
         oidc_user = user_datastore.find_user(email=oidc_email)
@@ -242,6 +205,14 @@ def oidc_callback():
     # Begin user session by logging the user in
     login_user(oidc_user)
     # Send user back to homepage
+    return redirect(url_for("home"))
+
+
+@app.route('/accounts/oidc/logout')
+def oidc_logout():
+    # url = oauth.oidc.metadata.get('revocation_endpoint')
+    # oauth.oidc.revoke_token(url, token=None, token_type_hint=None, body=None, auth=None, headers=None, **kwargs)
+    logout_user()
     return redirect(url_for("home"))
 
 
@@ -286,6 +257,10 @@ def create_db():
             description='User',
         )
         user_datastore.find_or_create_role(
+            name='oidc',
+            description='User from OIDC',
+        )
+        user_datastore.find_or_create_role(
             name='admin',
             description='Administrator',
         )
@@ -303,7 +278,7 @@ def create_db():
                 email=ADMIN_NAME,
                 password=ADMIN_DEFAULT_PW,
                 active=True,
-                roles=['admin','job_definition','job_list'],
+                roles=['admin', 'job_definition', 'job_list'],
             )
         # Create demo user
         if not user_datastore.find_user(id=TESTUSER_NAME):
@@ -311,7 +286,7 @@ def create_db():
                 email=TESTUSER_NAME,
                 password=TESTUSER_DEFAULT_PW,
                 active=True,
-                roles=['user','job_definition','job_list'],
+                roles=['user', 'job_definition', 'job_list'],
             )
         db.session.commit()
         logger.debug('Database created or updated')
@@ -351,11 +326,6 @@ admin = Admin(app, template_mode='bootstrap3', url='/admin')
 admin.add_view(UserView(User, db.session))
 admin.add_view(RoleView(Role, db.session))
 
-
-# ----------
-# https://flask-security-too.readthedocs.io/en/stable/customizing.html#authorization-with-oauth2
-# see also: https://realpython.com/flask-google-login/
-# https://www.codeflow.site/fr/article/flask-google-login
 
 # ----------
 # Manage user accounts using flask_security (flask_login)
