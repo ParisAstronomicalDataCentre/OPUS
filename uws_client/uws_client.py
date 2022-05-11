@@ -20,9 +20,8 @@ from flask import Flask, request, abort, redirect, url_for, session, g, current_
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import Security, SQLAlchemyUserDatastore, UserMixin, RoleMixin, login_required, roles_required, utils
 from flask_security.forms import LoginForm, RegisterForm
-from flask_login import user_logged_in, user_logged_out, current_user, LoginManager
-from flask_oauthlib.provider import OAuth2Provider
-from flask_oauthlib.client import OAuth
+from flask_login import user_logged_in, user_logged_out, current_user, LoginManager, login_user, logout_user
+from oauthlib.oauth2 import WebApplicationClient
 from flask_security import AnonymousUser
 from flask_security.core import (
     _user_loader as _flask_security_user_loader,
@@ -155,79 +154,95 @@ def get_or_create(session, model, **kwargs):
 
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 
-
-# Setup Flask-Security with OAuth2
-
-#oauth = OAuth2Provider(app)
-oauth = OAuth()
-twitter = oauth.remote_app(
-    'twitter',
-    app_key='TWITTER'
-)
-app.config['TWITTER'] = dict(
-    consumer_key='a random key',
-    consumer_secret='a random secret',
-    base_url='https://api.twitter.com/1/',
-    request_token_url='https://api.twitter.com/oauth/request_token',
-    access_token_url='https://api.twitter.com/oauth/access_token',
-    authorize_url='https://api.twitter.com/oauth/authenticate',
-)
-oauth.init_app(app)
-
-
-def _request_loader(request):
-    """
-    Load user from OAuth2 Authentication header or using
-    Flask-Security's request loader.
-    """
-    user = None
-
-    if hasattr(request, 'oauth'):
-        user = request.oauth.user
-    else:
-        # Need this try stmt in case oauthlib sometimes throws:
-        # AttributeError: dict object has no attribute startswith
-        try:
-            is_valid, oauth_request = oauth.verify_request(scopes=[])
-            if is_valid:
-                user = oauth_request.user
-        except AttributeError:
-            pass
-
-    if not user:
-        user = _flask_security_request_loader(request)
-
-    return user
-
-
-def _get_login_manager(app, anonymous_user):
-    """Prepare a login manager for Flask-Security to use."""
-    login_manager = LoginManager()
-
-    login_manager.anonymous_user = anonymous_user or AnonymousUser
-    login_manager.login_view = '{0}.login'.format(
-        security_config_value('BLUEPRINT_NAME', app=app))
-    login_manager.user_loader(_flask_security_user_loader)
-    login_manager.request_loader(_request_loader)
-
-    # if security_config_value('FLASH_MESSAGES', app=app):
-    #     (login_manager.login_message,
-    #      login_manager.login_message_category) = (
-    #         security_config_value('MSG_LOGIN', app=app))
-    #     (login_manager.needs_refresh_message,
-    #      login_manager.needs_refresh_message_category) = (
-    #         security_config_value('MSG_REFRESH', app=app))
-    # else:
-    #     login_manager.login_message = None
-    #     login_manager.needs_refresh_message = None
-
-    login_manager.init_app(app)
-    return login_manager
-
-
 security = Security(app, user_datastore,
                     login_form=ExtendedLoginForm, register_form=ExtendedRegisterForm)
 #                 login_manager=_get_login_manager(app, anonymous_user=None))
+
+
+# Setup Flask-Security with OIDC (oauthlib)
+
+oidc_client = WebApplicationClient(OIDC_CLIENT_ID)
+
+
+def get_provider_cfg():
+    return requests.get(OIDC_DISCOVERY_URL).json()
+
+
+@app.route("/oidc/login")
+def oidc_login():
+    logger.debug('Start OIDC login')
+    # Find out what URL to hit for Google login
+    google_provider_cfg = get_provider_cfg()
+    authorization_endpoint = google_provider_cfg["authorization_endpoint"]
+
+    # Use library to construct the request for Google login and provide
+    # scopes that let you retrieve user's profile from Google
+    request_uri = oidc_client.prepare_request_uri(
+        authorization_endpoint,
+        redirect_uri=request.base_url + "/callback",
+        scope=["openid", "email", "profile"],
+    )
+    return redirect(request_uri)
+
+
+@app.route("/oidc/login/callback")
+def oidc_callback():
+    logger.debug('Start OIDC callback')
+    # Get authorization code Google sent back to you
+    code = request.args.get("code")
+    # Find out what URL to hit to get tokens that allow you to ask for
+    # things on behalf of a user
+    provider_cfg = get_provider_cfg()
+    logger.debug(provider_cfg)
+    token_endpoint = provider_cfg["token_endpoint"]
+    # Prepare and send a request to get tokens! Yay tokens!
+    # token_url, headers, body = oidc_client.prepare_token_request(
+    #     token_endpoint,
+    #     authorization_response=request.url,
+    #     redirect_url=request.base_url,
+    #     code=code
+    # )
+    body = oidc_client.prepare_request_body('authorization_code', code=code, body='', redirect_uri=request.base_url)
+    logger.debug(body)
+    token_response = requests.post(
+        token_endpoint,
+        headers={'Content-Type': 'application/x-www-form-urlencoded'},
+        data=body,
+        auth=(OIDC_CLIENT_ID, OIDC_CLIENT_SECRET),
+    )
+    logger.debug(json.dumps(token_response.json()))
+    # Parse the tokens!
+    oidc_token = oidc_client.parse_request_body_response(json.dumps(token_response.json()))
+    logger.debug(oidc_token)
+    # Now that you have tokens (yay) let's find and hit the URL
+    # from Google that gives you the user's profile information,
+    # including their Google profile image and email
+    userinfo_endpoint = provider_cfg["userinfo_endpoint"]
+    uri, headers, body = oidc_client.add_token(userinfo_endpoint)
+    userinfo_response = requests.get(uri, headers=headers, data=body)
+    # You want to make sure their email is verified.
+    # The user authenticated with Google, authorized your
+    # app, and now you've verified their email through Google!
+    if userinfo_response.json().get("email_verified"):
+        oidc_id = userinfo_response.json()["sub"]
+        oidc_email = userinfo_response.json()["email"]
+    else:
+        return "User email not available or not verified by Google.", 400
+    # Doesn't exist? Add it to the database.
+    oidc_user = user_datastore.find_user(email=oidc_email)
+    if not oidc_user:
+        user_datastore.create_user(
+            email=oidc_email,
+            active=True,
+            roles=['user','job_definition','job_list'],
+        )
+        db.session.commit()
+        oidc_user = user_datastore.find_user(email=oidc_email)
+        logger.info('User OIDC {} added'.format(oidc_email))
+    # Begin user session by logging the user in
+    login_user(oidc_user)
+    # Send user back to homepage
+    return redirect(url_for("home"))
 
 
 # ----------
