@@ -190,7 +190,7 @@ def oidc_callback():
     user = token.get('userinfo')
     logger.debug(user)
     session['oidc_user'] = user
-    oidc_email = user["email"]
+    oidc_email = user["email"].lower()
     # Doesn't exist? Add it to the database.
     oidc_user = user_datastore.find_user(email=oidc_email)
     if not oidc_user:
