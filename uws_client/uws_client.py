@@ -20,9 +20,8 @@ from flask import Flask, request, abort, redirect, url_for, session, g, current_
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import Security, SQLAlchemyUserDatastore, UserMixin, RoleMixin, login_required, roles_required, utils
 from flask_security.forms import LoginForm, RegisterForm
-from flask_login import user_logged_in, user_logged_out, current_user, LoginManager
-from flask_oauthlib.provider import OAuth2Provider
-from flask_oauthlib.client import OAuth
+from flask_login import user_logged_in, user_logged_out, current_user, LoginManager, login_user, logout_user
+from authlib.integrations.flask_client import OAuth
 from flask_security import AnonymousUser
 from flask_security.core import (
     _user_loader as _flask_security_user_loader,
@@ -142,92 +141,79 @@ class ExtendedRegisterForm(RegisterForm):
     email = StringField('Username or Email Address', [InputRequired()])
 
 
-def get_or_create(session, model, **kwargs):
-    instance = session.query(model).filter_by(**kwargs).first()
+def get_or_create(db_session, model, **kwargs):
+    instance = db_session.query(model).filter_by(**kwargs).first()
     if instance:
         return instance
     else:
         instance = model(**kwargs)
-        session.add(instance)
-        session.commit()
+        db_session.add(instance)
+        db_session.commit()
         return instance
 
 
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 
-
-# Setup Flask-Security with OAuth2
-
-#oauth = OAuth2Provider(app)
-oauth = OAuth()
-twitter = oauth.remote_app(
-    'twitter',
-    app_key='TWITTER'
-)
-app.config['TWITTER'] = dict(
-    consumer_key='a random key',
-    consumer_secret='a random secret',
-    base_url='https://api.twitter.com/1/',
-    request_token_url='https://api.twitter.com/oauth/request_token',
-    access_token_url='https://api.twitter.com/oauth/access_token',
-    authorize_url='https://api.twitter.com/oauth/authenticate',
-)
-oauth.init_app(app)
-
-
-def _request_loader(request):
-    """
-    Load user from OAuth2 Authentication header or using
-    Flask-Security's request loader.
-    """
-    user = None
-
-    if hasattr(request, 'oauth'):
-        user = request.oauth.user
-    else:
-        # Need this try stmt in case oauthlib sometimes throws:
-        # AttributeError: dict object has no attribute startswith
-        try:
-            is_valid, oauth_request = oauth.verify_request(scopes=[])
-            if is_valid:
-                user = oauth_request.user
-        except AttributeError:
-            pass
-
-    if not user:
-        user = _flask_security_request_loader(request)
-
-    return user
-
-
-def _get_login_manager(app, anonymous_user):
-    """Prepare a login manager for Flask-Security to use."""
-    login_manager = LoginManager()
-
-    login_manager.anonymous_user = anonymous_user or AnonymousUser
-    login_manager.login_view = '{0}.login'.format(
-        security_config_value('BLUEPRINT_NAME', app=app))
-    login_manager.user_loader(_flask_security_user_loader)
-    login_manager.request_loader(_request_loader)
-
-    # if security_config_value('FLASH_MESSAGES', app=app):
-    #     (login_manager.login_message,
-    #      login_manager.login_message_category) = (
-    #         security_config_value('MSG_LOGIN', app=app))
-    #     (login_manager.needs_refresh_message,
-    #      login_manager.needs_refresh_message_category) = (
-    #         security_config_value('MSG_REFRESH', app=app))
-    # else:
-    #     login_manager.login_message = None
-    #     login_manager.needs_refresh_message = None
-
-    login_manager.init_app(app)
-    return login_manager
-
-
 security = Security(app, user_datastore,
                     login_form=ExtendedLoginForm, register_form=ExtendedRegisterForm)
 #                 login_manager=_get_login_manager(app, anonymous_user=None))
+
+
+# Setup Flask-Security with OIDC (authlib)
+
+# https://flask-security-too.readthedocs.io/en/stable/customizing.html#authorization-with-oauth2 -> complex...
+# https://realpython.com/flask-google-login/
+# https://www.codeflow.site/fr/article/flask-google-login -> almost, but issue with prepare_token_request (client_id should not appear in request body)
+# https://github.com/authlib/demo-oauth-client/blob/master/flask-google-login/app.py -> works smoothly !
+
+oauth = OAuth(app)
+oauth.register(
+    name='oidc',
+    client_id=OIDC_CLIENT_ID,
+    client_secret=OIDC_CLIENT_SECRET,
+    server_metadata_url=OIDC_DISCOVERY_URL,
+    client_kwargs={
+        'scope': 'openid email profile'
+    }
+)
+
+
+@app.route('/accounts/oidc/login')
+def oidc_login():
+    redirect_uri = url_for('oidc_callback', _external=True)
+    return oauth.oidc.authorize_redirect(redirect_uri)
+
+
+@app.route('/accounts/oidc/callback')
+def oidc_callback():
+    token = oauth.oidc.authorize_access_token()
+    user = token.get('userinfo')
+    logger.debug(user)
+    session['oidc_user'] = user
+    oidc_email = user["email"].lower()
+    # Doesn't exist? Add it to the database.
+    oidc_user = user_datastore.find_user(email=oidc_email)
+    if not oidc_user:
+        user_datastore.create_user(
+            email=oidc_email,
+            active=True,
+            roles=['user', 'oidc', 'job_definition', 'job_list'],
+        )
+        db.session.commit()
+        oidc_user = user_datastore.find_user(email=oidc_email)
+        logger.info('User OIDC {} added'.format(oidc_email))
+    # Begin user session by logging the user in
+    login_user(oidc_user)
+    # Send user back to homepage
+    return redirect(url_for("home"))
+
+
+@app.route('/accounts/oidc/logout')
+def oidc_logout():
+    # url = oauth.oidc.metadata.get('revocation_endpoint')
+    # oauth.oidc.revoke_token(url, token=None, token_type_hint=None, body=None, auth=None, headers=None, **kwargs)
+    logout_user()
+    return redirect(url_for("home"))
 
 
 # ----------
@@ -271,6 +257,10 @@ def create_db():
             description='User',
         )
         user_datastore.find_or_create_role(
+            name='oidc',
+            description='User from OIDC',
+        )
+        user_datastore.find_or_create_role(
             name='admin',
             description='Administrator',
         )
@@ -288,7 +278,7 @@ def create_db():
                 email=ADMIN_NAME,
                 password=ADMIN_DEFAULT_PW,
                 active=True,
-                roles=['admin','job_definition','job_list'],
+                roles=['admin', 'job_definition', 'job_list'],
             )
         # Create demo user
         if not user_datastore.find_user(id=TESTUSER_NAME):
@@ -296,7 +286,7 @@ def create_db():
                 email=TESTUSER_NAME,
                 password=TESTUSER_DEFAULT_PW,
                 active=True,
-                roles=['user','job_definition','job_list'],
+                roles=['user', 'job_definition', 'job_list'],
             )
         db.session.commit()
         logger.debug('Database created or updated')
@@ -336,11 +326,6 @@ admin = Admin(app, template_mode='bootstrap3', url='/admin')
 admin.add_view(UserView(User, db.session))
 admin.add_view(RoleView(Role, db.session))
 
-
-# ----------
-# https://flask-security-too.readthedocs.io/en/stable/customizing.html#authorization-with-oauth2
-# see also: https://realpython.com/flask-google-login/
-# https://www.codeflow.site/fr/article/flask-google-login
 
 # ----------
 # Manage user accounts using flask_security (flask_login)

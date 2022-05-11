@@ -17,11 +17,11 @@
 <body>
     <!-- Variables defined in div elements for JavaScript -->
     <div id="variables">
-    <div id="auth" style="display:none" value="{{ session.auth }}"></div>
-    <div id="server_url" style="display:none" value="{{ config.UWS_SERVER_URL_JS }}"></div>
-    <div id="server_endpoint" style="display:none" value="{{ config.UWS_SERVER_ENDPOINT }}"></div>
-    <div id="client_endpoint" style="display:none" value="{{ config.UWS_CLIENT_ENDPOINT }}"></div>
-    <!-- Other variables for the page -->{% block variables %}{% endblock %}
+        <div id="auth" style="display:none" value="{{ session.auth }}"></div>
+        <div id="server_url" style="display:none" value="{{ config.UWS_SERVER_URL_JS }}"></div>
+        <div id="server_endpoint" style="display:none" value="{{ config.UWS_SERVER_ENDPOINT }}"></div>
+        <div id="client_endpoint" style="display:none" value="{{ config.UWS_CLIENT_ENDPOINT }}"></div>
+        <!-- Other variables for the page -->{% block variables %}{% endblock %}
     </div>
     <!-- Page header (banner and nav panel) -->
 {% block header %}{% include "header.html" %}{% endblock %}
