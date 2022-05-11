@@ -13,7 +13,7 @@ voprov
 flask
 flask-sqlalchemy
 flask-security-too
-flask-oauthlib
+authlib
 email_validator
 flask-admin
 flask-mail
