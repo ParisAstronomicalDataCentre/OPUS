@@ -17,11 +17,11 @@
 <body>
     <!-- Variables defined in div elements for JavaScript -->
     <div id="variables">
-    <div id="auth" style="display:none" value="{{ session.auth }}"></div>
-    <div id="server_url" style="display:none" value="{{ config.UWS_SERVER_URL_JS }}"></div>
-    <div id="server_endpoint" style="display:none" value="{{ config.UWS_SERVER_ENDPOINT }}"></div>
-    <div id="client_endpoint" style="display:none" value="{{ config.UWS_CLIENT_ENDPOINT }}"></div>
-    <!-- Other variables for the page -->{% block variables %}{% endblock %}
+        <div id="auth" style="display:none" value="{{ session.auth }}"></div>
+        <div id="server_url" style="display:none" value="{{ config.UWS_SERVER_URL_JS }}"></div>
+        <div id="server_endpoint" style="display:none" value="{{ config.UWS_SERVER_ENDPOINT }}"></div>
+        <div id="client_endpoint" style="display:none" value="{{ config.UWS_CLIENT_ENDPOINT }}"></div>
+        <!-- Other variables for the page -->{% block variables %}{% endblock %}
     </div>
     <!-- Page header (banner and nav panel) -->
 {% block header %}{% include "header.html" %}{% endblock %}
@@ -31,7 +31,7 @@
     <div id="loading_div"
          style="position: fixed; top:5px; left:5px; width:2%; z-index: 10; opacity: 0.8;">
         <div id="loading" class="col-md-12" style="display:none;">
-            <img src="/static/images/loading.png" alt="loading" height="50" width="50"/>
+            <img src="/static/images/loading.gif" alt="loading" height="50" width="50"/>
         </div>
     </div>
     <div id="messages_div"

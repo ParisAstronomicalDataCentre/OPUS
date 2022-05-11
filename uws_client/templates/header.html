@@ -75,7 +75,13 @@
                         <li>
                             <a href="{{ url_for_security('login') }}">
                                 <span class="glyphicon glyphicon-log-in"></span>
-                                Sign in
+                                Local login
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('oidc_login') }}">
+                                <img src="/static/images/openid.jpg" height="18" width="18"/>
+                                OIDC login
                             </a>
                         </li>
 {% endif %}
