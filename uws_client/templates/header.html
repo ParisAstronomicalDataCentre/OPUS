@@ -81,7 +81,7 @@
                         <li>
                             <a href="{{ url_for('oidc_login') }}">
                                 <img src="/static/images/openid.jpg" height="18" width="18"/>
-                                OIDC login
+                                {{ config.OIDC_TITLE }}
                             </a>
                         </li>
 {% endif %}

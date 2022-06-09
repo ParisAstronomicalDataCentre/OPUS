@@ -171,9 +171,9 @@ oauth.register(
     name='oidc',
     client_id=OIDC_CLIENT_ID,
     client_secret=OIDC_CLIENT_SECRET,
-    server_metadata_url=OIDC_DISCOVERY_URL,
+    server_metadata_url=OIDC_IDP_URL,
     client_kwargs={
-        'scope': 'openid email profile'
+        'scope': OIDC_SCOPE
     }
 )
 
@@ -187,6 +187,8 @@ def oidc_login():
 @app.route('/accounts/oidc/callback')
 def oidc_callback():
     token = oauth.oidc.authorize_access_token()
+    session['oidc_token'] = token
+    logger.debug(token)
     user = token.get('userinfo')
     logger.debug(user)
     session['oidc_user'] = user
@@ -210,9 +212,13 @@ def oidc_callback():
 
 @app.route('/accounts/oidc/logout')
 def oidc_logout():
-    # url = oauth.oidc.metadata.get('revocation_endpoint')
-    # oauth.oidc.revoke_token(url, token=None, token_type_hint=None, body=None, auth=None, headers=None, **kwargs)
     logout_user()
+    server_metadata = oauth.oidc.load_server_metadata()
+    revoke_url = server_metadata.get('revocation_endpoint')
+    token = session['oidc_token']
+    oauth_client = oauth.oidc._get_oauth_client()
+    oauth_client.revoke_token(revoke_url, token=token['access_token'], token_type_hint="access_token", body=None, auth=None, headers=None)
+    logger.info("OIDC token revoked")
     return redirect(url_for("home"))
 
 
@@ -452,7 +458,7 @@ def add_url_to_context():
 def home():
     """Home page"""
     # logger.debug('app.config = {}'.format(app.config))
-    logger.debug('session = {}'.format(session.__dict__))
+    logger.debug('session = {}'.format(session.__str__()))
     logger.debug('config = '.format({k: app.config[k] for k in EDITABLE_CONFIG if k in app.config}))
     logger.debug('g = {}'.format(g.__dict__))
     date, version = git_version()
