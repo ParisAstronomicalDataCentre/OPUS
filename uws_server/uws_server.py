@@ -225,7 +225,7 @@ def abort_500(msg=None):
         abort(500)
 
 
-def abort_500_except(msg=None):
+def abort_500_except(msg=None, msg_public=None):
     """Show exception and traceback on web page if DEBUG=true
 
     Returns:
@@ -242,7 +242,9 @@ def abort_500_except(msg=None):
     if DEBUG:
         abort(500, message)
     else:
-        abort(500, 'Internal Server Error')
+        if not msg_public:
+            msg_public = 'Internal Server Error'
+        abort(500, msg_public)
 
 
 # ----------
@@ -1342,7 +1344,7 @@ def create_job(jobname):
     except TooManyJobs as e:
         abort_500(e.args[0])
     except CalledProcessError as e:
-        abort_500_except('STDERR output:\n' + e.output)
+        abort_500_except(msg='STDERR output:\n' + e.output, msg_public='Cannot connect to the computing cluster')
     except:
         abort_500_except()
     # Response
