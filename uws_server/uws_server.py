@@ -1439,7 +1439,7 @@ def delete_job(jobname, jobid):
     except storage.NotFoundWarning as e:
         abort_404(str(e))
     except CalledProcessError as e:
-        abort_500_except('STDERR output:\n' + e.output)
+        abort_500_except(msg='STDERR output:\n' + e.output, msg_public='Cannot connect to the computing cluster')
     except:
         abort_500_except()
     # Response
@@ -1468,7 +1468,7 @@ def post_job(jobname, jobid):
     except UserWarning as e:
         abort_500(e.args[0])
     except CalledProcessError as e:
-        abort_500_except('STDERR output:\n' + e.output)
+        abort_500_except(msg='STDERR output:\n' + e.output, msg_public='Cannot connect to the computing cluster')
     except:
         abort_500_except()
     redirect(BASE_URL + '/rest/' + jobname, 303)
@@ -1545,7 +1545,7 @@ def post_phase(jobname, jobid):
     except UserWarning as e:
         abort_500(e.args[0])
     except CalledProcessError as e:
-        abort_500_except('STDERR output:\n' + e.output)
+        abort_500_except(msg='STDERR output:\n' + e.output, msg_public='Cannot connect to the computing cluster')
     except:
         abort_500_except()
     # Response
