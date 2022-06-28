@@ -18,7 +18,7 @@ import logging
 import logging.config
 from flask import Flask, request, abort, redirect, url_for, session, g, current_app, render_template, flash, Response, stream_with_context
 from flask_sqlalchemy import SQLAlchemy
-from flask_security import Security, SQLAlchemyUserDatastore, UserMixin, RoleMixin, login_required, roles_required, utils
+from flask_security import Security, SQLAlchemyUserDatastore, UserMixin, RoleMixin, login_required, roles_required, utils, hash_password
 from flask_security.forms import LoginForm, RegisterForm
 from flask_login import user_logged_in, user_logged_out, current_user, LoginManager, login_user, logout_user
 from authlib.integrations.flask_client import OAuth
@@ -282,7 +282,7 @@ def create_db():
         if not user_datastore.find_user(id=ADMIN_NAME):
             user_datastore.create_user(
                 email=ADMIN_NAME,
-                password=ADMIN_DEFAULT_PW,
+                password=hash_password(ADMIN_DEFAULT_PW),
                 active=True,
                 roles=['admin', 'job_definition', 'job_list'],
             )
@@ -290,7 +290,7 @@ def create_db():
         if not user_datastore.find_user(id=TESTUSER_NAME):
             user_datastore.create_user(
                 email=TESTUSER_NAME,
-                password=TESTUSER_DEFAULT_PW,
+                password=hash_password(TESTUSER_DEFAULT_PW),
                 active=True,
                 roles=['user', 'job_definition', 'job_list'],
             )
