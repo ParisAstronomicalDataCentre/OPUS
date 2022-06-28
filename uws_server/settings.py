@@ -198,11 +198,11 @@ SLURM_WORKDIR_PATH = '/scratch/vouws/workdir'
 SLURM_RESULTS_PATH = '/poubelle/vouws/results'
 SLURM_SBATCH_DEFAULT = {
     'nodes': 1,
-    'ntasks-per-node': 1,
+    'ntasks-per-node': 16,
     'partition': 'short',  # for tycho...
     # 'partition': 'def',  # for quadri12...'
     # 'account': 'obspm',  # for quadri12...
-    'mem': '200mb',
+    'mem': '1gb',
     #'tmp': '200mb',
 }
 
@@ -222,9 +222,9 @@ PHASE_CONVERT = {
 }
 
 SLURM_PARAMETERS = {
-    'slurm_mem': 'Memory to be allocated to the job',
-    'slurm_nodes': 'Number of nodes allocated to the job',
-    'slurm_ntasks-per-node': '',
+    'slurm_mem': 'Memory to be allocated to the job (default: 1gb)',
+    'slurm_nodes': 'Number of nodes allocated to the job (default: 1)',
+    'slurm_ntasks-per-node': 'Number of tasks per node (default: 16)',
     'slurm_partition': 'short, ...',
     'slurm_account': 'If needed (obspm for quadri12)',
 }
