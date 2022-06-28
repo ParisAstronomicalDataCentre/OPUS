@@ -225,8 +225,8 @@ SLURM_PARAMETERS = {
     'slurm_mem': 'Memory to be allocated to the job (default: 1gb)',
     'slurm_nodes': 'Number of nodes allocated to the job (default: 1)',
     'slurm_ntasks-per-node': 'Number of tasks per node (default: 16)',
-    'slurm_partition': 'short, ...',
-    'slurm_account': 'If needed (obspm for quadri12)',
+    'slurm_partition': 'padc_medium, short, ...',
+    'slurm_account': 'If needed (padc_medium for tycho, obspm for quadri12, ...)',
 }
 SLURM_PARAMETERS_KEYS = [
     'slurm_mem',
