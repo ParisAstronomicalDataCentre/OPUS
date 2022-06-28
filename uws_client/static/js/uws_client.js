@@ -1266,7 +1266,7 @@ var uws_client = (function($) {
             //$('#job_list').html(' ');
             logger('INFO', 'Job list is empty');
         } else {
-            logger('INFO', 'Displaying job list...');
+            logger('INFO', 'Displaying job list, containing ' + jobs.length + ' jobs...');
             for (var i = 0; i < jobs.length; i++) {
                 var job = jobs[i];
                 if (!$('#'+job.jobId).length) {
