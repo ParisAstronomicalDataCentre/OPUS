@@ -117,8 +117,7 @@ def is_job_server(func):
         ip = get_real_ip()
         matching = [x for x in JOB_SERVERS if x in ip]
         if matching:
-            logger.info('Access authorized to {} for {} ({})'.format(request.urlparts.path, ip, JOB_SERVERS[matching[
-                0]]))
+            logger.info('Access authorized to {} for {} ({})'.format(request.urlparts.path, ip, JOB_SERVERS[matching[0]]))
             pass
         else:
             abort_403('{} is not a job server'.format(ip, request.urlparts.path))
