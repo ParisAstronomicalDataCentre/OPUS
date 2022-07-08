@@ -5,6 +5,7 @@
 
 import os
 import bleach
+import datetime
 
 # ----------
 # Configuration
@@ -59,6 +60,8 @@ def uia_username_mapper(identity):
     # we allow pretty much anything - but we bleach it.
     return bleach.clean(identity, strip=True)
 
+
+PERMANENT_SESSION_LIFETIME = datetime.timedelta(days=1)
 
 SQLALCHEMY_TRACK_MODIFICATIONS = True
 SECURITY_BLUEPRINT_NAME = "security"
