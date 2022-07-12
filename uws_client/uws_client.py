@@ -193,7 +193,7 @@ def oidc_callback():
     logger.debug(user)
     session['oidc_user'] = user
     # get email, or sub if email is not present (sub is always returned)
-    oidc_email = user.get("email", user["sub"].lower()
+    oidc_email = user.get("email", user["sub"]).lower()
     # Doesn't exist? Add it to the database.
     oidc_user = user_datastore.find_user(email=oidc_email)
     if not oidc_user:
