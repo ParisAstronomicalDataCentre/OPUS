@@ -205,7 +205,7 @@ def oidc_callback():
         flash("This OIDC Identity Provider has not been defined: " + session["oidc_idp"], "warning")
         return redirect(url_for('home'), 303)
     token = oauth._clients[session["oidc_idp"]].authorize_access_token()
-    session['oidc_token'] = token
+    # session['oidc_token'] = token
     logger.debug(token)
     user = token.get('userinfo')
     session['oidc_user'] = user
