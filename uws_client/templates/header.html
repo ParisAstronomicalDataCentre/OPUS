@@ -78,12 +78,14 @@
                                 Local login
                             </a>
                         </li>
+  {% for idp in config.OIDC_IDPS %}
                         <li>
-                            <a href="{{ url_for('oidc_login') }}">
-                                <img src="/static/images/openid.jpg" height="18" width="18"/>
-                                {{ config.OIDC_TITLE }}
+                            <a href="{{ url_for('oidc_login') }}" title="{{ idp.description }}">
+                                <img src="{{ idp.url_logo }}" height="18" width="18"/>
+                                {{ idp.title }}
                             </a>
                         </li>
+  {% endfor %}
 {% endif %}
                     </ul>
                 </div> <!-- navbar-collapse -->

@@ -167,25 +167,48 @@ security = Security(app, user_datastore,
 # https://github.com/authlib/demo-oauth-client/blob/master/flask-google-login/app.py -> works smoothly !
 
 oauth = OAuth(app)
-oauth.register(
-    name='oidc',
-    client_id=OIDC_CLIENT_ID,
-    client_secret=OIDC_CLIENT_SECRET,
-    server_metadata_url=OIDC_IDP_URL,
-    client_kwargs={
-        'scope': OIDC_SCOPE
-    }
-)
+for idp in OIDC_IDPS:
+    oauth.register(
+        name=idp["title"],
+        client_id=idp["client_id"],
+        client_secret=idp["client_secret"],
+        server_metadata_url=idp["url"],
+        client_kwargs={
+            'scope': idp["scope"]
+        }
+    )
 
-
-@app.route('/accounts/oidc/login')
-def oidc_login():
-    redirect_uri = url_for('oidc_callback', _external=True)
+@app.route('/accounts/oidc/login', defaults={'idp': "0"})
+@app.route('/accounts/oidc/login/', defaults={'idp': "0"})
+@app.route('/accounts/oidc/login/<idp>')
+def oidc_login(idp):
+    idp_int = int(idp)
+    logger.debug("use IdP " + idp)
+    if len(OIDC_IDPS) > idp_int:
+        oauth.register(
+            name="oidc",
+            overwrite=True,
+            client_id=OIDC_IDPS[idp_int].get("client_id"),
+            client_secret=OIDC_IDPS[idp_int]["client_secret"],
+            server_metadata_url=OIDC_IDPS[idp_int]["url"],
+            client_kwargs={
+                'scope': OIDC_IDPS[idp_int]["scope"]
+            }
+        )
+    else:
+        flash("No OIDC Identity Provider has been defined.", "warning")
+        return redirect(url_for('home'), 303)
+    redirect_uri = url_for('oidc_callback', _external=True)  # , idp=idp)
     return oauth.oidc.authorize_redirect(redirect_uri)
 
 
-@app.route('/accounts/oidc/callback')
+@app.route('/accounts/oidc/callback')  # , defaults={'idp': 0})
+# @app.route('/accounts/oidc/callback/<idp>')
 def oidc_callback():
+    if "oidc" not in oauth.__dict__:
+        flash("No OIDC Identity Provider has been defined.", "warning")
+        return redirect(url_for('home'), 303)
+    logger.debug(request.args)
     token = oauth.oidc.authorize_access_token()
     session['oidc_token'] = token
     logger.debug(token)
