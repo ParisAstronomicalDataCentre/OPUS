@@ -80,7 +80,7 @@
                         </li>
   {% for idp in config.OIDC_IDPS %}
                         <li>
-                            <a href="{{ url_for('oidc_login') }}" title="{{ idp.description }}">
+                            <a href="{{ url_for('oidc_login') }}{{loop.index}}" title="{{ idp.description }}">
                                 <img src="{{ idp.url_logo }}" height="23" width="20" style="padding-bottom: 3px;"/>
                                 {{ idp.title }}
                             </a>

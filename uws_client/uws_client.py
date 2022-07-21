@@ -167,16 +167,16 @@ security = Security(app, user_datastore,
 # https://github.com/authlib/demo-oauth-client/blob/master/flask-google-login/app.py -> works smoothly !
 
 oauth = OAuth(app)
-for idp in OIDC_IDPS:
-    oauth.register(
-        name=idp["title"],
-        client_id=idp["client_id"],
-        client_secret=idp["client_secret"],
-        server_metadata_url=idp["url"],
-        client_kwargs={
-            'scope': idp["scope"]
-        }
-    )
+# for idp in OIDC_IDPS:
+#     oauth.register(
+#         name=idp["title"],
+#         client_id=idp["client_id"],
+#         client_secret=idp["client_secret"],
+#         server_metadata_url=idp["url"],
+#         client_kwargs={
+#             'scope': idp["scope"]
+#         }
+#     )
 
 @app.route('/accounts/oidc/login', defaults={'idp': "0"})
 @app.route('/accounts/oidc/login/', defaults={'idp': "0"})
