@@ -203,18 +203,18 @@ def oidc_callback():
     elif session["oidc_idp"] not in idp_names:
         flash("This OIDC Identity Provider has not been defined: " + session["oidc_idp"], "warning")
         return redirect(url_for('home'), 303)
-    logger.debug(request.args)
     token = oauth._clients[session["oidc_idp"]].authorize_access_token()
     session['oidc_token'] = token
     logger.debug(token)
     user = token.get('userinfo')
-    logger.debug(user)
     session['oidc_user'] = user
     # get email, or sub if email is not present (sub is always returned)
     oidc_email = user.get("email", user["sub"]).lower()
+    logger.debug(oidc_email)
     # Doesn't exist? Add it to the database.
     oidc_user = user_datastore.find_user(email=oidc_email)
     if not oidc_user:
+        logger.info('User OIDC {} not found'.format(oidc_email))
         user_datastore.create_user(
             email=oidc_email,
             active=True,
@@ -281,12 +281,12 @@ def create_db():
     try:
         db.create_all()
         user_datastore.find_or_create_role(
-            name='user',
-            description='User',
-        )
-        user_datastore.find_or_create_role(
             name='oidc',
             description='User from OIDC',
+        )
+        user_datastore.find_or_create_role(
+            name='user',
+            description='User',
         )
         user_datastore.find_or_create_role(
             name='admin',
@@ -371,10 +371,7 @@ def on_user_logged_in(sender, user):
 
 @user_logged_out.connect_via(app)
 def on_user_logged_out(sender, user):
-    session.pop('oidc_idp', None)
-    session.pop('oidc_user', None)
-    session.pop('oidc_token', None)
-    session.pop('auth', None)
+    session.clear()
     logger.info(user.email)
     flash('"{}" is now logged out'.format(user.email), 'info')
 
