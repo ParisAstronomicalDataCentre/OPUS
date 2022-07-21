@@ -34,7 +34,7 @@
                         <li class="dropdown">
                             <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
                                   <span class="glyphicon glyphicon-user"></span>
-                                  Signed in as <strong>{{ current_user.email }}</strong><span class="caret"></span>
+                                  Signed in as <strong>{{ current_user.email }}</strong> ({{ session.oidc_idp if session.oidc_idp else 'Local' }})<span class="caret"></span>
                             </a>
                             <ul class="dropdown-menu">
 {% if current_user.has_role('admin') %}
@@ -80,7 +80,7 @@
                         </li>
   {% for idp in config.OIDC_IDPS %}
                         <li>
-                            <a href="{{ url_for('oidc_login') }}{{loop.index - 1}}" title="{{ idp.description }}">
+                            <a href="{{ url_for('oidc_login') }}{{ idp.title }}" title="{{ idp.description }}">
                                 <img src="{{ idp.url_logo }}" height="23" width="20" style="padding-bottom: 3px;"/>
                                 {{ idp.title }}
                             </a>

@@ -167,49 +167,44 @@ security = Security(app, user_datastore,
 # https://github.com/authlib/demo-oauth-client/blob/master/flask-google-login/app.py -> works smoothly !
 
 oauth = OAuth(app)
-# for idp in OIDC_IDPS:
-#     oauth.register(
-#         name=idp["title"],
-#         client_id=idp["client_id"],
-#         client_secret=idp["client_secret"],
-#         server_metadata_url=idp["url"],
-#         client_kwargs={
-#             'scope': idp["scope"]
-#         }
-#     )
+idp_names = dict((idp['title'], i) for i, idp in enumerate(OIDC_IDPS))
+for idp in OIDC_IDPS:
+    oauth.register(
+        name=idp["title"],
+        client_id=idp["client_id"],
+        client_secret=idp["client_secret"],
+        server_metadata_url=idp["url"],
+        client_kwargs={
+            'scope': idp["scope"]
+        }
+    )
+logger.debug("OIDC clients loaded: " + str(oauth._clients.keys()))
 
-@app.route('/accounts/oidc/login', defaults={'idp': "0"})
-@app.route('/accounts/oidc/login/', defaults={'idp': "0"})
+@app.route('/accounts/oidc/login', defaults={'idp': ""})
+@app.route('/accounts/oidc/login/', defaults={'idp': ""})
 @app.route('/accounts/oidc/login/<idp>')
 def oidc_login(idp):
-    idp_int = int(idp)
-    logger.debug("use IdP " + idp)
-    if len(OIDC_IDPS) > idp_int:
-        oauth.register(
-            name="oidc",
-            overwrite=True,
-            client_id=OIDC_IDPS[idp_int].get("client_id"),
-            client_secret=OIDC_IDPS[idp_int]["client_secret"],
-            server_metadata_url=OIDC_IDPS[idp_int]["url"],
-            client_kwargs={
-                'scope': OIDC_IDPS[idp_int]["scope"]
-            }
-        )
+    if idp in idp_names:
+        session["oidc_idp"] = idp
+        logger.debug("Use OIDC IdP " + idp)
     else:
-        flash("No OIDC Identity Provider has been defined.", "warning")
+        flash("This OIDC Identity Provider has not been defined: " + idp, "warning")
         return redirect(url_for('home'), 303)
     redirect_uri = url_for('oidc_callback', _external=True)  # , idp=idp)
-    return oauth.oidc.authorize_redirect(redirect_uri)
+    return oauth._clients[session["oidc_idp"]].authorize_redirect(redirect_uri)
 
 
 @app.route('/accounts/oidc/callback')  # , defaults={'idp': 0})
 # @app.route('/accounts/oidc/callback/<idp>')
 def oidc_callback():
-    if "oidc" not in oauth.__dict__:
+    if "oidc_idp" not in session:
         flash("No OIDC Identity Provider has been defined.", "warning")
         return redirect(url_for('home'), 303)
+    elif session["oidc_idp"] not in idp_names:
+        flash("This OIDC Identity Provider has not been defined: " + session["oidc_idp"], "warning")
+        return redirect(url_for('home'), 303)
     logger.debug(request.args)
-    token = oauth.oidc.authorize_access_token()
+    token = oauth._clients[session["oidc_idp"]].authorize_access_token()
     session['oidc_token'] = token
     logger.debug(token)
     user = token.get('userinfo')
@@ -236,6 +231,9 @@ def oidc_callback():
 
 @app.route('/accounts/oidc/logout')
 def oidc_logout():
+    if "oidc_idp" not in session:
+        flash("No OIDC Identity Provider has been defined.", "warning")
+        return redirect(url_for('home'), 303)
     logout_user()
     server_metadata = oauth.oidc.load_server_metadata()
     revoke_url = server_metadata.get('revocation_endpoint')
@@ -373,6 +371,10 @@ def on_user_logged_in(sender, user):
 
 @user_logged_out.connect_via(app)
 def on_user_logged_out(sender, user):
+    session.pop('oidc_idp', None)
+    session.pop('oidc_user', None)
+    session.pop('oidc_token', None)
+    session.pop('auth', None)
     logger.info(user.email)
     flash('"{}" is now logged out'.format(user.email), 'info')
 
