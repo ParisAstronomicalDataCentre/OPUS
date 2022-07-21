@@ -361,7 +361,7 @@ admin.add_view(RoleView(Role, db.session))
 
 @user_logged_in.connect_via(app)
 def on_user_logged_in(sender, user):
-    logger.info(user.email)
+    logger.info(user.email + " " + session.get("oidc_idp", "Local"))
     #session['server_url'] = app.config['UWS_SERVER_URL_JS']
     session['auth'] = base64.b64encode((current_user.email + ':' + str(current_user.token)).encode())
     # quick request to server (will create user on server)
