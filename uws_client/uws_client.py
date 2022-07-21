@@ -82,6 +82,7 @@ def git_version():
 app = Flask(__name__, instance_relative_config=True, instance_path=VAR_PATH)
 app.secret_key = b'\ttrLu\xdd\xde\x9f\xd2}\xc1\x0e\xb6\xe6}\x95\xc6\xb1\x8f\xa09\xf5\x1aG'
 # app.config.update(EDITABLE_CONFIG)  # Default editable config
+app.config["SESSION_TYPE"] = "filesystem"
 app.config.from_object(__name__)  # load config from this file
 
 mail = Mail(app)
@@ -223,6 +224,8 @@ def oidc_callback():
         db.session.commit()
         oidc_user = user_datastore.find_user(email=oidc_email)
         logger.info('User OIDC {} added'.format(oidc_email))
+    else:
+        logger.info('User OIDC {} found'.format(oidc_email))
     # Begin user session by logging the user in
     login_user(oidc_user)
     # Send user back to homepage
