@@ -206,13 +206,13 @@ def oidc_callback():
         return redirect(url_for('home'), 303)
     # Store token
     token = oauth._clients[session["oidc_idp"]].authorize_access_token()
-    logger.debug(token)
+    # session['oidc_access_token'] = token.get('access_token')
+    logger.debug("token = " + str(token))
     # Get userinfo
-    user = oauth._clients[session["oidc_idp"]].userinfo()
-    # parse_id_token(request, token)
     # user = token.get('userinfo')  # use direct userinfo sent with token (not always present...)
+    user = oauth._clients[session["oidc_idp"]].userinfo()
     session['oidc_user'] = user
-    logger.debug(user)
+    logger.debug("user = " + str(user))
     # Get email, or sub if email is not present (sub is always returned)
     oidc_email = user.get("email", None).lower()
     if not oidc_email:
@@ -228,9 +228,9 @@ def oidc_callback():
         )
         db.session.commit()
         oidc_user = user_datastore.find_user(email=oidc_email)
-        logger.info('User OIDC {} is new and was added'.format(oidc_email))
+        logger.info('OIDC user {} is new and was added'.format(oidc_email))
     else:
-        logger.info('User OIDC {} found'.format(oidc_email))
+        logger.info('user {} found in local user database'.format(oidc_email))
     # Begin user session by logging the user in
     login_user(oidc_user)
     # Send user back to homepage
@@ -242,13 +242,23 @@ def oidc_logout():
     if "oidc_idp" not in session:
         flash("No OIDC Identity Provider has been defined.", "warning")
         return redirect(url_for('home'), 303)
+    elif session["oidc_idp"] not in idp_names:
+        flash("This OIDC Identity Provider has not been defined: " + session["oidc_idp"], "warning")
+        return redirect(url_for('home'), 303)
+    # Revoke token on OIDC IdP
+    server_metadata = oauth._clients[session["oidc_idp"]].load_server_metadata()
+    revoke_url = server_metadata.get('revocation_endpoint', None)
+    if revoke_url:
+        oauth_client = oauth._clients[session["oidc_idp"]]._get_oauth_client()
+        resp = oauth_client.revoke_token(revoke_url)
+        # , token=session['oidc_access_token'], token_type_hint="access_token", body=None, auth=None, headers=None)
+        # example: client.revoke_token(app.config['OASERVER'] + '/oauth2/revoke', token=session['oatoken']['access_token'])
+        logger.info("OIDC token revoked on IdP " + session["oidc_idp"])
+        logger.info(resp)
+    else:
+        logger.info("No revocation_endpoint for OIDC Idp " + session["oidc_idp"])
+    # Logout user locally
     logout_user()
-    server_metadata = oauth.oidc.load_server_metadata()
-    revoke_url = server_metadata.get('revocation_endpoint')
-    token = session['oidc_token']
-    oauth_client = oauth.oidc._get_oauth_client()
-    oauth_client.revoke_token(revoke_url, token=token['access_token'], token_type_hint="access_token", body=None, auth=None, headers=None)
-    logger.info("OIDC token revoked")
     return redirect(url_for("home"))
 
 
@@ -373,15 +383,15 @@ def on_user_logged_in(sender, user):
     #session['server_url'] = app.config['UWS_SERVER_URL_JS']
     session['auth'] = base64.b64encode((current_user.email + ':' + str(current_user.token)).encode())
     # quick request to server (will create user on server)
-    response = uws_server_request('/jdl', method='GET')
+    response = uws_server_request('jdl', method='GET')
     flash('"{}" is now logged in'.format(user.email), 'info')
 
 
 @user_logged_out.connect_via(app)
 def on_user_logged_out(sender, user):
-    session.clear()
     logger.info(user.email)
     flash('"{}" is now logged out'.format(user.email), 'info')
+    session.clear()
 
 
 @app.route('/accounts/profile', methods=['GET', 'POST'])
