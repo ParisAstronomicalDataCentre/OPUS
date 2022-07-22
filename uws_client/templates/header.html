@@ -65,7 +65,7 @@
                                     Change password</a>
                                 </li>
                                 <li class="divider"></li>
-                                <li><a href="{{ url_for_security('logout') }}">
+                                <li><a href="{{ url_for('oidc_logout') if session.oidc_idp else url_for_security('logout') }}">
                                     <span class="glyphicon glyphicon-log-out"></span>
                                     Sign out</a>
                                 </li>
