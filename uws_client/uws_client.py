@@ -208,7 +208,8 @@ def oidc_callback():
     token = oauth._clients[session["oidc_idp"]].authorize_access_token()
     logger.debug(token)
     # Get userinfo
-    user = oauth._clients[session["oidc_idp"]].userinfo(request)
+    user = oauth._clients[session["oidc_idp"]].parse_id_token(request, token)
+    # userinfo(request)
     # user = token.get('userinfo')  # use direct userinfo sent with token (not always present...)
     session['oidc_user'] = user
     logger.debug(user)
