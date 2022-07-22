@@ -383,7 +383,7 @@ def on_user_logged_in(sender, user):
     #session['server_url'] = app.config['UWS_SERVER_URL_JS']
     session['auth'] = base64.b64encode((current_user.email + ':' + str(current_user.token)).encode())
     # quick request to server (will create user on server)
-    response = uws_server_request('jdl', method='GET')
+    response = uws_server_request('/jdl', method='GET')
     flash('"{}" is now logged in'.format(user.email), 'info')
 
 
