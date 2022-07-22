@@ -204,18 +204,22 @@ def oidc_callback():
     elif session["oidc_idp"] not in idp_names:
         flash("This OIDC Identity Provider has not been defined: " + session["oidc_idp"], "warning")
         return redirect(url_for('home'), 303)
+    # Store token
     token = oauth._clients[session["oidc_idp"]].authorize_access_token()
-    # session['oidc_token'] = token
     logger.debug(token)
-    user = token.get('userinfo')
+    # Get userinfo
+    user = oauth._clients[session["oidc_idp"]].userinfo(request)
+    # user = token.get('userinfo')  # use direct userinfo sent with token (not always present...)
     session['oidc_user'] = user
-    # get email, or sub if email is not present (sub is always returned)
-    oidc_email = user.get("email", user["sub"]).lower()
-    logger.debug(oidc_email)
-    # Doesn't exist? Add it to the database.
+    logger.debug(user)
+    # Get email, or sub if email is not present (sub is always returned)
+    oidc_email = user.get("email", None).lower()
+    if not oidc_email:
+        logger.warning("No email was found for user. Using \"sub\" to identify user")
+        oidc_email = user["sub"]
+    # Check if user exists in the database.
     oidc_user = user_datastore.find_user(email=oidc_email)
     if not oidc_user:
-        logger.info('User OIDC {} not found'.format(oidc_email))
         user_datastore.create_user(
             email=oidc_email,
             active=True,
@@ -223,7 +227,7 @@ def oidc_callback():
         )
         db.session.commit()
         oidc_user = user_datastore.find_user(email=oidc_email)
-        logger.info('User OIDC {} added'.format(oidc_email))
+        logger.info('User OIDC {} is new and was added'.format(oidc_email))
     else:
         logger.info('User OIDC {} found'.format(oidc_email))
     # Begin user session by logging the user in
