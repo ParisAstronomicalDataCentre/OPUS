@@ -335,7 +335,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, agents=1, model=
             ipdoc = voprov.read(ipfile, format="json")
             ipid = "#" + job.jobid + "#internal_provenance"
             logger.debug(ipid)
-            logger.debug(str(ipdoc.namespaces)
+            logger.debug(str(ipdoc.namespaces))
             ipbundle = VOProvBundle(namespaces=ipdoc.namespaces, identifier=ipid)
             setattr(ipbundle, "_label", ipid)
             #inpbundle._identifier = "id:" + job.jobid + "_prov"
