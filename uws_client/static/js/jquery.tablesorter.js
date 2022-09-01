@@ -1,4 +1,4 @@
-/*! TableSorter (FORK) v2.31.1 *//*
+/*! TableSorter (FORK) v2.31.3 *//*
 * Client-side table sorting with ease!
 * @requires jQuery v1.2.6+
 *
@@ -22,7 +22,7 @@
 	'use strict';
 	var ts = $.tablesorter = {
 
-		version : '2.31.1',
+		version : '2.31.3',
 
 		parsers : [],
 		widgets : [],
@@ -33,7 +33,7 @@
 			widthFixed       : false,      // adds colgroup to fix widths of columns
 			showProcessing   : false,      // show an indeterminate timer icon in the header when the table is sorted or filtered.
 
-			headerTemplate   : '{content}',// header layout template (HTML ok); {content} = innerHTML, {icon} = <i/> // class from cssIcon
+			headerTemplate   : '{content}',// header layout template (HTML ok); {content} = innerHTML, {icon} = <i></i> // class from cssIcon
 			onRenderTemplate : null,       // function( index, template ) { return template; }, // template is a string
 			onRenderHeader   : null,       // function( index ) {}, // nothing to return
 
@@ -982,7 +982,7 @@
 									// instead of setting duplicate span to empty string, use textExtraction to try to get a value
 									// see http://stackoverflow.com/q/36449711/145346
 									txt = c.duplicateSpan || index === 0 ?
-										val :
+										txt :
 										typeof c.textExtraction !== 'string' ?
 											ts.getElementText( c, cell, cacheIndex + index ) || '' :
 											'';

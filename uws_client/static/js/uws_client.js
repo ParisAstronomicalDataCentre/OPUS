@@ -178,6 +178,9 @@ var uws_client = (function($) {
             if (job_list_columns_nosort.indexOf(col_code) != -1) {
                 col_class += ' sorter-false';
             };
+            if (col_code == 'creationTime') {
+                col_class += ' sorter-shortDate dateFormat-yyyymmdd';
+            };
             tcontent = tcontent + '\
                     <th id="' + col_code + '" class="' + col_class + '">' + col_name + '</th>';
         };
@@ -186,6 +189,29 @@ var uws_client = (function($) {
             </thead>\
             <tbody>\
             </tbody>';
+        tcontent = tcontent + '\
+            <tfoot>\
+                <tr>\
+                  <th colspan="' + job_list_columns.length + '" class="ts-pager form-inline">\
+                    <div class="btn-group btn-group-sm" role="group">\
+                      <button type="button" class="btn btn-default first"><span class="glyphicon glyphicon-step-backward"></span></button>\
+                      <button type="button" class="btn btn-default prev"><span class="glyphicon glyphicon-backward"></span></button>\
+                    </div>\
+                    <span class="pagedisplay"></span>\
+                    <div class="btn-group btn-group-sm" role="group">\
+                      <button type="button" class="btn btn-default next"><span class="glyphicon glyphicon-forward"></span></button>\
+                      <button type="button" class="btn btn-default last"><span class="glyphicon glyphicon-step-forward"></span></button>\
+                    </div>\
+                    <select class="form-control input-sm pagesize" title="Select page size">\
+                      <option value="10">10</option>\
+                      <option selected="selected" value="20">20</option>\
+                      <option value="30">30</option>\
+                      <option value="all">All Rows</option>\
+                    </select>\
+                    <select class="form-control input-sm pagenum" title="Select page number"></select>\
+                  </th>\
+                </tr>\
+            </tfoot>';
         $('#job_list').html(tcontent);
     };
 
@@ -1277,13 +1303,28 @@ var uws_client = (function($) {
         // Use tablesorter
         //var col_sort = job_list_columns.indexOf('creationTime');
         var col_sort = $("th").index($("#creationTime"));
+        console.log(col_sort);
         $("#job_list").tablesorter({
             theme : "bootstrap",
             headerTemplate : '{content} {icon}',
             sortReset: true,
+            sortRestart : true,
             widgets : [ "uitheme", "zebra" ],
+        })
+        .tablesorterPager({
+            // target the pager markup - see the HTML block below
+            container: $(".ts-pager"),
+            // target the pager page select dropdown - choose a page
+            cssGoto  : ".pagenum",
+            // remove rows from the table to speed up the sort of large tables.
+            // setting this to false, only hides the non-visible rows; needed if you plan to add/remove rows with the pager enabled.
+            removeRows: false,
+            // output string - default is '{page}/{totalPages}';
+            // possible variables: {page}, {totalPages}, {filteredPages}, {startRow}, {endRow}, {filteredRows} and {totalRows}
+            output: '{startRow} - {endRow} / {filteredRows} ({totalRows})'
         });
-        $("#job_list").trigger("updateAll");
+
+        $("#job_list").trigger("updateAll", true);
         logger('INFO', 'Job list loaded ');
         $('#div_table').show();
     };
