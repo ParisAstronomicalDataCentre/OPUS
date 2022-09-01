@@ -336,18 +336,37 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, agents=1, model=
             ipid = "#" + job.jobid + "#internal_provenance"
             logger.debug(ipid)
             logger.debug(str(ipdoc.namespaces))
-            ipbundle = VOProvBundle(namespaces=ipdoc.namespaces, identifier=ipid)
-            setattr(ipbundle, "_label", ipid)
-            #inpbundle._identifier = "id:" + job.jobid + "_prov"
-            ipbundle.update(ipdoc)
-            #inpprov = inpdoc.bundle(job.jobid + "_prov")
-            pdoc.add_bundle(ipbundle)
-            pdoc.wasGeneratedBy(ipbundle.identifier, act)
-            #pdoc.update(inpdoc)
-            #for rec in inpdoc.get_records():
-            #    if "Activity" in str(rec.get_type()):
-            #        inf_act = pdoc.get_record(rec.identifier)[0]
-            #        inf_act.wasInformedBy(act)
+            # Create dictionary
+            prov_dict = prov2dict(ipdoc)
+            # Add namespaces
+            for prefix, uri in prov_dict["prefix"].items():
+                if prefix == "default":
+                    # pdoc.set_default_namespace(uri)
+                    pass
+                else:
+                    pdoc.add_namespace(prefix, uri)
+            # Look for current_job in activity
+            if "current_job" in prov_dict["activity"]:
+                current_job = prov_dict["activity"].pop("current_job")
+                if "used" in current_job:
+                    # Add used relation to act, and entities if relevant
+                    for ent_id in current_job["used"]:
+                        if ent_id in prov_dict["entity"]:
+                            pdoc.entity(ent_id, other_attributes=prov_dict["entity"][ent_id])
+                            act.used(ent_id, other_attributes=current_job["used"][ent_id])
+                if "generated" in current_job:
+                    # Add used relation to act, and entities if relevant
+                    for ent_id in current_job["generated"]:
+                        if ent_id in prov_dict["entity"]:
+                            pdoc.entity(ent_id, other_attributes=prov_dict["entity"][ent_id])
+                            pdoc.wasGeneratedBy(ent_id, act, other_attributes=current_job["generated"][ent_id])
+            # Create a bundle for the internal provenance
+            # ipbundle = VOProvBundle(namespaces=ipdoc.get_registered_namespaces(), identifier=ipid)
+            # ipbundle.set_default_namespace(ipdoc.ipdoc.get_default_namespace())
+            # setattr(ipbundle, "_label", ipid)
+            # ipbundle.update(ipdoc)
+            # pdoc.add_bundle(ipbundle)
+            # pdoc.wasGeneratedBy(ipbundle.identifier, act)
         # Add job results as entities
         e_out = []
         for rname in job.results:
@@ -532,3 +551,68 @@ def prov2png_content(prov_doc, attributes=True, direction='BT'):
     except InvocationException as e:
         png_content = ""
     return png_content
+
+
+def prov2dict(prov_doc):
+    """
+    Convert prov document to a dictionary
+    :param prov_doc:
+    :return: prov_dict:
+    """
+    prov_dict = {"prefix": {}, "activity": {}, "entity": {}, "agent": {}}
+    for rec in prov_doc.records:
+        rec_type = rec.get_type()
+        # Store prefix/namespaces
+        prov_dict["prefix"]["default"] = prov_doc.get_default_namespace().uri
+        for ns in prov_doc.get_registered_namespaces():
+            prov_dict["prefix"][ns.prefix] = ns.uri
+        # Store activity and its attributes
+        rec_id = str(rec.identifier)
+        rec_attributes = {str(attr[0]): attr[1] for attr in rec.attributes}
+        if rec_type == voprov.models.model.PROV_ACTIVITY:
+            prov_dict["activity"][rec_id] = rec_attributes
+        # Store entity and its attributes
+        if rec_type == voprov.models.model.PROV_ENTITY:
+            prov_dict["entity"][rec_id] = rec_attributes
+        # Store usage or generation and its attributes
+        if rec_type == voprov.models.model.PROV_USAGE or rec_type == voprov.models.model.PROV_GENERATION:
+            act_id = rec_attributes.pop("voprov:activity", rec_attributes.pop("prov:activity", None))
+            ent_id = rec_attributes.pop("voprov:entity", rec_attributes.pop("prov:entity", None))
+            rec_role = rec_attributes.pop("voprov:role", rec_attributes.pop("prov:role", None))
+            if rec_role:
+                rec_attributes["prov:role"] = rec_role
+            if act_id and ent_id:
+                act_id = str(act_id)
+                ent_id = str(ent_id)
+                if rec_type == voprov.models.model.PROV_USAGE:
+                    if not "used" in prov_dict["activity"][act_id]:
+                        prov_dict["activity"][act_id]["used"] = {}
+                    prov_dict["activity"][act_id]["used"][ent_id] = rec_attributes
+                else:
+                    if not "generated" in prov_dict["activity"][act_id]:
+                        prov_dict["activity"][act_id]["generated"] = {}
+                    prov_dict["activity"][act_id]["generated"][ent_id] = {"role": rec_role}
+        # Store agent and its attributes
+        if rec_type == voprov.models.model.PROV_AGENT:
+            prov_dict["agent"][rec_id] = rec_attributes
+        # Store attribution and its attributes
+        if rec_type == voprov.models.model.PROV_ATTRIBUTION:
+            ent_id = rec_attributes.pop("voprov:entity", rec_attributes.pop("prov:entity", None))
+            agt_id = rec_attributes.pop("voprov:agent", rec_attributes.pop("prov:agent", None))
+            if ent_id and agt_id:
+                ent_id = str(ent_id)
+                agt_id = str(agt_id)
+                if not "attributed" in prov_dict["entity"][act_id]:
+                    prov_dict["entity"][ent_id]["attributed"] = {}
+                prov_dict["entity"][ent_id]["attributed"][agt_id] = rec_attributes
+        # Store association and its attributes
+        if rec_type == voprov.models.model.PROV_ASSOCIATION:
+            act_id = rec_attributes.pop("voprov:activity", rec_attributes.pop("prov:activity", None))
+            agt_id = rec_attributes.pop("voprov:agent", rec_attributes.pop("prov:agent", None))
+            if ent_id and agt_id:
+                ent_id = str(ent_id)
+                agt_id = str(agt_id)
+                if not "associated" in prov_dict["activity"][act_id]:
+                    prov_dict["activity"][act_id]["associated"] = {}
+                prov_dict["activity"][act_id]["associated"][agt_id] = rec_attributes
+    return prov_dict
