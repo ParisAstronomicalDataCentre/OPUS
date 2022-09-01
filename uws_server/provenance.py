@@ -353,7 +353,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, agents=1, model=
                     for ent_id in current_job["used"]:
                         if ent_id in prov_dict["entity"]:
                             pdoc.entity(ent_id, other_attributes=prov_dict["entity"][ent_id])
-                            act.used(ent_id, other_attributes=current_job["used"][ent_id])
+                            act.used(ent_id, attributes=current_job["used"][ent_id])
                 if "generated" in current_job:
                     # Add used relation to act, and entities if relevant
                     for ent_id in current_job["generated"]:
