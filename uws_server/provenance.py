@@ -353,12 +353,16 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, agents=1, model=
                     current_job_used = current_job.pop("used")
                     for ent_id in current_job_used:
                         if ent_id in prov_dict["entity"]:
-                            pdoc.entity(ent_id, other_attributes=prov_dict["entity"][ent_id])
+                            used_ent = pdoc.entity(ent_id, other_attributes=prov_dict["entity"][ent_id])
                             used_type = current_job_used[ent_id].get("prov:type", None)
                             logger.debug(used_type)
                             # Software: link with activity description rather than activity
                             if used_type == "Software":
                                 # in adescbundle? or pdoc?
+                                l = current_job_used[ent_id].get("voprov:name", "")
+                                l += " "
+                                l += current_job_used[ent_id].get("voprov:version", "")
+                                used_ent.add_attributes({"prov:label": l})
                                 pdoc.influence(adesc, ent_id, other_attributes={
                                     'prov:type': 'hasDependency'
                                 })
