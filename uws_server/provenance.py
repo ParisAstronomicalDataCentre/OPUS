@@ -348,6 +348,10 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, agents=1, model=
             # Look for current_job in activity
             if "current_job" in prov_dict["activity"]:
                 current_job = prov_dict["activity"].pop("current_job")
+                for k, v in current_job.attributes:
+                    logger.debug(k,v)
+                    if k not in act._attributes:
+                        act.add_attributes({k: v})
                 if "used" in current_job:
                     # Add used relation to act, and entities if relevant
                     for ent_id in current_job["used"]:
