@@ -348,27 +348,45 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, agents=1, model=
             # Look for current_job in activity
             if "current_job" in prov_dict["activity"]:
                 current_job = prov_dict["activity"].pop("current_job")
+                # Add used relation to act, and entities if relevant
                 if "used" in current_job:
-                    # Add used relation to act, and entities if relevant
                     current_job_used = current_job.pop("used")
                     for ent_id in current_job_used:
                         if ent_id in prov_dict["entity"]:
                             pdoc.entity(ent_id, other_attributes=prov_dict["entity"][ent_id])
-                            act.used(ent_id, attributes=current_job_used[ent_id])
+                            used_type = current_job_used[ent_id].get("voprov:type", None)
+                            # Software: link with activity description rather than activity
+                            if used_type == "Software":
+                                # in adescbundle? or pdoc?
+                                pdoc.influence(adesc, ent_id, other_attributes={
+                                    'prov:type': 'hasDependency'
+                                })
+                            else:
+                                act.used(ent_id, attributes=current_job_used[ent_id])
+                # Add generated relation to act, and entities if relevant
                 if "generated" in current_job:
-                    # Add generated relation to act, and entities if relevant
                     current_job_generated = current_job.pop("generated")
                     for ent_id in current_job_generated:
                         if ent_id in prov_dict["entity"]:
                             pdoc.entity(ent_id, other_attributes=prov_dict["entity"][ent_id])
                             pdoc.wasGeneratedBy(ent_id, act, other_attributes=current_job_generated[ent_id])
+                # Add associated relation to act, and agents if relevant
                 if "associated" in current_job:
-                    # Add associated relation to act, and agents if relevant
                     current_job_associated = current_job.pop("associated")
                     for agt_id in current_job_associated:
                         if agt_id in prov_dict["agent"]:
                             pdoc.agent(agt_id, other_attributes=prov_dict["agent"][agt_id])
                             pdoc.wasAssociatedWith(act, agt_id, other_attributes=current_job_generated[ent_id])
+                # Add ActivityDescription dependencies
+                if "dependency" in current_job:
+                    current_job_dependency = current_job.pop("dependency")
+                    for ent_id in current_job_dependency:
+                        # in adescbundle? or pdoc?
+                        pdoc.entity(ent_id, other_attributes=prov_dict["entity"][ent_id])
+                        pdoc.influence(adesc, ent_id, other_attributes={
+                            'prov:role': 'dependency'
+                        })
+                # Add Activity attributes
                 for k, v in current_job.items():
                     logger.debug(k, v)
                     if k not in act._attributes:
