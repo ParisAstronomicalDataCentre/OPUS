@@ -369,7 +369,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, agents=1, model=
                         if agt_id in prov_dict["agent"]:
                             pdoc.agent(agt_id, other_attributes=prov_dict["agent"][agt_id])
                             pdoc.wasAssociatedWith(act, agt_id, other_attributes=current_job_generated[ent_id])
-                for k, v in current_job:
+                for k, v in current_job.items():
                     logger.debug(k, v)
                     if k not in act._attributes:
                         act.add_attributes({k: v})
