@@ -348,22 +348,31 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, agents=1, model=
             # Look for current_job in activity
             if "current_job" in prov_dict["activity"]:
                 current_job = prov_dict["activity"].pop("current_job")
-                for k, v in current_job.attributes:
-                    logger.debug(k,v)
-                    if k not in act._attributes:
-                        act.add_attributes({k: v})
                 if "used" in current_job:
                     # Add used relation to act, and entities if relevant
-                    for ent_id in current_job["used"]:
+                    current_job_used = current_job.pop("used")
+                    for ent_id in current_job_used:
                         if ent_id in prov_dict["entity"]:
                             pdoc.entity(ent_id, other_attributes=prov_dict["entity"][ent_id])
-                            act.used(ent_id, attributes=current_job["used"][ent_id])
+                            act.used(ent_id, attributes=current_job_used[ent_id])
                 if "generated" in current_job:
-                    # Add used relation to act, and entities if relevant
-                    for ent_id in current_job["generated"]:
+                    # Add generated relation to act, and entities if relevant
+                    current_job_generated = current_job.pop("generated")
+                    for ent_id in current_job_generated:
                         if ent_id in prov_dict["entity"]:
                             pdoc.entity(ent_id, other_attributes=prov_dict["entity"][ent_id])
-                            pdoc.wasGeneratedBy(ent_id, act, other_attributes=current_job["generated"][ent_id])
+                            pdoc.wasGeneratedBy(ent_id, act, other_attributes=current_job_generated[ent_id])
+                if "associated" in current_job:
+                    # Add associated relation to act, and agents if relevant
+                    current_job_associated = current_job.pop("associated")
+                    for agt_id in current_job_associated:
+                        if agt_id in prov_dict["agent"]:
+                            pdoc.agent(agt_id, other_attributes=prov_dict["agent"][agt_id])
+                            pdoc.wasAssociatedWith(act, agt_id, other_attributes=current_job_generated[ent_id])
+                for k, v in current_job:
+                    logger.debug(k, v)
+                    if k not in act._attributes:
+                        act.add_attributes({k: v})
             # Create a bundle for the internal provenance
             # ipbundle = VOProvBundle(namespaces=ipdoc.get_registered_namespaces(), identifier=ipid)
             # ipbundle.set_default_namespace(ipdoc.ipdoc.get_default_namespace())
