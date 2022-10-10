@@ -4,7 +4,7 @@
 {% block content %}
 	<div class="container bs-docs-container">
 	    <div class="col-md-4 col-md-offset-4">
-            <h3>{{ _('Login') }}</h3>
+            <h3>Local Login</h3>
             <form class="form-horizontal" action="{{ url_for_security('login') }}" method="POST" name="login_user_form">
                 {{ login_user_form.hidden_tag() }}
                 {{ render_field_with_bootstrap_errors(login_user_form.email, class="form-control") }}
