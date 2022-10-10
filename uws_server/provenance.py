@@ -404,7 +404,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, agents=1, model=
                         })
                 # Add Activity attributes
                 for k, v in current_job.items():
-                    logger.debug(k, v)
+                    #logger.debug(k, v)
                     if k not in act._attributes:
                         act.add_attributes({k: v})
             # Create a bundle for the internal provenance
