@@ -1046,7 +1046,7 @@ def provsap():
         kwargs['configuration'] = int(request.query.get('CONFIGURATION', 1))
         respformat = request.query.get('RESPONSEFORMAT', 'PROV-SVG')
         attributes = int(request.query.get('ATTRIBUTES', 1))
-        gd = request.query.get('GD', 'BT')
+        gd = request.query.get('GD', 'LR')
         if kwargs['depth'] == 'ALL':
             kwargs['depth'] = -1
         else:
@@ -1976,7 +1976,7 @@ def get_stderr(jobname, jobid):
 
 @app.route('/rest/<jobname>/<jobid>/prov<provtype>')
 def get_prov(jobname, jobid, provtype):
-    """Get stderr for job <jobid>
+    """Get prov for job <jobid>
 
     Returns:
         200 OK: file (on success)
