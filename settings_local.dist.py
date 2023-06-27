@@ -47,6 +47,7 @@ HOME_CONTENT = "<h3>OPUS</h3><p>Observatoire de Paris UWS Server - http://opus-j
 
 # Configure OIDC IdPs
 
+OIDC_IDPS = []
 # OIDC_IDPS = [
 #     {
 #         "title": "OIDC login",  # Label for the login button
