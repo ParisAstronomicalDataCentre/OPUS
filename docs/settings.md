@@ -5,7 +5,7 @@ OPUS Settings
 Default settings
 ----------------
 
-After installation, the OPUS server and client will work with their default settings, contained in the 
+After installation, the OPUS server and client will work with their default settings, contained in the
 files `$OPUS_DIR/uws_server/settings.py` and `$OPUS_DIR/uws_client/uws_client.py`.
 
 
@@ -30,7 +30,7 @@ Local settings are to be set before running the application, here is an example:
     MAIL_SERVER = 'smtp.example.com'
     MAIL_PORT = 25
     SENDER_EMAIL = 'no_reply@example.com'
-    
+
     # Client config
     ADMIN_DEFAULT_PW = ''     # Define a default password for ADMIN_NAME (can then be changed in the client)
     TESTUSER_NAME = 'testuser'
@@ -53,8 +53,8 @@ Local settings could also contain other relevant variables, depending on the des
 UWS Server settings
 ===================
 
-The file `$OPUS_DIR/uws_server/settings.py` contains all the variables needed by the web server with 
-their default values and descriptions. This file is part of the repository files and it is 
+The file `$OPUS_DIR/uws_server/settings.py` contains all the variables needed by the web server with
+their default values and descriptions. This file is part of the repository files and it is
 recommended to keep it unchanged. However, all those variables can be overridden from the `$OPUS_DIR/settings_local.py` file.
 
 
@@ -178,8 +178,8 @@ The various path defined are build from VAR_PATH by default.
 UWS Client settings
 ===================
 
-The file `$OPUS_DIR/uws_client/uws_client.py` contains all the variables needed by the web client with 
-their default values and descriptions. This file is part of the repository files and it is 
+The file `$OPUS_DIR/uws_client/uws_client.py` contains all the variables needed by the web client with
+their default values and descriptions. This file is part of the repository files and it is
 recommended to keep it unchanged. However, all those variables can be overridden from the `$OPUS_DIR/settings_local.py` file.
 
 
@@ -199,5 +199,5 @@ recommended to keep it unchanged. However, all those variables can be overridden
 | HOME_CONTENT        | Content of the home page (HTML accepted)                                                                                         |
 
 
-Some of those variables can be edited and modified from the UWS Client without having to restart the web server (list of variables in EDITABLE_CONFIG). 
+Some of those variables can be edited and modified from the UWS Client without having to restart the web server (list of variables in EDITABLE_CONFIG).
 In particular the UWS_SERVER_URL and UWS_AUTH variables, so that the client can connect to any other UWS server.
