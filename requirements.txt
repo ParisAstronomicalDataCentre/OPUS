@@ -10,7 +10,7 @@ webtest
 pyyaml
 prov==1.5.3
 voprov
-flask
+flask==2.2.3
 flask-sqlalchemy
 flask-security-too
 authlib
