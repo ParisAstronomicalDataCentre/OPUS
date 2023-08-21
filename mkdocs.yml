@@ -1,7 +1,7 @@
 site_name: OPUS Job Manager
 repo_url: https://github.com/ParisAstronomicalDataCentre/OPUS
 theme: readthedocs
-pages:
+nav:
 - Overview: 'index.md'
 - Installation: 'install.md'
 - Configuration: 'settings.md'
