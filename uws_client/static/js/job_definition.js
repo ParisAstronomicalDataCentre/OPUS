@@ -754,6 +754,14 @@
 						var jobname_select = $('select[name="jobname"]').val();
 						$('input[name=name]').val(jobname_select);
         });
+        $('#load_jdl_select').click( function() {
+            var jobname = $('input[name=name]').val();
+            if (jobname.indexOf('tmp/') == 0) {
+                setTimeout(function(){ $("#validate_jdl").prop("disabled", false); }, 200);
+                setTimeout(function(){ $("#validation_request_jdl").prop("disabled", false); }, 200);
+            };
+            load_jdl();
+        });
         $('#load_jdl').click( function() {
             var jobname = $('input[name=name]').val();
             if (jobname.indexOf('tmp/') == 0) {
