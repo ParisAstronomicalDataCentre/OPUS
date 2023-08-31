@@ -84,9 +84,9 @@
                 console.log(json['jobnames']);
                 // Fill select
                 for (var jn in json['jobnames']) {
-                    $('.selectpicker').append('<option>' + json['jobnames'][jn] + '</option>')
+                    $('select[name="jobname"]').append('<option>' + json['jobnames'][jn] + '</option>')
                 };
-                $('.selectpicker').selectpicker('refresh');
+								$('select[name="jobname"]').selectpicker('refresh');
 								// Fill input[name=name] typeahead
 								$('input[name=name]').typeahead({
                     source: json['jobnames'],
