@@ -67,22 +67,17 @@
                             <div class="col-md-4 help-block">Import job definition.</div>
                         </div>
                     </div>
-                </form>
-                <hr>
-                <form id='jdl_form' class="form-horizontal">
                     <div class="row">
                         <div class="col-md-12 form-group">
                             <label class="col-md-2 control-label">Load JDL</label>
                             <div class="col-md-6 controls">
                                 <div class="input-group">
-                                    <span>
-                                        <select name="jobname" class="selectpicker" title="Please Select...">
-                                            <option data-hidden="true"></option>
-                                            <!-- will be added by js function -->
-                                        </select>
-                                    </span>
+                                    <select name="jobname" class="selectpicker" title="Please Select...">
+                                        <option data-hidden="true"></option>
+                                        <!-- will be added by js function -->
+                                    </select>
                                     <span class="input-group-btn">
-                                        <button id="load_jdl" class="btn btn-default" type="button">
+                                        <button id="load_jdl_select" class="btn btn-default" type="button">
                                             <span class="glyphicon glyphicon-play-circle"></span>
                                             &nbsp;Load JDL
                                         </button>
@@ -92,6 +87,9 @@
                             <div class="col-md-4 help-block">Job name.</div>
                         </div>
                     </div>
+                </form>
+                <hr>
+                <form id='jdl_form' class="form-horizontal">
                     <div class="row">
                         <div class="col-md-12 form-group">
                             <label class="col-md-2 control-label">Job name</label>

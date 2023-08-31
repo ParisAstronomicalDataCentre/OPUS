@@ -750,6 +750,10 @@
             event.preventDefault();
             import_jdl();
         });
+        $('.selectpicker').on('change', function(){
+						var jobname_select = $('#jobname').attr('value');
+						$('input[name=name]').val(jobname_select);
+        });
         $('#load_jdl').click( function() {
             var jobname = $('input[name=name]').val();
             if (jobname.indexOf('tmp/') == 0) {
