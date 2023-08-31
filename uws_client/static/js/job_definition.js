@@ -750,8 +750,8 @@
             event.preventDefault();
             import_jdl();
         });
-        $('.selectpicker').on('change', function(){
-						var jobname_select = $('#jobname').attr('value');
+        $('select[name="jobname"]').on('change', function(){
+						var jobname_select = $('select[name="jobname"]').val();
 						$('input[name=name]').val(jobname_select);
         });
         $('#load_jdl').click( function() {
