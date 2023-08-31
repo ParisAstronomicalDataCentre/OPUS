@@ -82,7 +82,13 @@
             success : function(json) {
                 $('#loading').hide();
                 console.log(json['jobnames']);
-                $('input[name=name]').typeahead({
+                // Fill select
+                for (var jn in json['jobnames']) {
+                    $('.selectpicker').append('<option>' + json['jobnames'][jn] + '</option>')
+                };
+                $('.selectpicker').selectpicker('refresh');
+								// Fill input[name=name] typeahead
+								$('input[name=name]').typeahead({
                     source: json['jobnames'],
                     autoSelect: false,
                 });
