@@ -1,0 +1,29 @@
+<VOTABLE xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.ivoa.net/xml/VOTable/v1.3" version="1.3" xsi:schemaLocation="http://www.ivoa.net/xml/VOTable/v1.3 http://www.ivoa.net/xml/VOTable/v1.3">
+  <RESOURCE ID="test_activity_1" name="test_activity_1" type="meta" utype="voprov:ActivityDescription">
+    <DESCRIPTION>Job for tests, simply copies input text in a file</DESCRIPTION>
+    <PARAM name="doculink" value="" arraysize="*" datatype="char" utype="voprov:ActivityDescription.doculink"/>
+    <PARAM name="type" value="test" arraysize="*" datatype="char" utype="voprov:ActivityDescription.type"/>
+    <PARAM name="subtype" value="test" arraysize="*" datatype="char" utype="voprov:ActivityDescription.subtype"/>
+    <PARAM name="version" value="1" arraysize="*" datatype="char" utype="voprov:ActivityDescription.version"/>
+    <PARAM name="contact_name" value="opus-admin" arraysize="*" datatype="char" utype="voprov:Agent.name"/>
+    <PARAM name="contact_email" value="admin@opus" arraysize="*" datatype="char" utype="voprov:Agent.email"/>
+    <PARAM name="executionDuration" value="20" datatype="int" utype="uws:Job.executionDuration"/>
+    <PARAM name="quote" value="10" datatype="int" utype="uws:Job.quote"/>
+    <PARAM name="script" value="sleep 10&#13;&#10;echo $text &gt; $output&#13;&#10;" arraysize="*" datatype="char"/>
+    <GROUP name="InputParams">
+      <PARAM ID="text" name="text" datatype="char" value="Hello World" arraysize="*">
+        <DESCRIPTION>Input text for test job</DESCRIPTION>
+      </PARAM>
+    </GROUP>
+    <GROUP name="Used"/>
+    <GROUP name="Generated">
+      <GROUP name="output" utype="voprov:WasGeneratedBy">
+        <DESCRIPTION>Output file that contains the input text</DESCRIPTION>
+        <PARAM name="role" value="" arraysize="*" datatype="char" utype="voprov:WasGeneratedByDescription.role"/>
+        <PARAM name="multiplicity" value="" arraysize="*" datatype="char" utype="voprov:WasGeneratedByDescription.multiplicity"/>
+        <PARAM name="default" value="output.txt" arraysize="*" datatype="char" utype="voprov:Entity.id"/>
+        <PARAM name="content_type" value="text/plain" arraysize="*" datatype="char" utype="voprov:EntityDescription.content_type"/>
+      </GROUP>
+    </GROUP>
+  </RESOURCE>
+</VOTABLE>
