@@ -26,7 +26,7 @@ APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 VAR_PATH = '/var/opt/opus'
 
 # URL an IP of the web server
-BASE_URL = 'http://localhost/opus_server'
+BASE_URL = 'http://localhost:8082'  # For local debug server with run_server.py
 BASE_IP = '127.0.0.1'
 LOCAL_USER = 'www'  # Appache user (may be www, _www, apache...)
 

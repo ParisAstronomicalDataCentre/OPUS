@@ -3,7 +3,7 @@
 # Copyright (c) 2016 by Mathieu Servillat
 # Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
 """
-UWS client implementation using bottle.py and javascript
+UWS client implementation using flask and javascript
 """
 
 import subprocess
@@ -383,9 +383,12 @@ def on_user_logged_in(sender, user):
     #session['server_url'] = app.config['UWS_SERVER_URL_JS']
     session['auth'] = base64.b64encode((current_user.email + ':' + str(current_user.token)).encode())
     # quick request to server (will create user on server)
-    response = uws_server_request('/jdl', method='GET')
+    try:
+        response = uws_server_request('/jdl', method='GET')
+    except requests.exceptions.RequestException as e:
+        error_msg = "Server connection error: " + str(e)
+        flash(error_msg, 'warning')
     flash('"{}" is now logged in'.format(user.email), 'info')
-
 
 @user_logged_out.connect_via(app)
 def on_user_logged_out(sender, user):
