@@ -82,7 +82,13 @@
             success : function(json) {
                 $('#loading').hide();
                 console.log(json['jobnames']);
-                $('input[name=name]').typeahead({
+                // Fill select
+                for (var jn in json['jobnames']) {
+                    $('select[name="jobname"]').append('<option>' + json['jobnames'][jn] + '</option>')
+                };
+								$('select[name="jobname"]').selectpicker('refresh');
+								// Fill input[name=name] typeahead
+								$('input[name=name]').typeahead({
                     source: json['jobnames'],
                     autoSelect: false,
                 });
@@ -743,6 +749,18 @@
         $('#import_jdl').submit( function(event) {
             event.preventDefault();
             import_jdl();
+        });
+        $('select[name="jobname"]').on('change', function(){
+						var jobname_select = $('select[name="jobname"]').val();
+						$('input[name=name]').val(jobname_select);
+        });
+        $('#load_jdl_select').click( function() {
+            var jobname = $('input[name=name]').val();
+            if (jobname.indexOf('tmp/') == 0) {
+                setTimeout(function(){ $("#validate_jdl").prop("disabled", false); }, 200);
+                setTimeout(function(){ $("#validation_request_jdl").prop("disabled", false); }, 200);
+            };
+            load_jdl();
         });
         $('#load_jdl').click( function() {
             var jobname = $('input[name=name]').val();
