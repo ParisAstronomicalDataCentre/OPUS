@@ -253,12 +253,10 @@ def abort_500_except(msg=None, msg_public=None):
 
 @app.route('/')
 def home():
-    resp = requests.get(BASE_URL + '/opus_client')
+    # TODO: server and client may have different URLS...
+    resp = requests.get(UWS_CLIENT_ENDPOINT)
     if resp.status_code == 200:
-        redirect(BASE_URL + '/opus_client')
-    resp = requests.get(BASE_URL + '/client')
-    if resp.status_code == 200:
-        redirect(BASE_URL + '/client')
+        redirect(UWS_CLIENT_ENDPOINT)
     return 'OPUS - https://opus-job-manager.readthedocs.io'
 
 

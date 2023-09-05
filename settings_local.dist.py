@@ -1,8 +1,15 @@
 
 # OPUS global config
 
-BASE_URL = 'http://localhost/opus_server'
+# For local debug servers
+BASE_URL = 'http://localhost:8082'
+UWS_CLIENT_ENDPOINT = 'http://localhost:8080'
 BASE_IP = '127.0.0.1'
+# For web servers, e.g. Apache2
+#BASE_URL = 'http://localhost/opus_server'
+#UWS_CLIENT_ENDPOINT = '/opus_client'  # Recommended with opus_server (i.e. relative from BASE_URL)
+#BASE_IP = '127.0.0.1'
+
 ADMIN_EMAIL = ''
 ADMIN_NAME = 'opus-admin'
 MAIL_SERVER = 'smtp.'
@@ -39,8 +46,8 @@ TRUSTED_CLIENTS = {
 # Client global config
 
 # IMPORTANT: keep those passwords secret
-ADMIN_DEFAULT_PW = ''
-TESTUSER_DEFAULT_PW = ''
+ADMIN_DEFAULT_PW = 'TBD'
+TESTUSER_DEFAULT_PW = 'TBD'
 
 CLIENT_TITLE = "OPUS"
 HOME_CONTENT = "<h3>OPUS</h3><p>Observatoire de Paris UWS Server - http://opus-job-manager.readthedocs.io</p>"
