@@ -34,7 +34,7 @@ installation page)). A virtual environment should be created, e.g. with the foll
 
     $ cd $OPUS_DIR
     $ conda create --name wsgi36 python==3.6
-    $ source activate wsgi36
+    $ conda activate wsgi36
     $ pip install -r pip-requirements.txt
 
 The WSGI module should then be installed within this virtual environment, and a `wsgi.conf` file generated to setup the
