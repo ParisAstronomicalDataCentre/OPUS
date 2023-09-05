@@ -17,6 +17,4 @@ os.chdir(curdir)
 
 from uws_client import uws_client
 
-# Do NOT use bottle.run() with mod_wsgi
 application = uws_client.app
-
