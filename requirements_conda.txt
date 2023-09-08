@@ -8,8 +8,8 @@ requests
 lxml
 webtest
 pyyaml
-prov==1.5.3
-flask==2.2.5
+prov
+flask
 flask-sqlalchemy
 flask-security-too
 authlib

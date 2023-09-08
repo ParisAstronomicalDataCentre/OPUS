@@ -89,6 +89,38 @@ mail = Mail(app)
 
 
 # ----------
+# Load/store editable config
+
+
+def load_config():
+    if os.path.isfile(CONFIG_FILE):
+        logger.info('Loading editable config (overwrites some variables)')
+        with open(CONFIG_FILE, 'r') as cf:
+            econf = yaml.safe_load(cf)
+            app.config.update(econf)
+    else:
+        save_config()
+
+
+def save_config():
+    logger.info('Saving editable config')
+    with open(CONFIG_FILE, 'w') as cf:
+        econf = {k: app.config[k] for k in EDITABLE_CONFIG if k in app.config}
+        yaml.dump(econf, cf, default_flow_style=False)
+
+
+def update_config(key, value):
+    if key in EDITABLE_CONFIG:
+        app.config[key] = value
+        save_config()
+
+
+# Loads editable config at app start (before_first_request):
+with app.app_context():
+    load_config()
+
+
+# ----------
 # User DB
 
 
@@ -263,38 +295,9 @@ def oidc_logout():
 
 
 # ----------
-# Load/store editable config
-
-
-@app.before_first_request
-def load_config():
-    logger.debug('Load editable config')
-    if os.path.isfile(CONFIG_FILE):
-        with open(CONFIG_FILE, 'r') as cf:
-            econf = yaml.safe_load(cf)
-            app.config.update(econf)
-    else:
-        save_config()
-
-
-def save_config():
-    logger.debug('Save editable config')
-    with open(CONFIG_FILE, 'w') as cf:
-        econf = {k: app.config[k] for k in EDITABLE_CONFIG if k in app.config}
-        yaml.dump(econf, cf, default_flow_style=False)
-
-
-def update_config(key, value):
-    if key in EDITABLE_CONFIG:
-        app.config[key] = value
-        save_config()
-
-
-# ----------
 # Create default database
 
 
-@app.before_first_request
 def create_db():
     try:
         db.create_all()
@@ -318,7 +321,7 @@ def create_db():
             name='job_list',
             description='Access to job list',
         )
-        # Create admin user
+        # Create admin user if not exist
         if not user_datastore.find_user(id=ADMIN_NAME):
             user_datastore.create_user(
                 email=ADMIN_NAME,
@@ -326,7 +329,7 @@ def create_db():
                 active=True,
                 roles=['admin', 'job_definition', 'job_list'],
             )
-        # Create demo user
+        # Create demo user if not exist
         if not user_datastore.find_user(id=TESTUSER_NAME):
             user_datastore.create_user(
                 email=TESTUSER_NAME,
@@ -339,6 +342,11 @@ def create_db():
     except Exception as e:
         db.session.rollback()
         logger.warning(str(e))
+
+
+# Create or Update DB at app start (before_first_request):
+with app.app_context():
+    create_db()
 
 
 # ----------
