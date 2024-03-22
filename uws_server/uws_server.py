@@ -254,9 +254,12 @@ def abort_500_except(msg=None, msg_public=None):
 @app.route('/')
 def home():
     # TODO: server and client may have different URLS...
-    resp = requests.get(UWS_CLIENT_ENDPOINT)
-    if resp.status_code == 200:
-        redirect(UWS_CLIENT_ENDPOINT)
+    try:
+        resp = requests.get(UWS_CLIENT_ENDPOINT)
+        if resp.status_code == 200:
+            redirect(UWS_CLIENT_ENDPOINT)
+    except:
+         abort_404(msg="Client is not responding")
     return 'OPUS - https://opus-job-manager.readthedocs.io'
 
 
