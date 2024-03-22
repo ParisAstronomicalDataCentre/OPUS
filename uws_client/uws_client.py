@@ -22,7 +22,6 @@ from flask_security import Security, SQLAlchemyUserDatastore, UserMixin, RoleMix
 from flask_security.forms import LoginForm, RegisterForm
 from flask_login import user_logged_in, user_logged_out, current_user, LoginManager, login_user, logout_user
 from authlib.integrations.flask_client import OAuth
-from flask_security import AnonymousUser
 from flask_security.core import (
     _user_loader as _flask_security_user_loader,
     _request_loader as _flask_security_request_loader)
