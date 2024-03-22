@@ -256,7 +256,7 @@ def abort_500_except(msg=None, msg_public=None):
 def home():
     # TODO: server and client may have different URLS...
     logger.info("Access to home page")
-    logger.info(f"  Python sys.version: {sys.version}")
+    logger.info(f"  Python sys.version: {sys.version.replace("\n"," ")}")
     logger.info(f"  Python sys.exec_prefix: {sys.exec_prefix}")
     resp_status_code = 0
     try:
