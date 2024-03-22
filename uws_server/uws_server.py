@@ -256,14 +256,14 @@ def abort_500_except(msg=None, msg_public=None):
 def home():
     # TODO: server and client may have different URLS...
     logger.info("Access to home page")
-    logger.info(f"Python sys.version: {sys.version}")
-    logger.info(f"Python sys.exec_prefix: {sys.exec_prefix}")
+    logger.info(f"  Python sys.version: {sys.version}")
+    logger.info(f"  Python sys.exec_prefix: {sys.exec_prefix}")
     try:
         resp = requests.get(UWS_CLIENT_ENDPOINT)
         if resp.status_code == 200:
             redirect(UWS_CLIENT_ENDPOINT)
-    except:
-         abort_404(msg="Client is not responding")
+    except Exception as e:
+         abort_404(msg="Client is not responding: "+str(e.arg))
     return 'OPUS - https://opus-job-manager.readthedocs.io'
 
 
