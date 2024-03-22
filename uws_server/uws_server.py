@@ -259,11 +259,16 @@ def home():
     logger.info(f"  Python sys.version: {sys.version}")
     logger.info(f"  Python sys.exec_prefix: {sys.exec_prefix}")
     try:
-        resp = requests.get(UWS_CLIENT_ENDPOINT)
-        if resp.status_code == 200:
-            redirect(UWS_CLIENT_ENDPOINT)
+        if "http" in UWS_CLIENT_ENDPOINT:
+            resp = requests.get(UWS_CLIENT_ENDPOINT)
+            if resp.status_code == 200:
+                redirect(UWS_CLIENT_ENDPOINT)
+        else:
+            resp = requests.get(BASE_URL + UWS_CLIENT_ENDPOINT)
+            if resp.status_code == 200:
+                redirect(BASE_URL + UWS_CLIENT_ENDPOINT)
     except Exception as e:
-         abort_404(msg="Client is not responding: "+str(e.arg))
+         abort_404(msg="Client is not responding: " + str(e))
     return 'OPUS - https://opus-job-manager.readthedocs.io'
 
 
