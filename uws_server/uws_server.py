@@ -10,6 +10,7 @@ import traceback
 import glob
 import re
 import io
+import sys
 import copy
 import smtplib
 from email.mime.text import MIMEText
@@ -254,6 +255,9 @@ def abort_500_except(msg=None, msg_public=None):
 @app.route('/')
 def home():
     # TODO: server and client may have different URLS...
+    logger.info("Access to home page")
+    logger.info(f"Python sys.version: {sys.version}")
+    logger.info(f"Python sys.exec_prefix: {sys.exec_prefix}")
     try:
         resp = requests.get(UWS_CLIENT_ENDPOINT)
         if resp.status_code == 200:
