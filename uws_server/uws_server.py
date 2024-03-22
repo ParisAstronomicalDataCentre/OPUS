@@ -11,7 +11,6 @@ import glob
 import re
 import io
 import sys
-import traceback
 import copy
 import smtplib
 from email.mime.text import MIMEText
@@ -259,17 +258,18 @@ def home():
     logger.info("Access to home page")
     logger.info(f"  Python sys.version: {sys.version}")
     logger.info(f"  Python sys.exec_prefix: {sys.exec_prefix}")
+    resp_status_code = 0
     try:
         client_url = UWS_CLIENT_ENDPOINT
         if not "http" in client_url:
             client_url = BASE_URL + UWS_CLIENT_ENDPOINT
         resp = requests.get(client_url)
-        if resp.status_code == 200:
-            redirect(client_url)
+        resp_status_code = resp.status_code
     except Exception as e:
         msg_txt = "Client is not responding: " + repr(e)
-        msg_txt += "".join(traceback.format_exception(e))
         abort_404(msg=msg_txt)
+    if resp_status_code == 200:
+        redirect(client_url)
     return 'OPUS - https://opus-job-manager.readthedocs.io'
 
 
