@@ -11,6 +11,7 @@ import glob
 import re
 import io
 import sys
+import traceback
 import copy
 import smtplib
 from email.mime.text import MIMEText
@@ -267,6 +268,7 @@ def home():
             redirect(client_url)
     except Exception as e:
         msg_txt = "Client is not responding: " + repr(e)
+        msg_txt = traceback.format_exception(e)
         abort_404(msg=msg_txt)
     return 'OPUS - https://opus-job-manager.readthedocs.io'
 
