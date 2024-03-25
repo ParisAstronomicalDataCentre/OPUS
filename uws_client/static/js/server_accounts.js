@@ -47,7 +47,7 @@
 			error : function(xhr, status, exception) {
                 $('#loading').hide();
 				console.log(exception);
-				global.showMessage('Cannot get users list from server');
+				global.showMessage('Cannot get users list from server, check admin token', 'danger');
 				// $("#messages").append('<div class="fadeOut alert alert-' + category + ' text-center">' + msg + '</div>').delay(2000).fadeOut();
 			}
 		});
@@ -180,7 +180,7 @@
             error : function(xhr, status, exception) {
                 $('#loading').hide();
 				console.log(exception);
-				global.showMessage('Cannot patch user', 'danger');
+				global.showMessage('Cannot patch user, check admin token', 'danger');
 			}
 		});
     }
@@ -212,7 +212,7 @@
             error : function(xhr, status, exception) {
                 $('#loading').hide();
 				console.log(exception);
-				global.showMessage('Cannot create user', 'danger');
+				global.showMessage('Cannot create user, check admin token', 'danger');
 			}
 		});
     }
@@ -233,7 +233,7 @@
                 error : function(xhr, status, exception) {
                     $('#loading').hide();
                     console.log(exception);
-                    global.showMessage('Cannot delete user', 'danger');
+                    global.showMessage('Cannot delete user, check admin token', 'danger');
                 }
             });
         };
@@ -269,7 +269,7 @@
 
 
     $(document).ready( function() {
-    
+
         // Get jobname/jobid
         server_url = $('#server_url').attr('value');
         server_endpoint = $('#server_endpoint').attr('value');
