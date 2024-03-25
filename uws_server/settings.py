@@ -29,6 +29,7 @@ VAR_PATH = '/var/opt/opus'
 BASE_URL = 'http://localhost:8082'  # For local debug server with run_server.py
 BASE_IP = '127.0.0.1'
 LOCAL_USER = 'www'  # Appache user (may be www, _www, apache...)
+UWS_CLIENT_ENDPOINT = 'http://localhost:8080'  # For local debug server with run_client.py
 
 # Mail server
 MAIL_SERVER = 'smtp-int-m.obspm.fr'
