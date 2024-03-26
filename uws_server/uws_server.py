@@ -19,6 +19,7 @@ from subprocess import CalledProcessError
 from bottle import Bottle, request, response, abort, redirect, run, static_file
 
 from .uws_classes import *
+# Note: this import will also import .settings
 
 # Create a new application
 app = Bottle()
@@ -27,7 +28,6 @@ app = Bottle()
 # ----------
 # Set user
 # ----------
-
 
 # Handling the OPTIONS method
 # https://github.com/bottlepy/bottle/issues/402

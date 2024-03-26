@@ -1,4 +1,19 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# Copyright (c) 2016 by Mathieu Servillat
+# Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
 
+
+#----------
+# WARNING:
+# This file should be copied to settings_local.py and modified to configure
+# the execution of UWS server and client as desired (see "TBD" below)
+# The settings_local.py file contains default passwords and internal tokens,
+# it should thus be kept private (no git tacking, no public read access).
+#----------
+
+
+#----------
 # OPUS global config
 
 # For local debug servers
@@ -10,39 +25,19 @@ BASE_IP = '127.0.0.1'
 #UWS_CLIENT_ENDPOINT = '/opus_client'  # Recommended with opus_server (i.e. relative from BASE_URL)
 #BASE_IP = '127.0.0.1'
 
-ADMIN_EMAIL = ''
 ADMIN_NAME = 'opus-admin'
+ADMIN_EMAIL = ''
+ADMIN_TOKEN = 'TBD'  # TOKEN of admin user
+
 MAIL_SERVER = 'smtp.'
 MAIL_PORT = 25
-SENDER_EMAIL = ''  # e.g. no_reply@example.com
+SENDER_EMAIL = 'no_reply@'  # e.g. no_reply@example.com
+
 # Directory where app data is stored - has to be writable for the web server (www, _www, apache...)
 VAR_PATH = '/var/opt/opus'
 
-# Server global config
 
-# IMPORTANT: use random strings for the following tokens and keep them secret
-ADMIN_TOKEN = ''  # TOKEN of admin user
-JOB_EVENT_TOKEN = ''  # TOKEN for special user job_event, used internally
-MAINTENANCE_TOKEN = ''  # TOKEN for special user maintenance, used internally
-# Access rules
-ALLOW_ANONYMOUS = True
-CHECK_PERMISSIONS = False  # check rights to run/edit a job
-CHECK_OWNER = False  # only owner can access their files
-# job servers can have access to /job_event/<jobid_manager> to change the phase or report an error
-# The IP can be truncated to allow to refer to a set of IPs (e.g. '127.' for 127.*.*.*)
-JOB_SERVERS = {
-    '::1': 'localhost',
-    '127.0.0.1': 'localhost',
-    BASE_IP: 'base_ip',
-}
-# trusted clients can have access to /db and /jdl (while waiting for an A&A system)
-# e.g. /db/init, /jdl/validate...
-TRUSTED_CLIENTS = {
-    '::1':       'localhost',
-    '127.0.0.1': 'localhost',
-    BASE_IP: 'base_ip',
-}
-
+#----------
 # Client global config
 
 # IMPORTANT: keep those passwords secret
@@ -68,5 +63,34 @@ OIDC_IDPS = []
 # ]
 
 
+#----------
+# Server global config
 
+# IMPORTANT: use random strings for the following tokens and keep them secret
+JOB_EVENT_TOKEN = 'TBD'  # TOKEN for special user job_event, used internally
+MAINTENANCE_TOKEN = 'TBD'  # TOKEN for special user maintenance, used internally
+
+# Access rules
+ALLOW_ANONYMOUS = True
+CHECK_PERMISSIONS = False  # check rights to run/edit a job
+CHECK_OWNER = False  # only owner can access their files
+
+# Job servers can have access to /job_event/<jobid_manager> to change the phase or report an error
+# The IP can be truncated to allow to refer to a set of IPs (e.g. '127.' for 127.*.*.*)
+JOB_SERVERS = {
+    '::1': 'localhost',
+    '127.0.0.1': 'localhost',
+    BASE_IP: 'base_ip',
+}
+
+# Trusted clients can have access to /db and /jdl
+# e.g. /db/init, /jdl/validate...
+TRUSTED_CLIENTS = {
+    '::1':       'localhost',
+    '127.0.0.1': 'localhost',
+    BASE_IP: 'base_ip',
+}
+
+
+#----------
 # More config (see uws_server/settings.py and uws_client/settings.py)

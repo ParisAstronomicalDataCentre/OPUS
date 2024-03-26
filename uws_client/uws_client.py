@@ -14,9 +14,7 @@ import base64
 import requests
 import json
 from requests.auth import HTTPBasicAuth
-import logging
-import logging.config
-from flask import Flask, request, abort, redirect, url_for, session, g, current_app, render_template, flash, Response, stream_with_context
+from flask import Flask, request, abort, redirect, url_for, session, g, current_app, render_template, flash, Response, stream_with_context, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import Security, SQLAlchemyUserDatastore, UserMixin, RoleMixin, login_required, roles_required, utils, hash_password
 from flask_security.forms import LoginForm, RegisterForm
@@ -31,18 +29,12 @@ from flask_admin.contrib import sqla
 from flask_mail import Mail
 from wtforms import StringField, PasswordField
 from wtforms.validators import InputRequired
+
 from .settings import *
 
 
-# Set logger
-logging.config.dictConfig(LOGGING)
-logger = logging.getLogger('uws_client')
-logger.debug('Load flask client')
-
-# Create var dirs if not exist
-for p in [VAR_PATH + '/logs', VAR_PATH + '/config', VAR_PATH + '/db']:
-    if not os.path.isdir(p):
-        os.makedirs(p)
+# ----------
+# Helper functions
 
 
 # Return the git revision as a string
@@ -75,14 +67,14 @@ def git_version():
 
 
 # ----------
-# create the application instance :)
+# Create the application instance :)
 
 
 app = Flask(__name__, instance_relative_config=True, instance_path=VAR_PATH)
 app.secret_key = b'\ttrLu\xdd\xde\x9f\xd2}\xc1\x0e\xb6\xe6}\x95\xc6\xb1\x8f\xa09\xf5\x1aG'
 # app.config.update(EDITABLE_CONFIG)  # Default editable config
 app.config["SESSION_TYPE"] = "filesystem"
-app.config.from_object(__name__)  # load config from this file
+app.config.from_object(__name__)  # load config from this file (see settings.py)
 
 mail = Mail(app)
 
@@ -93,10 +85,10 @@ mail = Mail(app)
 
 def load_config():
     if os.path.isfile(CONFIG_FILE):
-        logger.info('Loading editable config (overwrites some variables)')
         with open(CONFIG_FILE, 'r') as cf:
             econf = yaml.safe_load(cf)
             app.config.update(econf)
+        logger.info('Loading editable config: ' + repr(econf))
     else:
         save_config()
 
@@ -163,6 +155,9 @@ class User(db.Model, UserMixin):
 
     def __repr__(self):
         return self.email
+
+    def get_id_db(self):
+        return self.id
 
 
 class ExtendedLoginForm(LoginForm):
@@ -478,7 +473,7 @@ def import_server_account():
             db.session.commit()
             logger.info('User {} added'.format(email))
             flash('User added, please enter new password and save record', 'success')
-            return user.get_id(), 200
+            return {"user_id": user.get_id_db()}
         # Already exist
         logger.warning('Cannot create user (already exists)')
         abort(409)
@@ -503,6 +498,11 @@ def server_jobs():
 @app.context_processor
 def add_url_to_context():
     return dict(url=request.url)
+
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(APP_PATH, 'favicon.ico')
 
 
 @app.route('/')

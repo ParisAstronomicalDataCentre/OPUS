@@ -6,6 +6,15 @@
 Settings for the UWS server
 """
 
+
+#----------
+# WARNING:
+# If ../settings_local.py is found (see settings_local.dist.py for a template),
+# some variables may be redefined for the local environement at the end of
+# this file.
+#----------
+
+
 import os
 import sys
 import datetime as dt
@@ -35,6 +44,7 @@ UWS_CLIENT_ENDPOINT = 'http://localhost:8080'  # For local debug server with run
 MAIL_SERVER = 'smtp-int-m.obspm.fr'
 MAIL_PORT = 25
 SENDER_EMAIL = 'no_reply@obspm.fr'
+
 
 ### Security settings
 
@@ -128,7 +138,7 @@ ARCHIVE_PATH = ''
 ARCHIVE_URL = '/store?ID={ID}'  # use {ID} for the identifier of the result, relative or full URL
 
 
-### Job Description Language settings
+### Job Description Language (JDL) settings
 
 # VOTFile: VOTable following the Provenance DM ActivityDescription class
 # WADLFile: WADL file describing the web service
@@ -187,7 +197,7 @@ MANAGER = 'Local'
 LOCAL_WORKDIR_PATH = '/tmp'
 
 
-#### SLURM Manager settings
+### SLURM Manager settings
 
 SLURM_URL = 'tycho.obspm.fr'  # 'quadri12.obspm.fr'  #
 SLURM_USER = 'vouws'  # need to add the web server ssh key (e.g. user www) in .ssh/authorized_hosts
@@ -334,10 +344,10 @@ JOB_RESULTS_ATTR = [
 # suffix to the log file (may be set by unittest_server.py or settings_local.py)
 LOG_FILE_SUFFIX = ''
 
+
 # ----------
 # Some variables may be redefined for the local environement in a settings_local.py file
 # ----------
-
 
 #--- Include host-specific settings ---
 if os.path.exists(APP_PATH + '/settings_local.py'):
@@ -346,8 +356,7 @@ elif os.path.exists(APP_PATH + '/uws_server/settings_local.py'):
     from .settings_local import *
 #--- Include host-specific settings ---
 
-
-#--- If execution from pytest, redefine settings ---
+#--- If execution from pytest, redefine some settings ---
 main_dict = sys.modules['__main__'].__dict__
 if 'pytest' in main_dict.get('__file__', ''):
     print('\nPerforming tests')
@@ -391,13 +400,6 @@ UPLOADS_PATH = VAR_PATH + '/uploads'
 TEMP_PATH = VAR_PATH + '/temp'
 #--- Set all _PATH based on APP_PATH or VAR_PATH ---
 
-# Create dirs if they do not exist yet
-for p in [VAR_PATH + '/db', VAR_PATH + '/config',
-          LOG_PATH, JDL_PATH, JOBDATA_PATH, LOCAL_WORKDIR_PATH, RESULTS_PATH, UPLOADS_PATH, TEMP_PATH,
-          JDL_PATH + '/votable', JDL_PATH + '/votable/tmp', JDL_PATH + '/votable/saved',
-          JDL_PATH + '/scripts', JDL_PATH + '/scripts/tmp', JDL_PATH + '/scripts/saved']:
-    if not os.path.isdir(p):
-        os.makedirs(p)
 
 # Set logger
 LOGGING = {
@@ -428,9 +430,15 @@ LOGGING = {
             'formatter': 'default'
         },
         'file_client': {
-            'level': 'DEBUG',
+            'level': 'INFO',
             'class': 'logging.FileHandler',
             'filename': LOG_PATH + '/client' + LOG_FILE_SUFFIX + '.log',
+            'formatter': 'default'
+        },
+        'file_client_debug': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': LOG_PATH + '/client' + LOG_FILE_SUFFIX + '_debug.log',
             'formatter': 'default'
         },
         'file_debug': {
@@ -447,7 +455,7 @@ LOGGING = {
         },
         'uws_client': {
             'level': 'DEBUG',
-            'handlers': ['file_client'],
+            'handlers': ['file_client', 'file_client_debug'],
         },
         'beaker': {
             'level': 'DEBUG',
@@ -473,7 +481,28 @@ class CustomAdapter(logging.LoggerAdapter):
     def process(self, msg, kwargs):
         return '{} [{}]'.format(msg, self.extra['username']), kwargs
 
+
 # Set logger
 logging.config.dictConfig(LOGGING)
 logger_init = logging.getLogger('uws_server')
 logger = logger_init
+
+
+# Create dirs if they do not exist yet
+for p in [VAR_PATH + '/db',
+          VAR_PATH + '/config',
+          LOG_PATH,
+          JOBDATA_PATH,
+          LOCAL_WORKDIR_PATH,
+          RESULTS_PATH,
+          UPLOADS_PATH,
+          TEMP_PATH,
+          JDL_PATH,
+          JDL_PATH + '/votable',
+          JDL_PATH + '/votable/tmp',
+          JDL_PATH + '/votable/saved',
+          JDL_PATH + '/scripts',
+          JDL_PATH + '/scripts/tmp',
+          JDL_PATH + '/scripts/saved']:
+    if not os.path.isdir(p):
+        os.makedirs(p)
