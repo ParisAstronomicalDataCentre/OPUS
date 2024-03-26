@@ -316,21 +316,23 @@ def create_db():
             description='Access to job list',
         )
         # Create admin user if not exist
-        if not user_datastore.find_user(id=ADMIN_NAME):
+        if not user_datastore.find_user(email=ADMIN_NAME):
             user_datastore.create_user(
                 email=ADMIN_NAME,
                 password=hash_password(ADMIN_DEFAULT_PW),
                 active=True,
                 roles=['admin', 'job_definition', 'job_list'],
             )
+            logger.info('Add user to user_datastore: ' + ADMIN_NAME)
         # Create demo user if not exist
-        if not user_datastore.find_user(id=TESTUSER_NAME):
+        if not user_datastore.find_user(email=TESTUSER_NAME):
             user_datastore.create_user(
                 email=TESTUSER_NAME,
                 password=hash_password(TESTUSER_DEFAULT_PW),
                 active=True,
                 roles=['user', 'job_definition', 'job_list'],
             )
+            logger.info('Add user to user_datastore: ' + TESTUSER_NAME)
         db.session.commit()
         logger.debug('Database created or updated')
     except Exception as e:
