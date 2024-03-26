@@ -244,27 +244,25 @@
         var name = event.data.name;
         var token = event.data.token;
         $.ajax({
-			url : client_endpoint + '/admin/add_client_user',
-			type : 'POST',
-			data:{
-                name: name,
-                token: token,
-            },
-			dataType: "json",
-			success : function(user_id) {
-                $('#loading').hide();
-                window.location.href = client_endpoint + "/admin/user/edit/?id=" + user_id +
-                "&url=%2Fopus_client%2Fadmin%2Fserver_accounts";
-			},
-            error : function(xhr, status, exception) {
-                $('#loading').hide();
-				console.log(xhr);
-				var msg = 'Cannot create user';
-				if (xhr.status == 400) { msg += ' (missing email/token)'; }
-				if (xhr.status == 409) { msg += ' (already exists)'; }
-				global.showMessage(msg, 'warning');
-			}
-		});
+    			url : client_endpoint + '/admin/add_client_user',
+    			type : 'POST',
+    			data:{
+                    name: name,
+                    token: token,
+                },
+    			success : function(resp) {
+            $('#loading').hide();
+            window.location.href = client_endpoint + "/admin/user/edit/?id=" + resp.user_id;
+    			},
+          error : function(xhr, status, exception) {
+            $('#loading').hide();
+            console.log(xhr);
+            var msg = 'Cannot create user';
+            if (xhr.status == 400) { msg += ' (missing email/token)'; }
+            if (xhr.status == 409) { msg += ' (already exists)'; }
+  		      global.showMessage(msg, 'warning');
+		      }
+	      });
     }
 
 
