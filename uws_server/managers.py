@@ -80,11 +80,11 @@ class Manager(object):
             'job_event() {',
             '    if [ -z "$2" ]',
             '    then',
-            '        curl -k -s -o $jd/curl_$1_signal.log'
+            '        curl -k -s -o $jd/job_curl_signal_$1.log'
             ' -d "jobid=$JOBID" -d "phase=$1" {}/handler/job_event'.format(BASE_URL),
             '    else',
             '        echo "$1 $2"',
-            '        curl -k -s -o $jd/curl_$1_signal.log'
+            '        curl -k -s -o $jd/job_curl_signal_$1.log'
             ' -d "jobid=$JOBID" -d "phase=$1" --data-urlencode "error_msg=$2" {}/handler/job_event'.format(BASE_URL),
             '    fi',
             '}',
@@ -94,7 +94,7 @@ class Manager(object):
             '    else',
             '        msg=$1',
             '    fi',
-            '    touch $jd/error',
+            '    touch $jd/job_error',
             '    echo "[`timestamp`] ERROR"',
             '    echo "$msg"',
             '    echo "[`timestamp`] Copy results"',
@@ -106,7 +106,7 @@ class Manager(object):
             '}',
             'term_handler() {',
             '    msg="Early termination in ${BASH_SOURCE[1]##*/} (signal $1 received)"',
-            '    touch $jd/error',
+            '    touch $jd/job_error',
             '    echo "[`timestamp`] ERROR"',
             '    echo "$msg"',
             '    echo "[`timestamp`] Copy results"',
@@ -126,7 +126,7 @@ class Manager(object):
         cp_results = [
             'copy_results() {',
             '    ls -lth | tail -n +2',
-            '    touch $jd/copy_results',
+            '    touch $jd/job_copy_results',
         ]
         for rname, r in job.jdl.content.get('generated', {}).items():
             # TODO: copy directly to archive directory (?)
@@ -196,10 +196,10 @@ class Manager(object):
             '### EXECUTION',
             'job_event "EXECUTING"',
             'echo "[`timestamp`] Start job *****"',
-            'touch $jd/start',
+            'touch $jd/job_start',
             # Run script in the current environment
             '. $jd/{}.sh'.format(job.jobname),
-            'touch $jd/done',
+            'touch $jd/job_done',
             'echo "[`timestamp`] Job done *****"',
             '### COPY RESULTS',
             'echo "[`timestamp`] Copy results"',
