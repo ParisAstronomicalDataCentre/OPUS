@@ -677,7 +677,7 @@ def uws_server_request(uri, method='GET', init_request=None):
             params = init_request.args
         response = requests.get('{}{}'.format(server_url, uri), params=params, auth=auth)
     # Return response
-    logger.info("{} {}{} ({})".format(method, server_url, uri, response.status_code))
+    logger.debug("{} {}{} ({})".format(method, server_url, uri, response.status_code))
     return response
 
 
