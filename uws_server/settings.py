@@ -465,13 +465,6 @@ class CustomAdapter(logging.LoggerAdapter):
     def process(self, msg, kwargs):
         return '{} [{}]'.format(msg, self.extra['username']), kwargs
 
-
-# Set logger
-logging.config.dictConfig(LOGGING)
-logger_init = logging.getLogger('uws_server')
-logger = logger_init
-
-
 # Create dirs if they do not exist yet
 for p in [VAR_PATH,
           VAR_PATH + '/db',
@@ -491,3 +484,8 @@ for p in [VAR_PATH,
           JDL_PATH + '/scripts/saved']:
     if not os.path.isdir(p):
         os.makedirs(p)
+
+# Set logger (need existing /logs in VAR_PATH)
+logging.config.dictConfig(LOGGING)
+logger_init = logging.getLogger('uws_server')
+logger = logger_init

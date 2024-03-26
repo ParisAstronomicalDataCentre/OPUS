@@ -190,13 +190,6 @@ LOGGING = {
 # Set path to uws_client templates
 # TEMPLATE_PATH.insert(0, app.config['APP_PATH'] + '/uws_client/templates/')
 
-
-# Set logger
-logging.config.dictConfig(LOGGING)
-logger = logging.getLogger('uws_client')
-logger.debug('Load flask client')
-
-
 # Create dirs if they do not exist yet
 for p in [VAR_PATH,
           VAR_PATH + '/logs',
@@ -204,3 +197,8 @@ for p in [VAR_PATH,
           VAR_PATH + '/db']:
     if not os.path.isdir(p):
         os.makedirs(p)
+
+# Set logger (need existing /logs in VAR_PATH)
+logging.config.dictConfig(LOGGING)
+logger = logging.getLogger('uws_client')
+logger.debug('Load flask client')
