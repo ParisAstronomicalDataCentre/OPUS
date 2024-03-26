@@ -429,18 +429,6 @@ LOGGING = {
             'filename': LOG_PATH + '/server' + LOG_FILE_SUFFIX + '_debug.log',
             'formatter': 'default'
         },
-        'file_client': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': LOG_PATH + '/client' + LOG_FILE_SUFFIX + '.log',
-            'formatter': 'default'
-        },
-        'file_client_debug': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': LOG_PATH + '/client' + LOG_FILE_SUFFIX + '_debug.log',
-            'formatter': 'default'
-        },
         'file_debug': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
@@ -452,10 +440,6 @@ LOGGING = {
         'uws_server': {
             'level': 'DEBUG',
             'handlers': ['file_server', 'file_server_debug'],
-        },
-        'uws_client': {
-            'level': 'DEBUG',
-            'handlers': ['file_client', 'file_client_debug'],
         },
         'beaker': {
             'level': 'DEBUG',
@@ -489,7 +473,8 @@ logger = logger_init
 
 
 # Create dirs if they do not exist yet
-for p in [VAR_PATH + '/db',
+for p in [VAR_PATH,
+          VAR_PATH + '/db',
           VAR_PATH + '/config',
           LOG_PATH,
           JOBDATA_PATH,

@@ -198,7 +198,8 @@ logger.debug('Load flask client')
 
 
 # Create dirs if they do not exist yet
-for p in [VAR_PATH + '/logs',
+for p in [VAR_PATH,
+          VAR_PATH + '/logs',
           VAR_PATH + '/config',
           VAR_PATH + '/db']:
     if not os.path.isdir(p):
