@@ -131,6 +131,9 @@ if UWS_SERVER_URL is None:
     UWS_SERVER_URL = BASE_URL
 UWS_SERVER_URL_JS = UWS_CLIENT_ENDPOINT + '/proxy'
 
+if not os.path.isabs(VAR_PATH):
+    VAR_PATH = os.path.join(APP_PATH, VAR_PATH)
+
 LOG_PATH = VAR_PATH + '/logs'  # the logs dir has to be writable from the app
 CONFIG_FILE = VAR_PATH + '/config/uws_client_config.yaml'  # the config dir has to be writable from the app
 SQLALCHEMY_DATABASE_URI = 'sqlite:///{}/db/flask_login.db'.format(VAR_PATH)
