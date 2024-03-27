@@ -33,7 +33,6 @@ def jobid():
     return create_job()
 
 
-@pytest.mark.webtest
 class TestGet(object):
 
     def assert_status(self, url, status, content_type=''):
@@ -371,4 +370,3 @@ class TestJobSequence(object):
         assert (response.status_int == 200)
         assert (response.text == '')
         self.assert_job_phase(jobid, 'COMPLETED')
-
