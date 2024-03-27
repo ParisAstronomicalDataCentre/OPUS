@@ -61,6 +61,7 @@ ADMIN_NAME = 'opus-admin'
 ADMIN_EMAIL = ''
 TESTUSER_NAME = 'testuser'
 
+ADMIN_TOKEN = 'TBD_in_settings_local.py'   # to be defined in settings_local.py
 ADMIN_DEFAULT_PW = 'TBD_in_settings_local.py'   # to be changed after install, or defined in settings_local.py
 TESTUSER_DEFAULT_PW = 'TBD_in_settings_local.py'  # to be changed after install, or defined in settings_local.py
 
