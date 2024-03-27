@@ -918,7 +918,7 @@ class Job(object):
                 self.storage.save(self)
             except Exception as e:
                 error = 'Cannot generate provenance files for job {}'.format(self.jobid)
-                logger.warning(error)
+                logger.warning(error, exc_info=True)
 
 
 # -------------
