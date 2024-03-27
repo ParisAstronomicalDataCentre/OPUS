@@ -21,8 +21,8 @@ import datetime as dt
 #from entity_store import *
 import hashlib
 from .settings import *
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey, Float, String, Boolean, Integer, BigInteger, DateTime, Text
