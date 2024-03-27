@@ -58,12 +58,12 @@ EDITABLE_CONFIG = [
 ### Security configuration
 
 ADMIN_NAME = 'opus-admin'
-ADMIN_EMAIL = ''
+ADMIN_EMAIL = 'admin@opus'
 TESTUSER_NAME = 'testuser'
 
-ADMIN_TOKEN = 'TBD_in_settings_local.py'   # to be defined in settings_local.py
-ADMIN_DEFAULT_PW = 'TBD_in_settings_local.py'   # to be changed after install, or defined in settings_local.py
-TESTUSER_DEFAULT_PW = 'TBD_in_settings_local.py'  # to be changed after install, or defined in settings_local.py
+ADMIN_TOKEN = 'TBD'   # to be defined in settings_local.py
+ADMIN_DEFAULT_PW = 'TBD'   # to be changed after install, or defined in settings_local.py
+TESTUSER_DEFAULT_PW = 'TBD'  # to be changed after install, or defined in settings_local.py
 
 ### OpenID Connect configuration (requires an Identity Provider, e.g. INDIGO-IAM, Google, ...)
 
@@ -106,7 +106,7 @@ SECURITY_CHANGEABLE = True
 SECURITY_SEND_PASSWORD_CHANGE_EMAIL = True
 MAIL_SERVER = 'smtp.'
 MAIL_PORT = 25
-SENDER_EMAIL = 'no_reply@'
+SENDER_EMAIL = 'no_reply@opus'
 MAIL_USE_SSL = False
 MAIL_USE_TLS = False
 # MAIL_USERNAME = ''

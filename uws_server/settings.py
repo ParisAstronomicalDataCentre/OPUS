@@ -41,20 +41,20 @@ LOCAL_USER = 'www'  # Appache user (may be www, _www, apache...)
 UWS_CLIENT_ENDPOINT = 'http://localhost:8080'  # For local debug server with run_client.py
 
 # Mail server
-MAIL_SERVER = 'smtp-int-m.obspm.fr'
+MAIL_SERVER = 'smtp.'
 MAIL_PORT = 25
-SENDER_EMAIL = 'no_reply@obspm.fr'
+SENDER_EMAIL = 'no_reply@opus'
 
 
 ### Security settings
 
 # Admin name+token has access to user database changes (i.e. set permissions)
 ADMIN_NAME = 'opus-admin'
-ADMIN_EMAIL = 'a@b.com'
+ADMIN_EMAIL = 'admin@opus'
 # IMPORTANT: use random strings for the following tokens and keep them secret
-ADMIN_TOKEN = 'TBD_in_settings_local.py'
-JOB_EVENT_TOKEN = 'TBD_in_settings_local.py'  # TOKEN for special user job_event, used internally
-MAINTENANCE_TOKEN = 'TBD_in_settings_local.py'  # TOKEN for special user maintenant, used internally
+ADMIN_TOKEN = 'TBD'
+JOB_EVENT_TOKEN = 'TBD'  # TOKEN for special user job_event, used internally
+MAINTENANCE_TOKEN = 'TBD'  # TOKEN for special user maintenant, used internally
 
 # Access rules
 ALLOW_ANONYMOUS = True
