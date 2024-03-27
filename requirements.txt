@@ -2,7 +2,6 @@ Authlib
 bcrypt
 bleach
 bottle
-email_validator
 Flask
 Flask-Admin
 Flask-Mail
