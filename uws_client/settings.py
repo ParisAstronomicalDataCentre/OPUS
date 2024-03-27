@@ -35,7 +35,7 @@ import logging.config
 #TESTING=False
 #SERVER_NAME=  # (e.g.: 'myapp.dev:5000')
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
-VAR_PATH = '/var/opt/opus'
+VAR_PATH = 'var'  # store var locally for quick test, prefer e.g. '/var/opt/opus'
 UWS_CLIENT_ENDPOINT = 'http://localhost:8080'  # For local debug server with run_client.py
 #UWS_CLIENT_ENDPOINT = '/opus_client'  # Recommended with server (i.e. relative from BASE_URL)
 UWS_SERVER_URL_JS = UWS_CLIENT_ENDPOINT + '/proxy'  # Called from javascript, set to local url (proxy) to avoid cross-calls, will connect to UWS_SERVER_URL

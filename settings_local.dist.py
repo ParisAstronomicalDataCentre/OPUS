@@ -33,7 +33,9 @@ MAIL_SERVER = 'smtp.'
 MAIL_PORT = 25
 SENDER_EMAIL = 'no_reply@'  # e.g. no_reply@example.com
 
-# Directory where app data is stored - has to be writable for the web server (www, _www, apache...)
+# Directory where app data is stored
+# It has to be writable for the web server user (www, _www, apache...)
+# try 'var' to store var locally for quick test
 VAR_PATH = '/var/opt/opus'
 
 
