@@ -267,8 +267,10 @@ def home():
         resp_status_code = resp.status_code
     except Exception as e:
         msg_txt = "Client is not responding: " + repr(e)
+        logger.warning(msg_txt)
         abort_404(msg=msg_txt)
     if resp_status_code == 200:
+        logger.info("Redirect to client")
         redirect(client_url)
     return 'OPUS - https://opus-job-manager.readthedocs.io'
 
