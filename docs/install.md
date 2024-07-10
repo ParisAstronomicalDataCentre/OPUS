@@ -1,41 +1,75 @@
 
-Installation
-============
+# Installation
 
-Get the code from the git repository
-------------------------------------
+## Get the code from the git repository
+
 The web application code can be placed in any directory, e.g. `OPUS_DIR=/opt/OPUS`. To create the `OPUS` directory, clone the git repository:
 
     $ git clone https://github.com/ParisAstronomicalDataCentre/OPUS.git
 
-Prepare local configuration
----------------------------
+Alternatively :
 
-Several files contain initial settings that should not be modified. However, a settings_local.py file in the OPUS directory, will overwrite any settings. One should thus create such a file, using the template provide.
+    $ git clone https://gitlab.obspm.fr/mservillat/OPUS.git
 
-    $ cd $OPUS_DIR
-    $ cp settings_local.dist.py settings_local.py
 
-This file must be edited to setup confidential tokens and defaults passwords, and any specific configuration of OPUS (Storage, SLURM...). See the page for Settings.
 
-Note that OPUS stores its logs, files and database in a dedicated directory, e.g. `OPUS_VAR=/var/opt/opus`.
+## Setting the environment
 
-Setting the environment
------------------------
+OPUS has been tested on MacOS, Debian/Ubuntu and CentOS. The web application generally uses Apache 2 and the WSGI module connected to a Python 3 environment.
 
-OPUS has been tested on MacOS, Debian/Ubuntu and CentOS. The web application generally uses Apache 2
-and the WSGI module connected to a Python 3.6 environment.
+The following packages may be needed if not already installed in the environment (e.g. using `yum`, `apt-get`, `pkg`, `brew`... depending on the distribution):
 
-The following packages may be needed if not already installed in the environment: git, bzip2, graphviz, httpd-devel,
-perl-Digest-SHA (e.g. for CentOS, using yum install`).
+    $ <install_command> git bzip2 graphviz httpd-devel libpq-dev perl-Digest-SHA
 
-The Python 3 environment used in all cases installed with the Anaconda distribution (check the [https://conda.io/docs/user-guide/install/index.html](Miniconda3
+The Python 3 environment (last version tested: python-3.11.8) can be installed with Anaconda (check the [https://conda.io/docs/user-guide/install/index.html](Miniconda3
 installation page)). A virtual environment should be created, e.g. with the following commands:
 
     $ cd $OPUS_DIR
-    $ conda create --name wsgi36 python==3.6
-    $ conda activate wsgi36
-    $ pip install -r pip-requirements.txt
+    $ conda create --name opus python==3.11
+    $ conda activate opus
+    $ pip install -r requirements.txt
+
+Check also the other requirement files:
+* `requirements.txt`: requirements for `pip`
+* `requirements_freeze.txt`: requirements for `pip` with last version tested
+* `requirements_conda.txt`: requirements for `conda` packages
+
+
+## Prepare local configuration
+
+Several files in the distribution contain initial settings for the server and the client. The local configuration is done by creating a `settings_local.py` file in the OPUS directory. Settings in this file will overwrite the initial settings. A template is provided and should be copied and modified:
+
+    $ cp settings_local.dist.py settings_local.py
+
+This file contains confidential tokens and defaults passwords, and any specific configuration of OPUS (Storage, SLURM...). The template is self descriptive for basic features. For more advanced features, see the dedicated page for Settings.
+
+OPUS stores its logs, job files and database in a dedicated directory, e.g. `OPUS_VAR=/var/opt/opus`. It is declared in `settings_local.py` as `VAR_PATH`. This directory has to be writable by the server and client, so writable by the user running the applications (either the web server user or a local user).
+
+The unit tests may be run to check the main features of the UWS server:
+
+    $ make test
+
+
+## Local execution with developments servers
+
+It is possible to run the application from the command line with a development server. To test the application, run the following commands in two different shell sessions:
+
+    $ python run_server.py
+    Bottle v0.12.25 server starting up (using WSGIRefServer())...
+    Listening on http://localhost:8082/
+    Hit Ctrl-C to quit.
+
+    $ python run_client.py
+     * Serving Flask app 'uws_client.uws_client'
+     * Debug mode: on
+    WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+     * Running on http://localhost:8080
+    Press CTRL+C to quit
+
+From a web browser, the OPUS server or client URL should redirect to the OPUS client home page.
+
+
+## Preparing the WSGI web server
 
 The WSGI module should then be installed within this virtual environment, and a `wsgi.conf` file generated to setup the
  Apache web server:
@@ -44,17 +78,8 @@ The WSGI module should then be installed within this virtual environment, and a 
     $ mod_wsgi-express module-config
     $ mod_wsgi-express module-config > wsgi.conf
 
-OPUS then requires a directory to store its logs, files and database, e.g. `OPUS_VAR=/var/opt/opus`. This directory
-must be writable from the web application, i.e. by the user Apache is running as (e.g. www, www-data or apache).
-The `$OPUS_VAR/logs` directory must also be created and writable for this user, if the logs are written in this
-directory (see Apache configuration proposed below).
 
-The unit tests may be run to check the main features of the UWS server:
-
-    $ make test
-
-Web server configuration
-------------------------
+## Web server configuration
 
 The `uws_server/uws_server.py` file  can be directly run to test the application on
 `localhost:8080`.
@@ -105,8 +130,7 @@ After this configuration, the server must be restarted, and logs checked:
     # apachectl
 
 
-SLURM Work Cluster configuration
---------------------------------
+## SLURM Work Cluster configuration
 
 In order to send and manage jobs on a SLURM Work Cluster, the UWS Server must be specifically configured.
 
