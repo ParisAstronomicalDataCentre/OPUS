@@ -81,11 +81,7 @@ The WSGI module should then be installed within this virtual environment, and a 
 
 ## Web server configuration
 
-The `uws_server/uws_server.py` file  can be directly run to test the application on
-`localhost:8080`.
-
-With Apache 2 and mod_wsgi, use the script `uws_server/wsgi.py` or create a similar script. In the
-same way, the client can be run directly (`uws_client/uws_client.py`) or using the script `uws_client/wsgi.py`. For
+With Apache 2 and mod_wsgi, use the script `uws_server/wsgi.py` or create a similar script. In the same way, the client can be run using the script `uws_client/wsgi.py`. For
 convenience, the following links can be created:
 
     $ cd $OPUS_DIR
@@ -127,7 +123,6 @@ or inside `/etc/apache2/extra/httpd-vhosts.conf` for MacOS), the content would t
 After this configuration, the server must be restarted, and logs checked:
 
     # apachectl restart
-    # apachectl
 
 
 ## SLURM Work Cluster configuration
