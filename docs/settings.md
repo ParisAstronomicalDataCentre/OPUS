@@ -6,7 +6,7 @@ Default settings
 ----------------
 
 After installation, the OPUS server and client will work with their default settings, contained in the
-files `$OPUS_DIR/uws_server/settings.py` and `$OPUS_DIR/uws_client/uws_client.py`.
+files `$OPUS_DIR/uws_server/settings.py` and `$OPUS_DIR/uws_client/uws_client.py`. Those should never be changed, they are part of the code, but local settings can be set as explained in the following section.
 
 
 Local settings
@@ -14,48 +14,12 @@ Local settings
 
 The file `$OPUS_DIR/settings_local.py`, if present, is read by OPUS to override the default values.
 
-This file also contains default tokens that have to be set internally and kept secret
-to ensure application security. This file should thus have restricted access by the web server only.
+This file also contains default tokens that have to be set internally and kept secret to ensure application security. This file should thus have restricted access by the web server only.
 
-Local settings are to be set before running the application, here is an example:
+A file `$OPUS_DIR/settings_local.dist.py` is given as a template. It can be copied to `$OPUS_DIR/settings_local.py` to then edit the local settings.
 
-    # OPUS global config
-    DEBUG=False
-    BASE_URL = 'http://opus.example.com'
-    BASE_IP = '1.2.3.4'
-    VAR_PATH = '/var/www/opus'
-    LOCAL_USER = 'www'
-    ADMIN_EMAIL = 'a@b.com'
-    ADMIN_NAME = 'opus-admin'
-    MAIL_SERVER = 'smtp.example.com'
-    MAIL_PORT = 25
-    SENDER_EMAIL = 'no_reply@example.com'
 
-    # Client config
-    ADMIN_DEFAULT_PW = ''     # Define a default password for ADMIN_NAME (can then be changed in the client)
-    TESTUSER_NAME = 'testuser'
-    TESTUSER_DEFAULT_PW = ''  # Define a default password for TESTUSER_NAME (can then be changed in the client)
-    CLIENT_TITLE = "OPUS"     # Title shown on webpages
-    HOME_CONTENT = ""         # Content of the home page (HTML accepted)
-
-    # Server config
-    ADMIN_TOKEN = 'uuid_or_any_random_string'
-    JOB_EVENT_TOKEN = 'uuid_or_any_random_string'    # TOKEN for special user job_event, used internally
-    MAINTENANCE_TOKEN = 'uuid_or_any_random_string'  # TOKEN for special user maintenant, used internally
-    # Access rules
-    ALLOW_ANONYMOUS = True    # some jobs may be run without signing in
-    CHECK_PERMISSIONS = True  # check rights to run a job
-    CHECK_OWNER = False       # only the owner of a job can access the results
-    NJOBS_MAX = 5             # 0 for no restriction
-
-Local settings could also contain other relevant variables, depending on the desired setting for a server or client.
-
-UWS Server settings
-===================
-
-The file `$OPUS_DIR/uws_server/settings.py` contains all the variables needed by the web server with
-their default values and descriptions. This file is part of the repository files and it is
-recommended to keep it unchanged. However, all those variables can be overridden from the `$OPUS_DIR/settings_local.py` file.
+Local settings may also contain other relevant variables, depending on the desired setting for a server or client.
 
 
 ### General settings
