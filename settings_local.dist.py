@@ -24,12 +24,13 @@ BASE_IP = '127.0.0.1'
 #BASE_URL = 'http://localhost/opus_server'
 #UWS_CLIENT_ENDPOINT = '/opus_client'  # Recommended with opus_server (i.e. relative from BASE_URL)
 #BASE_IP = '127.0.0.1'
+LOCAL_USER = 'www'  # Apache user (may be www, _www, apache...)
 
-ADMIN_NAME = 'opus-admin'
-ADMIN_EMAIL = ''
-ADMIN_TOKEN = 'TBD'  # TOKEN of admin user
+ADMIN_NAME = 'opus-admin'  # Will be the main local admin account
+ADMIN_EMAIL = 'admin@opus'
+ADMIN_TOKEN = 'TBD!'  # TOKEN of admin user, use a random string
 
-MAIL_SERVER = 'smtp.'
+MAIL_SERVER = 'smtp.'  # e.g. smtp.example.com
 MAIL_PORT = 25
 SENDER_EMAIL = 'no_reply@'  # e.g. no_reply@example.com
 
@@ -43,13 +44,13 @@ VAR_PATH = '/var/opt/opus'
 # Client global config
 
 # IMPORTANT: keep those passwords secret
-ADMIN_DEFAULT_PW = 'TBD'
-TESTUSER_DEFAULT_PW = 'TBD'
+ADMIN_DEFAULT_PW = 'TBD!'
+TESTUSER_DEFAULT_PW = 'TBD!'
 
 CLIENT_TITLE = "OPUS"
 HOME_CONTENT = "<h3>OPUS</h3><p>Observatoire de Paris UWS Server - http://opus-job-manager.readthedocs.io</p>"
 
-# Configure OIDC IdPs
+# Configure OpenID Connect Identity Providers
 
 OIDC_IDPS = []
 # OIDC_IDPS = [
@@ -69,13 +70,14 @@ OIDC_IDPS = []
 # Server global config
 
 # IMPORTANT: use random strings for the following tokens and keep them secret
-JOB_EVENT_TOKEN = 'TBD'  # TOKEN for special user job_event, used internally
-MAINTENANCE_TOKEN = 'TBD'  # TOKEN for special user maintenance, used internally
+JOB_EVENT_TOKEN = 'TBD!'  # TOKEN for special user job_event, used internally
+MAINTENANCE_TOKEN = 'TBD!'  # TOKEN for special user maintenance, used internally
 
 # Access rules
 ALLOW_ANONYMOUS = True
 CHECK_PERMISSIONS = False  # check rights to run/edit a job
 CHECK_OWNER = False  # only owner can access their files
+NJOBS_MAX = 0  # 0 for no restriction
 
 # Job servers can have access to /job_event/<jobid_manager> to change the phase or report an error
 # The IP can be truncated to allow to refer to a set of IPs (e.g. '127.' for 127.*.*.*)
@@ -95,4 +97,30 @@ TRUSTED_CLIENTS = {
 
 
 #----------
-# More config (see uws_server/settings.py and uws_client/settings.py)
+# Server behaviour
+
+# Default destruction interval
+DESTRUCTION_INTERVAL = 30  # in days
+
+# Maximum and default execution duration, 0 implies unlimited execution duration
+EXECUTION_DURATION_DEF = 120  # in seconds
+EXECUTION_DURATION_MAX = 3600  # in seconds
+
+# Maximum wait time (UWS1.1)
+WAIT_TIME_MAX = 600  # in seconds
+
+# ARCHIVED phase (UWS1.1)
+USE_ARCHIVED_PHASE = True
+
+# Add the provenance files to the results of the jobs
+GENERATE_PROV = True
+
+# Copy back results
+COPY_RESULTS = True  # copy results from Manager to UWS server Archive (may be irrelevant if Manager = Local)
+
+JOB_ID_LENGTH = 6   # length of uuid identifiers from the right, max=36
+
+
+#----------
+# More Server settings for Archive, DB Storage, Manager...
+# (see uws_server/settings.py and uws_client/settings.py)

@@ -457,12 +457,12 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         self.session.query(self.Job).filter_by(jobid=job.jobid).delete()
         self.session.commit()
 
-    def get_list(self, joblist, phase=None, after=None, last=None, where_owner=True):
+    def get_list(self, joblist, phase=None, after=None, last=None, where_owner=True, include_archived=False):
         """Get job list from storage"""
         query = self.session.query(self.Job).filter_by(jobname=joblist.jobname)
         if phase:
             query = query.filter(self.Job.phase.in_(phase))
-        else:
+        elif not include_archived:
             query = query.filter(self.Job.phase.notin_(["ARCHIVED"]))
         if after:
             query = query.filter(self.Job.creation_time >= after)

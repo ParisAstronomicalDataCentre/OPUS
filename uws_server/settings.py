@@ -37,7 +37,7 @@ VAR_PATH = 'var'  # store var locally for quick test, prefer e.g. '/var/opt/opus
 # URL an IP of the web server
 BASE_URL = 'http://localhost:8082'  # For local debug server with run_server.py
 BASE_IP = '127.0.0.1'
-LOCAL_USER = 'www'  # Appache user (may be www, _www, apache...)
+LOCAL_USER = 'www'  # Apache user (may be www, _www, apache...)
 UWS_CLIENT_ENDPOINT = 'http://localhost:8080'  # For local debug server with run_client.py
 
 # Mail server
@@ -83,7 +83,7 @@ TRUSTED_CLIENTS = {
 ### Internal settings
 
 # max active jobs per user
-NJOBS_MAX = 1  # 0 for no restriction
+NJOBS_MAX = 0  # 0 for no restriction
 
 # Default destruction interval
 DESTRUCTION_INTERVAL = 30  # in days
