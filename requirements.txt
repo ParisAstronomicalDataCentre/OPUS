@@ -3,6 +3,7 @@ bcrypt
 bleach
 bottle
 Flask
+argon2_cffi
 Flask-Admin
 Flask-Mail
 Flask-Security-Too
@@ -19,3 +20,4 @@ requests
 SQLAlchemy
 voprov
 WebTest
+WTForms==3.1.2
