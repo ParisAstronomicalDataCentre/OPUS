@@ -1155,7 +1155,7 @@ def maintenance(jobname):
         for jobname in jobnames:
             report.append('Maintenance checks for {}...'.format(jobname))
             # Get joblist
-            joblist = JobList(jobname, user, where_owner=False)
+            joblist = JobList(jobname, user, where_owner=False, include_archived=True)
             now = dt.datetime.now()
             for j in joblist.jobs:
                 # For each job:

@@ -928,7 +928,7 @@ class Job(object):
 class JobList(object):
     """JobList with attributes and function to fetch from storage and return as XML"""
 
-    def __init__(self, jobname, user, phase=None, after=None, last=None, where_owner=True):
+    def __init__(self, jobname, user, phase=None, after=None, last=None, where_owner=True, include_archived=False):
         self.jobname = jobname
         self.jobid = 'joblist'
         self.user = user
@@ -944,7 +944,7 @@ class JobList(object):
             where_owner = False
             #logger.debug('User is the admin: list all jobs')
 
-        self.jobs = self.storage.get_list(self, phase=phase, after=after, last=last, where_owner=where_owner)
+        self.jobs = self.storage.get_list(self, phase=phase, after=after, last=last, where_owner=where_owner, include_archived=include_archived)
 
     def to_xml(self):
         """Returns the XML representation of jobs (uws:jobs)"""
