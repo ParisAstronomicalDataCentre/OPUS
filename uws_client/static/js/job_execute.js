@@ -10,20 +10,6 @@
     var server_endpoint;
     var client_endpoint;
 
-    var job_list_columns = [
-        //'jobName',  // job.jobName
-        'jobId',  // job.jobId
-        'runId',  // job.runId
-        'creationTime',
-        'phase',
-        'edit',
-        //'details',
-        //'results',
-        'control',
-        //'delete',
-        //'ownerId',
-    ];
-
     var jobnames = [];
 
     function get_jobnames() {
@@ -50,7 +36,8 @@
                 if (jobname) {
                     $('select[name=jobname]').val(jobname);
                     $('.selectpicker').selectpicker('refresh');
-                    load_job_list();
+                    $('button.actions').removeAttr('disabled');
+                    $('#edit_jdl').removeAttr('disabled');
                 };
             },
             error : function(xhr, status, exception) {
@@ -61,37 +48,11 @@
                     $('.selectpicker').append('<option>' + jobname + '</option>');
                     $('select[name=jobname]').val(jobname);
                     $('.selectpicker').selectpicker('refresh');
-                    load_job_list();
+                    $('button.actions').removeAttr('disabled');
+                    $('#edit_jdl').removeAttr('disabled');
                 };
             }
         });
-    };
-
-    function load_job_list() {
-        var jobname = $('select[name=jobname]').val();
-        var col_sort = job_list_columns.indexOf('creationTime');
-        $('button.actions').removeAttr('disabled');
-        if (jobname == 'all') {
-            $('#loading').hide();
-            $('#create_new_job').attr("disabled", "disabled");
-            var cols = Array.from(job_list_columns);
-            if (cols.indexOf('jobName') == -1) {
-                cols.splice(0, 0, "jobName");
-            };
-            if (jobnames.length > 0) {
-                uws_client.initClient(server_url, server_endpoint, client_endpoint, jobnames, cols);
-            };
-        } else {
-            uws_client.initClient(server_url, server_endpoint, client_endpoint, [jobname], job_list_columns);
-        };
-        // init UWS Client
-        // write new url in browser bar
-        history.pushState({ jobname: jobname }, '', client_endpoint + uws_client.client_endpoint_jobs + "/" + jobname);
-        // Prepare job list
-        uws_client.getJobList();
-        //if ( $( "#job_id" ).length ) {
-        //    uws_client.selectJob($( "#jobid" ).attr('value'));
-        //}
     };
 
     // LOAD JOB LIST AT STARTUP
@@ -103,19 +64,12 @@
         get_jobnames();
         $('.selectpicker').selectpicker('deselectAll');
         $('button.actions').attr('disabled', 'disabled');
+        $('#edit_jdl').attr("disabled", "disabled");
         // Add events
         $('.selectpicker').on('change', function(){
-            load_job_list();
-        });
-        $('#refresh_list').click( function() {
-            uws_client.getJobList();
-        });
-        $('#edit_jdl').click( function() {
             var jobname = $('select[name=jobname]').val();
             if (jobname) {
-                console.log(uws_client.client_endpoint_job_form);
-                console.log(uws_client.client_endpoint_job_definition);
-                window.location.href =  client_endpoint + uws_client.client_endpoint_job_definition + "/" + jobname;
+                window.location.href =  client_endpoint + uws_client.client_endpoint_job_form + "/" + jobname;
             };
         });
         $('#create_new_job').click( function() {

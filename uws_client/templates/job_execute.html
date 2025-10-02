@@ -1,15 +1,11 @@
 {% extends "skeleton.html" %}
 {% block js %}
-    <script type="text/javascript" src="/static/js/jquery.tablesorter.js" defer></script>
-    <script type="text/javascript" src="/static/js/jquery.tablesorter.pager.js" defer></script>
-    <script type="text/javascript" src="/static/js/jquery.tablesorter.widgets.js" defer></script>
     <script type="text/javascript" src="/static/js/uwsLib.js" defer></script>
     <script type="text/javascript" src="/static/js/uws_client.js" defer></script>
-    <script type="text/javascript" src="/static/js/job_list.js" defer></script>
+    <script type="text/javascript" src="/static/js/job_execute.js" defer></script>
 {% endblock %}
 {% block css %}
     <link rel="stylesheet" type="text/css" href="/static/css/tablesorter.theme.bootstrap.css" />
-    <link rel="stylesheet" type="text/css" href="/static/css/jquery.tablesorter.pager.css" />
 {% endblock %}
 {% block variables %}
     <div id="jobname" style="display:none" value="{{ jobname }}"></div>
@@ -20,14 +16,10 @@
         <div id="job_list_panel" class="panel panel-default">
             <div class="panel-heading clearfix">
                 <div class="btn-group pull-right">
-                    <button id="refresh_list" type="button" class="actions btn btn-default">
-                        <span class="glyphicon glyphicon-refresh"></span>
-                        Refresh List
-                    </button>
-                    <button id="edit_jdl" type="button" class="actions btn btn-default">
+                    <a id="edit_jdl" class="btn btn-default" href="{{ url_for('job_definition', jobname=jobname) }}">
                         <span class="glyphicon glyphicon-edit"></span>
                         Edit job definition
-                    </button>
+                    </a>
                     <button id="create_new_job" type="button" class="actions btn btn-default">
                         <span class="glyphicon glyphicon-plus"></span>
                         Create New Job
@@ -39,11 +31,7 @@
                         <!-- will be added by js function -->
                     </select>
                 </span>
-                <span class="panel-title pull-left" style="padding-top: 6px; padding-right: 6px;">Job List for </span>
-            </div>
-            <div id="div_table" class="table-responsive">
-                <table id="job_list" class="table table-bordered table-condensed tablesorter">
-                </table>
+                <span class="panel-title pull-left" style="padding-top: 6px; padding-right: 6px;">Execute job </span>
             </div>
         </div> <!-- panel -->
 	</div> <!-- container -->

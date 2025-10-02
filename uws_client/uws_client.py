@@ -529,6 +529,16 @@ def job_list(jobname):
     return render_template('job_list.html', jobname=jobname)
 
 
+@app.route('/job_execute', defaults={'jobname': ''})
+@app.route('/job_execute/', defaults={'jobname': ''})
+@app.route('/job_execute/<jobname>')
+#@login_required
+def job_execute(jobname):
+    """Job execution page"""
+    logger.info(jobname)
+    return render_template('job_execute.html', jobname=jobname)
+
+
 @app.route('/job_edit/<jobname>/<jobid>')
 #@login_required
 def job_edit(jobname, jobid):

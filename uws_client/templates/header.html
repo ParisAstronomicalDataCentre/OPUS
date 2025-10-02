@@ -20,6 +20,10 @@
                             <!--<a href="/job_list"><span class="glyphicon glyphicon-cog"></span>-->
                             <!--Available jobs</a>-->
                         <!--</li>-->
+                        <li{{ ' class=active' if '/job_execute' in url }}>
+                            <a href="{{ url_for('job_execute') }}"><span class="glyphicon glyphicon-play-circle"></span>
+                                Execute Job</a>
+                        </li>
                         <li{{ ' class=active' if '/jobs' in url }}>
                             <a href="{{ url_for('job_list') }}"><span class="glyphicon glyphicon-list"></span>
                                 Job List</a>

@@ -32,6 +32,7 @@ var uws_client = (function($) {
     var client_endpoint_jobs = '/jobs';
     var client_endpoint_job_edit = '/job_edit';
     var client_endpoint_job_form = '/job_form';
+    var client_endpoint_job_definition = '/job_definition';
     var client_endpoint_proxy = '/proxy';
 
     var job_list_columns = [
@@ -1586,6 +1587,7 @@ var uws_client = (function($) {
         client_endpoint_jobs: client_endpoint_jobs,
         client_endpoint_job_edit: client_endpoint_job_edit,
         client_endpoint_job_form: client_endpoint_job_form,
+        client_endpoint_job_definition: client_endpoint_job_definition,
         client_endpoint_proxy: client_endpoint_proxy,
     }
 

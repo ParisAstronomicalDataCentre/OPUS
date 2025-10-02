@@ -53,27 +53,11 @@
                       enctype="multipart/form-data">
                     <div class="row">
                         <div class="col-md-12 form-group">
-                            <label class="col-md-2 control-label">Import</label>
-                            <div class="col-md-6 controls">
-                                <div class="input-group">
-                                    <input id="jdl_file" class="form-control" name="jdl_file" type="file"/>
-                                    <span class="input-group-btn">
-                                        <button id="import_jdl_submit" class="btn btn-default" type="submit">
-                                            <span class="glyphicon glyphicon-import"></span>
-                                            &nbsp;Import JDL</button>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="col-md-4 help-block">Import job definition.</div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-12 form-group">
-                            <label class="col-md-2 control-label">Load JDL</label>
+                            <label class="col-md-2 control-label">Load JDL from list</label>
                             <div class="col-md-6 controls">
                                 <div class="input-group">
                                     <span>
-                                        <select name="jobname" class="selectpicker" data-width="100%" title="Please Select...">
+                                        <select id="jobname" name="jobname" class="selectpicker" data-width="100%" title="Please Select...">
                                             <option data-hidden="true"></option>
                                             <!-- will be added by js function -->
                                         </select>
@@ -87,6 +71,22 @@
                                 </div>
                             </div>
                             <div class="col-md-4 help-block">Load job definition.</div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 form-group">
+                            <label class="col-md-2 control-label">Import JDL from a file</label>
+                            <div class="col-md-6 controls">
+                                <div class="input-group">
+                                    <input id="jdl_file" class="form-control" name="jdl_file" type="file"/>
+                                    <span class="input-group-btn">
+                                        <button id="import_jdl_submit" class="btn btn-default" type="submit">
+                                            <span class="glyphicon glyphicon-import"></span>
+                                            &nbsp;Import JDL</button>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-md-4 help-block">Import job definition.</div>
                         </div>
                     </div>
                 </form>

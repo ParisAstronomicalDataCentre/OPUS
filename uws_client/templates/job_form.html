@@ -10,15 +10,15 @@
 	<div id="csrf_token" style="display:none" value="csrf_token_form"></div>
 {% endblock %}
 {% block content %}
-	<div class="container bs-docs-container">    
+	<div class="container bs-docs-container">
         <div id="new_job_panel" class="panel panel-default">
             <div class="panel-heading clearfix">
                 <span class="pull-left" style="padding-top: 4px;">
                     <span class="panel-title">Create new {{ jobname }} job</span>
                 </span>
                 <a id="to_job_list" type="button" class="btn btn-default pull-right" href="{{ url_for('job_list', jobname=jobname) }}">
-                    <span class="glyphicon glyphicon-arrow-left"></span>
-                    Back to job list
+                    <span class="glyphicon glyphicon-list"></span>
+                    Job list
                 </a>
             </div>
             <div id="parameters_panel" class="panel-body">
@@ -30,4 +30,3 @@
         </div> <!-- panel -->
 	</div> <!-- container -->
 {% endblock %}
-        

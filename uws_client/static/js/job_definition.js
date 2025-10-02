@@ -84,7 +84,7 @@
                 console.log(json['jobnames']);
                 // Fill select
                 for (var jn in json['jobnames']) {
-                    $('select[name="jobname"]').append('<option>' + json['jobnames'][jn] + '</option>')
+										$('.selectpicker').append('<option value="' + json['jobnames'][jn] + '">' + json['jobnames'][jn] + '</option>')
                 };
 								$('select[name="jobname"]').selectpicker('refresh');
 								// Fill input[name=name] typeahead
@@ -92,6 +92,13 @@
                     source: json['jobnames'],
                     autoSelect: false,
                 });
+								var jobname = $('#jobname').attr('value');
+								if (jobname) {
+				            $('input[name=name]').val(jobname);
+										$('select[name="jobname"]').val(jobname);
+										$('select[name="jobname"]').selectpicker('refresh');
+				            load_jdl();
+				        };
                 editor.refresh();
             },
             error : function(xhr, status, exception) {
@@ -733,8 +740,8 @@
         server_endpoint = $('#server_endpoint').attr('value');
         client_endpoint = $('#client_endpoint').attr('value');
         get_jobnames();
-	    // Script editor with CodeMirror
-	    editor = CodeMirror.fromTextArea( $('textarea[name=script]')[0], {mode: "text/x-sh", lineNumbers: true } );
+	      // Script editor with CodeMirror
+	      editor = CodeMirror.fromTextArea( $('textarea[name=script]')[0], {mode: "text/x-sh", lineNumbers: true } );
         $('div.CodeMirror').addClass('panel panel-default');
         // Prepare empty form
         // add_item('param');
@@ -743,6 +750,8 @@
         var jobname = $('#jobname').attr('value');
         if (jobname) {
             $('input[name=name]').val(jobname);
+						$('#jobname_select').val(jobname);
+						$('#jobname_select').selectpicker('refresh');
             load_jdl();
         };
         // Add event functions
