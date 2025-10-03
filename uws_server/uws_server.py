@@ -110,9 +110,7 @@ def set_user(jobname=None):
             logger.debug(f'APP_TOKEN {app_name} found for user {user_name}, roles associated: {app_jobs}')
             for jobname in app_jobs:
                 if job_storage.has_role(user_name, user_token, jobname):
-                    if active:
-                        logger.debug('Role \"{}\" found for user {}'.format(jobname, user_name))
-                    else:
+                    if not active:
                         job_storage.remove_role(user_name, user_token, role=jobname)
                 else:
                     if active:
