@@ -330,7 +330,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         if row:
             roles = row.roles.split(',')
             if ('all' in roles) or (role in roles):
-                # logger.debug('Role \"{}\" ok for user {}:{}'.format(role, name, token))
+                # logger.debug('Role \"{}\" found for user {}:{}'.format(role, name, token))
                 return True
             else:
                 logger.debug('Role \"{}\" not found for user {}'.format(role, name))
