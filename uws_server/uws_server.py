@@ -100,6 +100,23 @@ def set_user(jobname=None):
     # Add user if not in db
     job_storage = getattr(storage, STORAGE + 'JobStorage')()
     job_storage.add_user(user.name, token=user.token)
+    # Check and add roles from APP_TOKEN
+    if APP_TOKENS:
+        if user_token in APP_TOKENS.keys():
+            # An application token was found and roles will be added
+            active = APP_TOKENS[user_token]["active"]
+            app_name = APP_TOKENS[user_token]["name"]
+            app_jobs = APP_TOKENS[user_token]["jobs"]
+            logger.debug(f'APP_TOKEN {app_name} found for user {user_name}, roles associated: {app_jobs}')
+            for jobname in app_jobs:
+                if job_storage.has_role(user_name, user_token, jobname):
+                    if active:
+                        logger.debug('Role \"{}\" found for user {}'.format(jobname, user_name))
+                    else:
+                        job_storage.remove_role(user_name, user_token, role=jobname)
+                else:
+                    if active:
+                        job_storage.add_role(user_name, user_token, role=jobname)
     return user
 
 

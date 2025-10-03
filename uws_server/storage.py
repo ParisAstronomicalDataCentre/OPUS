@@ -308,9 +308,9 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             row.roles = ','.join(roles)
             self.session.merge(row)
             self.session.commit()
-            logger.debug('Role {} added for user {}'.format(role, name))
+            logger.debug('Role \"{}\" added for user {}'.format(role, name))
         else:
-            logger.debug('Role {} already set for user {}'.format(role, name))
+            logger.debug('Role \"{}\" already set for user {}'.format(role, name))
 
     def remove_role(self, name, token, role=''):
         """Get job list from storage, i.e. access to a job"""
@@ -321,9 +321,9 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             row.roles = ','.join(roles)
             self.session.merge(row)
             self.session.commit()
-            logger.debug('Role {} removed for user {}'.format(role, name))
+            logger.debug('Role \"{}\" removed for user {}'.format(role, name))
         else:
-            logger.debug('Role {} not found for user {}'.format(role, name))
+            logger.debug('Role \"{}\" not found for user {}'.format(role, name))
 
     def has_role(self, name, token, role=''):
         row = self.session.query(self.User).filter_by(name=name, token=token).first()

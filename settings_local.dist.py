@@ -78,6 +78,16 @@ ALLOW_ANONYMOUS = True
 CHECK_PERMISSIONS = False  # check rights to run/edit a job
 CHECK_OWNER = False  # only owner can access their files
 NJOBS_MAX = 0  # 0 for no restriction
+# If a user has an APP_TOKEN, access to jobs will be added automatically
+APP_TOKENS = {
+    #""<token>"": {
+    #    "name": "<name>",
+    #    "active" : True  # set to False to remove job access
+    #    "jobs": [
+    #        "<jobname1>",
+    #        "<jobname2>",
+    #]},
+}
 
 # Job servers can have access to /job_event/<jobid_manager> to change the phase or report an error
 # The IP can be truncated to allow to refer to a set of IPs (e.g. '127.' for 127.*.*.*)
