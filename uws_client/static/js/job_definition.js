@@ -178,23 +178,11 @@
                     <tr id="used_' + ii + '">\
                         <td>\
                             <div class="input-group input-group-sm col-md-12">\
-                                <div class="input-group-sm col-xs-2 nopadding">\
                                     <input class="used_name form-control" style="font-weight: bold;" name="used_name_' + ii + '" type="text" placeholder="Name" />\
-                                </div>\
-                                <div class="input-group-sm col-xs-1 nopadding">\
                                     <div class="input-group-addon">=</div>\
-                                </div>\
-                                <div class="input-group-sm col-xs-2 nopadding">\
                                     <input class="used_default form-control" name="used_default_' + ii + '" type="text" placeholder="Default value" />\
-                                </div>\
-                                <div class="input-group-sm col-xs-1 nopadding">\
                                     <div class="input-group-addon">Mult. </div>\
-                                </div>\
-                                <div class="input-group-sm col-xs-1 nopadding">\
-                                    <input class="used_multiplicity form-control" name="used_multiplicity_' + ii + '" type="text" title="Multiplicity" maxlength="2" />\
-                                </div>\
-                                <div class="input-group-sm col-xs-5 nopadding">\
-                                    <div class="input-group-addon nopadding"></div>\
+                                    <input class="used_multiplicity form-control" name="used_multiplicity_' + ii + '" type="text" title="Multiplicity" maxlength="2" style="width: 30px;"/>\
                                     <div class="input-group-btn">\
                                         <select name="used_contenttype_' + ii + '" class="used_contenttype select-small selectpicker" multiple>\
                                             ' + options + '\
@@ -209,7 +197,6 @@
                                             <span class="glyphicon glyphicon-remove"></span>\
                                         </button>\
                                     </div>\
-                                </div>\
                             </div>\
                             <div style="height: 1px;"></div>\
                             <div class="input-group input-group-sm col-md-12" style="width:100%">\
