@@ -302,17 +302,18 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
     def add_role(self, name, token, role=''):
         """Add role to user, i.e. access to a job"""
         row = self.session.query(self.User).filter_by(name=name, token=token).first()
-        roles = []
-        if row.roles:
+        if row:
             roles = row.roles.split(',')
-        if role in roles:
-            logger.debug('Role \"{}\" already set for user {}'.format(role, name))
+            if role in roles:
+                logger.debug('Role \"{}\" already set for user {}'.format(role, name))
+            else:
+                roles.append(role)
+                row.roles = ','.join(roles)
+                self.session.merge(row)
+                self.session.commit()
+                logger.debug('Role \"{}\" added for user {}'.format(role, name))
         else:
-            roles.append(role)
-            row.roles = ','.join(roles)
-            self.session.merge(row)
-            self.session.commit()
-            logger.debug('Role \"{}\" added for user {}'.format(role, name))
+            logger.info('User {} not found in db'.format(name))
 
 
     def remove_role(self, name, token, role=''):
