@@ -262,7 +262,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
 
     def add_user(self, name, token=None, roles=None):
         """Add user"""
-        row = self.session.query(self.User).filter_by(name=name).first()
+        row = self.session.query(self.User).filter_by(name=name, token=token).first()
         if not row:
             d = {
                 'name': name,
@@ -276,18 +276,18 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             self.session.merge(u)
             self.session.commit()
             logger.info('User {} added to db'.format(name))
-        # else:
-        #     logger.info('User {} already exists in db'.format(name))
+        else:
+            logger.debug('User {} already exists in db'.format(name))
 
-    def remove_user(self, name):
+    def remove_user(self, name, token=None):
         """Remove user from storage"""
-        self.session.query(self.User).filter_by(name=name).delete()
+        self.session.query(self.User).filter_by(name=name, token=token).delete()
         self.session.commit()
         logger.info('User {} removed from db'.format(name))
 
     def update_user(self, name, key, value):
         """Update user attribute"""
-        row = self.session.query(self.User).filter_by(name=name).first()
+        row = self.session.query(self.User).filter_by(name=name, token=token).first()
         setattr(row, key, value)
         self.session.commit()
         logger.debug('User {} updated: {}={}'.format(name, key, value))
@@ -313,7 +313,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                 self.session.commit()
                 logger.debug('Role \"{}\" added for user {}'.format(role, name))
         else:
-            logger.info('User {} not found in db'.format(name))
+            logger.error('User {} not found in db'.format(name))
 
 
     def remove_role(self, name, token, role=''):
