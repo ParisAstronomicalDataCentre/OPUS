@@ -9,6 +9,7 @@
     var server_url;
     var server_endpoint;
     var client_endpoint;
+    var scim_endpoint;
     var job_options = [];
 
     function get_jobnames() {
@@ -40,7 +41,7 @@
         // ajax command to get_users on UWS server
         $('#loading').show();
         $.ajax({
-			url : server_url + '/scim/v2/Users',
+			url : server_url + scim_endpoint + '/Users',
 			type : 'GET',
 			dataType: "json",
 			success : get_users_success,
@@ -82,7 +83,8 @@
                 </td>\
                 <td class="text-center" style="vertical-align: middle;">\
                     <div class="input-group">\
-                        <input class="form-control" id="token_' + user_label + '" name="token_' + user_label + '" type="text" value="' + user.token + '"/>\
+                    <input class="form-control" id="token_' + user_label + '" name="token_' + user_label + '" type="text" value="' + user.token + '"/>\
+                    <input class="form-control" id="current_token_' + user_label + '" name="token_' + user_label + '" type="text" value="' + user.token + '" style="display:none"/>\
                         <div class="input-group-btn">\
                             <button id="button_token_' + user_label + '" type="button" class="token btn btn-default">\
                                 <span class="glyphicon glyphicon-send"></span>\
@@ -156,20 +158,24 @@
         var key = event.data.key;
         var user_label = name.replace(/\./g, "_").replace(/@/g, "_");
         var value = $('#' + key + '_' + user_label).val();
+        var token = $('#current_token_' + user_label).val();
         if (key == 'roles') {
             // if($('#' + key + '_' + user_label +' option:selected').length == job_options.length){
             //    console.log('all options selected');
             //     value = 'all';
             // } else {
+            if (value != null) {
                 value = value.join(',');
+            };
             // }
         }
         console.log(name, key, value);
         $.ajax({
-			url : server_url + '/scim/v2/Users/' + name,
+			url : server_url + scim_endpoint + '/Users/' + name,
 			type : 'POST',
 			data:{
                 [key]: value,
+                ['user_token']: token,
             },
 			dataType: "json",
 			success : function(json) {
@@ -180,7 +186,7 @@
             error : function(xhr, status, exception) {
                 $('#loading').hide();
 				console.log(exception);
-				global.showMessage('Cannot patch user, check admin token', 'danger');
+				global.showMessage('Cannot patch user, not found or check admin token', 'danger');
 			}
 		});
     }
@@ -196,7 +202,7 @@
         }
         var token = $('#token').val();
         $.ajax({
-			url : server_url + '/scim/v2/Users/',
+			url : server_url + scim_endpoint + '/Users/',
 			type : 'POST',
 			data:{
                 name: name,
@@ -223,7 +229,7 @@
         var isOk = window.confirm("Delete user" + name + "\nAre you sure?");
         if (isOk) {
             $.ajax({
-                url : server_url + '/scim/v2/Users/' + name,
+                url : server_url + scim_endpoint + '/Users/' + name,
                 type : 'DELETE',
                 success : function() {
                     $('#loading').hide();
@@ -272,6 +278,7 @@
         server_url = $('#server_url').attr('value');
         server_endpoint = $('#server_endpoint').attr('value');
         client_endpoint = $('#client_endpoint').attr('value');
+        scim_endpoint = $('#scim_endpoint').attr('value');
 
         // Get user list
         get_jobnames();

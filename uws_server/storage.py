@@ -251,18 +251,29 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
     # ----------
     # UserStorage methods
 
-    def get_users(self, name=None):
+    def get_users(self, name=None, token=None):
         """Get list of users with their token and roles"""
         if name:
-            rows = self.session.query(self.User).filter_by(name=name).all()
+            if token:
+                rows = self.session.query(self.User).filter_by(name=name, token=token).all()
+            else:
+                rows = self.session.query(self.User).filter_by(name=name).all()
         else:
             rows = self.session.query(self.User).all()
-        users = [r.__dict__ for r in rows]
+        users = []
+        if rows:
+            users = [r.__dict__ for r in rows]
+        else:
+            logger.error('No user found in db')
         return users
 
     def add_user(self, name, token=None, roles=None):
         """Add user"""
-        row = self.session.query(self.User).filter_by(name=name, token=token).first()
+        if token:
+            row = self.session.query(self.User).filter_by(name=name, token=token).first()
+        else:
+            logger.debug(f'No token given, it will be automatically generated')
+            row = self.session.query(self.User).filter_by(name=name).first()
         if not row:
             d = {
                 'name': name,
@@ -275,22 +286,45 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             u = self.User(**d)
             self.session.merge(u)
             self.session.commit()
-            logger.info('User {} added to db'.format(name))
-        else:
-            logger.debug('User {} already exists in db'.format(name))
+            logger.info(f'User {name} added to db')
+        #else:
+        #    logger.debug('User {} already exists in db'.format(name))
 
     def remove_user(self, name, token=None):
         """Remove user from storage"""
-        self.session.query(self.User).filter_by(name=name, token=token).delete()
-        self.session.commit()
-        logger.info('User {} removed from db'.format(name))
+        if token:
+            row = self.session.query(self.User).filter_by(name=name, token=token).first()
+        else:
+            logger.debug(f'No token given')
+            rows = self.session.query(self.User).filter_by(name=name).all()
+            if len(rows) > 1:
+                logger.warning(f'No user removed: more than one user found with name {name}.')
+                return ""
+            row = rows[0]
+        if row:
+            self.session.delete(row)
+            self.session.commit()
+            logger.info(f'User {name} removed from db')
+            return name
+        else:
+            logger.error(f'User {name} was not removed from db')
+            return ""
 
-    def update_user(self, name, key, value):
+    def update_user(self, name, key, value, token=None):
         """Update user attribute"""
-        row = self.session.query(self.User).filter_by(name=name, token=token).first()
-        setattr(row, key, value)
-        self.session.commit()
-        logger.debug('User {} updated: {}={}'.format(name, key, value))
+        if token:
+            row = self.session.query(self.User).filter_by(name=name, token=token).first()
+        else:
+            logger.debug(f'No token given')
+            row = self.session.query(self.User).filter_by(name=name).first()
+        #row = self.session.query(self.User).filter_by(name=name, token=token).first()
+        if row:
+            setattr(row, key, value)
+            self.session.commit()
+            logger.debug(f'User {name} updated: {key}={value}')
+            return name
+        else:
+            logger.error(f'User {name} not found in db')
 
     def get_roles(self, user):
         row = self.session.query(self.User).filter_by(name=user.name, token=user.token).first()
@@ -305,29 +339,31 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         if row:
             roles = row.roles.split(',')
             if role in roles:
-                logger.debug('Role \"{}\" already set for user {}'.format(role, name))
+                logger.debug(f'Role \"{role}\" already set for user {name}')
             else:
                 roles.append(role)
                 row.roles = ','.join(roles)
                 self.session.merge(row)
                 self.session.commit()
-                logger.debug('Role \"{}\" added for user {}'.format(role, name))
+                logger.debug(f'Role \"{role}\" added for user {name}')
         else:
             logger.error('User {} not found in db'.format(name))
-
 
     def remove_role(self, name, token, role=''):
         """Get job list from storage, i.e. access to a job"""
         row = self.session.query(self.User).filter_by(name=name, token=token).first()
-        roles = row.roles.split(',')
-        if role in roles:
-            roles.pop(role)
-            row.roles = ','.join(roles)
-            self.session.merge(row)
-            self.session.commit()
-            logger.debug('Role \"{}\" removed for user {}'.format(role, name))
+        if row:
+            roles = row.roles.split(',')
+            if role in roles:
+                roles.pop(role)
+                row.roles = ','.join(roles)
+                self.session.merge(row)
+                self.session.commit()
+                logger.debug(f'Role \"{role}\" removed for user {name}')
+            else:
+                logger.debug(f'Role \"{role}\" not found for user {name}')
         else:
-            logger.debug('Role \"{}\" not found for user {}'.format(role, name))
+            logger.error(f'User {name} not found in db')
 
     def has_role(self, name, token, role=''):
         row = self.session.query(self.User).filter_by(name=name, token=token).first()
@@ -337,7 +373,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                 # logger.debug('Role \"{}\" found for user {}:{}'.format(role, name, token))
                 return True
             else:
-                logger.debug('Role \"{}\" not found for user {}'.format(role, name))
+                logger.debug(f'Role \"{role}\" not found for user {name}')
                 return False
 
     def has_access(self, user, jobname):

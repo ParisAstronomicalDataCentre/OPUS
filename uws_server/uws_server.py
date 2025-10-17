@@ -315,140 +315,107 @@ def send_mail(send_to, subject, msg):
 # ----------
 
 
-@app.get('/scim/v2/ServiceProviderConfig')
+@app.get(SCIM_ENDPOINT + '/ServiceProviderConfig')
 def SCIM_ServiceProviderConfig():
-    scim_config = """
-  {
-    "schemas":
-      ["urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig"],
-    "patch": {
-      "supported":false
-    },
-    "bulk": {
-      "supported":false,
-      "maxOperations":1000,
-      "maxPayloadSize":1048576
-    },
-    "filter": {
-      "supported":false,
-      "maxResults": 200
-    },
-    "changePassword": {
-      "supported":false
-    },
-    "sort": {
-      "supported":false
-    },
-    "etag": {
-      "supported":false
-    },
-    "authenticationSchemes": [
-      {
-        "name": "HTTP Basic",
-        "description":
-          "Authentication scheme using the HTTP Basic Standard",
-        "specUri": "http://www.rfc-editor.org/info/rfc2617",
-        "type": "httpbasic"
-       }
-    ]
-  }
-    """
-    response.content_type = 'application/json; charset=UTF-8'
+    scim_config = {
+        "schemas": ["urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig"],
+        "patch": {"supported": False},
+        "bulk": {"supported": False, "maxOperations":1000, "maxPayloadSize":1048576},
+        "filter": {"supported": False, "maxResults": 200},
+        "changePassword": {"supported": False},
+        "sort": {"supported": False},
+        "etag": {"supported": False},
+        "authenticationSchemes": [
+            {"type": "httpbasic", "name": "HTTP Basic"}
+        ]
+    }
+    #response.content_type = 'application/json; charset=UTF-8'
     return scim_config
 
 
-@app.get('/scim/v2/Schemas')
+@app.get(SCIM_ENDPOINT + '/Schemas')
 def SCIM_Schemas():
-    scim_schemas = """
-  {
-    "id" : "urn:ietf:params:scim:schemas:core:2.0:User",
-    "name" : "User",
-    "description" : "User Account",
-    "attributes" : [
-      {
-        "name" : "userName",
-        "type" : "string",
-        "multiValued" : false,
-        "description" : "Unique identifier for the User, typically used by the user to directly authenticate to the service provider. Each User MUST include a non-empty userName value.  This identifier MUST be unique across the service provider's entire set of Users. REQUIRED.",
-        "required" : true,
-        "caseExact" : false,
-        "mutability" : "readWrite",
-        "returned" : "default",
-        "uniqueness" : "server"
-      },
-      {
-        "name" : "token",
-        "type" : "string",
-        "multiValued" : false,
-        "description" : "The User's token.",
-        "required" : true,
-        "caseExact" : true,
-        "mutability" : "writeOnly",
-        "returned" : "never",
-        "uniqueness" : "none"
-      },
-      {
-        "name" : "roles",
-        "type" : "string",
-        "multiValued" : true,
-        "description" : "A coma-separated list of roles for the User",
-        "required" : false,
-        "mutability" : "readWrite",
-        "returned" : "default"
-      },
-      {
-        "name" : "active",
-        "type" : "boolean",
-        "multiValued" : false,
-        "description" : "A Boolean value indicating the User's administrative status.",
-        "required" : false,
-        "mutability" : "readWrite",
-        "returned" : "default"
-      }
-    ]
-  }
-    """
-    response.content_type = 'application/json; charset=UTF-8'
+    scim_schemas = {
+        "id" : "urn:ietf:params:scim:schemas:core:2.0:User",
+        "name" : "User",
+        "description" : "User Account",
+        "attributes" : [
+          {
+            "name" : "userName",
+            "type" : "string",
+            "multiValued" : False,
+            "description" : "Unique identifier for the User, typically used by the user to directly authenticate to the service provider. Each User MUST include a non-empty userName value.  This identifier MUST be unique across the service provider's entire set of Users. REQUIRED.",
+            "required" : True,
+            "caseExact" : False,
+            "mutability" : "readWrite",
+            "returned" : "default",
+            "uniqueness" : "server"
+          },
+          {
+            "name" : "token",
+            "type" : "string",
+            "multiValued" : False,
+            "description" : "The User's token.",
+            "required" : True,
+            "caseExact" : True,
+            "mutability" : "writeOnly",
+            "returned" : "never",
+            "uniqueness" : "none"
+          },
+          {
+            "name" : "roles",
+            "type" : "string",
+            "multiValued" : True,
+            "description" : "A coma-separated list of roles for the User",
+            "required" : False,
+            "mutability" : "readWrite",
+            "returned" : "default"
+          },
+          {
+            "name" : "active",
+            "type" : "boolean",
+            "multiValued" : False,
+            "description" : "A Boolean value indicating the User's administrative status.",
+            "required" : False,
+            "mutability" : "readWrite",
+            "returned" : "default"
+          }
+        ]
+    }
     return scim_schemas
 
 
-@app.get('/scim/v2/ResourceTypes')
+@app.get(SCIM_ENDPOINT + '/ResourceTypes')
 def SCIM_ResourceTypes():
-    scim_resourcetypes = """
-{
-  "itemsPerPage": 1,
-  "startIndex": 1,
-  "Resources": [
-    {
-      "schemas": ["urn:ietf:params:scim:schemas:core:2.0:ResourceType"],
-      "id": "Users",
-      "name": "User",
-      "endpoint": "/Users",
-      "description": "User Account",
-      "schema": "urn:scim:schemas:core:2.0:User"
+    scim_resourcetypes = {
+      "itemsPerPage": 1,
+      "startIndex": 1,
+      "Resources": [
+        {
+          "schemas": ["urn:ietf:params:scim:schemas:core:2.0:ResourceType"],
+          "id": "Users",
+          "name": "User",
+          "endpoint": "/Users",
+          "description": "User Account",
+          "schema": "urn:scim:schemas:core:2.0:User"
+        }
+      ]
     }
-  ]
-}
-    """
-    response.content_type = 'application/json; charset=UTF-8'
     return scim_resourcetypes
 
 
-@app.get('/scim/v2/ResourceTypes/User')
+@app.get(SCIM_ENDPOINT + '/ResourceTypes/User')
 def SCIM_ResourceTypes_User():
-    scim_resourcetypes = """
-    {
-      "id": "Users",
-      "schemas": [
-        "urn:scim:schemas:core:2.0:ResourceType"
-      ],
-      "name": "User",
-      "description": "Core User",
-      "endpoint": "/Users",
-      "schema": "urn:scim:schemas:core:2.0:User"
+    scim_resourcetypes = {
+        "id": "Users",
+        "schemas": [
+            "urn:scim:schemas:core:2.0:ResourceType"
+        ],
+        "name": "User",
+        "description": "Core User",
+        "endpoint": "/Users",
+        "schema": "urn:scim:schemas:core:2.0:User"
     }
-    """
-    response.content_type = 'application/json; charset=UTF-8'
     return scim_resourcetypes
 
 
@@ -469,7 +436,7 @@ def user2scim(u):
     return user_dict
 
 
-@app.get('/scim/v2/Users')
+@app.get(SCIM_ENDPOINT + '/Users')
 @is_client_trusted
 @is_admin
 def get_users():
@@ -488,7 +455,7 @@ def get_users():
     return scim_users
 
 
-@app.post('/scim/v2/Users')
+@app.post(SCIM_ENDPOINT + '/Users')
 @is_client_trusted
 @is_admin
 def create_user():
@@ -499,49 +466,66 @@ def create_user():
         job_storage = getattr(storage, STORAGE + 'JobStorage')()
         job_storage.add_user(name, token=token, roles=roles)
         users = job_storage.get_users(name=name)
-        u = users[0]
-        logger.info('User created: ' + name)
-        return user2scim(u)
+        if users:
+            u = users[0]
+            logger.info('User created: ' + name)
+            return user2scim(u)
+        else:
+            abort_404(f'No user found with name {name}')
     else:
         abort_500('No user name provided')
 
 
-@app.get('/scim/v2/Users/<name>')
+@app.get(SCIM_ENDPOINT + '/Users/<name>')
 @is_client_trusted
 @is_admin
 def get_user(name):
     job_storage = getattr(storage, STORAGE + 'JobStorage')()
     users = job_storage.get_users(name=name)
-    u = users[0]
-    return user2scim(u)
+    if users:
+        u = users[0]
+        return user2scim(u)
+    else:
+        abort_404(f'No user found with name {name}')
 
 
-@app.route('/scim/v2/Users/<name>', method='POST')
+@app.post(SCIM_ENDPOINT + '/Users/<name>')
 @is_client_trusted
 @is_admin
 def patch_user(name):
     job_storage = getattr(storage, STORAGE + 'JobStorage')()
-    users = job_storage.get_users(name=name)
-    u = users[0]
-    for k in request.POST.keys():
-        if k in ['token', 'roles', 'active']:
-            u[k] = request.POST[k]
-            # save modified user
-            job_storage.update_user(name, k, request.POST[k])
-            logger.info('User patched: ' + name)
-    return user2scim(u)
+    token = request.POST.get("user_token", None)
+    if token:
+        users = job_storage.get_users(name=name, token=token)
+        u = users[0]
+        if u:
+            for k in request.POST.keys():
+                if k in ['token', 'roles', 'active']:
+                    u[k] = request.POST[k]
+                    # save modified user
+                    job_storage.update_user(name, k, request.POST[k], token=token)
+                    logger.info('User patched: ' + name)
+            return user2scim(u)
+        else:
+            abort_404(f'No user found with name {name}')
+    else:
+        abort_404(f'No token found for user name {name}')
 
 
-@app.route('/scim/v2/Users/<name>', method='DELETE')
+@app.route(SCIM_ENDPOINT + '/Users/<name>', method='DELETE')
 @is_client_trusted
 @is_admin
 def delete_user(name):
     job_storage = getattr(storage, STORAGE + 'JobStorage')()
-    users = job_storage.remove_user(name)
-    logger.info('User deleted: ' + name)
-    response.content_type = 'text/plain; charset=UTF-8'
-    response.status = 200
-    return 'Success'
+    token = request.POST.get("user_token", None)
+    username = job_storage.remove_user(name, token=token)
+    if username:
+        logger.info('User deleted: ' + username)
+        response.content_type = 'text/plain; charset=UTF-8'
+        response.status = 200
+        return 'Success'
+    else:
+        abort_500(f'No user deleted (name: {name})')
 
 
 # ----------
@@ -1311,7 +1295,7 @@ def job_event():
 # ----------
 
 
-@app.route('/rest/<jobname>')
+@app.route(UWS_SERVER_ENDPOINT + '/<jobname>')
 def get_joblist(jobname):
     """Get list for <jobname> jobs
 
@@ -1346,7 +1330,7 @@ def get_joblist(jobname):
         abort_500_except()
 
 
-@app.post('/rest/<jobname>')
+@app.post(UWS_SERVER_ENDPOINT + '/<jobname>')
 def create_job(jobname):
     """Create a new job
 
@@ -1375,7 +1359,7 @@ def create_job(jobname):
     except:
         abort_500_except()
     # Response
-    redirect(BASE_URL + '/rest/' + jobname + '/' + job.jobid, 303)
+    redirect(BASE_URL + UWS_SERVER_ENDPOINT + '/' + jobname + '/' + job.jobid, 303)
 
 
 # ----------
@@ -1383,7 +1367,7 @@ def create_job(jobname):
 # ----------
 
 
-@app.route('/rest/<jobname>/<jobid>')
+@app.route(UWS_SERVER_ENDPOINT + '/<jobname>/<jobid>')
 def get_job(jobname, jobid):
     """Get description for job <jobid>
 
@@ -1444,7 +1428,7 @@ def get_job(jobname, jobid):
         abort_500_except()
 
 
-@app.delete('/rest/<jobname>/<jobid>')
+@app.delete(UWS_SERVER_ENDPOINT + '/<jobname>/<jobid>')
 def delete_job(jobname, jobid):
     """Delete job with <jobid>
 
@@ -1470,10 +1454,10 @@ def delete_job(jobname, jobid):
     except:
         abort_500_except()
     # Response
-    redirect(BASE_URL + '/rest/' + jobname, 303)
+    redirect(BASE_URL + UWS_SERVER_ENDPOINT + '/' + jobname, 303)
 
 
-@app.post('/rest/<jobname>/<jobid>')
+@app.post(UWS_SERVER_ENDPOINT + '/<jobname>/<jobid>')
 def post_job(jobname, jobid):
     """Alias for delete_job() if ACTION=DELETE"""
     user = set_user()
@@ -1498,7 +1482,7 @@ def post_job(jobname, jobid):
         abort_500_except(msg='STDERR output:\n' + e.output, msg_public='Cannot connect to the computing cluster')
     except:
         abort_500_except()
-    redirect(BASE_URL + '/rest/' + jobname, 303)
+    redirect(BASE_URL + UWS_SERVER_ENDPOINT + '/' + jobname, 303)
 
 
 # ----------
@@ -1506,7 +1490,7 @@ def post_job(jobname, jobid):
 # ----------
 
 
-@app.route('/rest/<jobname>/<jobid>/phase')
+@app.route(UWS_SERVER_ENDPOINT + '/<jobname>/<jobid>/phase')
 def get_phase(jobname, jobid):
     """Get the phase of job <job-id>
 
@@ -1531,7 +1515,7 @@ def get_phase(jobname, jobid):
         abort_500_except()
 
 
-@app.post('/rest/<jobname>/<jobid>/phase')
+@app.post(UWS_SERVER_ENDPOINT + '/<jobname>/<jobid>/phase')
 def post_phase(jobname, jobid):
     """Change Phase of job <jobid> --> start or abort job
 
@@ -1576,7 +1560,7 @@ def post_phase(jobname, jobid):
     except:
         abort_500_except()
     # Response
-    redirect(BASE_URL + '/rest/' + jobname + '/' + jobid, 303)
+    redirect(BASE_URL + UWS_SERVER_ENDPOINT + '/' + jobname + '/' + jobid, 303)
 
 
 # ----------
@@ -1584,7 +1568,7 @@ def post_phase(jobname, jobid):
 # ----------
 
 
-@app.route('/rest/<jobname>/<jobid>/executionduration')
+@app.route(UWS_SERVER_ENDPOINT + '/<jobname>/<jobid>/executionduration')
 def get_executionduration(jobname, jobid):
     """Get the maximum execution duration of job <jobid>
 
@@ -1609,7 +1593,7 @@ def get_executionduration(jobname, jobid):
         abort_500_except()
 
 
-@app.post('/rest/<jobname>/<jobid>/executionduration')
+@app.post(UWS_SERVER_ENDPOINT + '/<jobname>/<jobid>/executionduration')
 def post_executionduration(jobname, jobid):
     """Change the maximum execution duration of job <jobid>
 
@@ -1648,7 +1632,7 @@ def post_executionduration(jobname, jobid):
     except:
         abort_500_except()
     # Response
-    redirect(BASE_URL + '/rest/' + jobname + '/' + jobid, 303)
+    redirect(BASE_URL + UWS_SERVER_ENDPOINT + '/' + jobname + '/' + jobid, 303)
 
 
 # ----------
@@ -1656,7 +1640,7 @@ def post_executionduration(jobname, jobid):
 # ----------
 
 
-@app.route('/rest/<jobname>/<jobid>/destruction')
+@app.route(UWS_SERVER_ENDPOINT + '/<jobname>/<jobid>/destruction')
 def get_destruction(jobname, jobid):
     """Get the destruction instant for job <jobid>
 
@@ -1681,7 +1665,7 @@ def get_destruction(jobname, jobid):
         abort_500_except()
 
 
-@app.post('/rest/<jobname>/<jobid>/destruction')
+@app.post(UWS_SERVER_ENDPOINT + '/<jobname>/<jobid>/destruction')
 def post_destruction(jobname, jobid):
     """Change the destruction instant for job <jobid>
 
@@ -1720,7 +1704,7 @@ def post_destruction(jobname, jobid):
     except:
         abort_500_except()
     # Response
-    redirect(BASE_URL + '/rest/' + jobname + '/' + jobid, 303)
+    redirect(BASE_URL + UWS_SERVER_ENDPOINT + '/' + jobname + '/' + jobid, 303)
 
 
 # ----------
@@ -1728,7 +1712,7 @@ def post_destruction(jobname, jobid):
 # ----------
 
 
-@app.route('/rest/<jobname>/<jobid>/error')
+@app.route(UWS_SERVER_ENDPOINT + '/<jobname>/<jobid>/error')
 def get_error(jobname, jobid):
     """Get any error message associated with job <jobid>
 
@@ -1759,7 +1743,7 @@ def get_error(jobname, jobid):
 # ----------
 
 
-@app.route('/rest/<jobname>/<jobid>/quote')
+@app.route(UWS_SERVER_ENDPOINT + '/<jobname>/<jobid>/quote')
 def get_quote(jobname, jobid):
     """Get the Quote for job <jobid>
 
@@ -1789,7 +1773,7 @@ def get_quote(jobname, jobid):
 # ----------
 
 
-@app.route('/rest/<jobname>/<jobid>/parameters')
+@app.route(UWS_SERVER_ENDPOINT + '/<jobname>/<jobid>/parameters')
 def get_parameters(jobname, jobid):
     """Get parameters for job <jobid>
 
@@ -1816,7 +1800,7 @@ def get_parameters(jobname, jobid):
         abort_500_except()
 
 
-@app.route('/rest/<jobname>/<jobid>/parameters/<pname>')
+@app.route(UWS_SERVER_ENDPOINT + '/<jobname>/<jobid>/parameters/<pname>')
 def get_parameter(jobname, jobid, pname):
     """Get parameter <param> for job <jobid>
 
@@ -1845,7 +1829,7 @@ def get_parameter(jobname, jobid, pname):
         abort_500_except()
 
 
-@app.post('/rest/<jobname>/<jobid>/parameters/<pname>')
+@app.post(UWS_SERVER_ENDPOINT + '/<jobname>/<jobid>/parameters/<pname>')
 def post_parameter(jobname, jobid, pname):
     """Change the parameter value for job <jobid>
 
@@ -1880,7 +1864,7 @@ def post_parameter(jobname, jobid, pname):
     except:
         abort_500_except()
     # Response
-    redirect(BASE_URL + '/rest/' + jobname + '/' + jobid + '/parameters', 303)
+    redirect(BASE_URL + UWS_SERVER_ENDPOINT + '/' + jobname + '/' + jobid + '/parameters', 303)
 
 
 # ----------
@@ -1888,7 +1872,7 @@ def post_parameter(jobname, jobid, pname):
 # ----------
 
 
-@app.route('/rest/<jobname>/<jobid>/results')
+@app.route(UWS_SERVER_ENDPOINT + '/<jobname>/<jobid>/results')
 def get_results(jobname, jobid):
     """Get results for job <jobid>
 
@@ -1915,7 +1899,7 @@ def get_results(jobname, jobid):
         abort_500_except()
 
 
-@app.route('/rest/<jobname>/<jobid>/results/<rname>')
+@app.route(UWS_SERVER_ENDPOINT + '/<jobname>/<jobid>/results/<rname>')
 def get_result(jobname, jobid, rname):
     """Get result <rname> for job <jobid>
 
@@ -1944,7 +1928,7 @@ def get_result(jobname, jobid, rname):
         abort_500_except()
 
 
-@app.route('/rest/<jobname>/<jobid>/stdout')
+@app.route(UWS_SERVER_ENDPOINT + '/<jobname>/<jobid>/stdout')
 def get_stdout(jobname, jobid):
     """Get stdout for job <jobid>
 
@@ -1973,7 +1957,7 @@ def get_stdout(jobname, jobid):
         abort_500_except()
 
 
-@app.route('/rest/<jobname>/<jobid>/stderr')
+@app.route(UWS_SERVER_ENDPOINT + '/<jobname>/<jobid>/stderr')
 def get_stderr(jobname, jobid):
     """Get stderr for job <jobid>
 
@@ -2002,7 +1986,7 @@ def get_stderr(jobname, jobid):
         abort_500_except()
 
 
-@app.route('/rest/<jobname>/<jobid>/prov<provtype>')
+@app.route(UWS_SERVER_ENDPOINT + '/<jobname>/<jobid>/prov<provtype>')
 def get_prov(jobname, jobid, provtype):
     """Get prov for job <jobid>
 
@@ -2040,7 +2024,7 @@ def get_prov(jobname, jobid, provtype):
 # ----------
 
 
-@app.route('/rest/<jobname>/<jobid>/owner')
+@app.route(UWS_SERVER_ENDPOINT + '/<jobname>/<jobid>/owner')
 def get_owner(jobname, jobid):
     """Get the owner of the job <jobid>
 

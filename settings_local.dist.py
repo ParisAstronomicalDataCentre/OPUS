@@ -25,6 +25,8 @@ BASE_IP = '127.0.0.1'
 #UWS_CLIENT_ENDPOINT = '/opus_client'  # Recommended with opus_server (i.e. relative from BASE_URL)
 #BASE_IP = '127.0.0.1'
 LOCAL_USER = 'www'  # Apache user (may be www, _www, apache...)
+#UWS_SERVER_ENDPOINT = '/uws'
+#SCIM_ENDPOINT = '/scim'
 
 ADMIN_NAME = 'opus-admin'  # Will be the main local admin account
 ADMIN_EMAIL = 'admin@opus'

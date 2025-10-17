@@ -38,7 +38,11 @@ VAR_PATH = 'local_var'  # store var locally for quick test, prefer e.g. '/var/op
 BASE_URL = 'http://localhost:8082'  # For local debug server with run_server.py
 BASE_IP = '127.0.0.1'
 LOCAL_USER = 'www'  # Apache user (may be www, _www, apache...)
+
 UWS_CLIENT_ENDPOINT = 'http://localhost:8080'  # For local debug server with run_client.py
+UWS_SERVER_ENDPOINT = '/uws'
+SCIM_ENDPOINT = '/scim'
+
 
 # Mail server
 MAIL_SERVER = 'smtp.'

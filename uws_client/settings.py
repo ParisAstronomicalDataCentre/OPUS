@@ -43,7 +43,7 @@ UWS_SERVER_URL_JS = UWS_CLIENT_ENDPOINT + '/proxy'  # Called from javascript, se
 ### TBD in settings_local.py
 BASE_URL = 'http://localhost:8082'  # For local debug server with run_server.py
 UWS_SERVER_URL = None  # set to BASE_URL if None, can be any other OPUS UWS Server
-UWS_SERVER_ENDPOINT = '/rest'
+UWS_SERVER_ENDPOINT = '/uws'
 UWS_AUTH = 'Basic'
 CLIENT_TITLE = "OPUS"
 HOME_CONTENT = ""
@@ -144,7 +144,7 @@ SECURITY_EMAIL_SENDER = SENDER_EMAIL
 
 CONFIG_DEFAULTS = {
     'UWS_SERVER_URL': BASE_URL,
-    'UWS_SERVER_ENDPOINT': '/rest',
+    'UWS_SERVER_ENDPOINT': UWS_SERVER_ENDPOINT,
     'UWS_AUTH': 'Basic',
 }
 
