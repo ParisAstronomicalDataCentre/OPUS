@@ -1,7 +1,4 @@
 
-tags:
-  - sonar
-
 image: 
   name: sonarsource/sonar-scanner-cli:11
   entrypoint: [""]
@@ -17,7 +14,9 @@ stages:
 build-sonar:
   stage: build-sonar
   
-  
+  tags:
+    - sonar
+    
   cache:
     policy: pull-push
     key: "sonar-cache-$CI_COMMIT_REF_SLUG"
