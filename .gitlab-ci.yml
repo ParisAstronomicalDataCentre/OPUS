@@ -16,6 +16,7 @@ build-sonar:
   
   tags:
     - sonar
+    - ivoa
     
   cache:
     policy: pull-push
