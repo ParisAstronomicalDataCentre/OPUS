@@ -1,3 +1,7 @@
+
+tags:
+  - sonar
+
 image: 
   name: sonarsource/sonar-scanner-cli:11
   entrypoint: [""]
