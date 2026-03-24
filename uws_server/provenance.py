@@ -74,7 +74,7 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, agents=1, model=
     pdoc.add_namespace('opus_user', BASE_URL + '/user/')
     ns_result = 'opus_store'
     pdoc.add_namespace(ns_result, BASE_URL + '/store/?ID=')
-    pdoc.add_namespace('opus_job', BASE_URL + '/rest/')
+    pdoc.add_namespace('opus_job', BASE_URL + UWS_SERVER_ENDPOINT + '/')
     pdoc.add_namespace('opus_jdl', BASE_URL + '/jdl/')
     pdoc.add_namespace('media-type', 'https://www.w3.org/ns/iana/media-types/')
     ns_jdl = job.jobname
