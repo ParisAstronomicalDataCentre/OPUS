@@ -26,6 +26,7 @@ test_app = TestApp(uws_server.app)  # , extra_environ=dict(REMOTE_USER='test'))
 
 jobname = 'ctbin'
 
+UWS_EP = uws_server.UWS_SERVER_ENDPOINT
 
 
 class TestGet(unittest.TestCase):
@@ -53,46 +54,46 @@ class TestGet(unittest.TestCase):
         # Test GET with job 22222222-e656-b924-c14a-fbd02f9ebaa9
         jobid = '22222222-e656-b924-c14a-fbd02f9ebaa9'
 
-        url = '/rest/' + jobname
+        url = UWS_EP + '/' + jobname
         self.assert_status(url, 200, 'text/xml; charset=UTF-8')
 
-        url = '/rest/' + jobname + '/bad_jobid'
+        url = UWS_EP + '/' + jobname + '/bad_jobid'
         self.assert_status(url, 404)
 
-        url = '/rest/' + jobname + '/' + jobid
+        url = UWS_EP + '/' + jobname + '/' + jobid
         self.assert_status(url, 200, 'text/xml; charset=UTF-8')
 
-        url = '/rest/' + jobname + '/' + jobid + '/bad_attribute'
+        url = UWS_EP + '/' + jobname + '/' + jobid + '/bad_attribute'
         self.assert_status(url, 405)
 
-        url = '/rest/' + jobname + '/' + jobid + '/phase'
+        url = UWS_EP + '/' + jobname + '/' + jobid + '/phase'
         self.assert_status(url, 200, 'text/plain; charset=UTF-8')
 
-        url = '/rest/' + jobname + '/' + jobid + '/executionduration'
+        url = UWS_EP + '/' + jobname + '/' + jobid + '/executionduration'
         self.assert_status(url, 200, 'text/plain; charset=UTF-8')
 
-        url = '/rest/' + jobname + '/' + jobid + '/destruction'
+        url = UWS_EP + '/' + jobname + '/' + jobid + '/destruction'
         self.assert_status(url, 200, 'text/plain; charset=UTF-8')
 
-        url = '/rest/' + jobname + '/' + jobid + '/error'
+        url = UWS_EP + '/' + jobname + '/' + jobid + '/error'
         self.assert_status(url, 200, 'text/plain; charset=UTF-8')
 
-        url = '/rest/' + jobname + '/' + jobid + '/quote'
+        url = UWS_EP + '/' + jobname + '/' + jobid + '/quote'
         self.assert_status(url, 200, 'text/plain; charset=UTF-8')
 
-        url = '/rest/' + jobname + '/' + jobid + '/parameters'
+        url = UWS_EP + '/' + jobname + '/' + jobid + '/parameters'
         self.assert_status(url, 200, 'text/xml; charset=UTF-8')
 
-        url = '/rest/' + jobname + '/' + jobid + '/parameters/input'
+        url = UWS_EP + '/' + jobname + '/' + jobid + '/parameters/input'
         self.assert_status(url, 200, 'text/plain; charset=UTF-8')
 
-        url = '/rest/' + jobname + '/' + jobid + '/results'
+        url = UWS_EP + '/' + jobname + '/' + jobid + '/results'
         self.assert_status(url, 200, 'text/xml; charset=UTF-8')
 
-        url = '/rest/' + jobname + '/' + jobid + '/results/output'
+        url = UWS_EP + '/' + jobname + '/' + jobid + '/results/output'
         self.assert_status(url, 200, 'text/plain; charset=UTF-8')
 
-        url = '/rest/' + jobname + '/' + jobid + '/owner'
+        url = UWS_EP + '/' + jobname + '/' + jobid + '/owner'
         self.assert_status(url, 200, 'text/plain; charset=UTF-8')
 
 
@@ -103,7 +104,7 @@ class TestJobUpdate(unittest.TestCase):
         print('\n***** TestJobUpdate *****')
 
     def assert_job_attribute(self, jobid, attribute, value):
-        url = '/rest/' + jobname + '/' + jobid + '/' + attribute
+        url = UWS_EP + '/' + jobname + '/' + jobid + '/' + attribute
         response = test_app.get(url)
         self.assertEqual(response.text, value)
 
@@ -115,7 +116,7 @@ class TestJobUpdate(unittest.TestCase):
         self.assertRegex(response.location, '/db/show')
         # Update execution duration
         jobid = '00000000-dbf3-6b04-b1e7-28d47ad32794'
-        url = '/rest/' + jobname + '/' + jobid + '/executionduration'
+        url = UWS_EP + '/' + jobname + '/' + jobid + '/executionduration'
         post = {'BAD_KEY': '120'}
         response = test_app.post(url, post, status=500)
         print(url + ' ' + str(post))
@@ -138,7 +139,7 @@ class TestJobUpdate(unittest.TestCase):
         self.assert_job_attribute(jobid, 'executionduration', '120')
         # Update destruction time
         jobid = '00000000-dbf3-6b04-b1e7-28d47ad32794'
-        url = '/rest/' + jobname + '/' + jobid + '/destruction'
+        url = UWS_EP + '/' + jobname + '/' + jobid + '/destruction'
         post = {'BAD_KEY': '2016-01-01T00:00:00'}
         response = test_app.post(url, post, status=500)
         print(url + ' ' + str(post))
@@ -182,7 +183,7 @@ class TestJobUpdateParam(unittest.TestCase):
         print('\n***** TestJobUpdateParam *****')
 
     def assert_job_attribute(self, jobid, attribute, value):
-        url = '/rest/' + jobname + '/' + jobid + '/' + attribute
+        url = UWS_EP + '/' + jobname + '/' + jobid + '/' + attribute
         response = test_app.get(url)
         self.assertEqual(response.text, value)
 
@@ -194,7 +195,7 @@ class TestJobUpdateParam(unittest.TestCase):
         self.assertRegex(response.location, '/db/show')
         # Change parameter
         jobid = '00000000-dbf3-6b04-b1e7-28d47ad32794'
-        url = '/rest/' + jobname + '/' + jobid + '/parameters/input'
+        url = UWS_EP + '/' + jobname + '/' + jobid + '/parameters/input'
         post = {'BAD_KEY': 'Testing'}
         response = test_app.post(url, post, status=500)
         print(url + ' ' + str(post))
@@ -212,7 +213,7 @@ class TestJobUpdateParam(unittest.TestCase):
         self.assert_job_attribute(jobid, 'parameters/input', 'Testing')
         # Change parameter of COMPLETED job
         jobid = '22222222-e656-b924-c14a-fbd02f9ebaa9'
-        url = '/rest/' + jobname + '/' + jobid + '/parameters/input'
+        url = UWS_EP + '/' + jobname + '/' + jobid + '/parameters/input'
         post = {'VALUE': 'Testing'}
         response = test_app.post(url, post, status=500)
         print(url + ' ' + str(post))
@@ -229,7 +230,7 @@ class TestJobAbort(unittest.TestCase):
         print('\n***** TestJobAbort *****')
 
     def assert_job_phase(self, jobid, phase):
-        url = '/rest/' + jobname + '/' + jobid + '/phase'
+        url = UWS_EP + '/' + jobname + '/' + jobid + '/phase'
         response = test_app.get(url)
         self.assertEqual(response.text, phase)
 
@@ -241,7 +242,7 @@ class TestJobAbort(unittest.TestCase):
         self.assertRegex(response.location, '/db/show')
         # Abort PENDING job
         jobid = '00000000-dbf3-6b04-b1e7-28d47ad32794'
-        url = '/rest/' + jobname + '/' + jobid + '/phase'
+        url = UWS_EP + '/' + jobname + '/' + jobid + '/phase'
         post = {'PHASE': 'ABORT'}
         response = test_app.post(url, post)
         print(url + ' ' + str(post))
@@ -252,7 +253,7 @@ class TestJobAbort(unittest.TestCase):
         self.assert_job_phase(jobid, 'ABORTED')
         # Abort EXECUTING job
         jobid = '11111111-9c85-4873-a4b1-8d7e5e91ed57'
-        url = '/rest/' + jobname + '/' + jobid + '/phase'
+        url = UWS_EP + '/' + jobname + '/' + jobid + '/phase'
         post = {'PHASE': 'ABORT'}
         response = test_app.post(url, post)
         print(url + ' ' + str(post))
@@ -263,7 +264,7 @@ class TestJobAbort(unittest.TestCase):
         self.assert_job_phase(jobid, 'ABORTED')
         # Abort COMPLETED job (should return HTTP Error 500)
         jobid = '22222222-e656-b924-c14a-fbd02f9ebaa9'
-        url = '/rest/' + jobname + '/' + jobid + '/phase'
+        url = UWS_EP + '/' + jobname + '/' + jobid + '/phase'
         post = {'PHASE': 'ABORT'}
         response = test_app.post(url, post, status=500)
         print(url + ' ' + str(post))
@@ -287,7 +288,7 @@ class TestJobDelete(unittest.TestCase):
         self.assertRegex(response.location, '/db/show')
         # Delete PENDING job
         jobid = '00000000-dbf3-6b04-b1e7-28d47ad32794'
-        url = '/rest/' + jobname + '/' + jobid
+        url = UWS_EP + '/' + jobname + '/' + jobid
         post = {'ACTION': 'BAD_VALUE'}
         response = test_app.post(url, post, status=500)
         print(url + ' ' + str(post))
@@ -309,7 +310,7 @@ class TestJobDelete(unittest.TestCase):
         self.assertRegex(response.location, '/' + jobname)
         # Delete EXECUTING job
         jobid = '11111111-9c85-4873-a4b1-8d7e5e91ed57'
-        url = '/rest/' + jobname + '/' + jobid
+        url = UWS_EP + '/' + jobname + '/' + jobid
         response = test_app.delete(url, post)
         print(url + ' DELETE')
         print(' --> ' + response.status)
@@ -318,7 +319,7 @@ class TestJobDelete(unittest.TestCase):
         self.assertRegex(response.location, '/' + jobname)
         # Delete COMPLETED job
         jobid = '22222222-e656-b924-c14a-fbd02f9ebaa9'
-        url = '/rest/' + jobname + '/' + jobid
+        url = UWS_EP + '/' + jobname + '/' + jobid
         response = test_app.delete(url, post)
         print(url + ' DELETE')
         print(' --> ' + response.status)
@@ -334,7 +335,7 @@ class TestJobSequence(unittest.TestCase):
         print('\n***** TestJobSequence *****')
 
     def assert_job_phase(self, jobid, phase):
-        url = '/rest/' + jobname + '/' + jobid + '/phase'
+        url = UWS_EP + '/' + jobname + '/' + jobid + '/phase'
         response = test_app.get(url)
         self.assertEqual(response.text, phase)
 
@@ -345,7 +346,7 @@ class TestJobSequence(unittest.TestCase):
         self.assertEqual(response.status_int, 303)
         self.assertRegex(response.location, '/db/show')
         # Create job
-        url = '/rest/' + jobname + ''
+        url = UWS_EP + '/' + jobname + ''
         post = {'input': 'Testing'}
         response = test_app.post(url, post)
         print(url + ' ' + str(post))
@@ -356,7 +357,7 @@ class TestJobSequence(unittest.TestCase):
         jobid = response.location.split('/')[-1]
         self.assert_job_phase(jobid, 'PENDING')
         # Start job
-        url = '/rest/' + jobname + '/' + jobid + '/phase'
+        url = UWS_EP + '/' + jobname + '/' + jobid + '/phase'
         post = {'PHASE': 'BAD_VALUE'}
         response = test_app.post(url, post, status=500)
         print(url + ' ' + str(post))
@@ -377,7 +378,7 @@ class TestJobSequence(unittest.TestCase):
         print(' --> ' + response.status)
         print(' --> ' + response.location)
         self.assertEqual(response.status_int, 303)
-        self.assertRegex(response.location, '/rest/' + jobname + '/' + jobid)
+        self.assertRegex(response.location, UWS_EP + '/' + jobname + '/' + jobid)
         self.assert_job_phase(jobid, 'QUEUED')
         # job_event EXECUTING
         url = '/handler/job_event'

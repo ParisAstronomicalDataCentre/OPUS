@@ -44,6 +44,7 @@ UWS_SERVER_URL_JS = UWS_CLIENT_ENDPOINT + '/proxy'  # Called from javascript, se
 BASE_URL = 'http://localhost:8082'  # For local debug server with run_server.py
 UWS_SERVER_URL = None  # set to BASE_URL if None, can be any other OPUS UWS Server
 UWS_SERVER_ENDPOINT = '/uws'
+SCIM_ENDPOINT = '/scim'
 UWS_AUTH = 'Basic'
 CLIENT_TITLE = "OPUS"
 HOME_CONTENT = ""

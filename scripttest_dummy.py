@@ -6,12 +6,12 @@ import time
 from uws import UWS
 import subprocess as sp
 
-url = "http://localhost/rest/dummy"
+url = "http://localhost/uws/dummy"
 user_name = "anonymous"
 password = "anonymous"
 uws_client = UWS.client.Client(url=url)  # , user=user_name, password=password)
 
-# curl -d "input=Hello World" $URL/rest/dummy
+# curl -d "input=Hello World" $URL/uws/dummy
 
 # Create dummy job with default parameters
 def create_job():
