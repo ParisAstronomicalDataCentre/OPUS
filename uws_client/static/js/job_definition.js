@@ -749,6 +749,7 @@
         $('select[name="jobname"]').on('change', function(){
 						var jobname_select = $('select[name="jobname"]').val();
 						$('input[name=name]').val(jobname_select);
+                        load_jdl();
         });
         $('#load_jdl_select').click( function() {
             var jobname = $('input[name=name]').val();
