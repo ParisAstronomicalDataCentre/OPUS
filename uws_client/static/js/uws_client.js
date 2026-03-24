@@ -24,7 +24,7 @@ var uws_client = (function($) {
     // Config
     var DEBUG = true;
     var host_root = location.protocol + '//' + location.host;
-    var server_endpoint_jobs = '/rest';
+    var server_endpoint_jobs = '/uws';
     var server_endpoint_jdl = '/jdl/<jobname>/json';
     var server_endpoint_results = '/store';
     var client_endpoint = '/opus_client';
@@ -381,7 +381,7 @@ var uws_client = (function($) {
                 <td class="text-center" style="vertical-align: middle;">\
                     <button type="button" class="properties btn btn-default btn-sm" title="Edit">\
                         <span class="glyphicon glyphicon-info-sign"></span>\
-                        <span class="hidden-xs hidden-sm hidden-md">&nbsp;Edit Job</span>\
+                        <span class="hidden-xs hidden-sm hidden-md">&nbsp;Open Job</span>\
                     </button>\
                 </td>',
             details: '\
@@ -446,6 +446,7 @@ var uws_client = (function($) {
         if ($.inArray(col_code, job_list_columns) == -1) {
             if (job.ownerId.length > 0) {
                 var headers = [];
+                // Add Owner column header
                 $('#job_list > thead > tr > th').each(function(){
                     headers.push($(this).text());
                 });
@@ -455,6 +456,8 @@ var uws_client = (function($) {
                     job_list_columns.push(col_code);
                     $('#job_list > thead > tr').append('<<th id="' + col_code +'" class="text-center">' + col_name +
                     '</th>');
+                    // Extend tfoot colspan
+                    $('#job_list > tfoot > tr > th').attr('colspan', 7);
                 };
                 row = row + col_content[col_code];
             };
