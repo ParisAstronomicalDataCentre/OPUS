@@ -16,7 +16,7 @@ import smtplib
 from email.mime.text import MIMEText
 import threading
 from subprocess import CalledProcessError
-from bottle import Bottle, request, response, abort, redirect, run, static_file
+from bottle import Bottle, request, response, abort, redirect, run, static_file, HTTPError
 
 from .uws_classes import *
 # Note: this import will also import .settings
@@ -306,9 +306,9 @@ def send_mail(send_to, subject, msg):
         mail_text['To'] = send_to
         server.sendmail(SENDER_EMAIL, send_to, mail_text.as_string())
         server.quit()
-    except Exception:
+    except Exception as e:
         logger.error('Unable to send email')
-        abort_500('Unable to send email')
+        raise HTTPError(424, 'Unable to send email')
 
 # ----------
 # SCIM v2 API for user management
@@ -673,6 +673,8 @@ def validation_request_job_definition(jobname):
         else:
             logger.info('No JDL  found for validation: ' + jdl_src)
             abort_500('No JDL file found for ' + jobname)
+    except HTTPError as e:
+        raise e
     except:
         abort_500_except()
     # Return code 200
@@ -1353,7 +1355,7 @@ def create_job(jobname):
     except UserWarning as e:
         abort_500(e.args[0])
     except TooManyJobs as e:
-        abort_500(e.args[0])
+        abort_500_except(msg=f'Maximum number of active jobs reached ({NJOBS_MAX})', msg_public=f'Maximum number of active jobs reached ({NJOBS_MAX})')
     except CalledProcessError as e:
         abort_500_except(msg='STDERR output:\n' + e.output, msg_public='Cannot connect to the computing cluster')
     except:

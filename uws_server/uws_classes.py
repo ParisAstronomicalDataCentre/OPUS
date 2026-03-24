@@ -30,7 +30,7 @@ class JobAccessDenied(Exception):
 
 
 class TooManyJobs(Exception):
-    """User has no right to access job"""
+    """Maximum number of active jobs reached (NJOBS_MAX)"""
     pass
 
 
@@ -695,7 +695,7 @@ class Job(object):
         for rname in ['stdout', 'stderr']:
             rfname = rname + '.log'
             if os.path.isfile(rfdir + rfname):
-                url = '{}//rest/{}/{}/{}'.format(BASE_URL, self.jobname, self.jobid, rname)
+                url = '{}/{}/{}/{}/{}'.format(BASE_URL, UWS_SERVER_ENDPOINT, self.jobname, self.jobid, rname)
                 rattr = {
                     'access_url': url,
                     'content_type': 'text/plain',
@@ -734,7 +734,7 @@ class Job(object):
                 rname = 'prov' + ptype
                 rfname = 'provenance.' + ptype
                 if os.path.isfile(rfdir + rfname):
-                    url = '{}//rest/{}/{}/prov{}'.format(BASE_URL, self.jobname, self.jobid, ptype)
+                    url = '{}/{}/{}/{}/prov{}'.format(BASE_URL, UWS_SERVER_ENDPOINT, self.jobname, self.jobid, ptype)
                     rattr = {
                         'access_url': url,
                         'content_type': content_types[ptype],
