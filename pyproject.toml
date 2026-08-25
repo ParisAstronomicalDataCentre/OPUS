@@ -1,0 +1,71 @@
+[project]
+name = "OPUS"
+version = "0.1"
+description = "Job controller server and client based on the IVOA standards UWS and Provenance"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Mathieu Servillat", email = "mathieu.servillat@obspm.fr" },
+]
+dependencies = [
+    "Authlib",
+    "bcrypt",
+    "bleach",
+    "bottle",
+    "Flask",
+    "argon2_cffi",
+    "Flask-Admin",
+    "Flask-Mail",
+    "Flask-Security-Too",
+    "Flask-SQLAlchemy",
+    "lxml",
+    "prov",
+    "networkx",
+    "python-dateutil",
+    "psutil",
+    "psycopg2",
+    "pydot",
+    "pydotplus",
+    "pytest",
+    "PyYAML",
+    "requests",
+    "SQLAlchemy",
+    "voprov",
+    "WebTest",
+    "WTForms==3.1.2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["uws_client", "uws_server"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.4.0",
+    "black>=24.0.0",
+    "mypy>=1.0.0",
+    "pytest>=8.0.0",
+]
+
+# Ruff configuration
+[tool.ruff]
+line-length = 88
+target-version = "py310"  # Updated
+select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "SIM"]
+ignore = ["E501"]
+
+# Black configuration
+[tool.black]
+line-length = 88
+target-version = ["py310"]  # Updated
+
+# Mypy configuration
+[tool.mypy]
+python_version = "3.10"  # Updated
+warn_return_any = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
