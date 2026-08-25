@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Copyright (c) 2016 by Mathieu Servillat
 # Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
 """
@@ -17,23 +16,24 @@ Specific functions are expected for those classes:
 """
 
 import datetime as dt
-import subprocess as sp
 import re
+import subprocess as sp
+
 from .settings import *
 
 if MANAGER == "Local":
-    import shutil
     import signal
-    import requests
     import threading
+
     import psutil
+    import requests
 
 
 # -------------
 # Manager class
 
 
-class Manager(object):
+class Manager:
     """
     Manage job execution. This class defines required functions executed
     by the UWS server: start(), abort(), delete(), get_status(), get_info(),
@@ -58,16 +58,16 @@ class Manager(object):
         Returns:
             batch file content as a string
         """
-        jd = "{}/{}".format(self.jobdata_path, job.jobid)
-        wd = "{}/{}".format(self.workdir_path, job.jobid)
-        rs = "{}/{}".format(self.results_path, job.jobid)
+        jd = f"{self.jobdata_path}/{job.jobid}"
+        wd = f"{self.workdir_path}/{job.jobid}"
+        rs = f"{self.results_path}/{job.jobid}"
         # Need JDL for results description
         if not job.jdl.content:
             job.jdl.read(job.jobname)
         # Create sbatch
         batch = [
             "### INIT",
-            "JOBID={}".format(jobid_var),
+            f"JOBID={jobid_var}",
             'echo "JOBID is $JOBID"',
             "timestamp() {",
             '    date +"%Y-%m-%dT%H:%M:%S"',
@@ -82,15 +82,11 @@ class Manager(object):
                 '    if [ -z "$2" ]',
                 "    then",
                 "        curl -k -s -o $jd/job_curl_signal_$1.log"
-                ' -d "jobid=$JOBID" -d "phase=$1" {}/handler/job_event'.format(
-                    BASE_URL
-                ),
+                f' -d "jobid=$JOBID" -d "phase=$1" {BASE_URL}/handler/job_event',
                 "    else",
                 '        echo "$1 $2"',
                 "        curl -k -s -o $jd/job_curl_signal_$1.log"
-                ' -d "jobid=$JOBID" -d "phase=$1" --data-urlencode "error_msg=$2" {}/handler/job_event'.format(
-                    BASE_URL
-                ),
+                f' -d "jobid=$JOBID" -d "phase=$1" --data-urlencode "error_msg=$2" {BASE_URL}/handler/job_event',
                 "    fi",
                 "}",
                 "error_handler() {",
@@ -175,10 +171,10 @@ class Manager(object):
         batch.extend(
             [
                 "### PREPARE DIRECTORIES",
-                "jd={}".format(jd),
-                "wd={}".format(wd),
-                "rs={}".format(rs),
-                "cp {}/{}.sh $jd".format(self.scripts_path, job.jobname),
+                f"jd={jd}",
+                f"wd={wd}",
+                f"rs={rs}",
+                f"cp {self.scripts_path}/{job.jobname}.sh $jd",
                 "mkdir -p $rs",
                 "mkdir -p $wd",
                 "cd $wd",
@@ -217,7 +213,7 @@ class Manager(object):
                 'echo "[`timestamp`] Start job *****"',
                 "touch $jd/job_start",
                 # Run script in the current environment
-                ". $jd/{}.sh".format(job.jobname),
+                f". $jd/{job.jobname}.sh",
                 "touch $jd/job_done",
                 'echo "[`timestamp`] Job done *****"',
                 "### COPY RESULTS",
@@ -302,9 +298,9 @@ class LocalManager(Manager):
         data = {"jobid": process_id, "phase": phase}
         if error_msg:
             data["error_msg"] = error_msg
-        url = "{}/handler/job_event".format(BASE_URL)
+        url = f"{BASE_URL}/handler/job_event"
         response = requests.post(url, data)
-        logger.info("job event sent {}".format(response.content))
+        logger.info(f"job event sent {response.content}")
         if response.status_code != 200:
             logger.error(response.content)
         del response
@@ -316,8 +312,8 @@ class LocalManager(Manager):
         if not rcode:
             try:
                 p = psutil.Process(process_id)
-            except psutil.NoSuchProcess as e:
-                logger.info("process {} ended (NoSuchProcess)".format(process_id))
+            except psutil.NoSuchProcess:
+                logger.info(f"process {process_id} ended (NoSuchProcess)")
                 if job.phase == "EXECUTING":
                     self._send_signal(
                         process_id, "ERROR", error_msg="Process terminated with errors"
@@ -326,13 +322,13 @@ class LocalManager(Manager):
             # TODO: Handle sleeping, idle, suspended processes?...
             # Handle stopped processes
             if p.status() in [psutil.STATUS_STOPPED, psutil.STATUS_TRACING_STOP]:
-                logger.info("process {} stopped".format(process_id))
+                logger.info(f"process {process_id} stopped")
                 try:
                     # Try to restart the process by sending SIGCONT
                     os.kill(process_id, signal.SIGCONT)
                 except OSError as e:
                     if "No such process" in str(e):
-                        logger.warning("No such process ({})".format(process_id))
+                        logger.warning(f"No such process ({process_id})")
                     else:
                         logger.warning(str(e))
                 if p.status() == psutil.STATUS_STOPPED:
@@ -344,33 +340,33 @@ class LocalManager(Manager):
                     if process_id in self.suspended_processes:
                         self._send_signal(process_id, "EXECUTING")
                         self.suspended_processes.remove(process_id)
-                    logger.info("process {} continued".format(process_id))
+                    logger.info(f"process {process_id} continued")
                 # Rerun _poll_process after some time
                 threading.Timer(
                     self.poll_interval, self._poll_process, [popen, job]
                 ).start()
             else:
                 # Let the process run
-                logger.debug("process {} running".format(process_id))
+                logger.debug(f"process {process_id} running")
                 # Rerun _poll_process after some time
                 threading.Timer(
                     self.poll_interval, self._poll_process, [popen, job]
                 ).start()
         # Handle killed processes
         elif rcode == -9:
-            logger.info("process {} killed during execution".format(process_id))
+            logger.info(f"process {process_id} killed during execution")
             self._send_signal(
                 process_id, "ERROR", error_msg="Process killed during execution"
             )
         # Handle processes terminated with errors
         elif rcode <= -1:
-            logger.info("process {} terminated with errors".format(process_id))
+            logger.info(f"process {process_id} terminated with errors")
             self._send_signal(
                 process_id, "ERROR", error_msg="Process terminated with errors"
             )
         # Otherwise process has terminated
         else:
-            logger.info("process {} terminated (rcode=0)".format(process_id))
+            logger.info(f"process {process_id} terminated (rcode=0)")
             if job.phase == "EXECUTING":
                 self._send_signal(
                     process_id, "ERROR", error_msg="Process terminated (rcode=0)"
@@ -381,14 +377,14 @@ class LocalManager(Manager):
         :return: process_id
         """
         # Make directories if needed
-        jd = "{}/{}".format(self.jobdata_path, job.jobid)
-        wd = "{}/{}".format(self.workdir_path, job.jobid)
+        jd = f"{self.jobdata_path}/{job.jobid}"
+        wd = f"{self.workdir_path}/{job.jobid}"
         if not os.path.isdir(jd):
             os.makedirs(jd)
         if not os.path.isdir(wd):
             os.makedirs(wd)
         # Create parameter file
-        param_file = "{}/parameters.sh".format(jd)
+        param_file = f"{jd}/parameters.sh"
         with open(param_file, "w") as f:
             # parameters are a list of key=value (easier for bash sourcing)
             params, files = job.parameters_to_bash(get_files=True)
@@ -397,16 +393,14 @@ class LocalManager(Manager):
         get_input_files = []
         # Copy job description file
         jdl_fname = job.jdl._get_filename(job.jobname)
-        get_input_files.append("cp -p {jdl} {jd}".format(jdl=jdl_fname, jd=jd))
+        get_input_files.append(f"cp -p {jdl_fname} {jd}")
         # Copy input files to workdir_path (scp if uploaded from form, or wget if given as a URI)
         for fname in files["form"]:
             # shutil.copy(
             #     '{}/{}/{}'.format(UPLOADS_PATH, job.jobid, fname),
             #     '{}/{}'.format(wd, fname))
             get_input_files.append(
-                "cp -p {up}/{jobid}/{fname} {wd}/{fname}".format(
-                    up=UPLOADS_PATH, jobid=job.jobid, fname=fname, wd=wd
-                )
+                f"cp -p {UPLOADS_PATH}/{job.jobid}/{fname} {wd}/{fname}"
             )
         for furl in files["URI"]:
             fname = furl.split("/")[-1]
@@ -414,16 +408,16 @@ class LocalManager(Manager):
             # with open('{}/{}'.format(wd, fname), 'wb') as out_file:
             #     shutil.copyfileobj(response.raw, out_file)
             # del response
-            get_input_files.append("curl -OJ {url}".format(url=furl))
+            get_input_files.append(f"curl -OJ {furl}")
         # Create batch file
         batch = [
             "#!/bin/bash -l",
             "### INIT LocalManager",
             # Redirect stdout and stderr to files
-            "exec >{jd}/stdout.log 2>{jd}/stderr.log".format(jd=jd),
+            f"exec >{jd}/stdout.log 2>{jd}/stderr.log",
         ]
         batch.extend(self._make_batch(job, get_input_files=get_input_files))
-        batch_file = "{}/batch.sh".format(jd)
+        batch_file = f"{jd}/batch.sh"
         with open(batch_file, "w") as f:
             f.write("\n".join(batch))
         os.chmod(batch_file, 0o744)
@@ -445,9 +439,7 @@ class LocalManager(Manager):
         except OSError as e:
             if "No such process" in str(e):
                 logger.info(
-                    "No such process ({}) for job {} {}".format(
-                        job.process_id, job.jobname, job.jobid
-                    )
+                    f"No such process ({job.process_id}) for job {job.jobname} {job.jobid}"
                 )
             else:
                 logger.info(str(e))
@@ -464,9 +456,7 @@ class LocalManager(Manager):
         except OSError as e:
             if "No such process" in str(e):
                 logger.info(
-                    "No such process ({}) for job {} {}".format(
-                        job.process_id, job.jobname, job.jobid
-                    )
+                    f"No such process ({job.process_id}) for job {job.jobname} {job.jobid}"
                 )
             else:
                 logger.info(str(e))
@@ -503,7 +493,7 @@ class SLURMManager(Manager):
         Returns:
             sbatch file content as a string
         """
-        jd = "{}/{}".format(self.jobdata_path, job.jobid)
+        jd = f"{self.jobdata_path}/{job.jobid}"
         duration = dt.timedelta(0, int(job.execution_duration))
         # duration format is 00:01:00 for 1 min
         duration_str = (
@@ -513,13 +503,13 @@ class SLURMManager(Manager):
         sbatch = [
             "#!/bin/bash -l",
             "### INIT SLURM",
-            "#SBATCH --job-name={}".format(job.jobname),
-            "#SBATCH --error={}/stderr.log".format(jd),
-            "#SBATCH --output={}/stdout.log".format(jd),
-            "#SBATCH --mail-user={}".format(self.mail),
+            f"#SBATCH --job-name={job.jobname}",
+            f"#SBATCH --error={jd}/stderr.log",
+            f"#SBATCH --output={jd}/stdout.log",
+            f"#SBATCH --mail-user={self.mail}",
             "#SBATCH --mail-type=ALL",
             "#SBATCH --no-requeue",
-            "#SBATCH --time={}".format(duration_str),
+            f"#SBATCH --time={duration_str}",
         ]
         # Insert server/job specific sbatch commands
         for k in SLURM_PARAMETERS:
@@ -553,26 +543,24 @@ class SLURMManager(Manager):
             process_id on SLURM server
         """
         # Create jobdata and workdir (to upload the scripts, parameters and input files)
-        jd = "{}/{}".format(self.jobdata_path, job.jobid)
-        wd = "{}/{}".format(self.workdir_path, job.jobid)
-        cmd = ["ssh", self.ssh_arg, "mkdir -p {jd}".format(jd=jd)]
+        jd = f"{self.jobdata_path}/{job.jobid}"
+        wd = f"{self.workdir_path}/{job.jobid}"
+        cmd = ["ssh", self.ssh_arg, f"mkdir -p {jd}"]
         # logger.debug(' '.join(cmd))
         try:
             sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
         except sp.CalledProcessError as e:
-            logger.warning("{}: {}".format(e.cmd, e.output))
+            logger.warning(f"{e.cmd}: {e.output}")
             if "File exists" in str(e.output):
                 logger.warning(
-                    "force start {} {} (directories exist)".format(
-                        job.jobname, job.jobid
-                    )
+                    f"force start {job.jobname} {job.jobid} (directories exist)"
                 )
             else:
                 raise
         get_input_files = []
         # Create parameter file
-        param_file_local = "{}/{}_parameters.sh".format(TEMP_PATH, job.jobid)
-        param_file_distant = "{}/parameters.sh".format(jd)
+        param_file_local = f"{TEMP_PATH}/{job.jobid}_parameters.sh"
+        param_file_distant = f"{jd}/parameters.sh"
         with open(param_file_local, "w") as f:
             # parameters are a list of key=value (easier for bash sourcing)
             params, files = job.parameters_to_bash(get_files=True)
@@ -584,16 +572,12 @@ class SLURMManager(Manager):
         # # logger.debug(' '.join(cmd))
         # sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
         get_input_files.append(
-            "scp {ssh_args}:{loc} {dist}".format(
-                ssh_args=self.ssh_arg_uws, loc=param_file_local, dist=param_file_distant
-            )
+            f"scp {self.ssh_arg_uws}:{param_file_local} {param_file_distant}"
         )
         # Copy job description file
         jdl_fname = job.jdl._get_filename(job.jobname)
         get_input_files.append(
-            "scp -p {ssh_args}:{jdl} {jd}".format(
-                ssh_args=self.ssh_arg_uws, jdl=jdl_fname, jd=jd
-            )
+            f"scp -p {self.ssh_arg_uws}:{jdl_fname} {jd}"
         )
         # Copy input files to workdir_path (scp if uploaded from form, or wget if given as a URI)
         for fname in files["form"]:
@@ -603,13 +587,7 @@ class SLURMManager(Manager):
             # # logger.debug(' '.join(cmd))
             # sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
             get_input_files.append(
-                "scp -p {ssh_args}:{up}/{jobid}/{fname} {wd}/{fname}".format(
-                    ssh_args=self.ssh_arg_uws,
-                    up=UPLOADS_PATH,
-                    jobid=job.jobid,
-                    fname=fname,
-                    wd=wd,
-                )
+                f"scp -p {self.ssh_arg_uws}:{UPLOADS_PATH}/{job.jobid}/{fname} {wd}/{fname}"
             )
         for furl in files["URI"]:
             # fname = furl.split('/')[-1]
@@ -617,10 +595,10 @@ class SLURMManager(Manager):
             #        'wget -q {} -O {}/{}'.format(furl, wd, fname)]
             # # logger.debug(' '.join(cmd))
             # sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
-            get_input_files.append("curl -OJ {url}".format(url=furl))
+            get_input_files.append(f"curl -OJ {furl}")
         # Create sbatch file
-        sbatch_file_local = "{}/{}_sbatch.sh".format(TEMP_PATH, job.jobid)
-        sbatch_file_distant = "{}/sbatch.sh".format(jd)
+        sbatch_file_local = f"{TEMP_PATH}/{job.jobid}_sbatch.sh"
+        sbatch_file_distant = f"{jd}/sbatch.sh"
         with open(sbatch_file_local, "w") as f:
             sbatch = self._make_sbatch(job, get_input_files=get_input_files)
             f.write("\n".join(sbatch))
@@ -628,12 +606,12 @@ class SLURMManager(Manager):
         cmd = [
             "scp",
             sbatch_file_local,
-            "{}:{}".format(self.ssh_arg, sbatch_file_distant),
+            f"{self.ssh_arg}:{sbatch_file_distant}",
         ]
         # logger.debug(' '.join(cmd))
         sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
         # Start job using sbatch
-        cmd = ["ssh", self.ssh_arg, "sbatch {}".format(sbatch_file_distant)]
+        cmd = ["ssh", self.ssh_arg, f"sbatch {sbatch_file_distant}"]
         # logger.debug(' '.join(cmd))
         process_out = str(
             sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
@@ -645,29 +623,29 @@ class SLURMManager(Manager):
 
     def abort(self, job):
         """Abort job on SLURM server"""
-        cmd = ["ssh", self.ssh_arg, "scancel {}".format(job.process_id)]
+        cmd = ["ssh", self.ssh_arg, f"scancel {job.process_id}"]
         sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
 
     def delete(self, job):
         """Delete job on SLURM server"""
         if job.phase not in ["COMPLETED", "ERROR"]:
-            cmd = ["ssh", self.ssh_arg, "scancel {}".format(job.process_id)]
+            cmd = ["ssh", self.ssh_arg, f"scancel {job.process_id}"]
             try:
                 sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
             except sp.CalledProcessError as e:
-                logger.warning("{}: {}".format(e.cmd, e.output))
+                logger.warning(f"{e.cmd}: {e.output}")
                 if "Invalid job id specified" in e.output:
-                    logger.warning("force delete {} {}".format(job.jobname, job.jobid))
+                    logger.warning(f"force delete {job.jobname} {job.jobid}")
                 else:
                     raise
         # Delete workdir_path
-        cmd = ["ssh", self.ssh_arg, "rm -rf {}/{}".format(self.workdir_path, job.jobid)]
+        cmd = ["ssh", self.ssh_arg, f"rm -rf {self.workdir_path}/{job.jobid}"]
         sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
         # Delete jobdata_path
-        cmd = ["ssh", self.ssh_arg, "rm -rf {}/{}".format(self.jobdata_path, job.jobid)]
+        cmd = ["ssh", self.ssh_arg, f"rm -rf {self.jobdata_path}/{job.jobid}"]
         sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
         # Delete results_path
-        cmd = ["ssh", self.ssh_arg, "rm -rf {}/{}".format(self.results_path, job.jobid)]
+        cmd = ["ssh", self.ssh_arg, f"rm -rf {self.results_path}/{job.jobid}"]
         sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
 
     def get_status(self, job):
@@ -679,7 +657,7 @@ class SLURMManager(Manager):
         cmd = [
             "ssh",
             self.ssh_arg,
-            "sacct -j {}".format(job.process_id),
+            f"sacct -j {job.process_id}",
             "-o state -P -n",
         ]
         phase = sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
@@ -699,7 +677,7 @@ class SLURMManager(Manager):
         cmd = [
             "ssh",
             self.ssh_arg,
-            "sacct -j {}".format(job.process_id),
+            f"sacct -j {job.process_id}",
             "-o jobid,start,end,elapsed,state -P -n",
         ]
         logger.debug(" ".join(cmd))
@@ -717,7 +695,7 @@ class SLURMManager(Manager):
         cmd = [
             "scp",
             "-rp",
-            "{}:{}/{}".format(self.ssh_arg, self.jobdata_path, job.jobid),
+            f"{self.ssh_arg}:{self.jobdata_path}/{job.jobid}",
             JOBDATA_PATH,
         ]
         logger.debug(" ".join(cmd))
@@ -727,21 +705,21 @@ class SLURMManager(Manager):
             cmd = [
                 "scp",
                 "-rp",
-                "{}:{}/{}".format(self.ssh_arg, self.results_path, job.jobid),
+                f"{self.ssh_arg}:{self.results_path}/{job.jobid}",
                 RESULTS_PATH,
             ]
             logger.debug(" ".join(cmd))
             try:
                 sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
-            except Exception as e:
-                logger.debug("Cannot get results for job {}".format(job.jobid))
+            except Exception:
+                logger.debug(f"Cannot get results for job {job.jobid}")
 
     def cp_script(self, jobname):
         """Copy job script to SLURM server"""
         cmd = [
             "scp",
-            "{}/{}.sh".format(SCRIPTS_PATH, jobname),
-            "{}:{}/{}.sh".format(self.ssh_arg, self.scripts_path, jobname),
+            f"{SCRIPTS_PATH}/{jobname}.sh",
+            f"{self.ssh_arg}:{self.scripts_path}/{jobname}.sh",
         ]
         logger.debug(" ".join(cmd))
         sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)

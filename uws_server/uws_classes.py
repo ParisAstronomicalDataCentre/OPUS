@@ -1,22 +1,23 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Copyright (c) 2016 by Mathieu Servillat
 # Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
 """
 Defines classes for UWS objects job and job_list
 """
 
-import shutil
-import urllib.request, urllib.parse, urllib.error
-import requests
-import re
 import datetime as dt
+import re
+import shutil
+import urllib.error
+import urllib.parse
+import urllib.request
 import xml.etree.ElementTree as ETree
+
+import requests
 import yaml
 from blinker import signal
-from . import uws_jdl
-from . import storage
-from . import managers
+
+from . import managers, storage, uws_jdl
 from .settings import *
 
 # ---------
@@ -78,7 +79,7 @@ def get_filename_from_cd(cd):
 # User class
 
 
-class User(object):
+class User:
     """A user is defined by a name and a persistent ID (TOKEN) or token
     The TOKEN remains constant for a given user using a given client.
     Ideally it is a more general TOKEN set during the authentication (e.g with eduGain/Shibboleth).
@@ -118,9 +119,7 @@ def check_permissions(job):
             if job.jobname and job.jobname not in ["test_"]:
                 if not job.storage.has_access(job.user, job.jobname):
                     raise JobAccessDenied(
-                        "User {} does not have permission to create/edit {} jobs".format(
-                            job.user.name, job.jobname
-                        )
+                        f"User {job.user.name} does not have permission to create/edit {job.jobname} jobs"
                     )
     # else:
     #    logger.debug('Permissions not checked for job {}/{}'.format(job.jobname, job.jobid))
@@ -136,7 +135,7 @@ def check_owner(job):
                 pass
             else:
                 raise JobAccessDenied(
-                    "User {} is not the owner of the job".format(job.user.name)
+                    f"User {job.user.name} is not the owner of the job"
                 )
 
 
@@ -150,7 +149,7 @@ def upper2underscore(inputstring):
 # Job class
 
 
-class Job(object):
+class Job:
     """Job with UWS attributes and methods to create, set and show job information"""
 
     # Each Job contains:
@@ -216,9 +215,7 @@ class Job(object):
             jobs = self.storage.get_list(self, phase=ACTIVE_PHASES, where_owner=True)
             if NJOBS_MAX and len(jobs) >= NJOBS_MAX:
                 raise TooManyJobs(
-                    "Maximum number of active jobs reached for {} ({})".format(
-                        user.name, NJOBS_MAX
-                    )
+                    f"Maximum number of active jobs reached for {user.name} ({NJOBS_MAX})"
                 )
             # Create a new PENDING job and save to storage
             now = dt.datetime.now()
@@ -275,7 +272,7 @@ class Job(object):
             self.results = {}
 
         if not self.jobname:
-            logger.debug("Attribute jobname not given for jobid {}".format(self.jobid))
+            logger.debug(f"Attribute jobname not given for jobid {self.jobid}")
 
     # ----------
     # Method to read job description from JDL file
@@ -299,7 +296,7 @@ class Job(object):
         else:
             # The result filename is the name given as default in the JDL
             fname = self.jdl.content["generated"][rname]["default"]
-        logger.debug("Result filename for {} is {}".format(rname, fname))
+        logger.debug(f"Result filename for {rname} is {fname}")
         return fname
 
     # ----------
@@ -348,9 +345,7 @@ class Job(object):
                 f.save(os.path.join(upload_dir, f.filename))
                 # value = f.filename
                 logger.info(
-                    'Input "{}" is a file and was downloaded ({})'.format(
-                        pname, f.filename
-                    )
+                    f'Input "{pname}" is a file and was downloaded ({f.filename})'
                 )
                 # Check if file already exists in entity store (hash + ID in name or jobid) and add in Used table
                 entity = self.storage.register_entity(
@@ -374,14 +369,12 @@ class Job(object):
                     # Get value from post
                     value = post.pop(pname)
                     logger.info(
-                        'Input "{}" is a value (or an identifier, or a URL): {}'.format(
-                            pname, value
-                        )
+                        f'Input "{pname}" is a value (or an identifier, or a URL): {value}'
                     )
                 else:
                     # Set value to its default
                     value = self.jdl.content["used"][pname]["default"]
-                    logger.info('Input "{}" set by default: {}'.format(pname, value))
+                    logger.info(f'Input "{pname}" set by default: {value}')
                 # 3/ Try to convert value/ID to a URL and upload
                 url = self.jdl.content["used"][pname]["url"]
                 if url:
@@ -402,9 +395,7 @@ class Job(object):
                             )
                             # Parameter value is set to the file name on server
                             logger.info(
-                                'Input "{}" is a URL and was downloaded : {}'.format(
-                                    pname, furl
-                                )
+                                f'Input "{pname}" is a URL and was downloaded : {furl}'
                             )
                             entity = self.storage.register_entity(
                                 file_name=filename,
@@ -422,12 +413,10 @@ class Job(object):
                             value = "file://" + filename
                     except Exception as e:
                         logger.warning(
-                            'Cannot upload URL for input "{}": {}\n{}'.format(
-                                pname, furl, e
-                            )
+                            f'Cannot upload URL for input "{pname}": {furl}\n{e}'
                         )
                         raise UserWarning(
-                            'cannot upload URL for input "{}": {}'.format(pname, furl)
+                            f'cannot upload URL for input "{pname}": {furl}'
                         )
                 # TODO: 4/ check if value is an ID that already exists in the entity store ? other attribute ?
                 if not entity:
@@ -524,7 +513,7 @@ class Job(object):
         # Used
         params.append("# Used")
         for pname, pdict in self.jdl.content.get("used", {}).items():
-            if not pname in self.parameters:
+            if pname not in self.parameters:
                 pvalue = pdict["default"]
                 if get_files:
                     if any(s in pvalue for s in ["http://", "https://"]):
@@ -538,7 +527,7 @@ class Job(object):
         # Results
         params.append("# Results")
         for rname, rdict in self.jdl.content.get("generated", {}).items():
-            if not rname in self.parameters:
+            if rname not in self.parameters:
                 rvalue = rdict["default"]
                 params.append(rname + '="' + rvalue + '"')
         # Other parameters
@@ -574,7 +563,7 @@ class Job(object):
                     # Convert to URL for XML output
                     url = ARCHIVE_URL.format(ID=pdict["entity_id"])
                     if url.startswith("/"):
-                        url = "{}{}".format(BASE_URL, url)
+                        url = f"{BASE_URL}{url}"
                     value = url
                 value = urllib.parse.quote_plus(urllib.parse.unquote_plus(value))
                 by_ref = str(pdict["byref"]).lower()
@@ -662,7 +651,7 @@ class Job(object):
         try:
             return ETree.tostring(xml_job)
         except Exception as e:
-            raise UserWarning("Cannot serialize job {}: {}".format(self.jobid, e))
+            raise UserWarning(f"Cannot serialize job {self.jobid}: {e}")
 
     # ----------
     # Metadata management
@@ -684,7 +673,7 @@ class Job(object):
         # TODO: retrieve entity identifiers from internal provenance if present
         ip_name = os.path.join(JOBDATA_PATH, self.jobid, "internal_provenance.json")
         if os.path.isfile(ip_name):
-            with open(ip_name, "r") as f:
+            with open(ip_name) as f:
                 pdoc = yaml.safe_load(f)
             if "entity" in pdoc:
                 for eid in pdoc["entity"]:
@@ -712,13 +701,13 @@ class Job(object):
                             **einfo,
                         )
                         logger.info(
-                            "Entity added to job {}: {}".format(self.jobid, str(entity))
+                            f"Entity added to job {self.jobid}: {str(entity)}"
                         )
         # Read results.yml to know generated results (those that are located in the results directory)
         rf_name = os.path.join(JOBDATA_PATH, self.jobid, "results.yml")
         result_list = {}
         if os.path.isfile(rf_name):
-            with open(rf_name, "r") as rf:
+            with open(rf_name) as rf:
                 result_list = yaml.safe_load(rf)
         for rname in result_list:
             rinfo = dict(result_list[rname])
@@ -740,7 +729,7 @@ class Job(object):
                 rid = rname
             self.add_result_entry(rid, entity)
             # ['access_url'], entity['content_type'], entity['entity_id'])
-            logger.info("Result added to job {}: {}".format(self.jobid, rid))
+            logger.info(f"Result added to job {self.jobid}: {rid}")
 
         # access_url computed for UWS server (retrieve endpoint with entity_id)
         #                     or distant server (url given with $ID to replace by entity_id)
@@ -759,13 +748,11 @@ class Job(object):
 
     def add_logs(self):
         # Link job logs stdout and stderr (added as a result)
-        rfdir = "{}/{}/".format(JOBDATA_PATH, self.jobid)
+        rfdir = f"{JOBDATA_PATH}/{self.jobid}/"
         for rname in ["stdout", "stderr"]:
             rfname = rname + ".log"
             if os.path.isfile(rfdir + rfname):
-                url = "{}/{}/{}/{}/{}".format(
-                    BASE_URL, UWS_SERVER_ENDPOINT, self.jobname, self.jobid, rname
-                )
+                url = f"{BASE_URL}/{UWS_SERVER_ENDPOINT}/{self.jobname}/{self.jobid}/{rname}"
                 rattr = {
                     "access_url": url,
                     "content_type": "text/plain",
@@ -775,7 +762,7 @@ class Job(object):
                 }
                 self.add_result_entry(rname, rattr)
             else:
-                logger.warning("Log file missing: {}".format(rfname))
+                logger.warning(f"Log file missing: {rfname}")
 
     def add_provenance(self):
         # Create PROV files (added as a result)
@@ -783,7 +770,7 @@ class Job(object):
         if GENERATE_PROV:
             from . import provenance
 
-            rfdir = "{}/{}/".format(JOBDATA_PATH, self.jobid)
+            rfdir = f"{JOBDATA_PATH}/{self.jobid}/"
             ptypes = ["json", "xml", "svg"]
             content_types = {
                 "json": "application/json",
@@ -805,9 +792,7 @@ class Job(object):
                 rname = "prov" + ptype
                 rfname = "provenance." + ptype
                 if os.path.isfile(rfdir + rfname):
-                    url = "{}/{}/{}/{}/prov{}".format(
-                        BASE_URL, UWS_SERVER_ENDPOINT, self.jobname, self.jobid, ptype
-                    )
+                    url = f"{BASE_URL}/{UWS_SERVER_ENDPOINT}/{self.jobname}/{self.jobid}/prov{ptype}"
                     rattr = {
                         "access_url": url,
                         "content_type": content_types[ptype],
@@ -817,7 +802,7 @@ class Job(object):
                     }
                     self.add_result_entry(rname, rattr)
                 else:
-                    logger.warning("Provenance file missing: {}".format(rfname))
+                    logger.warning(f"Provenance file missing: {rfname}")
 
     # ----------
     # Actions on a job
@@ -832,14 +817,13 @@ class Job(object):
         if self.phase == "PENDING":
             process_id = self.manager.start(self)
         else:
-            raise UserWarning("Job {} is not in the PENDING state".format(self.jobid))
+            raise UserWarning(f"Job {self.jobid} is not in the PENDING state")
         try:
             # Test if process_id is an integer
             process_id = int(process_id)
         except ValueError:
             raise RuntimeError(
-                "Bad process_id returned for job {}:\nprocess_id:\n{}"
-                "".format(self.jobid, process_id)
+                f"Bad process_id returned for job {self.jobid}:\nprocess_id:\n{process_id}"
             )
         self.process_id = process_id
         # No need to change times: job not started yet
@@ -867,9 +851,7 @@ class Job(object):
             self.manager.abort(self)
         else:
             raise UserWarning(
-                "Job {} cannot be aborted while in phase {}".format(
-                    self.jobid, self.phase
-                )
+                f"Job {self.jobid} cannot be aborted while in phase {self.phase}"
             )
         # Change phase to ABORTED
         self.change_status("ABORTED", "Job aborted by user " + self.user.name)
@@ -879,7 +861,7 @@ class Job(object):
 
         Job can be archived at any time.
         """
-        self.change_status("ARCHIVED", "Job archived (phase was {})".format(self.phase))
+        self.change_status("ARCHIVED", f"Job archived (phase was {self.phase})")
 
     def delete(self):
         """Delete job
@@ -890,15 +872,15 @@ class Job(object):
             # Send command to manager
             self.manager.delete(self)
         # Remove uploaded files corresponding to jobid if needed
-        uploads_dir = "{}/{}".format(UPLOADS_PATH, self.jobid)
+        uploads_dir = f"{UPLOADS_PATH}/{self.jobid}"
         if os.path.isdir(uploads_dir):
             shutil.rmtree(uploads_dir)
         # Remove jobdata files corresponding to jobid if needed
-        jobdata_dir = "{}/{}".format(JOBDATA_PATH, self.jobid)
+        jobdata_dir = f"{JOBDATA_PATH}/{self.jobid}"
         if os.path.isdir(jobdata_dir):
             shutil.rmtree(jobdata_dir)
         # Remove results files corresponding to jobid if needed
-        results_dir = "{}/{}".format(RESULTS_PATH, self.jobid)
+        results_dir = f"{RESULTS_PATH}/{self.jobid}"
         if os.path.isdir(results_dir):
             shutil.rmtree(results_dir)
         # Remove job and entities from storage
@@ -949,20 +931,18 @@ class Job(object):
                 "ARCHIVED",
             ]:
                 raise UserWarning(
-                    "Phase change not allowed: {} --> {}".format(self.phase, new_phase)
+                    f"Phase change not allowed: {self.phase} --> {new_phase}"
                 )
         else:
             # phase is in ['COMPLETED', 'ABORTED', 'ARCHIVED']
             if new_phase in ["ARCHIVED"]:
                 if self.phase not in ["COMPLETED", "ABORTED", "ERROR"]:
                     raise UserWarning(
-                        "Job {} cannot be updated to {} while in phase {}"
-                        "".format(self.jobid, new_phase, self.phase)
+                        f"Job {self.jobid} cannot be updated to {new_phase} while in phase {self.phase}"
                     )
             else:
                 raise UserWarning(
-                    "Job {} cannot be updated to {} while in terminal phase {}"
-                    "".format(self.jobid, new_phase, self.phase)
+                    f"Job {self.jobid} cannot be updated to {new_phase} while in terminal phase {self.phase}"
                 )
         # Set start_time
         if new_phase in ["QUEUED"]:
@@ -976,9 +956,9 @@ class Job(object):
                     # Add results, logs, provenance (if they exist...) to job control db
                     self.add_results()
                     self.add_logs()
-                except Exception as e:
+                except Exception:
                     self.phase = "ERROR"
-                    error = "Cannot get jobdata for job {}".format(self.jobid)
+                    error = f"Cannot get jobdata for job {self.jobid}"
                     logger.error(error)
                     if self.error:
                         self.error += ". " + error
@@ -1022,8 +1002,8 @@ class Job(object):
             try:
                 self.add_provenance()
                 self.storage.save(self)
-            except Exception as e:
-                error = "Cannot generate provenance files for job {}".format(self.jobid)
+            except Exception:
+                error = f"Cannot generate provenance files for job {self.jobid}"
                 logger.warning(error, exc_info=True)
 
 
@@ -1031,7 +1011,7 @@ class Job(object):
 # JobList class
 
 
-class JobList(object):
+class JobList:
     """JobList with attributes and function to fetch from storage and return as XML"""
 
     def __init__(
@@ -1113,7 +1093,7 @@ class JobList(object):
         try:
             return ETree.tostring(xml_jobs)
         except Exception as e:
-            raise UserWarning("Cannot serialize joblist: {}".format(e))
+            raise UserWarning(f"Cannot serialize joblist: {e}")
 
     def to_html(self):
         """Returns the HTML representation of jobs"""

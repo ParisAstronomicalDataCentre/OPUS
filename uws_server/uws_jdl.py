@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Copyright (c) 2016 by Mathieu Servillat
 # Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
 """
@@ -7,13 +6,14 @@ Interfaces between UWS server and job description
 """
 
 import collections
-import inspect
 import copy
-import json
-import yaml
-import lxml.etree as ETree
 import glob
-import datetime as dt
+import inspect
+import json
+
+import lxml.etree as ETree
+import yaml
+
 from .settings import *
 
 # ---------
@@ -82,7 +82,7 @@ test_job = {
 # Job Description Language
 
 
-class JDLFile(object):
+class JDLFile:
     """
     Manage job description. This class defines required functions executed
     by the UWS server: save(), read().
@@ -106,22 +106,22 @@ class JDLFile(object):
     # scripts_path = '.'
 
     def _get_filename(self, jobname, jobid=None):
-        fn = "{}/{}{}".format(self.jdl_path, jobname, self.extension)
+        fn = f"{self.jdl_path}/{jobname}{self.extension}"
         if jobid:
-            fn_jobid = "{}/{}/{}{}".format(JOBDATA_PATH, jobid, jobname, self.extension)
+            fn_jobid = f"{JOBDATA_PATH}/{jobid}/{jobname}{self.extension}"
             if os.path.isfile(fn_jobid):
                 fn = fn_jobid
         # logger.info('JDL filename: ' + fn)
         return fn
 
     def get_jobnames(self):
-        flist = glob.glob("{}/*{}".format(self.jdl_path, self.extension))
+        flist = glob.glob(f"{self.jdl_path}/*{self.extension}")
         # Check if JDL file exists on server?
         jobnames_jdl = [f.split("/")[-1].split(self.extension)[0] for f in flist]
         jobnames_all = [
             j
             for j in jobnames_jdl
-            if os.path.isfile("{}/{}.sh".format(self.scripts_path, j))
+            if os.path.isfile(f"{self.scripts_path}/{j}.sh")
         ]
         return jobnames_all
 
@@ -144,18 +144,18 @@ class JDLFile(object):
         )
 
     def save_script(self, jobname, script):
-        script_fname = "{}/{}.sh".format(self.scripts_path, jobname)
+        script_fname = f"{self.scripts_path}/{jobname}.sh"
         with open(script_fname, "w") as f:
             f.write(script.replace("\r", ""))
             logger.info("Job script saved: " + script_fname)
 
     def read_script(self, jobname):
-        script_fname = "{}/{}.sh".format(self.scripts_path, jobname)
+        script_fname = f"{self.scripts_path}/{jobname}.sh"
         if os.path.isfile(script_fname):
-            with open(script_fname, "r") as f:
+            with open(script_fname) as f:
                 self.content["script"] = f.read()
         else:
-            logger.warning("Script not found for {}".format(jobname))
+            logger.warning(f"Script not found for {jobname}")
 
     def set_from_post(self, post, user):
         # now = dt.datetime.now()
@@ -195,7 +195,7 @@ class JDLFile(object):
                 pisfile = post.get("used_isfile_" + str(iused), "")
                 purl = post.get("used_url_" + str(iused), "")
                 if pisfile == "File":
-                    purl = "file://$ID".format(pname)
+                    purl = "file://$ID"
                 used[pname] = {
                     "content_type": ptype,  # ', '.join(ptype),
                     "multiplicity": post.get("used_multiplicity_" + str(iused), ""),
@@ -271,7 +271,7 @@ class JSONFile(JDLFile):
         """Read job description from file"""
         raw_jobname = jobname.split("/")[-1]  # remove tmp/ prefix
         fname = self._get_filename(jobname)
-        with open(fname, "r") as f:
+        with open(fname) as f:
             # self.content = json.load(f)
             self.content.update(yaml.safe_load(f))
         # Load script in job_def
@@ -361,7 +361,7 @@ class VOTFile(JDLFile):
                     "value": str(self.content.get(key, "")),
                     "arraysize": "*",
                     "datatype": "char",
-                    "utype": "voprov:ActivityDescription.{}".format(key),
+                    "utype": f"voprov:ActivityDescription.{key}",
                 },
             )
         # Contact information
@@ -371,10 +371,10 @@ class VOTFile(JDLFile):
                 "PARAM",
                 attrib={
                     "name": "contact_" + key,
-                    "value": self.content.get("contact_{}".format(key), ""),
+                    "value": self.content.get(f"contact_{key}", ""),
                     "arraysize": "*",
                     "datatype": "char",
-                    "utype": "voprov:Agent.{}".format(key),
+                    "utype": f"voprov:Agent.{key}",
                 },
             )
         # UWS parameters
@@ -386,7 +386,7 @@ class VOTFile(JDLFile):
                     "name": key,
                     "value": self.content.get(key, 1),
                     "datatype": "int",
-                    "utype": "uws:Job.{}".format(key),
+                    "utype": f"uws:Job.{key}",
                 },
             )
         # Script
@@ -560,7 +560,7 @@ class VOTFile(JDLFile):
                 "Generated": "generated",
             }
             try:
-                with open(fname, "r") as f:
+                with open(fname) as f:
                     jdl_string = f.read()
                 jdl_tree = ETree.fromstring(jdl_string)
                 # print jdl_tree
@@ -568,7 +568,7 @@ class VOTFile(JDLFile):
                 xmlns = "{" + jdl_tree.nsmap[None] + "}"
                 # print xmlns
                 # Read parameters description
-                resource_block = jdl_tree.find(".//{}RESOURCE".format(xmlns))
+                resource_block = jdl_tree.find(f".//{xmlns}RESOURCE")
                 # print resource_block
                 job_def = {
                     "name": resource_block.get("name"),
@@ -578,12 +578,12 @@ class VOTFile(JDLFile):
                 }
                 for elt in resource_block.getchildren():
 
-                    if elt.tag == "{}DESCRIPTION".format(xmlns):
+                    if elt.tag == f"{xmlns}DESCRIPTION":
                         job_def["annotation"] = elt.text
                         # print elt.text
-                    if elt.tag == "{}LINK".format(xmlns):
+                    if elt.tag == f"{xmlns}LINK":
                         job_def["doculink"] = elt.get("href")
-                    if elt.tag == "{}PARAM".format(xmlns):
+                    if elt.tag == f"{xmlns}PARAM":
                         # TODO: set datatype of value in the dictionary?
                         # print elt.get('name'), elt.get('value')
                         job_def[elt.get("name")] = elt.get("value", "")
@@ -593,14 +593,14 @@ class VOTFile(JDLFile):
                         #    if subelt.tag == '{}DESCRIPTION'.format(xmlns):
                         #        logger.debug(subelt.text)
 
-                    if elt.tag == "{}GROUP".format(xmlns):
+                    if elt.tag == f"{xmlns}GROUP":
                         group = groups[elt.get("name")]
                         # print group
                         order = 0
                         keys = []
                         if group == "parameters":
                             for p in elt:
-                                if p.tag == "{}PARAM".format(xmlns):
+                                if p.tag == f"{xmlns}PARAM":
                                     order += 1
                                     name = p.get("name")
                                     keys.append(name)
@@ -625,16 +625,16 @@ class VOTFile(JDLFile):
                                         "utype": p.get("utype", ""),
                                     }
                                     for pp in p:
-                                        if pp.tag == "{}DESCRIPTION".format(xmlns):
+                                        if pp.tag == f"{xmlns}DESCRIPTION":
                                             item["annotation"] = pp.text
-                                        if pp.tag == "{}VALUES".format(xmlns):
+                                        if pp.tag == f"{xmlns}VALUES":
                                             options = []
                                             for ppp in pp:
-                                                if ppp.tag == "{}MIN".format(xmlns):
+                                                if ppp.tag == f"{xmlns}MIN":
                                                     item["min"] = ppp.get("value")
-                                                if ppp.tag == "{}MAX".format(xmlns):
+                                                if ppp.tag == f"{xmlns}MAX":
                                                     item["max"] = ppp.get("value")
-                                                if ppp.tag == "{}OPTION".format(xmlns):
+                                                if ppp.tag == f"{xmlns}OPTION":
                                                     options.append(ppp.get("value"))
                                             item["options"] = ",".join(options)
                                     job_def[group][name] = item
@@ -666,12 +666,12 @@ class VOTFile(JDLFile):
                                         .get("annotation", item["annotation"])
                                     )
                                 for pp in p:
-                                    if pp.tag == "{}PARAM".format(xmlns):
+                                    if pp.tag == f"{xmlns}PARAM":
                                         if pp.get("name"):
                                             item[pp.get("name")] = pp.get("value")
-                                    if pp.tag == "{}DESCRIPTION".format(xmlns):
+                                    if pp.tag == f"{xmlns}DESCRIPTION":
                                         item["annotation"] = pp.text
-                                    if pp.tag == "{}LINK".format(xmlns):
+                                    if pp.tag == f"{xmlns}LINK":
                                         purl = pp.get("href")
                                         item["url"] = purl
                                         if "file://" in purl:
@@ -698,22 +698,22 @@ class VOTFile(JDLFile):
                                         .get("annotation")
                                     )
                                 for pp in p:
-                                    if pp.tag == "{}PARAM".format(xmlns):
+                                    if pp.tag == f"{xmlns}PARAM":
                                         if pp.get("name"):
                                             item[pp.get("name")] = pp.get("value")
-                                    if pp.tag == "{}DESCRIPTION".format(xmlns):
+                                    if pp.tag == f"{xmlns}DESCRIPTION":
                                         item["annotation"] = pp.text
                                 job_def[group][name] = item
                         job_def[group + "_keys"] = keys
                 # Log votable access
                 # frame, filename, line_number, function_name, lines, index = inspect.stack()[1]
                 # logger.debug('VOTable read at {} ({}:{}): {}'.format(function_name, filename, line_number, fname))
-            except IOError:
+            except OSError:
                 # if file does not exist, continue and return an empty dict
-                logger.debug("VOTable not found for job {}".format(jobname))
-                raise UserWarning("VOTable not found for job {}".format(jobname))
+                logger.debug(f"VOTable not found for job {jobname}")
+                raise UserWarning(f"VOTable not found for job {jobname}")
             except Exception as e:
-                logger.error("{}".format(e))
+                logger.error(f"{e}")
                 raise
                 # return {}
             self.content.update(job_def)
@@ -906,7 +906,7 @@ class VOTFile(JDLFile):
         # '{}/{}{}'.format(JDL_PATH, job.jobname, self.extension)
         groups = {"InputParams": "parameters", "Used": "used", "Generated": "generated"}
         try:
-            with open(fname, "r") as f:
+            with open(fname) as f:
                 jdl_string = f.read()
             # print jdl_string
             jdl_tree = ETree.fromstring(jdl_string)
@@ -916,7 +916,7 @@ class VOTFile(JDLFile):
             # print xmlns
             # Read parameters description
             resource_block = jdl_tree.find(
-                ".//{}RESOURCE[@ID='{}']".format(xmlns, raw_jobname)
+                f".//{xmlns}RESOURCE[@ID='{raw_jobname}']"
             )
             # print resource_block
             job_def = {
@@ -927,23 +927,23 @@ class VOTFile(JDLFile):
             }
             for elt in resource_block.getchildren():
 
-                if elt.tag == "{}DESCRIPTION".format(xmlns):
+                if elt.tag == f"{xmlns}DESCRIPTION":
                     job_def["annotation"] = elt.text
                     # print elt.text
-                if elt.tag == "{}LINK".format(xmlns):
+                if elt.tag == f"{xmlns}LINK":
                     job_def["doculink"] = elt.get("href")
-                if elt.tag == "{}PARAM".format(xmlns):
+                if elt.tag == f"{xmlns}PARAM":
                     # TODO: set datatype of value in the dictionary?
                     # print elt.get('name'), elt.get('value')
                     job_def[elt.get("name")] = elt.get("value", "")
-                if elt.tag == "{}GROUP".format(xmlns):
+                if elt.tag == f"{xmlns}GROUP":
                     group = groups[elt.get("name")]
                     # print group
                     order = 0
                     keys = []
                     if group == "parameters":
                         for p in elt:
-                            if p.tag == "{}PARAM".format(xmlns):
+                            if p.tag == f"{xmlns}PARAM":
                                 order += 1
                                 name = p.get("name")
                                 keys.append(name)
@@ -968,16 +968,16 @@ class VOTFile(JDLFile):
                                     "utype": p.get("utype", ""),
                                 }
                                 for pp in p:
-                                    if pp.tag == "{}DESCRIPTION".format(xmlns):
+                                    if pp.tag == f"{xmlns}DESCRIPTION":
                                         item["annotation"] = pp.text
-                                    if pp.tag == "{}VALUES".format(xmlns):
+                                    if pp.tag == f"{xmlns}VALUES":
                                         options = []
                                         for ppp in pp:
-                                            if ppp.tag == "{}MIN".format(xmlns):
+                                            if ppp.tag == f"{xmlns}MIN":
                                                 item["min"] = ppp.get("value")
-                                            if ppp.tag == "{}MAX".format(xmlns):
+                                            if ppp.tag == f"{xmlns}MAX":
                                                 item["max"] = ppp.get("value")
-                                            if ppp.tag == "{}OPTION".format(xmlns):
+                                            if ppp.tag == f"{xmlns}OPTION":
                                                 options.append(ppp.get("value"))
                                         item["options"] = ",".join(options)
                                 job_def[group][name] = item
@@ -1010,10 +1010,10 @@ class VOTFile(JDLFile):
                                     "url": "",
                                 }
                             for pp in p:
-                                if pp.tag == "{}DESCRIPTION".format(xmlns):
+                                if pp.tag == f"{xmlns}DESCRIPTION":
                                     if not ref:
                                         item["annotation"] = pp.text
-                                if pp.tag == "{}LINK".format(xmlns):
+                                if pp.tag == f"{xmlns}LINK":
                                     purl = pp.get("href")
                                     item["url"] = purl
                                     if "file://" in purl:
@@ -1042,19 +1042,19 @@ class VOTFile(JDLFile):
                                     "annotation": "",  # filled below
                                 }
                                 for pp in p:
-                                    if pp.tag == "{}DESCRIPTION".format(xmlns):
+                                    if pp.tag == f"{xmlns}DESCRIPTION":
                                         item["annotation"] = pp.text
                             job_def[group][name] = item
                     job_def[group + "_keys"] = keys
             # Log votable access
             # frame, filename, line_number, function_name, lines, index = inspect.stack()[1]
             # logger.debug('VOTable read at {} ({}:{}): {}'.format(function_name, filename, line_number, fname))
-        except IOError:
+        except OSError:
             # if file does not exist, continue and return an empty dict
-            logger.debug("VOTable not found for job {}".format(jobname))
-            raise UserWarning("VOTable not found for job {}".format(jobname))
+            logger.debug(f"VOTable not found for job {jobname}")
+            raise UserWarning(f"VOTable not found for job {jobname}")
         except Exception as e:
-            logger.error("{}".format(e))
+            logger.error(f"{e}")
             raise
             # return {}
         self.content.update(job_def)
@@ -1122,13 +1122,13 @@ class WADLFile(JDLFile):
             ETree.SubElement(roelt, "doc").text = r.get("annotation", "")
             jdl_ropts.append(roelt)
         # Read WADL UWS template as XML Tree
-        filename = "{}/uws_template.wadl".format(JDL_PATH)
-        with open(filename, "r") as f:
+        filename = f"{JDL_PATH}/uws_template.wadl"
+        with open(filename) as f:
             jdl_string = f.read()
         jdl_tree = ETree.fromstring(jdl_string)
         xmlns = "{" + jdl_tree.nsmap[None] + "}"
         # Insert raw_jobname as the resource path
-        joblist_block = jdl_tree.find(".//{}resource[@id='joblist']".format(xmlns))
+        joblist_block = jdl_tree.find(f".//{xmlns}resource[@id='joblist']")
         joblist_block.set("path", raw_jobname)
         joblist_block.set("doculink", self.content["doculink"])
         joblist_block.set("contact_name", self.content["contact_name"])
@@ -1136,7 +1136,7 @@ class WADLFile(JDLFile):
         joblist_block.set("contact_email", self.content["contact_email"])
         # Insert job description
         job_list_description_block = jdl_tree.find(
-            ".//{}doc[@title='description']".format(xmlns)
+            f".//{xmlns}doc[@title='description']"
         )
         job_list_description_block.text = self.content["annotation"]  # .decode()
         # Insert parameters
@@ -1147,27 +1147,27 @@ class WADLFile(JDLFile):
             "set_job_parameters",
         ]:
             params_block[block] = jdl_tree.find(
-                ".//{}request[@id='{}']".format(xmlns, block)
+                f".//{xmlns}request[@id='{block}']"
             )
             for pelt in jdl_params:
                 params_block[block].append(copy.copy(pelt))
         # Insert parameters as options
         param_opts_block = jdl_tree.find(
-            ".//{}param[@name='parameter-name']".format(xmlns)
+            f".//{xmlns}param[@name='parameter-name']"
         )
         for poelt in jdl_popts:
             param_opts_block.append(poelt)
         # Insert results as options
-        result_opts_block = jdl_tree.find(".//{}param[@name='result-id']".format(xmlns))
+        result_opts_block = jdl_tree.find(f".//{xmlns}param[@name='result-id']")
         for roelt in jdl_ropts:
             result_opts_block.append(roelt)
         # Insert default execution duration
         execdur_block = jdl_tree.find(
-            ".//{}param[@name='EXECUTIONDURATION']".format(xmlns)
+            f".//{xmlns}param[@name='EXECUTIONDURATION']"
         )
         execdur_block.set("default", self.content["executionduration"])
         # Insert default quote
-        quote_block = jdl_tree.find(".//{}representation[@id='quote']".format(xmlns))
+        quote_block = jdl_tree.find(f".//{xmlns}representation[@id='quote']")
         quote_block.set("default", self.content["quote"])
         jdl_content = ETree.tostring(jdl_tree, pretty_print=True)
         jdl_fname = self._get_filename(jobname)
@@ -1183,14 +1183,14 @@ class WADLFile(JDLFile):
         results = collections.OrderedDict()
         used = collections.OrderedDict()
         try:
-            with open(fname, "r") as f:
+            with open(fname) as f:
                 jdl_string = f.read()
             jdl_tree = ETree.fromstring(jdl_string)
             # Get default namespace
             xmlns = "{" + jdl_tree.nsmap[None] + "}"
             # Read parameters description
             params_block = jdl_tree.find(
-                ".//{}request[@id='create_job_parameters']".format(xmlns)
+                f".//{xmlns}request[@id='create_job_parameters']"
             )
             for p in params_block.getchildren():
                 pname = p.get("name")
@@ -1212,7 +1212,7 @@ class WADLFile(JDLFile):
                         }
                         used[pname] = item
             # Read results description
-            results_block = jdl_tree.find(".//{}param[@name='result-id']".format(xmlns))
+            results_block = jdl_tree.find(f".//{xmlns}param[@name='result-id']")
             for r in results_block.getchildren():
                 if r.get("value") not in [None]:
                     ctype = r.get("content_type")
@@ -1231,23 +1231,23 @@ class WADLFile(JDLFile):
             }
             # Read job description
             joblist_description_block = jdl_tree.find(
-                ".//{}doc[@title='description']".format(xmlns)
+                f".//{xmlns}doc[@title='description']"
             )
             job_def["annotation"] = joblist_description_block.text
             # Read job attributes
-            joblist_block = jdl_tree.find(".//{}resource[@id='joblist']".format(xmlns))
+            joblist_block = jdl_tree.find(f".//{xmlns}resource[@id='joblist']")
             job_def["doculink"] = joblist_block.get("doculink")
             job_def["contact_name"] = joblist_block.get("contact_name")
             # job_def['contact_affil'] = joblist_block.get('contact_affil')
             job_def["contact_email"] = joblist_block.get("contact_email")
             # Read execution duration
             execdur_block = jdl_tree.find(
-                ".//{}param[@name='EXECUTIONDURATION']".format(xmlns)
+                f".//{xmlns}param[@name='EXECUTIONDURATION']"
             )
             job_def["executionduration"] = execdur_block.get("default")
             # Read default quote
             quote_block = jdl_tree.find(
-                ".//{}representation[@id='quote']".format(xmlns)
+                f".//{xmlns}representation[@id='quote']"
             )
             job_def["quote"] = quote_block.get("default")
             # Log wadl access
@@ -1255,10 +1255,10 @@ class WADLFile(JDLFile):
                 1
             ]
             # logger.debug('WADL read at {} ({}:{}): {}'.format(function_name, filename, line_number, fname))
-        except IOError:
+        except OSError:
             # if file does not exist, continue and return an empty dict
-            logger.debug("WADL not found for job {}".format(jobname))
-            raise UserWarning("WADL not found for job {}".format(jobname))
+            logger.debug(f"WADL not found for job {jobname}")
+            raise UserWarning(f"WADL not found for job {jobname}")
             # return {}
         self.content.update(job_def)
 
@@ -1268,7 +1268,7 @@ class WADLFile(JDLFile):
 
 
 def update_vot(jobname):
-    logger.info("Updating VOTFile for {}".format(jobname))
+    logger.info(f"Updating VOTFile for {jobname}")
     vot = VOTFile()
     vot.read_old(jobname)
     vot.content["executionDuration"] = vot.content["executionduration"]
@@ -1277,7 +1277,7 @@ def update_vot(jobname):
 
 
 def wadl2vot(jobname):
-    logger.info("Convert WADLFile to VOTFile for {}".format(jobname))
+    logger.info(f"Convert WADLFile to VOTFile for {jobname}")
     wadl = WADLFile()
     vot = VOTFile()
     wadl.read(jobname)
@@ -1287,7 +1287,7 @@ def wadl2vot(jobname):
 
 
 def vot2json(jobname):
-    logger.info("Convert VOTFile to JSONFile for {}".format(jobname))
+    logger.info(f"Convert VOTFile to JSONFile for {jobname}")
     js = JSONFile()
     vot = VOTFile()
     vot.read(jobname)

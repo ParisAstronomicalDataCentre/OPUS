@@ -1,13 +1,13 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Copyright (c) 2016 by Mathieu Servillat
 # Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
 """
 Unit tests for UWS server
 """
 
-import unittest
 import datetime as dt
+import unittest
+
 from webtest import TestApp
 
 # Redefine LOG_FILE, SQLITE_FILE, MANAGER
@@ -16,7 +16,7 @@ now_str = now.isoformat().split(".")[0]
 ALLOW_ANONYMOUS = True
 CHECK_PERMISSIONS = False
 CHECK_OWNER = False
-SQLITE_FILE_NAME = "job_database_test_{}.db".format(now_str)
+SQLITE_FILE_NAME = f"job_database_test_{now_str}.db"
 LOG_FILE_SUFFIX = "_test_" + now_str
 MANAGER = ""
 

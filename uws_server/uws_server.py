@@ -1,29 +1,28 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Copyright (c) 2016 by Mathieu Servillat
 # Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
 """ """
 
-import requests
-import traceback
-import glob
-import re
-import io
-import sys
 import copy
+import io
+import re
 import smtplib
-from email.mime.text import MIMEText
+import sys
 import threading
+import traceback
+from email.mime.text import MIMEText
 from subprocess import CalledProcessError
+
+import requests
 from bottle import (
     Bottle,
-    request,
-    response,
+    HTTPError,
     abort,
     redirect,
+    request,
+    response,
     run,
     static_file,
-    HTTPError,
 )
 
 from .uws_classes import *
@@ -152,13 +151,11 @@ def is_job_server(func):
         matching = [x for x in JOB_SERVERS if x in ip]
         if matching:
             logger.info(
-                "Access authorized to {} for {} ({})".format(
-                    request.urlparts.path, ip, JOB_SERVERS[matching[0]]
-                )
+                f"Access authorized to {request.urlparts.path} for {ip} ({JOB_SERVERS[matching[0]]})"
             )
             pass
         else:
-            abort_403("{} is not a job server".format(ip, request.urlparts.path))
+            abort_403(f"{ip} is not a job server")
         return func(*args, **kwargs)
 
     return is_job_server_wrapper
@@ -173,13 +170,11 @@ def is_client_trusted(func):
         matching = [x for x in TRUSTED_CLIENTS if x in ip]
         if matching:
             logger.info(
-                "Access authorized to {} for {} ({})".format(
-                    request.urlparts.path, ip, TRUSTED_CLIENTS[matching[0]]
-                )
+                f"Access authorized to {request.urlparts.path} for {ip} ({TRUSTED_CLIENTS[matching[0]]})"
             )
             pass
         else:
-            abort_403("{} is not a trusted client".format(ip, request.urlparts.path))
+            abort_403(f"{ip} is not a trusted client")
         return func(*args, **kwargs)
 
     return is_client_trusted_wrapper
@@ -191,7 +186,7 @@ def is_localhost(func):
     def is_localhost_wrapper(*args, **kwargs):
         ip = get_real_ip()
         if ip != BASE_IP and ip != "::1" and ip != "127.0.0.1":
-            abort_403("{} is not localhost".format(ip, request.urlparts.path))
+            abort_403(f"{ip} is not localhost")
         return func(*args, **kwargs)
 
     return is_localhost_wrapper
@@ -206,7 +201,7 @@ def is_admin(func):
     def is_admin_wrapper(*args, **kwargs):
         user = set_user()
         if not user.check_admin():
-            abort_403("{} is not an admin".format(user.name, request.urlparts.path))
+            abort_403(f"{user.name} is not an admin")
         return func(*args, **kwargs)
 
     return is_admin_wrapper
@@ -227,8 +222,8 @@ def abort_400(msg=""):
     Returns:
         403 Forbidden
     """
-    logger.warning("Bad Request: {} ({})".format(msg, request.urlparts.path))
-    abort(400, "{}".format(msg))
+    logger.warning(f"Bad Request: {msg} ({request.urlparts.path})")
+    abort(400, f"{msg}")
 
 
 def abort_403(msg=""):
@@ -237,8 +232,8 @@ def abort_403(msg=""):
     Returns:
         403 Forbidden
     """
-    logger.warning("Forbidden: {} ({})".format(msg, request.urlparts.path))
-    abort(403, "{}".format(msg))
+    logger.warning(f"Forbidden: {msg} ({request.urlparts.path})")
+    abort(403, f"{msg}")
     # abort(403, 'You don\'t have permission to access {} on this server. \n{}'
     #            ''.format(request.urlparts.path, msg))
 
@@ -251,7 +246,7 @@ def abort_404(msg=None):
         404 Not Found + message
     """
     if msg:
-        logger.warning("Not Found: {} ({})".format(msg, request.urlparts.path))
+        logger.warning(f"Not Found: {msg} ({request.urlparts.path})")
         abort(404, msg)
     else:
         logger.warning("Not Found")
@@ -309,7 +304,7 @@ def home():
     resp_status_code = 0
     try:
         client_url = UWS_CLIENT_ENDPOINT
-        if not "http" in client_url:
+        if "http" not in client_url:
             client_url = BASE_URL + UWS_CLIENT_ENDPOINT
         resp = requests.get(client_url)
         resp_status_code = resp.status_code
@@ -339,7 +334,7 @@ def send_mail(send_to, subject, msg):
         mail_text["To"] = send_to
         server.sendmail(SENDER_EMAIL, send_to, mail_text.as_string())
         server.quit()
-    except Exception as e:
+    except Exception:
         logger.error("Unable to send email")
         raise HTTPError(424, "Unable to send email")
 
@@ -676,9 +671,7 @@ def import_job_definition():
                         shutil.move(fname_temp, fname_mv)
                 else:
                     logger.warning(
-                        "No jobname found, using filename to define jobname: {} ({})".format(
-                            jobname, f.filename
-                        )
+                        f"No jobname found, using filename to define jobname: {jobname} ({f.filename})"
                     )
                     jdl.content["name"] = jobname
                 # Save JDL
@@ -700,14 +693,12 @@ def validation_request_job_definition(jobname):
     user = set_user()
     try:
         jdl = getattr(uws_jdl, JDL)()
-        jdl_src = "{}/tmp/{}{}".format(jdl.jdl_path, jobname, jdl.extension)
+        jdl_src = f"{jdl.jdl_path}/tmp/{jobname}{jdl.extension}"
         if os.path.isfile(jdl_src):
             # send email to admin
             # mail.
-            mail_subject = "OPUS job validation request: {}".format(jobname)
-            mail_text = "{}\n{}/jdl/tmp/{}/json\n(from: {})".format(
-                mail_subject, BASE_URL, jobname, user.name
-            )
+            mail_subject = f"OPUS job validation request: {jobname}"
+            mail_text = f"{mail_subject}\n{BASE_URL}/jdl/tmp/{jobname}/json\n(from: {user.name})"
             send_mail(ADMIN_EMAIL, mail_subject, mail_text)
             logger.info("Validation request sent to admin: " + jobname)
         else:
@@ -732,10 +723,10 @@ def validate_job_definition(jobname):
         # Copy script and jdl from new
         # jdl = uws_jdl.__dict__[JDL]()
         jdl = getattr(uws_jdl, JDL)()
-        jdl_src = "{}/tmp/{}{}".format(jdl.jdl_path, jobname, jdl.extension)
-        jdl_dst = "{}/{}{}".format(jdl.jdl_path, jobname, jdl.extension)
-        script_src = "{}/tmp/{}.sh".format(jdl.scripts_path, jobname)
-        script_dst = "{}/{}.sh".format(jdl.scripts_path, jobname)
+        jdl_src = f"{jdl.jdl_path}/tmp/{jobname}{jdl.extension}"
+        jdl_dst = f"{jdl.jdl_path}/{jobname}{jdl.extension}"
+        script_src = f"{jdl.scripts_path}/tmp/{jobname}.sh"
+        script_dst = f"{jdl.scripts_path}/{jobname}.sh"
         # Save, then copy from tmp/
         if os.path.isfile(jdl_src):
             if os.path.isfile(jdl_dst):
@@ -805,7 +796,7 @@ def convert_jdl(jobname):
         abort_404(e.args[0])
     except:
         abort_500_except()
-    return "JDL converted for {}".format(jobname)
+    return f"JDL converted for {jobname}"
 
 
 # @app.get('/config/cp_script/<jobname>')
@@ -817,7 +808,7 @@ def cp_script(jobname):
     # Check if client is trusted (only admin should be allowed to validate a job)
     try:
         # Copy script to job manager
-        script_dst = "{}/{}.sh".format(SCRIPTS_PATH, jobname)
+        script_dst = f"{SCRIPTS_PATH}/{jobname}.sh"
         if os.path.isfile(script_dst):
             # manager = managers.__dict__[MANAGER + 'Manager']()
             manager = getattr(managers, MANAGER + "Manager")()
@@ -831,7 +822,7 @@ def cp_script(jobname):
         abort_500_except()
     # Return code 200
     response.content_type = "text/plain; charset=UTF-8"
-    return "Script copied for job {}".format(jobname)
+    return f"Script copied for job {jobname}"
     # redirect('/client/job_definition?jobname={}&msg=script_copied'.format(jobname), 303)
 
 
@@ -860,7 +851,7 @@ def get_script(jobname):
             # Get JDL content
             jdl = getattr(uws_jdl, JDL)()
             jdl.read_script(jobname)
-            logger.info("Job script downloaded: {}".format(jobname))
+            logger.info(f"Job script downloaded: {jobname}")
             response.content_type = "text/plain; charset=UTF-8"
             return jdl.content["script"]
         else:
@@ -885,7 +876,7 @@ def get_jdl_json(jobname):
         # Get JDL content
         jdl = getattr(uws_jdl, JDL)()
         jdl.read(jobname)
-        logger.debug("JDL downloaded ad JSON: {}".format(jobname))
+        logger.debug(f"JDL downloaded ad JSON: {jobname}")
         return jdl.content
         # else:
         #     abort_403()
@@ -915,7 +906,7 @@ def get_jdl(jobname):
         if os.path.isfile(fname):
             with open(fname) as f:
                 jdl = f.readlines()
-            logger.debug("JDL file downloaded: {}".format(fname))
+            logger.debug(f"JDL file downloaded: {fname}")
             return static_file(
                 download_fname, root=download_dir, download=download_fname
             )
@@ -943,8 +934,8 @@ def delete_jdl(jobname):
     try:
         jdl = getattr(uws_jdl, JDL)()
         jdl.read(jobname)  # need version for saved files
-        jdl_src = "{}/{}{}".format(jdl.jdl_path, jobname, jdl.extension)
-        script_src = "{}/{}.sh".format(jdl.scripts_path, jobname)
+        jdl_src = f"{jdl.jdl_path}/{jobname}{jdl.extension}"
+        script_src = f"{jdl.scripts_path}/{jobname}.sh"
         if os.path.isfile(jdl_src):
             # Save file with version and time stamp
             mt = (
@@ -1005,7 +996,7 @@ def download_entity():
     """
     user = set_user()
     try:
-        if not "ID" in request.query:
+        if "ID" not in request.query:
             raise UserWarning('"ID" is not specified in request')
         entity_id = request.query["ID"]
         # logger.debug('Init storage for entity {}'.format(entity_id))
@@ -1020,13 +1011,13 @@ def download_entity():
                     pass
                 else:
                     raise EntityAccessDenied(
-                        "User {} is not the owner of the entity".format(user.name)
+                        f"User {user.name} is not the owner of the entity"
                     )
 
         download = (
             entity["entity_id"] + "_" + entity["file_name"]
         )  #  + os.path.splitext(entity['file_name'])[1]
-        logger.debug("{}".format(str(entity)))
+        logger.debug(f"{str(entity)}")
         response.set_header("Content-type", entity["content_type"])
         return static_file(
             entity["file_name"],
@@ -1069,7 +1060,7 @@ def get_result_file(jobid, rname):  # , rfname):
         # Check if result exists
         if rname not in job.results:
             raise storage.NotFoundWarning(
-                'Result "{}" NOT FOUND for job "{}"'.format(rname, jobid)
+                f'Result "{rname}" NOT FOUND for job "{jobid}"'
             )
         # Return result
         result_details = {
@@ -1085,13 +1076,13 @@ def get_result_file(jobid, rname):  # , rfname):
             rfname = job.get_result_filename(rname)
         if rname in ["stdout", "stderr"]:
             return static_file(
-                rfname, root="{}/{}".format(JOBDATA_PATH, job.jobid), mimetype="text"
+                rfname, root=f"{JOBDATA_PATH}/{job.jobid}", mimetype="text"
             )
         # response.content_type = 'text/plain; charset=UTF-8'
         # return str(job.results[result]['url'])
         content_type = job.results[rname]["content_type"]
         logger.debug(
-            "{} {} {} {} {}".format(job.jobname, jobid, rname, rfname, content_type)
+            f"{job.jobname} {jobid} {rname} {rfname} {content_type}"
         )
         response.set_header("Content-type", content_type)
         if any(
@@ -1100,16 +1091,16 @@ def get_result_file(jobid, rname):  # , rfname):
         ):
             return static_file(
                 rfname,
-                root="{}/{}".format(RESULTS_PATH, job.jobid),
+                root=f"{RESULTS_PATH}/{job.jobid}",
                 mimetype=content_type,
             )
         else:
             response.set_header(
-                "Content-Disposition", 'attachment; filename="{}"'.format(rfname)
+                "Content-Disposition", f'attachment; filename="{rfname}"'
             )
             return static_file(
                 rfname,
-                root="{}/{}".format(RESULTS_PATH, job.jobid),
+                root=f"{RESULTS_PATH}/{job.jobid}",
                 mimetype=content_type,
                 download=True,
             )
@@ -1136,7 +1127,7 @@ def provsap():
 
     user = set_user()
     try:
-        if not "ID" in request.query:
+        if "ID" not in request.query:
             raise UserWarning('"ID" is not specified in request')
         kwargs = {}
         kwargs["depth"] = request.query.get("DEPTH", 1)
@@ -1172,7 +1163,7 @@ def provsap():
             # job = Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True)
             # logger.info('{} {}'.format(job.jobname, jobid))
             # Return job provenance
-            logger.debug("{}".format(kwargs))
+            logger.debug(f"{kwargs}")
             pdoc = provenance.job2prov(
                 jobid, user, show_generated=show_generated, **kwargs
             )
@@ -1222,9 +1213,7 @@ def provsap():
             return b"\n".join(result.readlines())
         else:
             raise BadRequest(
-                "Bad value for RESPONSEFORMAT ({}).\nAvailable values are ('PROV-JSON', 'PROV-XML', 'PROV-SVG').".format(
-                    format
-                )
+                f"Bad value for RESPONSEFORMAT ({format}).\nAvailable values are ('PROV-JSON', 'PROV-XML', 'PROV-SVG')."
             )
     except BadRequest as e:
         abort_400(e.args[0])
@@ -1260,7 +1249,7 @@ def maintenance(jobname):
             jdl = getattr(uws_jdl, JDL)()
             jobnames = jdl.get_jobnames()
         for jobname in jobnames:
-            report.append("Maintenance checks for {}...".format(jobname))
+            report.append(f"Maintenance checks for {jobname}...")
             # Get joblist
             joblist = JobList(jobname, user, where_owner=False, include_archived=True)
             now = dt.datetime.now()
@@ -1275,9 +1264,7 @@ def maintenance(jobname):
                     get_results=True,
                 )
                 report.append(
-                    "[{} {} {} {}]".format(
-                        jobname, job.jobid, job.creation_time, job.phase
-                    )
+                    f"[{jobname} {job.jobid} {job.creation_time} {job.phase}]"
                 )
                 # Check consistency of dates (destruction_time > end_time > start_time > creation_time)
                 creation_time = (
@@ -1318,9 +1305,7 @@ def maintenance(jobname):
                     new_phase = job.get_status()  # will update the phase from manager
                     if new_phase != phase:
                         report.append(
-                            "  Status has been updated: {} --> {}".format(
-                                phase, new_phase
-                            )
+                            f"  Status has been updated: {phase} --> {new_phase}"
                         )
                 # If destruction time is passed, delete or archive job
                 if destruction_time and (destruction_time < now):
@@ -1329,24 +1314,18 @@ def maintenance(jobname):
                         if job.phase in ["COMPLETED", "ABORTED", "ERROR"]:
                             job.archive()
                             report.append(
-                                "  Job has been archived (destruction_time={})".format(
-                                    job.destruction_time
-                                )
+                                f"  Job has been archived (destruction_time={job.destruction_time})"
                             )
                         else:
                             # job.delete()
                             report.append(
-                                "  Job has been deleted (destruction_time={})".format(
-                                    job.destruction_time
-                                )
+                                f"  Job has been deleted (destruction_time={job.destruction_time})"
                             )
                             pass
                     else:
                         # job.delete()
                         report.append(
-                            "  Job has been deleted (destruction_time={})".format(
-                                job.destruction_time
-                            )
+                            f"  Job has been deleted (destruction_time={job.destruction_time})"
                         )
                         pass
         report.append("Done\n")
@@ -1388,7 +1367,7 @@ def job_event():
     try:
         user = User("job_event", JOB_EVENT_TOKEN)
         logger = logger_init
-        logger.debug("with POST={}".format(str(request.POST.dict)))
+        logger.debug(f"with POST={str(request.POST.dict)}")
         if "jobid" in request.POST:
             process_id = request.POST["jobid"]
             # Get job properties from DB based on process_id
@@ -1411,7 +1390,7 @@ def job_event():
                     msg = request.POST.get("error_msg", "")
                     job.change_status("ERROR", msg)
                     logger.info(
-                        "ERROR reported for job {} {}".format(job.jobname, job.jobid)
+                        f"ERROR reported for job {job.jobname} {job.jobid}"
                     )
                 elif new_phase not in [cur_phase]:
                     # Convert phase if needed
@@ -1431,8 +1410,7 @@ def job_event():
                     # Change job status
                     job.change_status(new_phase, msg)
                     logger.info(
-                        "Phase {} --> {} for job {} {}"
-                        "".format(cur_phase, new_phase, job.jobname, job.jobid)
+                        f"Phase {cur_phase} --> {new_phase} for job {job.jobname} {job.jobid}"
                     )
                 else:
                     raise UserWarning("Phase is already " + new_phase)
@@ -1469,7 +1447,7 @@ def get_joblist(jobname):
     """
     user = set_user()
     try:
-        logger.info("{}".format(jobname))
+        logger.info(f"{jobname}")
         # UWS v1.1 PHASE keyword
         phase = None
         if "PHASE" in request.query:
@@ -1507,17 +1485,16 @@ def create_job(jobname):
         # TODO: Check if form submitted correctly, detect file size overflow?
         # Set new job description from POSTed parameters
         job = Job(jobname, "", user, from_post=request)
-        logger.info("{} {} CREATED and PENDING".format(jobname, job.jobid))
+        logger.info(f"{jobname} {job.jobid} CREATED and PENDING")
         # If PHASE=RUN, start job
         if request.forms.get("PHASE") == "RUN":
             job.start()
             logger.info(
-                "{} {} QUEUED with process_id={}"
-                "".format(jobname, job.jobid, str(job.process_id))
+                f"{jobname} {job.jobid} QUEUED with process_id={str(job.process_id)}"
             )
     except UserWarning as e:
         abort_500(e.args[0])
-    except TooManyJobs as e:
+    except TooManyJobs:
         abort_500_except(
             msg=f"Maximum number of active jobs reached ({NJOBS_MAX})",
             msg_public=f"Maximum number of active jobs reached ({NJOBS_MAX})",
@@ -1550,7 +1527,7 @@ def get_job(jobname, jobid):
     """
     user = set_user()
     try:
-        logger.info("{} {}".format(jobname, jobid))
+        logger.info(f"{jobname} {jobid}")
         # Get job properties from DB
         job = Job(
             jobname,
@@ -1583,15 +1560,15 @@ def get_job(jobname, jobid):
                         kw.get("sig_phase") != job.phase
                     ):
                         change_status_event.set()
-                        return "{}: signal received and job updated".format(jobid)
-                    return "{}: signal received but job not concerned".format(jobid)
+                        return f"{jobid}: signal received and job updated"
+                    return f"{jobid}: signal received but job not concerned"
 
                 # Connect to signal
                 change_status_signal.connect(receiver)
                 # Wait for signal event
-                logger.info("{}: Blocking for {} seconds".format(jobid, wait_time))
+                logger.info(f"{jobid}: Blocking for {wait_time} seconds")
                 event_is_set = change_status_event.wait(wait_time)
-                logger.info("{}: Continue execution".format(jobid))
+                logger.info(f"{jobid}: Continue execution")
                 change_status_signal.disconnect(receiver)
                 # Reload job if necessary
                 if event_is_set:
@@ -1628,12 +1605,12 @@ def delete_job(jobname, jobid):
     """
     user = set_user()
     try:
-        logger.info("{} {}".format(jobname, jobid))
+        logger.info(f"{jobname} {jobid}")
         # Get job properties from DB
         job = Job(jobname, jobid, user)
         # Delete job
         job.delete()
-        logger.info("{} {} DELETED".format(jobname, jobid))
+        logger.info(f"{jobname} {jobid} DELETED")
     except JobAccessDenied as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
@@ -1654,14 +1631,14 @@ def post_job(jobname, jobid):
     """Alias for delete_job() if ACTION=DELETE"""
     user = set_user()
     try:
-        logger.debug("POST: {}".format(request.POST.__dict__))
-        logger.info("deleting {} {}".format(jobname, jobid))
+        logger.debug(f"POST: {request.POST.__dict__}")
+        logger.info(f"deleting {jobname} {jobid}")
         if request.forms.get("ACTION") == "DELETE":
             # Get job properties from DB
             job = Job(jobname, jobid, user)
             # Delete job
             job.delete()
-            logger.info("{} {} DELETED".format(jobname, jobid))
+            logger.info(f"{jobname} {jobid} DELETED")
         else:
             raise UserWarning("ACTION=DELETE is not specified in POST")
     except JobAccessDenied as e:
@@ -1723,7 +1700,7 @@ def post_phase(jobname, jobid):
     try:
         if "PHASE" in request.forms:
             new_phase = request.forms.get("PHASE")
-            logger.info("PHASE={} {} {}".format(new_phase, jobname, jobid))
+            logger.info(f"PHASE={new_phase} {jobname} {jobid}")
             if new_phase == "RUN":
                 # Get job properties from DB
                 job = Job(
@@ -1735,8 +1712,7 @@ def post_phase(jobname, jobid):
                 # Start job
                 job.start()
                 logger.info(
-                    "{} {} STARTED with process_id={}"
-                    "".format(jobname, jobid, str(job.process_id))
+                    f"{jobname} {jobid} STARTED with process_id={str(job.process_id)}"
                 )
             elif new_phase == "ABORT":
                 # Get job properties from DB
@@ -1750,7 +1726,7 @@ def post_phase(jobname, jobid):
                 )
                 # Abort job
                 job.abort()
-                logger.info("{} {} ABORTED".format(jobname, jobid))
+                logger.info(f"{jobname} {jobid} ABORTED")
             else:
                 raise UserWarning("PHASE=" + new_phase + " not expected")
         else:
@@ -1788,7 +1764,7 @@ def get_executionduration(jobname, jobid):
     """
     user = set_user()
     try:
-        logger.info("{} {}".format(jobname, jobid))
+        logger.info(f"{jobname} {jobid}")
         # Get job properties from DB
         job = Job(jobname, jobid, user)
         # Return value
@@ -1813,7 +1789,7 @@ def post_executionduration(jobname, jobid):
     """
     user = set_user()
     try:
-        logger.info("{} {}".format(jobname, jobid))
+        logger.info(f"{jobname} {jobid}")
         # Get value from POST
         if "EXECUTIONDURATION" not in request.forms:
             raise UserWarning("EXECUTIONDURATION keyword required")
@@ -1829,12 +1805,11 @@ def post_executionduration(jobname, jobid):
             # Change value
             job.set_attribute("execution_duration", new_value)
             logger.info(
-                "{} {} set execution_duration={}".format(jobname, jobid, str(new_value))
+                f"{jobname} {jobid} set execution_duration={str(new_value)}"
             )
         else:
             raise UserWarning(
-                'Job "{}" must be in PENDING state (currently {}) to change execution duration'
-                "".format(jobid, job.phase)
+                f'Job "{jobid}" must be in PENDING state (currently {job.phase}) to change execution duration'
             )
     except JobAccessDenied as e:
         abort_403(str(e))
@@ -1864,7 +1839,7 @@ def get_destruction(jobname, jobid):
     """
     user = set_user()
     try:
-        logger.info("{} {}".format(jobname, jobid))
+        logger.info(f"{jobname} {jobid}")
         # Get job properties from DB
         job = Job(jobname, jobid, user)
         # Return value
@@ -1889,7 +1864,7 @@ def post_destruction(jobname, jobid):
     """
     user = set_user()
     try:
-        logger.info("{} {}".format(jobname, jobid))
+        logger.info(f"{jobname} {jobid}")
         # Get value from POST
         if "DESTRUCTION" not in request.forms:
             raise UserWarning("DESTRUCTION keyword required")
@@ -1902,14 +1877,14 @@ def post_destruction(jobname, jobid):
                 new_value = new_value[:19]
             else:
                 raise UserWarning(
-                    "Destruction time must be in ISO8601 format ({})".format(str(e))
+                    f"Destruction time must be in ISO8601 format ({str(e)})"
                 )
         # Get job properties from DB
         job = Job(jobname, jobid, user)
         # Change value
         # job.set_destruction_time(new_value)
         job.set_attribute("destruction_time", new_value)
-        logger.info("{} {} set destruction_time={}".format(jobname, jobid, new_value))
+        logger.info(f"{jobname} {jobid} set destruction_time={new_value}")
     except JobAccessDenied as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
@@ -1939,7 +1914,7 @@ def get_error(jobname, jobid):
     """
     user = set_user()
     try:
-        logger.info("{} {}".format(jobname, jobid))
+        logger.info(f"{jobname} {jobid}")
         # Get job properties from DB
         job = Job(jobname, jobid, user)
         # Return value
@@ -1969,7 +1944,7 @@ def get_quote(jobname, jobid):
     """
     user = set_user()
     try:
-        logger.info("{} {}".format(jobname, jobid))
+        logger.info(f"{jobname} {jobid}")
         # Get job properties from DB
         job = Job(jobname, jobid, user)
         # Return value
@@ -2000,7 +1975,7 @@ def get_parameters(jobname, jobid):
     """
     user = set_user()
     try:
-        logger.info("{} {}".format(jobname, jobid))
+        logger.info(f"{jobname} {jobid}")
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_parameters=True)
         # Return job parameters in UWS format
@@ -2033,7 +2008,7 @@ def get_parameter(jobname, jobid, pname):
         # Check if param exists
         if pname not in job.parameters:
             raise storage.NotFoundWarning(
-                'Parameter "{}" NOT FOUND for job "{}"'.format(pname, jobid)
+                f'Parameter "{pname}" NOT FOUND for job "{jobid}"'
             )
         # Return parameter
         response.content_type = "text/plain; charset=UTF-8"
@@ -2057,7 +2032,7 @@ def post_parameter(jobname, jobid, pname):
     """
     user = set_user()
     try:
-        logger.info("pname={} {} {}".format(pname, jobname, jobid))
+        logger.info(f"pname={pname} {jobname} {jobid}")
         # Get value from POST
         if "VALUE" not in request.forms:
             raise UserWarning("VALUE keyword required")
@@ -2069,12 +2044,11 @@ def post_parameter(jobname, jobid, pname):
         if job.phase == "PENDING":
             job.set_parameter(pname, new_value)
             logger.info(
-                "{} {} set parameter {}={}".format(jobname, jobid, pname, new_value)
+                f"{jobname} {jobid} set parameter {pname}={new_value}"
             )
         else:
             raise UserWarning(
-                'Job "{}" must be in PENDING state (currently {}) to change parameter'
-                "".format(jobid, job.phase)
+                f'Job "{jobid}" must be in PENDING state (currently {job.phase}) to change parameter'
             )
     except JobAccessDenied as e:
         abort_403(str(e))
@@ -2108,7 +2082,7 @@ def get_results(jobname, jobid):
     """
     user = set_user()
     try:
-        logger.info("{} {}".format(jobname, jobid))
+        logger.info(f"{jobname} {jobid}")
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_results=True)
         # Return job results in UWS format
@@ -2135,13 +2109,13 @@ def get_result(jobname, jobid, rname):
     """
     user = set_user()
     try:
-        logger.info("rname={} {} {}".format(rname, jobname, jobid))
+        logger.info(f"rname={rname} {jobname} {jobid}")
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_results=True)
         # Check if result exists
         if rname not in job.results:
             raise storage.NotFoundWarning(
-                'Result "{}" NOT FOUND for job "{}"'.format(rname, jobid)
+                f'Result "{rname}" NOT FOUND for job "{jobid}"'
             )
         # Return result
         response.content_type = "text/plain; charset=UTF-8"
@@ -2169,11 +2143,11 @@ def get_stdout(jobname, jobid):
         # Get job properties from DB
         # job = Job(jobname, jobid, user, get_results=True)
         logname = "stdout"
-        logroot = "{}/{}".format(JOBDATA_PATH, jobid)
+        logroot = f"{JOBDATA_PATH}/{jobid}"
         if not os.path.isfile(os.path.join(logroot, logname + ".log")):
             # TODO: get from manager if not available, only available when EXECUTING
             raise storage.NotFoundWarning(
-                'Log "{}" NOT FOUND for job "{}"'.format(logname, jobid)
+                f'Log "{logname}" NOT FOUND for job "{jobid}"'
             )
         # Return file
         return static_file(logname + ".log", root=logroot, mimetype="text")
@@ -2200,11 +2174,11 @@ def get_stderr(jobname, jobid):
         # Get job properties from DB
         # job = Job(jobname, jobid, user, get_results=True)
         logname = "stderr"
-        logroot = "{}/{}".format(JOBDATA_PATH, jobid)
+        logroot = f"{JOBDATA_PATH}/{jobid}"
         if not os.path.isfile(os.path.join(logroot, logname + ".log")):
             # TODO: get from manager if not available, only available when EXECUTING
             raise storage.NotFoundWarning(
-                'Log "{}" NOT FOUND for job "{}"'.format(logname, jobid)
+                f'Log "{logname}" NOT FOUND for job "{jobid}"'
             )
         # Return file
         return static_file(logname + ".log", root=logroot, mimetype="text")
@@ -2231,10 +2205,10 @@ def get_prov(jobname, jobid, provtype):
         # Get job properties from DB
         # job = Job(jobname, jobid, user, get_results=True)
         provname = "provenance." + provtype
-        provroot = "{}/{}".format(JOBDATA_PATH, jobid)
+        provroot = f"{JOBDATA_PATH}/{jobid}"
         if not os.path.isfile(os.path.join(provroot, provname)):
             raise storage.NotFoundWarning(
-                'Prov file "{}" NOT FOUND for job "{}"'.format(provname, jobid)
+                f'Prov file "{provname}" NOT FOUND for job "{jobid}"'
             )
         # Return file
         content_types = {
@@ -2267,7 +2241,7 @@ def get_owner(jobname, jobid):
     """
     user = set_user()
     try:
-        logger.info("{} {}".format(jobname, jobid))
+        logger.info(f"{jobname} {jobid}")
         # Get job properties from DB
         job = Job(jobname, jobid, user)
         # Return value

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Copyright (c) 2016 by Mathieu Servillat
 # Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
 """
@@ -14,12 +13,12 @@ Settings for the UWS server
 # ----------
 
 
-import os
-import sys
 import datetime as dt
-import uuid
 import logging
 import logging.config
+import os
+import sys
+import uuid
 
 ### General settings
 
@@ -392,7 +391,7 @@ if "pytest" in main_dict.get("__file__", ""):
     now = dt.datetime.now()
     now_str = now.isoformat().split(".")[0]
     STORAGE_TYPE == "SQLite"
-    SQLITE_FILE_NAME = "job_database_test_{}.db".format(now_str)
+    SQLITE_FILE_NAME = f"job_database_test_{now_str}.db"
     LOG_FILE_SUFFIX = "_test_" + now_str
     MANAGER = ""
     ALLOW_ANONYMOUS = True
@@ -415,9 +414,7 @@ if STORAGE_TYPE == "SQLite":
     # Path to sqlite db file
     SQLALCHEMY_DB = "sqlite:///" + SQLITE_FILE
 if STORAGE_TYPE == "PostgreSQL":
-    SQLALCHEMY_DB = "postgresql://{}:{}@{}:{}/{}".format(
-        PGSQL_USER, PGSQL_PASSWORD, PGSQL_HOST, PGSQL_PORT, PGSQL_DATABASE
-    )
+    SQLALCHEMY_DB = f"postgresql://{PGSQL_USER}:{PGSQL_PASSWORD}@{PGSQL_HOST}:{PGSQL_PORT}/{PGSQL_DATABASE}"
 # Logging
 LOG_PATH = VAR_PATH + "/logs"
 # Path for JDL files, should probably be accessed through a URL as static files

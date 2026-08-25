@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Copyright (c) 2016 by Mathieu Servillat
 # Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
 """
@@ -18,11 +17,12 @@ Settings for the UWS client
 # ----------
 
 
-import os
-import bleach
 import datetime
 import logging
 import logging.config
+import os
+
+import bleach
 
 # ----------
 # Configuration
@@ -145,7 +145,7 @@ LOG_PATH = VAR_PATH + "/logs"  # the logs dir has to be writable from the app
 CONFIG_FILE = (
     VAR_PATH + "/config/uws_client_config.yaml"
 )  # the config dir has to be writable from the app
-SQLALCHEMY_DATABASE_URI = "sqlite:///{}/db/flask_login.db".format(VAR_PATH)
+SQLALCHEMY_DATABASE_URI = f"sqlite:///{VAR_PATH}/db/flask_login.db"
 SECURITY_POST_LOGIN_VIEW = UWS_CLIENT_ENDPOINT
 SECURITY_POST_LOGOUT_VIEW = UWS_CLIENT_ENDPOINT + SECURITY_URL_PREFIX + "/login"
 SECURITY_EMAIL_SENDER = SENDER_EMAIL

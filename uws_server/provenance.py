@@ -1,21 +1,19 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Copyright (c) 2016 by Mathieu Servillat
 # Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
 """
 Export UWS job description to a ProvDocument following the W3C PROV standard
 """
 
-import prov
 import voprov
-from voprov.models.model import VOProvDocument, VOProvBundle, VOPROV, PROV
+from pydotplus.graphviz import InvocationException
+from voprov.models.model import PROV, VOPROV, VOProvDocument
 
 # from prov.model import ProvDocument, ProvBundle
 from voprov.visualization.dot import prov_to_dot
-from pydotplus.graphviz import InvocationException
 
-from .settings import *
 from . import uws_classes
+from .settings import *
 
 # examples:
 # http://prov.readthedocs.org/en/latest/usage.html#simple-prov-document
@@ -109,7 +107,7 @@ def job2prov(
     if descriptions:
         adescid = "#" + job.jobname + "#description"
         adescbundle = pdoc.bundle(adescid)
-        setattr(adescbundle, "_label", adescid)
+        adescbundle._label = adescid
         # ActivityDescription
         adesc = adescbundle.activityDescription("opus_jdl:" + job.jobname, job.jobname)
         adesc.add_attributes(
@@ -232,7 +230,7 @@ def job2prov(
                 )
                 if contact_email:
                     contact.add_attributes(
-                        {"foaf:mbox": "<mailto:{}>".format(contact_email)}
+                        {"foaf:mbox": f"<mailto:{contact_email}>"}
                     )
                 # Link to ActivityDescription
                 pdoc.influence(
@@ -258,7 +256,7 @@ def job2prov(
             "#" + job.jobid + "#configuration"
         )  # + '/' + job.jobid + '/parameters'
         aconfbundle = pdoc.bundle(aconfid)
-        setattr(aconfbundle, "_label", aconfid)
+        aconfbundle._label = aconfid
         params = []
         for pname, pdict in job.jdl.content.get("parameters", {}).items():
             # Add Parameter
@@ -319,9 +317,7 @@ def job2prov(
             label = pname
             entity_id = job.parameters.get(pname, {}).get("entity_id", None)
             logger.debug(
-                "Search for entity {} (pname={}, value={})".format(
-                    entity_id, pname, value
-                )
+                f"Search for entity {entity_id} (pname={pname}, value={value})"
             )
             entity = job.storage.get_entity(entity_id, silent=True)
             if entity:
@@ -330,7 +326,7 @@ def job2prov(
                 pqns = [ns_result + ":" + entity_id]
                 label = entity["file_name"]
                 location = entity["access_url"]
-                logger.debug("Input entity found: {}".format(entity))
+                logger.debug(f"Input entity found: {entity}")
             elif "//" in value:
                 # Entity is a file or a URL (not a value or an ID)
                 pqns = [
@@ -339,9 +335,7 @@ def job2prov(
                 used_entities.append(pqns[0])
                 location = value
                 logger.debug(
-                    "No record found for input entity {}={}, assuming it is a file or a URL".format(
-                        pname, value
-                    )
+                    f"No record found for input entity {pname}={value}, assuming it is a file or a URL"
                 )
             else:
                 # Entity is a value or an ID
@@ -519,7 +513,7 @@ def job2prov(
                         pdict = job.jdl.content["generated"].get(
                             entity["result_name"], {}
                         )
-                    if not "prov:label" in eattrs:
+                    if "prov:label" not in eattrs:
                         eattrs["prov:label"] = rname
                     e_out[-1].add_attributes(eattrs)
                     # Add Generation relation
@@ -586,7 +580,7 @@ def unified_relations(bundle):
     if bundle.is_document():
         for subbundle in bundle._bundles:
             if not hasattr(bundle._bundles[subbundle], "_label"):
-                setattr(bundle._bundles[subbundle], "_label", "")
+                bundle._bundles[subbundle]._label = ""
             bundle._bundles[subbundle] = unified_relations(bundle._bundles[subbundle])
     for record in bundle._records:
         if record.is_relation():
@@ -647,7 +641,7 @@ def prov2svg(prov_doc, fname):
     try:
         dot = prov2dot(prov_doc)
         svg_content = dot.create(format="svg")
-    except InvocationException as e:
+    except InvocationException:
         svg_content = """
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg xmlns="http://www.w3.org/2000/svg" version="1.0"
@@ -668,7 +662,7 @@ def prov2svg_content(prov_doc, attributes=True, direction="BT"):
     try:
         dot = prov2dot(prov_doc, attributes=attributes, direction=direction)
         svg_content = dot.create(format="svg")
-    except InvocationException as e:
+    except InvocationException:
         svg_content = """
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg xmlns="http://www.w3.org/2000/svg" version="1.0"
@@ -688,7 +682,7 @@ def prov2png_content(prov_doc, attributes=True, direction="BT"):
     try:
         dot = prov2dot(prov_doc, attributes=attributes, direction=direction)
         png_content = dot.create(format="png")
-    except InvocationException as e:
+    except InvocationException:
         png_content = ""
     return png_content
 
@@ -734,11 +728,11 @@ def prov2dict(prov_doc):
                 act_id = str(act_id)
                 ent_id = str(ent_id)
                 if rec_type == voprov.models.model.PROV_USAGE:
-                    if not "used" in prov_dict["activity"][act_id]:
+                    if "used" not in prov_dict["activity"][act_id]:
                         prov_dict["activity"][act_id]["used"] = {}
                     prov_dict["activity"][act_id]["used"][ent_id] = rec_attributes
                 else:
-                    if not "generated" in prov_dict["activity"][act_id]:
+                    if "generated" not in prov_dict["activity"][act_id]:
                         prov_dict["activity"][act_id]["generated"] = {}
                     prov_dict["activity"][act_id]["generated"][ent_id] = {
                         "role": rec_role
@@ -757,7 +751,7 @@ def prov2dict(prov_doc):
             if ent_id and agt_id:
                 ent_id = str(ent_id)
                 agt_id = str(agt_id)
-                if not "attributed" in prov_dict["entity"][act_id]:
+                if "attributed" not in prov_dict["entity"][act_id]:
                     prov_dict["entity"][ent_id]["attributed"] = {}
                 prov_dict["entity"][ent_id]["attributed"][agt_id] = rec_attributes
         # Store association and its attributes
@@ -771,7 +765,7 @@ def prov2dict(prov_doc):
             if ent_id and agt_id:
                 ent_id = str(ent_id)
                 agt_id = str(agt_id)
-                if not "associated" in prov_dict["activity"][act_id]:
+                if "associated" not in prov_dict["activity"][act_id]:
                     prov_dict["activity"][act_id]["associated"] = {}
                 prov_dict["activity"][act_id]["associated"][agt_id] = rec_attributes
     return prov_dict

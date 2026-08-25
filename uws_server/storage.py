@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Copyright (c) 2016 by Mathieu Servillat
 # Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
 """
@@ -21,23 +20,21 @@ import datetime as dt
 
 # from entity_store import *
 import hashlib
-from .settings import *
-from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import Column
+
 from sqlalchemy import (
-    ForeignKey,
-    Float,
-    String,
-    Boolean,
-    Integer,
     BigInteger,
+    Boolean,
+    Column,
     DateTime,
+    ForeignKey,
+    Integer,
+    String,
     Text,
+    create_engine,
 )
-from sqlalchemy.ext.automap import automap_base
-from sqlalchemy.dialects import sqlite
+from sqlalchemy.orm import declarative_base, sessionmaker
+
+from .settings import *
 
 # ---------
 # Exceptions/Warnings
@@ -53,7 +50,7 @@ class NotFoundWarning(Warning):
 # Storage classes
 
 
-class JobStorage(object):
+class JobStorage:
     """
     Manage job information storage. This class defines required functions executed
     by the UWS server save(), read(), delete()
@@ -83,7 +80,7 @@ class JobStorage(object):
         pass
 
 
-class UserStorage(object):
+class UserStorage:
     """
     Manage user information storage.
     """
@@ -121,7 +118,7 @@ class UserStorage(object):
         pass
 
 
-class EntityStorage(object):
+class EntityStorage:
     """
     Manage Entity storage.
     """
@@ -328,7 +325,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                 self.session.query(self.User).filter_by(name=name, token=token).first()
             )
         else:
-            logger.debug(f"No token given, it will be automatically generated")
+            logger.debug("No token given, it will be automatically generated")
             row = self.session.query(self.User).filter_by(name=name).first()
         if not row:
             d = {
@@ -353,7 +350,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                 self.session.query(self.User).filter_by(name=name, token=token).first()
             )
         else:
-            logger.debug(f"No token given")
+            logger.debug("No token given")
             rows = self.session.query(self.User).filter_by(name=name).all()
             if len(rows) > 1:
                 logger.warning(
@@ -377,7 +374,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                 self.session.query(self.User).filter_by(name=name, token=token).first()
             )
         else:
-            logger.debug(f"No token given")
+            logger.debug("No token given")
             row = self.session.query(self.User).filter_by(name=name).first()
         # row = self.session.query(self.User).filter_by(name=name, token=token).first()
         if row:
@@ -413,7 +410,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                 self.session.commit()
                 logger.debug(f'Role "{role}" added for user {name}')
         else:
-            logger.error("User {} not found in db".format(name))
+            logger.error(f"User {name} not found in db")
 
     def remove_role(self, name, token, role=""):
         """Get job list from storage, i.e. access to a job"""
@@ -522,14 +519,14 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                 )
                 if not row:
                     raise NotFoundWarning(
-                        "Job with process_id={} NOT FOUND".format(job.process_id)
+                        f"Job with process_id={job.process_id} NOT FOUND"
                     )
                 # job.jobname = row.jobname
                 # job.jobid = row.jobid
             else:
                 row = self.session.query(self.Job).filter_by(jobid=job.jobid).first()
                 if not row:
-                    raise NotFoundWarning('Job "{}" NOT FOUND'.format(job.jobid))
+                    raise NotFoundWarning(f'Job "{job.jobid}" NOT FOUND')
             for k in JOB_ATTRIBUTES:
                 if k in list(row.__dict__.keys()):
                     job.__dict__[k] = row.__dict__[k]
@@ -621,8 +618,8 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
 
         # Files
         if "file_name" in kwargs:
-            if not "file_dir" in kwargs:
-                logger.warning("No file_dir given for file entity: {}".format(kwargs))
+            if "file_dir" not in kwargs:
+                logger.warning(f"No file_dir given for file entity: {kwargs}")
                 kwargs["file_dir"] = "."
             # Redefine file_dir if ARCHIVE is Local (the generated file has been copied to RESULTS_PATH)
             if ARCHIVE == "Local":
@@ -659,19 +656,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                             )
                         elif "jobid" in kwargs and str(row.jobid) == str(
                             kwargs.get("jobid")
-                        ):
-                            # Entity has the jobid that generated it in its name
-                            entity = dict(
-                                (col, getattr(row, col))
-                                for col in row.__table__.columns.keys()
-                            )
-                            entity_id = entity["entity_id"]
-                            logger.info(
-                                "Entity found for {} with same hash, and file_name contains jobid".format(
-                                    kwargs["file_name"]
-                                )
-                            )
-                        elif str(row.jobid) in kwargs["file_name"]:
+                        ) or str(row.jobid) in kwargs["file_name"]:
                             # Entity has the jobid that generated it in its name
                             entity = dict(
                                 (col, getattr(row, col))
@@ -692,7 +677,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                                 .first()
                             )
                             if used and (
-                                getattr(row, "file_name") == kwargs["file_name"]
+                                row.file_name == kwargs["file_name"]
                             ):
                                 # Entity has already been used by the same job (and is now exposed as a UWS result)
                                 entity = dict(
@@ -709,9 +694,9 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         # Value (may be an identifier)
         if "value" in kwargs:
             for k in ["name"]:
-                if not k in kwargs:
+                if k not in kwargs:
                     raise UserWarning(
-                        "Attribute {} is missing to register an entity".format(k)
+                        f"Attribute {k} is missing to register an entity"
                     )
             # entity is a value or an ID
             row = (
@@ -724,7 +709,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                 entity = dict(
                     (col, getattr(row, col)) for col in row.__table__.columns.keys()
                 )
-                logger.info("Entity found with value=entity_id={}".format(entity_id))
+                logger.info(f"Entity found with value=entity_id={entity_id}")
             else:
                 # Not found in entity store, is it an entity_id or a simple value ?
                 pass
@@ -743,7 +728,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                         (col, getattr(row, col)) for col in row.__table__.columns.keys()
                     )
                     logger.info(
-                        "Entity found from given entity_id={}".format(entity_id)
+                        f"Entity found from given entity_id={entity_id}"
                     )
             else:
                 # Generate unique identifier for the new entity
@@ -769,21 +754,21 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             # Store new entity and return attributes
             kwargs["entity_id"] = entity_id
             # Define access_url if not given
-            if not "access_url" in kwargs:
+            if "access_url" not in kwargs:
                 url = ARCHIVE_URL.format(ID=entity_id)
                 if url.startswith("/"):
-                    url = "{}{}".format(BASE_URL, url)
+                    url = f"{BASE_URL}{url}"
                 kwargs["access_url"] = url
             # Store info in DB
             e = self.Entity(**kwargs)
             self.session.merge(e)
             self.session.commit()
             # Return entity attributes
-            logger.info("New entity registered: {}".format(str(kwargs)))
+            logger.info(f"New entity registered: {str(kwargs)}")
             return kwargs
         else:
             # Return existing entity attributes
-            logger.info("Existing entity found: {}".format(str(entity)))
+            logger.info(f"Existing entity found: {str(entity)}")
             # TODO: update entity with kwargs?
             return entity
 
@@ -805,7 +790,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             if silent:
                 return {}
             else:
-                raise NotFoundWarning('Result "{}" NOT FOUND'.format(entity_id))
+                raise NotFoundWarning(f'Result "{entity_id}" NOT FOUND')
         return dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
 
     def search_entity(
@@ -828,9 +813,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             row = query.first()
             if not row:
                 raise NotFoundWarning(
-                    "Entity with jobid={} and result_name={} NOT FOUND".format(
-                        jobid, result_name
-                    )
+                    f"Entity with jobid={jobid} and result_name={result_name} NOT FOUND"
                 )
             return dict(
                 (col, getattr(row, col)) for col in row.__table__.columns.keys()
@@ -842,9 +825,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             row = query.first()
             if not row:
                 raise NotFoundWarning(
-                    "Entity with file_name={} and hash={} NOT FOUND".format(
-                        file_name, hash
-                    )
+                    f"Entity with file_name={file_name} and hash={hash} NOT FOUND"
                 )
             return dict(
                 (col, getattr(row, col)) for col in row.__table__.columns.keys()
@@ -853,7 +834,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             query = self.session.query(self.Entity).filter_by(hash=hash)
             row = query.first()
             if not row:
-                raise NotFoundWarning("Entity with hash={} NOT FOUND".format(hash))
+                raise NotFoundWarning(f"Entity with hash={hash} NOT FOUND")
             return dict(
                 (col, getattr(row, col)) for col in row.__table__.columns.keys()
             )
@@ -869,7 +850,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
 # SQL
 
 
-class SQLStorage(object):
+class SQLStorage:
     """Manage job information storage using SQL database
 
     This class defines required functions executed by the UWS server:
@@ -955,22 +936,20 @@ class SQLJobStorage(SQLStorage, JobStorage):
         """Read job from storage"""
         if from_process_id:
             # Query db for jobname and jobid using process_id
-            query = "SELECT jobname, jobid FROM jobs WHERE process_id='{}';".format(
-                job.process_id
-            )
+            query = f"SELECT jobname, jobid FROM jobs WHERE process_id='{job.process_id}';"
             row = self.cursor.execute(query).fetchone()
             if not row:
                 raise NotFoundWarning(
-                    "Job with process_id={} NOT FOUND".format(job.process_id)
+                    f"Job with process_id={job.process_id} NOT FOUND"
                 )
             job.jobname = row["jobname"]
             job.jobid = row["jobid"]
         if get_attributes:
             # Query db for job description
-            query = "SELECT * FROM jobs WHERE jobid='{}';".format(job.jobid)
+            query = f"SELECT * FROM jobs WHERE jobid='{job.jobid}';"
             row = self.cursor.execute(query).fetchone()
             if not row:
-                raise NotFoundWarning('Job "{}" NOT FOUND'.format(job.jobid))
+                raise NotFoundWarning(f'Job "{job.jobid}" NOT FOUND')
             # creation_time = dt.datetime.strptime(job['creation_time'], DT_FMT)
             # start_time = dt.datetime.strptime(row['start_time'], DT_FMT)
             # end_time = dt.datetime.strptime(row['end_time'], DT_FMT)
@@ -992,7 +971,7 @@ class SQLJobStorage(SQLStorage, JobStorage):
             job.process_id = row["process_id"]
         if get_parameters:
             # Query db for job parameters
-            query = "SELECT * FROM job_parameters WHERE jobid='{}';".format(job.jobid)
+            query = f"SELECT * FROM job_parameters WHERE jobid='{job.jobid}';"
             params = self.cursor.execute(query).fetchall()
             # Format results to a parameter dict
             params_dict = {
@@ -1004,7 +983,7 @@ class SQLJobStorage(SQLStorage, JobStorage):
             job.parameters = {}
         if get_results:
             # Query db for job results
-            query = "SELECT * FROM job_results WHERE jobid='{}';".format(job.jobid)
+            query = f"SELECT * FROM job_results WHERE jobid='{job.jobid}';"
             results = self.cursor.execute(query).fetchall()
             results_dict = {
                 row["name"]: {"url": row["url"], "content_type": row["content_type"]}
@@ -1016,29 +995,29 @@ class SQLJobStorage(SQLStorage, JobStorage):
 
     def delete(self, job):
         """Delete job from storage"""
-        query1 = "DELETE FROM job_results WHERE jobid='{}';".format(job.jobid)
+        query1 = f"DELETE FROM job_results WHERE jobid='{job.jobid}';"
         self.cursor.execute(query1)
-        query2 = "DELETE FROM job_parameters WHERE jobid='{}';".format(job.jobid)
+        query2 = f"DELETE FROM job_parameters WHERE jobid='{job.jobid}';"
         self.cursor.execute(query2)
-        query3 = "DELETE FROM jobs WHERE jobid='{}';".format(job.jobid)
+        query3 = f"DELETE FROM jobs WHERE jobid='{job.jobid}';"
         self.cursor.execute(query3)
         self.conn.commit()
 
     def get_list(self, joblist, phase=None, after=None, last=None, where_owner=True):
         """Query storage for job list"""
         query = "SELECT jobid, phase FROM jobs"
-        where = ["jobname='{}'".format(joblist.jobname)]
+        where = [f"jobname='{joblist.jobname}'"]
         if phase:
             where_phase = []
             for p in phase:
-                where_phase.append("phase='{}'".format(p))
+                where_phase.append(f"phase='{p}'")
             where.append("({})".format(" OR ".join(where_phase)))
         if where_owner:
-            where.append("owner='{}'".format(joblist.user.name))
-            where.append("owner_token='{}'".format(joblist.user.token))
+            where.append(f"owner='{joblist.user.name}'")
+            where.append(f"owner_token='{joblist.user.token}'")
         query += " WHERE " + " AND ".join(where)
         query += " ORDER BY destruction_time ASC"
-        logger.debug("query = {}".format(query))
+        logger.debug(f"query = {query}")
         jobs = self.cursor.execute(query).fetchall()
         return jobs
 
@@ -1047,7 +1026,7 @@ class SQLJobStorage(SQLStorage, JobStorage):
 # SQLite
 
 
-class SQLiteStorage(object):
+class SQLiteStorage:
     """Manage job information storage using SQLite"""
 
     def __init__(self, db_file=SQLITE_FILE):
@@ -1078,7 +1057,7 @@ class SQLiteJobStorage(SQLiteStorage, SQLJobStorage):
 # PostgreSQL
 
 
-class PostgreSQLStorage(object):
+class PostgreSQLStorage:
     """Manage job information storage using PostgreSQL"""
 
     def __init__(

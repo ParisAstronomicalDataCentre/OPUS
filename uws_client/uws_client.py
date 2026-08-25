@@ -5,59 +5,51 @@
 UWS client implementation using flask and javascript
 """
 
-import subprocess
-import yaml
-import uuid
-import datetime
 import base64
-import requests
+import datetime
 import json
-from requests.auth import HTTPBasicAuth
+import subprocess
+import uuid
+
+import requests
+import yaml
+from authlib.integrations.flask_client import OAuth
 from flask import (
     Flask,
-    request,
-    abort,
-    redirect,
-    url_for,
-    session,
-    g,
-    current_app,
-    render_template,
-    flash,
     Response,
-    stream_with_context,
+    abort,
+    flash,
+    g,
+    redirect,
+    render_template,
+    request,
     send_from_directory,
+    session,
+    url_for,
 )
-from flask_sqlalchemy import SQLAlchemy
+from flask_admin import Admin
+from flask_admin.contrib import sqla
+from flask_login import (
+    current_user,
+    login_user,
+    logout_user,
+    user_logged_in,
+    user_logged_out,
+)
+from flask_mail import Mail
 from flask_security import (
+    RoleMixin,
     Security,
     SQLAlchemyUserDatastore,
     UserMixin,
-    RoleMixin,
+    hash_password,
     login_required,
     roles_required,
-    utils,
-    hash_password,
 )
 from flask_security.forms import LoginForm, RegisterForm
-from flask_login import (
-    user_logged_in,
-    user_logged_out,
-    current_user,
-    LoginManager,
-    login_user,
-    logout_user,
-)
-from authlib.integrations.flask_client import OAuth
-from flask_security.core import (
-    _user_loader as _flask_security_user_loader,
-    _request_loader as _flask_security_request_loader,
-)
-from flask_security.utils import config_value as security_config_value
-from flask_admin import Admin
-from flask_admin.contrib import sqla
-from flask_mail import Mail
-from wtforms import StringField, PasswordField
+from flask_sqlalchemy import SQLAlchemy
+from requests.auth import HTTPBasicAuth
+from wtforms import PasswordField, StringField
 from wtforms.validators import InputRequired
 
 from .settings import *
@@ -120,7 +112,7 @@ mail = Mail(app)
 
 def load_config():
     if os.path.isfile(CONFIG_FILE):
-        with open(CONFIG_FILE, "r") as cf:
+        with open(CONFIG_FILE) as cf:
             econf = yaml.safe_load(cf)
             app.config.update(econf)
         logger.info("Loading editable config: " + repr(econf))
@@ -301,9 +293,9 @@ def oidc_callback():
         )
         db.session.commit()
         oidc_user = user_datastore.find_user(email=oidc_email)
-        logger.info("OIDC user {} is new and was added".format(oidc_email))
+        logger.info(f"OIDC user {oidc_email} is new and was added")
     else:
-        logger.info("user {} found in local user database".format(oidc_email))
+        logger.info(f"user {oidc_email} found in local user database")
     # Begin user session by logging the user in
     login_user(oidc_user)
     # Send user back to homepage
@@ -445,13 +437,13 @@ def on_user_logged_in(sender, user):
     except requests.exceptions.RequestException as e:
         error_msg = "Server connection error: " + str(e)
         flash(error_msg, "warning")
-    flash('"{}" is now logged in'.format(user.email), "info")
+    flash(f'"{user.email}" is now logged in', "info")
 
 
 @user_logged_out.connect_via(app)
 def on_user_logged_out(sender, user):
     logger.info(user.email)
-    flash('"{}" is now logged out'.format(user.email), "info")
+    flash(f'"{user.email}" is now logged out', "info")
     session.clear()
 
 
@@ -481,7 +473,7 @@ def profile():
                 user_datastore.put(current_user)
                 user_datastore.commit()
                 logger.debug(current_user.__dict__)
-                flash("Token of user {} has been updated".format(current_user.email))
+                flash(f"Token of user {current_user.email} has been updated")
         else:
             flash("No token found in form")
         return redirect(url_for("profile"), 303)
@@ -526,7 +518,7 @@ def import_server_account():
                 roles=["user"],
             )
             db.session.commit()
-            logger.info("User {} added".format(email))
+            logger.info(f"User {email} added")
             flash("User added, please enter new password and save record", "success")
             return {"user_id": user.get_id_db()}
         # Already exist
@@ -580,13 +572,11 @@ def favicon():
 def home():
     """Home page"""
     # logger.debug('app.config = {}'.format(app.config))
-    logger.debug("session = {}".format(session.__str__()))
+    logger.debug(f"session = {session.__str__()}")
     logger.debug(
-        "config = ".format(
-            {k: app.config[k] for k in EDITABLE_CONFIG if k in app.config}
-        )
+        "config = "
     )
-    logger.debug("g = {}".format(g.__dict__))
+    logger.debug(f"g = {g.__dict__}")
     date, version = git_version()
     return render_template("home.html", git_date=date, git_version=version)
 
@@ -746,13 +736,13 @@ def uws_server_request(uri, method="GET", init_request=None):
             auth = HTTPBasicAuth("anonymous", "anonymous")
     # Send request
     if method == "DELETE":
-        response = requests.delete("{}{}".format(server_url, uri), auth=auth)
+        response = requests.delete(f"{server_url}{uri}", auth=auth)
     elif method == "POST":
         post = {}
         if init_request:
             for key in list(init_request.form.keys()):
                 value = init_request.form.getlist(key)
-                logger.debug("POST {}: {}".format(key, value))
+                logger.debug(f"POST {key}: {value}")
                 if len(value) == 1:
                     post[key] = value[0]
                 else:
@@ -764,17 +754,17 @@ def uws_server_request(uri, method="GET", init_request=None):
                 fp = init_request.files[fname]
                 files[fname] = (fp.filename, fp.stream, fp.content_type, fp.headers)
         response = requests.post(
-            "{}{}".format(server_url, uri), data=post, files=files, auth=auth
+            f"{server_url}{uri}", data=post, files=files, auth=auth
         )
     else:
         params = {}
         if init_request:
             params = init_request.args
         response = requests.get(
-            "{}{}".format(server_url, uri), params=params, auth=auth
+            f"{server_url}{uri}", params=params, auth=auth
         )
     # Return response
-    logger.debug("{} {}{} ({})".format(method, server_url, uri, response.status_code))
+    logger.debug(f"{method} {server_url}{uri} ({response.status_code})")
     return response
 
 

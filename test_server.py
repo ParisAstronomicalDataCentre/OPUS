@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Copyright (c) 2016 by Mathieu Servillat
 # Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
 """
@@ -14,7 +13,7 @@ from uws_server import uws_server
 test_app = webtest.TestApp(uws_server.app)  # , extra_environ=dict(REMOTE_USER='test'))
 
 print(uws_server.SQLALCHEMY_DB)
-print("{}/server{}_debug.log".format(uws_server.LOG_PATH, uws_server.LOG_FILE_SUFFIX))
+print(f"{uws_server.LOG_PATH}/server{uws_server.LOG_FILE_SUFFIX}_debug.log")
 
 # server must have a test job (does nothing)
 jobname = "test_"
@@ -27,7 +26,7 @@ def create_job():
         jobname, "", uws_server.User("test_", "test_"), from_post=request
     )
     job.storage.save(job)
-    print("\n\nFill db with job test_ {}\n".format(job.jobid))
+    print(f"\n\nFill db with job test_ {job.jobid}\n")
     return job.jobid
 
 
@@ -36,7 +35,7 @@ def jobid():
     return create_job()
 
 
-class TestGet(object):
+class TestGet:
 
     def assert_status(self, url, status, content_type=""):
         if status in [404, 405]:
@@ -96,7 +95,7 @@ class TestGet(object):
         self.assert_status(url, 200, "text/plain; charset=UTF-8")
 
 
-class TestJobUpdate(object):
+class TestJobUpdate:
     """Test attribute updates"""
 
     def assert_job_attribute(self, jobid, attribute, value):
@@ -166,7 +165,7 @@ class TestJobUpdate(object):
         self.assert_job_attribute(jobid, "destruction", "2016-01-01T00:00:00")
 
 
-class TestJobUpdateParam(object):
+class TestJobUpdateParam:
     """Test attribute updates"""
 
     def assert_job_attribute(self, jobid, attribute, value):
@@ -206,7 +205,7 @@ class TestJobUpdateParam(object):
         self.assert_job_attribute(jobid, "parameters/input", "test_updated")
 
 
-class TestJobAbort(object):
+class TestJobAbort:
     """Test abort command on jobs (COMPLETED jobs cannot be aborted)"""
 
     def setUp(self):
@@ -233,7 +232,7 @@ class TestJobAbort(object):
         job = uws_server.Job(jobname, jobid, uws_server.User("test_", "test_"))
         job.change_status("EXECUTING")
         job.storage.save(job)
-        print("Job phase is {}".format(job.phase))
+        print(f"Job phase is {job.phase}")
         url = UWS_EP + "/" + jobname + "/" + jobid + "/phase"
         post = {"PHASE": "ABORT"}
         response = test_app.post(url, post)
@@ -248,7 +247,7 @@ class TestJobAbort(object):
         job = uws_server.Job(jobname, jobid, uws_server.User("test_", "test_"))
         job.change_status("COMPLETED")
         job.storage.save(job)
-        print("Job phase is {}".format(job.phase))
+        print(f"Job phase is {job.phase}")
         url = UWS_EP + "/" + jobname + "/" + jobid + "/phase"
         post = {"PHASE": "ABORT"}
         response = test_app.post(url, post, status=500)
@@ -259,7 +258,7 @@ class TestJobAbort(object):
         self.assert_job_phase(jobid, "COMPLETED")
 
 
-class TestJobDelete(object):
+class TestJobDelete:
     """Test delete command on jobs"""
 
     def test_delete(self, jobid):
@@ -289,7 +288,7 @@ class TestJobDelete(object):
         job = uws_server.Job(jobname, jobid, uws_server.User("test_", "test_"))
         job.change_status("EXECUTING")
         job.storage.save(job)
-        print("Job phase is {}".format(job.phase))
+        print(f"Job phase is {job.phase}")
         url = UWS_EP + "/" + jobname + "/" + jobid
         response = test_app.delete(url, post)
         print(url + " DELETE")
@@ -302,7 +301,7 @@ class TestJobDelete(object):
         job = uws_server.Job(jobname, jobid, uws_server.User("test_", "test_"))
         job.change_status("COMPLETED")
         job.storage.save(job)
-        print("Job phase is {}".format(job.phase))
+        print(f"Job phase is {job.phase}")
         url = UWS_EP + "/" + jobname + "/" + jobid
         response = test_app.delete(url, post)
         print(url + " DELETE")
@@ -312,7 +311,7 @@ class TestJobDelete(object):
         assert "/" + jobname in response.location
 
 
-class TestJobSequence(object):
+class TestJobSequence:
     """Test default sequence for a job: creation, start, executing, completed"""
 
     def assert_job_phase(self, jobid, phase):
