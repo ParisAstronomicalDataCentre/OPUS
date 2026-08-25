@@ -4,50 +4,50 @@
 # Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
 
 
-#----------
+# ----------
 # WARNING:
 # This file should be copied to settings_local.py and modified to configure
 # the execution of UWS server and client as desired (see "TBD" below)
 # The settings_local.py file contains default passwords and internal tokens,
 # it should thus be kept private (no git tacking, no public read access).
-#----------
+# ----------
 
 
-#----------
+# ----------
 # OPUS global config
 
 # For local debug servers
-BASE_URL = 'http://localhost:8082'
-UWS_CLIENT_ENDPOINT = 'http://localhost:8080'
-BASE_IP = '127.0.0.1'
+BASE_URL = "http://localhost:8082"
+UWS_CLIENT_ENDPOINT = "http://localhost:8080"
+BASE_IP = "127.0.0.1"
 # For web servers, e.g. Apache2
-#BASE_URL = 'http://localhost/opus_server'
-#UWS_CLIENT_ENDPOINT = '/opus_client'  # Recommended with opus_server (i.e. relative from BASE_URL)
-#BASE_IP = '127.0.0.1'
-LOCAL_USER = 'www'  # Apache user (may be www, _www, apache...)
-#UWS_SERVER_ENDPOINT = '/uws'
-#SCIM_ENDPOINT = '/scim'
+# BASE_URL = 'http://localhost/opus_server'
+# UWS_CLIENT_ENDPOINT = '/opus_client'  # Recommended with opus_server (i.e. relative from BASE_URL)
+# BASE_IP = '127.0.0.1'
+LOCAL_USER = "www"  # Apache user (may be www, _www, apache...)
+# UWS_SERVER_ENDPOINT = '/uws'
+# SCIM_ENDPOINT = '/scim'
 
-ADMIN_NAME = 'opus-admin'  # Will be the main local admin account
-ADMIN_EMAIL = 'admin@opus'
-ADMIN_TOKEN = 'TBD!'  # TOKEN of admin user, use a random string
+ADMIN_NAME = "opus-admin"  # Will be the main local admin account
+ADMIN_EMAIL = "admin@opus"
+ADMIN_TOKEN = "TBD!"  # TOKEN of admin user, use a random string
 
-MAIL_SERVER = 'smtp.'  # e.g. smtp.example.com
+MAIL_SERVER = "smtp."  # e.g. smtp.example.com
 MAIL_PORT = 25
-SENDER_EMAIL = 'no_reply@'  # e.g. no_reply@example.com
+SENDER_EMAIL = "no_reply@"  # e.g. no_reply@example.com
 
 # Directory where app data is stored
 # It has to be writable for the web server user (www, _www, apache...)
 # try 'var' to store var locally for quick test
-VAR_PATH = '/var/opt/opus'
+VAR_PATH = "/var/opt/opus"
 
 
-#----------
+# ----------
 # Client global config
 
 # IMPORTANT: keep those passwords secret
-ADMIN_DEFAULT_PW = 'TBD!'
-TESTUSER_DEFAULT_PW = 'TBD!'
+ADMIN_DEFAULT_PW = "TBD!"
+TESTUSER_DEFAULT_PW = "TBD!"
 
 CLIENT_TITLE = "OPUS"
 HOME_CONTENT = "<h3>OPUS</h3><p>Observatoire de Paris UWS Server - http://opus-job-manager.readthedocs.io</p>"
@@ -68,12 +68,12 @@ OIDC_IDPS = []
 # ]
 
 
-#----------
+# ----------
 # Server global config
 
 # IMPORTANT: use random strings for the following tokens and keep them secret
-JOB_EVENT_TOKEN = 'TBD!'  # TOKEN for special user job_event, used internally
-MAINTENANCE_TOKEN = 'TBD!'  # TOKEN for special user maintenance, used internally
+JOB_EVENT_TOKEN = "TBD!"  # TOKEN for special user job_event, used internally
+MAINTENANCE_TOKEN = "TBD!"  # TOKEN for special user maintenance, used internally
 
 # Access rules
 ALLOW_ANONYMOUS = True
@@ -82,33 +82,33 @@ CHECK_OWNER = False  # only owner can access their files
 NJOBS_MAX = 0  # 0 for no restriction
 # If a user has an APP_TOKEN, access to jobs will be added automatically
 APP_TOKENS = {
-    #""<token>"": {
+    # ""<token>"": {
     #    "name": "<name>",
     #    "active" : True  # set to False to remove job access
     #    "jobs": [
     #        "<jobname1>",
     #        "<jobname2>",
-    #]},
+    # ]},
 }
 
 # Job servers can have access to /job_event/<jobid_manager> to change the phase or report an error
 # The IP can be truncated to allow to refer to a set of IPs (e.g. '127.' for 127.*.*.*)
 JOB_SERVERS = {
-    '::1': 'localhost',
-    '127.0.0.1': 'localhost',
-    BASE_IP: 'base_ip',
+    "::1": "localhost",
+    "127.0.0.1": "localhost",
+    BASE_IP: "base_ip",
 }
 
 # Trusted clients can have access to /db and /jdl
 # e.g. /db/init, /jdl/validate...
 TRUSTED_CLIENTS = {
-    '::1':       'localhost',
-    '127.0.0.1': 'localhost',
-    BASE_IP: 'base_ip',
+    "::1": "localhost",
+    "127.0.0.1": "localhost",
+    BASE_IP: "base_ip",
 }
 
 
-#----------
+# ----------
 # Server behaviour
 
 # Default destruction interval
@@ -130,9 +130,9 @@ GENERATE_PROV = True
 # Copy back results
 COPY_RESULTS = True  # copy results from Manager to UWS server Archive (may be irrelevant if Manager = Local)
 
-JOB_ID_LENGTH = 6   # length of uuid identifiers from the right, max=36
+JOB_ID_LENGTH = 6  # length of uuid identifiers from the right, max=36
 
 
-#----------
+# ----------
 # More Server settings for Archive, DB Storage, Manager...
 # (see uws_server/settings.py and uws_client/settings.py)

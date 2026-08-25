@@ -14,18 +14,20 @@ from uws_server import uws_server
 test_app = webtest.TestApp(uws_server.app)  # , extra_environ=dict(REMOTE_USER='test'))
 
 print(uws_server.SQLALCHEMY_DB)
-print('{}/server{}_debug.log'.format(uws_server.LOG_PATH, uws_server.LOG_FILE_SUFFIX))
+print("{}/server{}_debug.log".format(uws_server.LOG_PATH, uws_server.LOG_FILE_SUFFIX))
 
 # server must have a test job (does nothing)
-jobname = 'test_'
+jobname = "test_"
 UWS_EP = uws_server.UWS_SERVER_ENDPOINT
 
 
 def create_job():
-    request = type('MyClass', (object,), {'POST': {'runId': 'test_'}, 'files': {}})()
-    job = uws_server.Job(jobname, '', uws_server.User('test_', 'test_'), from_post=request)
+    request = type("MyClass", (object,), {"POST": {"runId": "test_"}, "files": {}})()
+    job = uws_server.Job(
+        jobname, "", uws_server.User("test_", "test_"), from_post=request
+    )
     job.storage.save(job)
-    print('\n\nFill db with job test_ {}\n'.format(job.jobid))
+    print("\n\nFill db with job test_ {}\n".format(job.jobid))
     return job.jobid
 
 
@@ -36,225 +38,225 @@ def jobid():
 
 class TestGet(object):
 
-    def assert_status(self, url, status, content_type=''):
+    def assert_status(self, url, status, content_type=""):
         if status in [404, 405]:
             response = test_app.get(url, status=status)
         else:
             response = test_app.get(url)
         print(url)
-        print(' --> ' + response.status)
-        assert (response.status_int == status)
+        print(" --> " + response.status)
+        assert response.status_int == status
         if content_type:
-            assert (response.headers['content-type'] == content_type)
+            assert response.headers["content-type"] == content_type
 
     def test_get(self, jobid):
         # Test GET with job 22222222-e656-b924-c14a-fbd02f9ebaa9
-        #jobid = '22222222-e656-b924-c14a-fbd02f9ebaa9'
+        # jobid = '22222222-e656-b924-c14a-fbd02f9ebaa9'
 
-        url = UWS_EP + '/' + jobname
-        self.assert_status(url, 200, 'text/xml; charset=UTF-8')
+        url = UWS_EP + "/" + jobname
+        self.assert_status(url, 200, "text/xml; charset=UTF-8")
 
-        url = UWS_EP + '/' + jobname + '/bad_jobid'
+        url = UWS_EP + "/" + jobname + "/bad_jobid"
         self.assert_status(url, 404)
 
-        url = UWS_EP + '/' + jobname + '/' + jobid
-        self.assert_status(url, 200, 'text/xml; charset=UTF-8')
+        url = UWS_EP + "/" + jobname + "/" + jobid
+        self.assert_status(url, 200, "text/xml; charset=UTF-8")
 
-        url = UWS_EP + '/' + jobname + '/' + jobid + '/bad_attribute'
+        url = UWS_EP + "/" + jobname + "/" + jobid + "/bad_attribute"
         self.assert_status(url, 405)
 
-        url = UWS_EP + '/' + jobname + '/' + jobid + '/phase'
-        self.assert_status(url, 200, 'text/plain; charset=UTF-8')
+        url = UWS_EP + "/" + jobname + "/" + jobid + "/phase"
+        self.assert_status(url, 200, "text/plain; charset=UTF-8")
 
-        url = UWS_EP + '/' + jobname + '/' + jobid + '/executionduration'
-        self.assert_status(url, 200, 'text/plain; charset=UTF-8')
+        url = UWS_EP + "/" + jobname + "/" + jobid + "/executionduration"
+        self.assert_status(url, 200, "text/plain; charset=UTF-8")
 
-        url = UWS_EP + '/' + jobname + '/' + jobid + '/destruction'
-        self.assert_status(url, 200, 'text/plain; charset=UTF-8')
+        url = UWS_EP + "/" + jobname + "/" + jobid + "/destruction"
+        self.assert_status(url, 200, "text/plain; charset=UTF-8")
 
-        url = UWS_EP + '/' + jobname + '/' + jobid + '/error'
-        self.assert_status(url, 200, 'text/plain; charset=UTF-8')
+        url = UWS_EP + "/" + jobname + "/" + jobid + "/error"
+        self.assert_status(url, 200, "text/plain; charset=UTF-8")
 
-        url = UWS_EP + '/' + jobname + '/' + jobid + '/quote'
-        self.assert_status(url, 200, 'text/plain; charset=UTF-8')
+        url = UWS_EP + "/" + jobname + "/" + jobid + "/quote"
+        self.assert_status(url, 200, "text/plain; charset=UTF-8")
 
-        url = UWS_EP + '/' + jobname + '/' + jobid + '/parameters'
-        self.assert_status(url, 200, 'text/xml; charset=UTF-8')
+        url = UWS_EP + "/" + jobname + "/" + jobid + "/parameters"
+        self.assert_status(url, 200, "text/xml; charset=UTF-8")
 
-        url = UWS_EP + '/' + jobname + '/' + jobid + '/parameters/input'
-        self.assert_status(url, 200, 'text/plain; charset=UTF-8')
+        url = UWS_EP + "/" + jobname + "/" + jobid + "/parameters/input"
+        self.assert_status(url, 200, "text/plain; charset=UTF-8")
 
-        url = UWS_EP + '/' + jobname + '/' + jobid + '/results'
-        self.assert_status(url, 200, 'text/xml; charset=UTF-8')
+        url = UWS_EP + "/" + jobname + "/" + jobid + "/results"
+        self.assert_status(url, 200, "text/xml; charset=UTF-8")
 
-        #url = UWS_EP + '/' + jobname + '/' + jobid + '/results/output'
-        #self.assert_status(url, 200, 'text/plain; charset=UTF-8')
+        # url = UWS_EP + '/' + jobname + '/' + jobid + '/results/output'
+        # self.assert_status(url, 200, 'text/plain; charset=UTF-8')
 
-        url = UWS_EP + '/' + jobname + '/' + jobid + '/owner'
-        self.assert_status(url, 200, 'text/plain; charset=UTF-8')
+        url = UWS_EP + "/" + jobname + "/" + jobid + "/owner"
+        self.assert_status(url, 200, "text/plain; charset=UTF-8")
 
 
 class TestJobUpdate(object):
     """Test attribute updates"""
 
     def assert_job_attribute(self, jobid, attribute, value):
-        url = UWS_EP + '/' + jobname + '/' + jobid + '/' + attribute
+        url = UWS_EP + "/" + jobname + "/" + jobid + "/" + attribute
         response = test_app.get(url)
-        assert (response.text == value)
+        assert response.text == value
 
     def test_update(self, jobid):
         # Update execution duration
-        #jobid = '00000000-dbf3-6b04-b1e7-28d47ad32794'
-        url = UWS_EP + '/' + jobname + '/' + jobid + '/executionduration'
-        post = {'BAD_KEY': '120'}
+        # jobid = '00000000-dbf3-6b04-b1e7-28d47ad32794'
+        url = UWS_EP + "/" + jobname + "/" + jobid + "/executionduration"
+        post = {"BAD_KEY": "120"}
         response = test_app.post(url, post, status=500)
-        print(url + ' ' + str(post))
-        print(' --> ' + response.status)
-        print(' --> ' + response.html.pre.string)
-        assert (response.status_int == 500)
-        post = {'EXECUTIONDURATION': 'BAD_VALUE'}
+        print(url + " " + str(post))
+        print(" --> " + response.status)
+        print(" --> " + response.html.pre.string)
+        assert response.status_int == 500
+        post = {"EXECUTIONDURATION": "BAD_VALUE"}
         response = test_app.post(url, post, status=500)
-        print(url + ' ' + str(post))
-        print(' --> ' + response.status)
-        print(' --> ' + response.html.pre.string)
-        assert (response.status_int == 500)
-        post = {'EXECUTIONDURATION': '120'}
+        print(url + " " + str(post))
+        print(" --> " + response.status)
+        print(" --> " + response.html.pre.string)
+        assert response.status_int == 500
+        post = {"EXECUTIONDURATION": "120"}
         response = test_app.post(url, post)
-        print(url + ' ' + str(post))
-        print(' --> ' + response.status)
-        print(' --> ' + response.location)
-        assert (response.status_int == 303)
-        assert('/' + jobname + '/' + jobid in response.location)
-        self.assert_job_attribute(jobid, 'executionduration', '120')
+        print(url + " " + str(post))
+        print(" --> " + response.status)
+        print(" --> " + response.location)
+        assert response.status_int == 303
+        assert "/" + jobname + "/" + jobid in response.location
+        self.assert_job_attribute(jobid, "executionduration", "120")
         # Update destruction time
-        url = UWS_EP + '/' + jobname + '/' + jobid + '/destruction'
-        post = {'BAD_KEY': '2016-01-01T00:00:00'}
+        url = UWS_EP + "/" + jobname + "/" + jobid + "/destruction"
+        post = {"BAD_KEY": "2016-01-01T00:00:00"}
         response = test_app.post(url, post, status=500)
-        print(url + ' ' + str(post))
-        print(' --> ' + response.status)
-        print(' --> ' + response.html.pre.string)
-        assert (response.status_int == 500)
-        post = {'DESTRUCTION': 'BAD_VALUE'}
+        print(url + " " + str(post))
+        print(" --> " + response.status)
+        print(" --> " + response.html.pre.string)
+        assert response.status_int == 500
+        post = {"DESTRUCTION": "BAD_VALUE"}
         response = test_app.post(url, post, status=500)
-        print(url + ' ' + str(post))
-        print(' --> ' + response.status)
-        print(' --> ' + response.html.pre.string)
-        assert (response.status_int == 500)
-        post = {'DESTRUCTION': '2016-01-01 00:00:00'}
+        print(url + " " + str(post))
+        print(" --> " + response.status)
+        print(" --> " + response.html.pre.string)
+        assert response.status_int == 500
+        post = {"DESTRUCTION": "2016-01-01 00:00:00"}
         response = test_app.post(url, post, status=500)
-        print(url + ' ' + str(post))
-        print(' --> ' + response.status)
-        print(' --> ' + response.html.pre.string)
-        assert (response.status_int == 500)
-        post = {'DESTRUCTION': '2016-01-01T00:00:00'}
+        print(url + " " + str(post))
+        print(" --> " + response.status)
+        print(" --> " + response.html.pre.string)
+        assert response.status_int == 500
+        post = {"DESTRUCTION": "2016-01-01T00:00:00"}
         response = test_app.post(url, post)
-        print(url + ' ' + str(post))
-        print(' --> ' + response.status)
-        print(' --> ' + response.location)
-        assert (response.status_int == 303)
-        assert ('/' + jobname + '/' + jobid in response.location)
-        self.assert_job_attribute(jobid, 'destruction', '2016-01-01T00:00:00')
-        post = {'DESTRUCTION': '2016-01-01T00:00:00.55555'}
+        print(url + " " + str(post))
+        print(" --> " + response.status)
+        print(" --> " + response.location)
+        assert response.status_int == 303
+        assert "/" + jobname + "/" + jobid in response.location
+        self.assert_job_attribute(jobid, "destruction", "2016-01-01T00:00:00")
+        post = {"DESTRUCTION": "2016-01-01T00:00:00.55555"}
         response = test_app.post(url, post)
-        print(url + ' ' + str(post))
-        print(' --> ' + response.status)
-        print(' --> ' + response.location)
-        assert (response.status_int == 303)
-        assert ('/' + jobname + '/' + jobid in response.location)
-        self.assert_job_attribute(jobid, 'destruction', '2016-01-01T00:00:00')
+        print(url + " " + str(post))
+        print(" --> " + response.status)
+        print(" --> " + response.location)
+        assert response.status_int == 303
+        assert "/" + jobname + "/" + jobid in response.location
+        self.assert_job_attribute(jobid, "destruction", "2016-01-01T00:00:00")
 
 
 class TestJobUpdateParam(object):
     """Test attribute updates"""
 
     def assert_job_attribute(self, jobid, attribute, value):
-        url = UWS_EP + '/' + jobname + '/' + jobid + '/' + attribute
+        url = UWS_EP + "/" + jobname + "/" + jobid + "/" + attribute
         response = test_app.get(url)
-        assert (response.text == value)
+        assert response.text == value
 
     def test_update_param(self, jobid):
         # Change parameter
-        url = UWS_EP + '/' + jobname + '/' + jobid + '/parameters/input'
-        post = {'BAD_KEY': 'Testing'}
+        url = UWS_EP + "/" + jobname + "/" + jobid + "/parameters/input"
+        post = {"BAD_KEY": "Testing"}
         response = test_app.post(url, post, status=500)
-        print(url + ' ' + str(post))
-        print(' --> ' + response.status)
-        print(' --> ' + response.html.pre.string)
-        assert (response.status_int == 500)
-        self.assert_job_attribute(jobid, 'parameters/input', 'test_')
-        post = {'VALUE': 'test_updated'}
+        print(url + " " + str(post))
+        print(" --> " + response.status)
+        print(" --> " + response.html.pre.string)
+        assert response.status_int == 500
+        self.assert_job_attribute(jobid, "parameters/input", "test_")
+        post = {"VALUE": "test_updated"}
         response = test_app.post(url, post)
-        print(url + ' ' + str(post))
-        print(' --> ' + response.status)
-        print(' --> ' + response.location)
-        assert (response.status_int == 303)
-        assert ('/' + jobname + '/' + jobid in response.location)
-        self.assert_job_attribute(jobid, 'parameters/input', 'test_updated')
+        print(url + " " + str(post))
+        print(" --> " + response.status)
+        print(" --> " + response.location)
+        assert response.status_int == 303
+        assert "/" + jobname + "/" + jobid in response.location
+        self.assert_job_attribute(jobid, "parameters/input", "test_updated")
         # Change parameter of COMPLETED job
-        job = uws_server.Job(jobname, jobid, uws_server.User('test_', 'test_'))
-        job.change_status('COMPLETED')
+        job = uws_server.Job(jobname, jobid, uws_server.User("test_", "test_"))
+        job.change_status("COMPLETED")
         job.storage.save(job)
-        url = UWS_EP + '/' + jobname + '/' + jobid + '/parameters/input'
-        post = {'VALUE': 'test_completed'}
+        url = UWS_EP + "/" + jobname + "/" + jobid + "/parameters/input"
+        post = {"VALUE": "test_completed"}
         response = test_app.post(url, post, status=500)
-        print(url + ' ' + str(post))
-        print(' --> ' + response.status)
-        print(' --> ' + response.html.pre.string)
-        assert (response.status_int == 500)
-        self.assert_job_attribute(jobid, 'parameters/input', 'test_updated')
+        print(url + " " + str(post))
+        print(" --> " + response.status)
+        print(" --> " + response.html.pre.string)
+        assert response.status_int == 500
+        self.assert_job_attribute(jobid, "parameters/input", "test_updated")
 
 
 class TestJobAbort(object):
     """Test abort command on jobs (COMPLETED jobs cannot be aborted)"""
 
     def setUp(self):
-        print('\n***** TestJobAbort *****')
+        print("\n***** TestJobAbort *****")
 
     def assert_job_phase(self, jobid, phase):
-        url = UWS_EP + '/' + jobname + '/' + jobid + '/phase'
+        url = UWS_EP + "/" + jobname + "/" + jobid + "/phase"
         response = test_app.get(url)
-        assert (response.text == phase)
+        assert response.text == phase
 
     def test_abort(self, jobid):
         # Abort PENDING job
-        url = UWS_EP + '/' + jobname + '/' + jobid + '/phase'
-        post = {'PHASE': 'ABORT'}
+        url = UWS_EP + "/" + jobname + "/" + jobid + "/phase"
+        post = {"PHASE": "ABORT"}
         response = test_app.post(url, post)
-        print(url + ' ' + str(post))
-        print(' --> ' + response.status)
-        print(' --> ' + response.location)
-        assert (response.status_int == 303)
-        assert ('/' + jobname + '/' + jobid in response.location)
-        self.assert_job_phase(jobid, 'ABORTED')
+        print(url + " " + str(post))
+        print(" --> " + response.status)
+        print(" --> " + response.location)
+        assert response.status_int == 303
+        assert "/" + jobname + "/" + jobid in response.location
+        self.assert_job_phase(jobid, "ABORTED")
         # Abort EXECUTING job
         jobid = create_job()
-        job = uws_server.Job(jobname, jobid, uws_server.User('test_', 'test_'))
-        job.change_status('EXECUTING')
+        job = uws_server.Job(jobname, jobid, uws_server.User("test_", "test_"))
+        job.change_status("EXECUTING")
         job.storage.save(job)
-        print('Job phase is {}'.format(job.phase))
-        url = UWS_EP + '/' + jobname + '/' + jobid + '/phase'
-        post = {'PHASE': 'ABORT'}
+        print("Job phase is {}".format(job.phase))
+        url = UWS_EP + "/" + jobname + "/" + jobid + "/phase"
+        post = {"PHASE": "ABORT"}
         response = test_app.post(url, post)
-        print(url + ' ' + str(post))
-        print(' --> ' + response.status)
-        print(' --> ' + response.location)
-        assert (response.status_int == 303)
-        assert ('/' + jobname + '/' + jobid in response.location)
-        self.assert_job_phase(jobid, 'ABORTED')
+        print(url + " " + str(post))
+        print(" --> " + response.status)
+        print(" --> " + response.location)
+        assert response.status_int == 303
+        assert "/" + jobname + "/" + jobid in response.location
+        self.assert_job_phase(jobid, "ABORTED")
         # Abort COMPLETED job (should return HTTP Error 500)
         jobid = create_job()
-        job = uws_server.Job(jobname, jobid, uws_server.User('test_', 'test_'))
-        job.change_status('COMPLETED')
+        job = uws_server.Job(jobname, jobid, uws_server.User("test_", "test_"))
+        job.change_status("COMPLETED")
         job.storage.save(job)
-        print('Job phase is {}'.format(job.phase))
-        url = UWS_EP + '/' + jobname + '/' + jobid + '/phase'
-        post = {'PHASE': 'ABORT'}
+        print("Job phase is {}".format(job.phase))
+        url = UWS_EP + "/" + jobname + "/" + jobid + "/phase"
+        post = {"PHASE": "ABORT"}
         response = test_app.post(url, post, status=500)
-        print(url + ' ' + str(post))
-        print(' --> ' + response.status)
-        print(' --> ' + response.html.pre.string)
-        assert (response.status_int == 500)
-        self.assert_job_phase(jobid, 'COMPLETED')
+        print(url + " " + str(post))
+        print(" --> " + response.status)
+        print(" --> " + response.html.pre.string)
+        assert response.status_int == 500
+        self.assert_job_phase(jobid, "COMPLETED")
 
 
 class TestJobDelete(object):
@@ -262,112 +264,112 @@ class TestJobDelete(object):
 
     def test_delete(self, jobid):
         # Delete PENDING job
-        url = UWS_EP + '/' + jobname + '/' + jobid
-        post = {'ACTION': 'BAD_VALUE'}
+        url = UWS_EP + "/" + jobname + "/" + jobid
+        post = {"ACTION": "BAD_VALUE"}
         response = test_app.post(url, post, status=500)
-        print(url + ' ' + str(post))
-        print(' --> ' + response.status)
-        print(' --> ' + response.html.pre.string)
-        assert (response.status_int == 500)
-        post = {'BAD_KEY': 'DELETE'}
+        print(url + " " + str(post))
+        print(" --> " + response.status)
+        print(" --> " + response.html.pre.string)
+        assert response.status_int == 500
+        post = {"BAD_KEY": "DELETE"}
         response = test_app.post(url, post, status=500)
-        print(url + ' ' + str(post))
-        print(' --> ' + response.status)
-        print(' --> ' + response.html.pre.string)
-        assert (response.status_int == 500)
-        post = {'ACTION': 'DELETE'}
+        print(url + " " + str(post))
+        print(" --> " + response.status)
+        print(" --> " + response.html.pre.string)
+        assert response.status_int == 500
+        post = {"ACTION": "DELETE"}
         response = test_app.post(url, post)
-        print(url + ' ' + str(post))
-        print(' --> ' + response.status)
-        print(' --> ' + response.location)
-        assert (response.status_int == 303)
-        assert ('/' + jobname in response.location)
+        print(url + " " + str(post))
+        print(" --> " + response.status)
+        print(" --> " + response.location)
+        assert response.status_int == 303
+        assert "/" + jobname in response.location
         # Delete EXECUTING job
         jobid = create_job()
-        job = uws_server.Job(jobname, jobid, uws_server.User('test_', 'test_'))
-        job.change_status('EXECUTING')
+        job = uws_server.Job(jobname, jobid, uws_server.User("test_", "test_"))
+        job.change_status("EXECUTING")
         job.storage.save(job)
-        print('Job phase is {}'.format(job.phase))
-        url = UWS_EP + '/' + jobname + '/' + jobid
+        print("Job phase is {}".format(job.phase))
+        url = UWS_EP + "/" + jobname + "/" + jobid
         response = test_app.delete(url, post)
-        print(url + ' DELETE')
-        print(' --> ' + response.status)
-        print(' --> ' + response.location)
-        assert (response.status_int == 303)
-        assert ('/' + jobname in response.location)
+        print(url + " DELETE")
+        print(" --> " + response.status)
+        print(" --> " + response.location)
+        assert response.status_int == 303
+        assert "/" + jobname in response.location
         # Delete COMPLETED job
         jobid = create_job()
-        job = uws_server.Job(jobname, jobid, uws_server.User('test_', 'test_'))
-        job.change_status('COMPLETED')
+        job = uws_server.Job(jobname, jobid, uws_server.User("test_", "test_"))
+        job.change_status("COMPLETED")
         job.storage.save(job)
-        print('Job phase is {}'.format(job.phase))
-        url = UWS_EP + '/' + jobname + '/' + jobid
+        print("Job phase is {}".format(job.phase))
+        url = UWS_EP + "/" + jobname + "/" + jobid
         response = test_app.delete(url, post)
-        print(url + ' DELETE')
-        print(' --> ' + response.status)
-        print(' --> ' + response.location)
-        assert (response.status_int == 303)
-        assert ('/' + jobname in response.location)
+        print(url + " DELETE")
+        print(" --> " + response.status)
+        print(" --> " + response.location)
+        assert response.status_int == 303
+        assert "/" + jobname in response.location
 
 
 class TestJobSequence(object):
     """Test default sequence for a job: creation, start, executing, completed"""
 
     def assert_job_phase(self, jobid, phase):
-        url = UWS_EP + '/' + jobname + '/' + jobid + '/phase'
+        url = UWS_EP + "/" + jobname + "/" + jobid + "/phase"
         response = test_app.get(url)
-        assert (response.text == phase)
+        assert response.text == phase
 
     def test_job_sequence(self, jobid):
         # Create job
-        url = UWS_EP + '/' + jobname + ''
-        post = {'input': 'test_start'}
+        url = UWS_EP + "/" + jobname + ""
+        post = {"input": "test_start"}
         response = test_app.post(url, post)
-        print(url + ' ' + str(post))
-        print(' --> ' + response.status)
-        print(' --> ' + response.location)
-        assert (response.status_int == 303)
-        assert ('/' + jobname + '/' in response.location)
-        jobid = response.location.split('/')[-1]
-        self.assert_job_phase(jobid, 'PENDING')
+        print(url + " " + str(post))
+        print(" --> " + response.status)
+        print(" --> " + response.location)
+        assert response.status_int == 303
+        assert "/" + jobname + "/" in response.location
+        jobid = response.location.split("/")[-1]
+        self.assert_job_phase(jobid, "PENDING")
         # Start job
-        url = UWS_EP + '/' + jobname + '/' + jobid + '/phase'
-        post = {'PHASE': 'BAD_VALUE'}
+        url = UWS_EP + "/" + jobname + "/" + jobid + "/phase"
+        post = {"PHASE": "BAD_VALUE"}
         response = test_app.post(url, post, status=500)
-        print(url + ' ' + str(post))
-        print(' --> ' + response.status)
-        print(' --> ' + response.html.pre.string)
-        assert (response.status_int == 500)
-        self.assert_job_phase(jobid, 'PENDING')
-        post = {'BAD_KEY': 'RUN'}
+        print(url + " " + str(post))
+        print(" --> " + response.status)
+        print(" --> " + response.html.pre.string)
+        assert response.status_int == 500
+        self.assert_job_phase(jobid, "PENDING")
+        post = {"BAD_KEY": "RUN"}
         response = test_app.post(url, post, status=500)
-        print(url + ' ' + str(post))
-        print(' --> ' + response.status)
-        print(' --> ' + response.html.pre.string)
-        assert (response.status_int == 500)
-        self.assert_job_phase(jobid, 'PENDING')
-        post = {'PHASE': 'RUN'}
+        print(url + " " + str(post))
+        print(" --> " + response.status)
+        print(" --> " + response.html.pre.string)
+        assert response.status_int == 500
+        self.assert_job_phase(jobid, "PENDING")
+        post = {"PHASE": "RUN"}
         response = test_app.post(url, post)
-        print(url + ' ' + str(post))
-        print(' --> ' + response.status)
-        print(' --> ' + response.location)
-        assert (response.status_int == 303)
-        assert (UWS_EP + '/' + jobname + '/' + jobid in response.location)
-        self.assert_job_phase(jobid, 'QUEUED')
+        print(url + " " + str(post))
+        print(" --> " + response.status)
+        print(" --> " + response.location)
+        assert response.status_int == 303
+        assert UWS_EP + "/" + jobname + "/" + jobid in response.location
+        self.assert_job_phase(jobid, "QUEUED")
         # job_event EXECUTING
-        url = '/handler/job_event'
-        post = {'jobid': '0', 'phase': 'EXECUTING'}
-        response = test_app.post(url, post, extra_environ=dict(REMOTE_ADDR='127.0.0.1'))
+        url = "/handler/job_event"
+        post = {"jobid": "0", "phase": "EXECUTING"}
+        response = test_app.post(url, post, extra_environ=dict(REMOTE_ADDR="127.0.0.1"))
         print(url)
-        print(' --> ' + response.status)
-        assert (response.status_int == 200)
-        assert (response.text == '')
-        self.assert_job_phase(jobid, 'EXECUTING')
+        print(" --> " + response.status)
+        assert response.status_int == 200
+        assert response.text == ""
+        self.assert_job_phase(jobid, "EXECUTING")
         # job_event COMPLETED
-        post = {'jobid': '0', 'phase': 'COMPLETED'}
-        response = test_app.post(url, post, extra_environ=dict(REMOTE_ADDR='127.0.0.1'))
+        post = {"jobid": "0", "phase": "COMPLETED"}
+        response = test_app.post(url, post, extra_environ=dict(REMOTE_ADDR="127.0.0.1"))
         print(url)
-        print(' --> ' + response.status)
-        assert (response.status_int == 200)
-        assert (response.text == '')
-        self.assert_job_phase(jobid, 'COMPLETED')
+        print(" --> " + response.status)
+        assert response.status_int == 200
+        assert response.text == ""
+        self.assert_job_phase(jobid, "COMPLETED")

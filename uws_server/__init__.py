@@ -1,2 +1,2 @@
-__author__ = 'mservillat'
-__package__ = 'uws_server'
+__author__ = "mservillat"
+__package__ = "uws_server"

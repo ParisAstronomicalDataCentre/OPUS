@@ -18,17 +18,26 @@ the number of database access (in the case of a relational database)
 """
 
 import datetime as dt
-#from entity_store import *
+
+# from entity_store import *
 import hashlib
 from .settings import *
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import Column
-from sqlalchemy import ForeignKey, Float, String, Boolean, Integer, BigInteger, DateTime, Text
+from sqlalchemy import (
+    ForeignKey,
+    Float,
+    String,
+    Boolean,
+    Integer,
+    BigInteger,
+    DateTime,
+    Text,
+)
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.dialects import sqlite
-
 
 # ---------
 # Exceptions/Warnings
@@ -36,6 +45,7 @@ from sqlalchemy.dialects import sqlite
 
 class NotFoundWarning(Warning):
     """Warning used if Storage does not contain the information"""
+
     pass
 
 
@@ -53,8 +63,14 @@ class JobStorage(object):
         """Save job information to storage (attributes, parameters and results)"""
         pass
 
-    def read(self, job, get_attributes=True, get_parameters=True, get_results=True,
-             from_process_id=False):
+    def read(
+        self,
+        job,
+        get_attributes=True,
+        get_parameters=True,
+        get_results=True,
+        from_process_id=False,
+    ):
         """Read job information from storage"""
         pass
 
@@ -76,7 +92,7 @@ class UserStorage(object):
         """Get list of users with their token and roles"""
         pass
 
-    def add_user(self, name, token, roles=''):
+    def add_user(self, name, token, roles=""):
         """Add user"""
         pass
 
@@ -88,15 +104,15 @@ class UserStorage(object):
         """Update user attribute"""
         pass
 
-    def add_role(self, name, token, role=''):
+    def add_role(self, name, token, role=""):
         """Add role to user, i.e. access to a job"""
         pass
 
-    def remove_role(self, name, token, role=''):
+    def remove_role(self, name, token, role=""):
         """Get job list from storage, i.e. access to a job"""
         pass
 
-    def has_role(self, name, token, role=''):
+    def has_role(self, name, token, role=""):
         """Check if user has role"""
         pass
 
@@ -116,8 +132,8 @@ class EntityStorage(object):
         :return: hax hash
         """
         BUF_SIZE = 65536  # lets read stuff in 64kb chunks!
-        sha = getattr(hashlib, 'sha' + SHA_ALGO)()
-        with open(path, 'rb') as f:
+        sha = getattr(hashlib, "sha" + SHA_ALGO)()
+        with open(path, "rb") as f:
             while True:
                 data = f.read(BUF_SIZE)
                 if not data:
@@ -125,11 +141,20 @@ class EntityStorage(object):
                 sha.update(data)
         return sha.hexdigest()
 
-    def register_entity(self, jobid, file_name, file_url, file_dir=None, hash=None, owner='anonymous', owner_token='anonymous'):
+    def register_entity(
+        self,
+        jobid,
+        file_name,
+        file_url,
+        file_dir=None,
+        hash=None,
+        owner="anonymous",
+        owner_token="anonymous",
+    ):
         """Add entity, store hash and properties, return entity_id"""
         pass
 
-    def remove_entity(self, entity_id, owner='anonymous', owner_token='anonymous'):
+    def remove_entity(self, entity_id, owner="anonymous", owner_token="anonymous"):
         """Remove entity"""
         pass
 
@@ -137,7 +162,16 @@ class EntityStorage(object):
         """Return all entity attributes"""
         pass
 
-    def search_entity(self, entity_id=None, jobid=None, result_name=None, file_name=None, hash=None, owner='anonymous', owner_token='anonymous'):
+    def search_entity(
+        self,
+        entity_id=None,
+        jobid=None,
+        result_name=None,
+        file_name=None,
+        hash=None,
+        owner="anonymous",
+        owner_token="anonymous",
+    ):
         """Search entity, return all entity attributes, maybe for several entities"""
         pass
 
@@ -149,22 +183,24 @@ class EntityStorage(object):
 class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
 
     def __init__(self, db_string=SQLALCHEMY_DB):
-        self.engine = create_engine(db_string)  # , connect_args={'check_same_thread': False})
+        self.engine = create_engine(
+            db_string
+        )  # , connect_args={'check_same_thread': False})
         self.Base = declarative_base()
         # self.Base = automap_base()
         # dt_format = u'%(year)04d/%(month)02d/%(day)02dT%(hour)02d:%(min)02d:%(second)02d'
         # dt_regexp = u'(\d+)/(\d+)/(\d+)T(\d+):(\d+):(\d+)'
         # myDateTime = DateTime().with_variant(sqlite.DATETIME(storage_format=dt_format, regexp=dt_regexp), 'sqlite')
         # myDateTime = DateTime().with_variant(sqlite.TIMESTAMP(), 'sqlite')
-        if STORAGE_TYPE == 'SQLite':
-            myDateTime = DateTime().with_variant(String(19), 'sqlite')
-            myBoolean = Boolean().with_variant(String(5), 'sqlite')
+        if STORAGE_TYPE == "SQLite":
+            myDateTime = DateTime().with_variant(String(19), "sqlite")
+            myBoolean = Boolean().with_variant(String(5), "sqlite")
         else:
             myDateTime = DateTime()
             myBoolean = Boolean()
 
         class Job(self.Base):
-            __tablename__ = 'jobs'
+            __tablename__ = "jobs"
             jobid = Column(String(80), primary_key=True)  # uuid: max=36
             jobname = Column(String(255))
             phase = Column(String(10))
@@ -181,27 +217,35 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             process_id = Column(BigInteger(), nullable=True)
 
         class Parameter(self.Base):
-            __tablename__ = 'job_parameters'
-            jobid = Column(String(80), ForeignKey("jobs.jobid"), primary_key=True)  # uuid: max=36
+            __tablename__ = "job_parameters"
+            jobid = Column(
+                String(80), ForeignKey("jobs.jobid"), primary_key=True
+            )  # uuid: max=36
             name = Column(String(255), primary_key=True)
             value = Column(String(255), nullable=True)
             byref = Column(myBoolean, default=False, nullable=True)
             # from_entity = Column(myBoolean, default=False, nullable=True)
-            entity_id = Column(String(255), ForeignKey("entities.entity_id"), nullable=True)
+            entity_id = Column(
+                String(255), ForeignKey("entities.entity_id"), nullable=True
+            )
 
         class Result(self.Base):
-            __tablename__ = 'job_results'
-            jobid = Column(String(80), ForeignKey("jobs.jobid"), primary_key=True)  # uuid: max=36
+            __tablename__ = "job_results"
+            jobid = Column(
+                String(80), ForeignKey("jobs.jobid"), primary_key=True
+            )  # uuid: max=36
             name = Column(String(255), primary_key=True)
             url = Column(String(255), nullable=True)
             content_type = Column(String(64), nullable=True)
-            entity_id = Column(String(255), ForeignKey("entities.entity_id"), nullable=True)
+            entity_id = Column(
+                String(255), ForeignKey("entities.entity_id"), nullable=True
+            )
 
         class User(self.Base):
-            __tablename__ = 'users'
+            __tablename__ = "users"
             name = Column(String(80), primary_key=True)
             token = Column(String(255), default=TOKEN_GEN)
-            roles = Column(String(255), default='')
+            roles = Column(String(255), default="")
             active = Column(Boolean(), default=True)
             first_connection = Column(myDateTime)
             # last_login = Column(myDateTime)
@@ -209,7 +253,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             # TODO: roles as a table with FK to jobnames,
 
         class Entity(self.Base):
-            __tablename__ = 'entities'
+            __tablename__ = "entities"
             entity_id = Column(String(80), primary_key=True)
             value = Column(String(255), nullable=True)
             file_name = Column(String(255), nullable=True)
@@ -221,16 +265,22 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             access_url = Column(String(255), nullable=True)
             owner = Column(String(64))
             # was generated by:
-            jobid = Column(String(80), ForeignKey("jobs.jobid"), nullable=True)  # uuid: max=36
+            jobid = Column(
+                String(80), ForeignKey("jobs.jobid"), nullable=True
+            )  # uuid: max=36
             result_name = Column(String(255), nullable=True)
             result_value = Column(String(255), nullable=True)
             # derivation
             from_entity = Column(String(80), nullable=True)
 
         class Used(self.Base):
-            __tablename__ = 'used'
-            entity_id = Column(String(80), ForeignKey("entities.entity_id"), primary_key=True)
-            jobid = Column(String(80), ForeignKey("jobs.jobid"), primary_key=True)  # uuid: max=36
+            __tablename__ = "used"
+            entity_id = Column(
+                String(80), ForeignKey("entities.entity_id"), primary_key=True
+            )
+            jobid = Column(
+                String(80), ForeignKey("jobs.jobid"), primary_key=True
+            )  # uuid: max=36
             role = Column(String(255), nullable=True)
             owner = Column(String(64), nullable=True)
 
@@ -255,7 +305,11 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         """Get list of users with their token and roles"""
         if name:
             if token:
-                rows = self.session.query(self.User).filter_by(name=name, token=token).all()
+                rows = (
+                    self.session.query(self.User)
+                    .filter_by(name=name, token=token)
+                    .all()
+                )
             else:
                 rows = self.session.query(self.User).filter_by(name=name).all()
         else:
@@ -264,116 +318,128 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         if rows:
             users = [r.__dict__ for r in rows]
         else:
-            logger.error('No user found in db')
+            logger.error("No user found in db")
         return users
 
     def add_user(self, name, token=None, roles=None):
         """Add user"""
         if token:
-            row = self.session.query(self.User).filter_by(name=name, token=token).first()
+            row = (
+                self.session.query(self.User).filter_by(name=name, token=token).first()
+            )
         else:
-            logger.debug(f'No token given, it will be automatically generated')
+            logger.debug(f"No token given, it will be automatically generated")
             row = self.session.query(self.User).filter_by(name=name).first()
         if not row:
             d = {
-                'name': name,
-                'first_connection': dt.datetime.now(),
+                "name": name,
+                "first_connection": dt.datetime.now(),
             }
             if token:
-                d['token'] = token
+                d["token"] = token
             if roles:
-                d['roles'] = roles
+                d["roles"] = roles
             u = self.User(**d)
             self.session.merge(u)
             self.session.commit()
-            logger.info(f'User {name} added to db')
-        #else:
+            logger.info(f"User {name} added to db")
+        # else:
         #    logger.debug('User {} already exists in db'.format(name))
 
     def remove_user(self, name, token=None):
         """Remove user from storage"""
         if token:
-            row = self.session.query(self.User).filter_by(name=name, token=token).first()
+            row = (
+                self.session.query(self.User).filter_by(name=name, token=token).first()
+            )
         else:
-            logger.debug(f'No token given')
+            logger.debug(f"No token given")
             rows = self.session.query(self.User).filter_by(name=name).all()
             if len(rows) > 1:
-                logger.warning(f'No user removed: more than one user found with name {name}.')
+                logger.warning(
+                    f"No user removed: more than one user found with name {name}."
+                )
                 return ""
             row = rows[0]
         if row:
             self.session.delete(row)
             self.session.commit()
-            logger.info(f'User {name} removed from db')
+            logger.info(f"User {name} removed from db")
             return name
         else:
-            logger.error(f'User {name} was not removed from db')
+            logger.error(f"User {name} was not removed from db")
             return ""
 
     def update_user(self, name, key, value, token=None):
         """Update user attribute"""
         if token:
-            row = self.session.query(self.User).filter_by(name=name, token=token).first()
+            row = (
+                self.session.query(self.User).filter_by(name=name, token=token).first()
+            )
         else:
-            logger.debug(f'No token given')
+            logger.debug(f"No token given")
             row = self.session.query(self.User).filter_by(name=name).first()
-        #row = self.session.query(self.User).filter_by(name=name, token=token).first()
+        # row = self.session.query(self.User).filter_by(name=name, token=token).first()
         if row:
             setattr(row, key, value)
             self.session.commit()
-            logger.debug(f'User {name} updated: {key}={value}')
+            logger.debug(f"User {name} updated: {key}={value}")
             return name
         else:
-            logger.error(f'User {name} not found in db')
+            logger.error(f"User {name} not found in db")
 
     def get_roles(self, user):
-        row = self.session.query(self.User).filter_by(name=user.name, token=user.token).first()
+        row = (
+            self.session.query(self.User)
+            .filter_by(name=user.name, token=user.token)
+            .first()
+        )
         roles = []
         if row:
-            roles = row.roles.split(',')
+            roles = row.roles.split(",")
         return roles
 
-    def add_role(self, name, token, role=''):
+    def add_role(self, name, token, role=""):
         """Add role to user, i.e. access to a job"""
         row = self.session.query(self.User).filter_by(name=name, token=token).first()
         if row:
-            roles = row.roles.split(',')
+            roles = row.roles.split(",")
             if role in roles:
-                logger.debug(f'Role \"{role}\" already set for user {name}')
+                logger.debug(f'Role "{role}" already set for user {name}')
             else:
                 roles.append(role)
-                row.roles = ','.join(roles)
+                row.roles = ",".join(roles)
                 self.session.merge(row)
                 self.session.commit()
-                logger.debug(f'Role \"{role}\" added for user {name}')
+                logger.debug(f'Role "{role}" added for user {name}')
         else:
-            logger.error('User {} not found in db'.format(name))
+            logger.error("User {} not found in db".format(name))
 
-    def remove_role(self, name, token, role=''):
+    def remove_role(self, name, token, role=""):
         """Get job list from storage, i.e. access to a job"""
         row = self.session.query(self.User).filter_by(name=name, token=token).first()
         if row:
-            roles = row.roles.split(',')
+            roles = row.roles.split(",")
             if role in roles:
                 roles.pop(role)
-                row.roles = ','.join(roles)
+                row.roles = ",".join(roles)
                 self.session.merge(row)
                 self.session.commit()
-                logger.debug(f'Role \"{role}\" removed for user {name}')
+                logger.debug(f'Role "{role}" removed for user {name}')
             else:
-                logger.debug(f'Role \"{role}\" not found for user {name}')
+                logger.debug(f'Role "{role}" not found for user {name}')
         else:
-            logger.error(f'User {name} not found in db')
+            logger.error(f"User {name} not found in db")
 
-    def has_role(self, name, token, role=''):
+    def has_role(self, name, token, role=""):
         row = self.session.query(self.User).filter_by(name=name, token=token).first()
         if row:
-            roles = row.roles.split(',')
-            if ('all' in roles) or (role in roles):
+            roles = row.roles.split(",")
+            if ("all" in roles) or (role in roles):
                 # logger.debug('Role \"{}\" found for user {}:{}'.format(role, name, token))
                 return True
             else:
-                logger.debug(f'Role \"{role}\" not found for user {name}')
+                logger.debug(f'Role "{role}" not found for user {name}')
                 return False
 
     def has_access(self, user, jobname):
@@ -387,15 +453,15 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
 
     def _save_parameter(self, job, pname):
         # Save job parameter to db
-        eid = job.parameters[pname]['entity_id']
-        if not eid or eid == '0':
+        eid = job.parameters[pname]["entity_id"]
+        if not eid or eid == "0":
             eid = None
         d = {
-            'jobid': job.jobid,
-            'name': pname,
-            'value': job.parameters[pname]['value'],
-            'byref': job.parameters[pname]['byref'],
-            'entity_id': eid,
+            "jobid": job.jobid,
+            "name": pname,
+            "value": job.parameters[pname]["value"],
+            "byref": job.parameters[pname]["byref"],
+            "entity_id": eid,
         }
         p = self.Parameter(**d)
         self.session.merge(p)
@@ -403,11 +469,11 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
     def _save_result(self, job, rname):
         # Save job result to db
         d = {
-            'jobid': job.jobid,
-            'name': rname,
-            'url': job.results[rname]['url'],
-            'content_type': job.results[rname]['content_type'],
-            'entity_id': job.results[rname]['entity_id'],
+            "jobid": job.jobid,
+            "name": rname,
+            "url": job.results[rname]["url"],
+            "content_type": job.results[rname]["content_type"],
+            "entity_id": job.results[rname]["entity_id"],
         }
         r = self.Result(**d)
         self.session.merge(r)
@@ -437,15 +503,27 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                 self._save_result(job, rname)
             self.session.commit()
 
-    def read(self, job, get_attributes=True, get_parameters=True, get_results=True,
-             from_process_id=False):
+    def read(
+        self,
+        job,
+        get_attributes=True,
+        get_parameters=True,
+        get_results=True,
+        from_process_id=False,
+    ):
         """Read job information from storage"""
         if get_attributes:
             if from_process_id:
                 # Query db for jobname and jobid using process_id
-                row = self.session.query(self.Job).filter_by(process_id=job.process_id).first()
+                row = (
+                    self.session.query(self.Job)
+                    .filter_by(process_id=job.process_id)
+                    .first()
+                )
                 if not row:
-                    raise NotFoundWarning('Job with process_id={} NOT FOUND'.format(job.process_id))
+                    raise NotFoundWarning(
+                        "Job with process_id={} NOT FOUND".format(job.process_id)
+                    )
                 # job.jobname = row.jobname
                 # job.jobid = row.jobid
             else:
@@ -461,9 +539,9 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             # Format results to a parameter dict
             params_dict = {
                 row.name: {
-                    'value': row.value,
-                    'byref': row.byref,
-                    'entity_id': row.entity_id,
+                    "value": row.value,
+                    "byref": row.byref,
+                    "entity_id": row.entity_id,
                 }
                 for row in params
             }
@@ -476,15 +554,19 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             results_dict = {}
             for rrow in results:
                 rrow_dict = {
-                    'url': rrow.url,
-                    'content_type': rrow.content_type,
-                    'entity_id': rrow.entity_id,
+                    "url": rrow.url,
+                    "content_type": rrow.content_type,
+                    "entity_id": rrow.entity_id,
                 }
-                entity = self.session.query(self.Entity).filter_by(entity_id=rrow.entity_id).first()
+                entity = (
+                    self.session.query(self.Entity)
+                    .filter_by(entity_id=rrow.entity_id)
+                    .first()
+                )
                 if entity:
                     logger.debug(entity)
-                    rrow_dict['file_name'] = entity.entity_id + '_' + entity.file_name
-                    rrow_dict['hash'] = entity.hash
+                    rrow_dict["file_name"] = entity.entity_id + "_" + entity.file_name
+                    rrow_dict["hash"] = entity.hash
                 results_dict[rrow.name] = rrow_dict
             job.results = results_dict
         else:
@@ -497,7 +579,15 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         self.session.query(self.Job).filter_by(jobid=job.jobid).delete()
         self.session.commit()
 
-    def get_list(self, joblist, phase=None, after=None, last=None, where_owner=True, include_archived=False):
+    def get_list(
+        self,
+        joblist,
+        phase=None,
+        after=None,
+        last=None,
+        where_owner=True,
+        include_archived=False,
+    ):
         """Get job list from storage"""
         query = self.session.query(self.Job).filter_by(jobname=joblist.jobname)
         if phase:
@@ -530,114 +620,174 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         #         raise UserWarning('Attribute {} is missing to register an entity'.format(k))
 
         # Files
-        if 'file_name' in kwargs:
-            if not 'file_dir' in kwargs:
-                logger.warning('No file_dir given for file entity: {}'.format(kwargs))
-                kwargs['file_dir'] = '.'
+        if "file_name" in kwargs:
+            if not "file_dir" in kwargs:
+                logger.warning("No file_dir given for file entity: {}".format(kwargs))
+                kwargs["file_dir"] = "."
             # Redefine file_dir if ARCHIVE is Local (the generated file has been copied to RESULTS_PATH)
-            if ARCHIVE == 'Local':
-                if 'result_name' in kwargs:
-                    kwargs['file_dir'] = os.path.join(RESULTS_PATH, kwargs['jobid'])
-                elif 'used_jobid' in kwargs:
-                    kwargs['file_dir'] = os.path.join(UPLOADS_PATH, kwargs['used_jobid'])
+            if ARCHIVE == "Local":
+                if "result_name" in kwargs:
+                    kwargs["file_dir"] = os.path.join(RESULTS_PATH, kwargs["jobid"])
+                elif "used_jobid" in kwargs:
+                    kwargs["file_dir"] = os.path.join(
+                        UPLOADS_PATH, kwargs["used_jobid"]
+                    )
             # Compute hash if not given (look for file in file_dir)
-            if 'hash' not in kwargs:
-                full_path = os.path.join(kwargs['file_dir'], kwargs['file_name'])
+            if "hash" not in kwargs:
+                full_path = os.path.join(kwargs["file_dir"], kwargs["file_name"])
                 if os.path.isfile(full_path):
-                    kwargs['hash'] = self.get_hash(full_path)
+                    kwargs["hash"] = self.get_hash(full_path)
 
             # Check if file already exists --> first hash, then test if filename contains entity_id or jobid if found
-            if 'hash' in kwargs:
-                elist = self.session.query(self.Entity).filter_by(hash=kwargs['hash']).all()
+            if "hash" in kwargs:
+                elist = (
+                    self.session.query(self.Entity).filter_by(hash=kwargs["hash"]).all()
+                )
                 if elist:
                     for row in elist:
-                        if str(row.entity_id) in kwargs['file_name']:
+                        if str(row.entity_id) in kwargs["file_name"]:
                             # Entity has the expected entity_id in its name
-                            entity = dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
-                            entity_id = entity['entity_id']
-                            logger.info('Entity found for {} with same hash, and file_name contains entity_id'.format(
-                                kwargs['file_name']))
-                        elif 'jobid' in kwargs and str(row.jobid) == str(kwargs.get('jobid')):
+                            entity = dict(
+                                (col, getattr(row, col))
+                                for col in row.__table__.columns.keys()
+                            )
+                            entity_id = entity["entity_id"]
+                            logger.info(
+                                "Entity found for {} with same hash, and file_name contains entity_id".format(
+                                    kwargs["file_name"]
+                                )
+                            )
+                        elif "jobid" in kwargs and str(row.jobid) == str(
+                            kwargs.get("jobid")
+                        ):
                             # Entity has the jobid that generated it in its name
-                            entity = dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
-                            entity_id = entity['entity_id']
-                            logger.info('Entity found for {} with same hash, and file_name contains jobid'.format(
-                                kwargs['file_name']))
-                        elif str(row.jobid) in kwargs['file_name']:
+                            entity = dict(
+                                (col, getattr(row, col))
+                                for col in row.__table__.columns.keys()
+                            )
+                            entity_id = entity["entity_id"]
+                            logger.info(
+                                "Entity found for {} with same hash, and file_name contains jobid".format(
+                                    kwargs["file_name"]
+                                )
+                            )
+                        elif str(row.jobid) in kwargs["file_name"]:
                             # Entity has the jobid that generated it in its name
-                            entity = dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
-                            entity_id = entity['entity_id']
-                            logger.info('Entity found for {} with same hash, and file_name contains jobid'.format(
-                                kwargs['file_name']))
+                            entity = dict(
+                                (col, getattr(row, col))
+                                for col in row.__table__.columns.keys()
+                            )
+                            entity_id = entity["entity_id"]
+                            logger.info(
+                                "Entity found for {} with same hash, and file_name contains jobid".format(
+                                    kwargs["file_name"]
+                                )
+                            )
                         else:
-                            used = self.session.query(self.Used).filter_by(entity_id=row.entity_id, jobid=kwargs.get(
-                                'jobid')).first()
-                            if used and (getattr(row, 'file_name') == kwargs['file_name']):
+                            used = (
+                                self.session.query(self.Used)
+                                .filter_by(
+                                    entity_id=row.entity_id, jobid=kwargs.get("jobid")
+                                )
+                                .first()
+                            )
+                            if used and (
+                                getattr(row, "file_name") == kwargs["file_name"]
+                            ):
                                 # Entity has already been used by the same job (and is now exposed as a UWS result)
-                                entity = dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
-                                entity_id = entity['entity_id']
-                                logger.info('Entity found for {} with same hash, was used by the same job and is now exposed as a UWS result'.format(kwargs['file_name']))
+                                entity = dict(
+                                    (col, getattr(row, col))
+                                    for col in row.__table__.columns.keys()
+                                )
+                                entity_id = entity["entity_id"]
+                                logger.info(
+                                    "Entity found for {} with same hash, was used by the same job and is now exposed as a UWS result".format(
+                                        kwargs["file_name"]
+                                    )
+                                )
 
         # Value (may be an identifier)
-        if 'value' in kwargs:
-            for k in ['name']:
+        if "value" in kwargs:
+            for k in ["name"]:
                 if not k in kwargs:
-                    raise UserWarning('Attribute {} is missing to register an entity'.format(k))
+                    raise UserWarning(
+                        "Attribute {} is missing to register an entity".format(k)
+                    )
             # entity is a value or an ID
-            row = self.session.query(self.Entity).filter_by(entity_id=kwargs['value']).first()
+            row = (
+                self.session.query(self.Entity)
+                .filter_by(entity_id=kwargs["value"])
+                .first()
+            )
             if row:
-                entity_id = kwargs['value']
-                entity = dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
-                logger.info('Entity found with value=entity_id={}'.format(entity_id))
+                entity_id = kwargs["value"]
+                entity = dict(
+                    (col, getattr(row, col)) for col in row.__table__.columns.keys()
+                )
+                logger.info("Entity found with value=entity_id={}".format(entity_id))
             else:
                 # Not found in entity store, is it an entity_id or a simple value ?
                 pass
 
         # Unknown entity, use existing entity_id or generate a new one
         if not entity:
-            if 'entity_id' in kwargs:
+            if "entity_id" in kwargs:
                 # Store given identifier for the new entity
-                row = self.session.query(self.Entity).filter_by(entity_id=entity_id).first()
+                row = (
+                    self.session.query(self.Entity)
+                    .filter_by(entity_id=entity_id)
+                    .first()
+                )
                 if row:
-                    entity = dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
-                    logger.info('Entity found from given entity_id={}'.format(entity_id))
+                    entity = dict(
+                        (col, getattr(row, col)) for col in row.__table__.columns.keys()
+                    )
+                    logger.info(
+                        "Entity found from given entity_id={}".format(entity_id)
+                    )
             else:
                 # Generate unique identifier for the new entity
                 entity_id = ENTITY_ID_GEN(**kwargs)
 
         # Check if entity is being used (pop used_jobid and used_role and add Used entry)
-        if 'used_jobid' in kwargs:
-            jobid = kwargs.pop('used_jobid')
-            role = kwargs.pop('used_role', None)
-            used = self.Used(entity_id=entity_id, jobid=jobid, role=role, owner=kwargs['owner'])
+        if "used_jobid" in kwargs:
+            jobid = kwargs.pop("used_jobid")
+            role = kwargs.pop("used_role", None)
+            used = self.Used(
+                entity_id=entity_id, jobid=jobid, role=role, owner=kwargs["owner"]
+            )
             self.session.merge(used)
             self.session.commit()
-            logger.info('Adding Used relation for file_name={} (entity_id={}, jobid={})'.format(kwargs['file_name'], entity_id, jobid))
+            logger.info(
+                "Adding Used relation for file_name={} (entity_id={}, jobid={})".format(
+                    kwargs["file_name"], entity_id, jobid
+                )
+            )
 
         # Register new entity
         if not entity:
             # Store new entity and return attributes
-            kwargs['entity_id'] = entity_id
+            kwargs["entity_id"] = entity_id
             # Define access_url if not given
-            if not 'access_url' in kwargs:
+            if not "access_url" in kwargs:
                 url = ARCHIVE_URL.format(ID=entity_id)
-                if url.startswith('/'):
-                    url = '{}{}'.format(BASE_URL, url)
-                kwargs['access_url'] = url
+                if url.startswith("/"):
+                    url = "{}{}".format(BASE_URL, url)
+                kwargs["access_url"] = url
             # Store info in DB
             e = self.Entity(**kwargs)
             self.session.merge(e)
             self.session.commit()
             # Return entity attributes
-            logger.info('New entity registered: {}'.format(str(kwargs)))
+            logger.info("New entity registered: {}".format(str(kwargs)))
             return kwargs
         else:
             # Return existing entity attributes
-            logger.info('Existing entity found: {}'.format(str(entity)))
+            logger.info("Existing entity found: {}".format(str(entity)))
             # TODO: update entity with kwargs?
             return entity
 
-    def remove_entity(self, entity_id=None, jobid=None, owner='anonymous'):
+    def remove_entity(self, entity_id=None, jobid=None, owner="anonymous"):
         """Remove entity"""
         if entity_id:
             self.session.query(self.Entity).filter_by(entity_id=entity_id).delete()
@@ -658,32 +808,58 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                 raise NotFoundWarning('Result "{}" NOT FOUND'.format(entity_id))
         return dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
 
-    def search_entity(self, entity_id=None, jobid=None, result_name=None, file_name=None, hash=None, owner='anonymous', owner_token='anonymous'):
+    def search_entity(
+        self,
+        entity_id=None,
+        jobid=None,
+        result_name=None,
+        file_name=None,
+        hash=None,
+        owner="anonymous",
+        owner_token="anonymous",
+    ):
         """Search entity, return all entity attributes, maybe for several entities"""
         if entity_id:
             return self.get_entity(entity_id, silent=True)
         elif jobid and result_name:
-            query = self.session.query(self.Entity).filter_by(jobid=jobid, result_name=result_name)
+            query = self.session.query(self.Entity).filter_by(
+                jobid=jobid, result_name=result_name
+            )
             row = query.first()
             if not row:
-                raise NotFoundWarning('Entity with jobid={} and result_name={} NOT FOUND'.format(jobid, result_name))
-            return dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
+                raise NotFoundWarning(
+                    "Entity with jobid={} and result_name={} NOT FOUND".format(
+                        jobid, result_name
+                    )
+                )
+            return dict(
+                (col, getattr(row, col)) for col in row.__table__.columns.keys()
+            )
         elif file_name and hash:
-            query = self.session.query(self.Entity).filter_by(file_name=file_name, hash=hash)
+            query = self.session.query(self.Entity).filter_by(
+                file_name=file_name, hash=hash
+            )
             row = query.first()
             if not row:
-                raise NotFoundWarning('Entity with file_name={} and hash={} NOT FOUND'.format(file_name, hash))
-            return dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
+                raise NotFoundWarning(
+                    "Entity with file_name={} and hash={} NOT FOUND".format(
+                        file_name, hash
+                    )
+                )
+            return dict(
+                (col, getattr(row, col)) for col in row.__table__.columns.keys()
+            )
         elif hash:
             query = self.session.query(self.Entity).filter_by(hash=hash)
             row = query.first()
             if not row:
-                raise NotFoundWarning('Entity with hash={} NOT FOUND'.format(hash))
-            return dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
+                raise NotFoundWarning("Entity with hash={} NOT FOUND".format(hash))
+            return dict(
+                (col, getattr(row, col)) for col in row.__table__.columns.keys()
+            )
         else:
             pass
         pass
-
 
 
 # ----------
@@ -705,8 +881,11 @@ class SQLStorage(object):
     cursor = None
 
     def _save_query(self, table_name, d):
-        query = "INSERT OR REPLACE INTO {} ({}) VALUES ('{}')" \
-                "".format(table_name, ", ".join(list(d.keys())), "', '".join(map(str, list(d.values()))))
+        query = "INSERT OR REPLACE INTO {} ({}) VALUES ('{}')" "".format(
+            table_name,
+            ", ".join(list(d.keys())),
+            "', '".join(map(str, list(d.values()))),
+        )
         query = query.replace("'None'", "NULL")
         self.cursor.execute(query)
         self.conn.commit()
@@ -722,31 +901,33 @@ class SQLJobStorage(SQLStorage, JobStorage):
     def _save_parameter(self, job, pname):
         # Save job parameter to db
         d = {
-            'jobid': job.jobid,
-            'name': pname,
-            'value': job.parameters[pname]['value'],
-            'byref': job.parameters[pname]['byref'],
-            'entity_id': job.parameters[pname]['entity_id'],
+            "jobid": job.jobid,
+            "name": pname,
+            "value": job.parameters[pname]["value"],
+            "byref": job.parameters[pname]["byref"],
+            "entity_id": job.parameters[pname]["entity_id"],
         }
-        self._save_query('job_parameters', d)
+        self._save_query("job_parameters", d)
 
     def _save_result(self, job, rname):
         # Save job parameter to db
         d = {
-            'jobid': job.jobid,
-            'name': rname,
-            'url': job.results[rname]['url'],
-            'content_type': job.results[rname]['content_type'],
-            'entity_id': job.results[rname]['entity_id'],
+            "jobid": job.jobid,
+            "name": rname,
+            "url": job.results[rname]["url"],
+            "content_type": job.results[rname]["content_type"],
+            "entity_id": job.results[rname]["entity_id"],
         }
-        self._save_query('job_results', d)
+        self._save_query("job_results", d)
 
-    def save(self, job, save_attributes=True, save_parameters=False, save_results=False):
+    def save(
+        self, job, save_attributes=True, save_parameters=False, save_results=False
+    ):
         """Save job information to storage (attributes, parameters and results)"""
         if save_attributes:
             # Save job description to db
             d = {col: str(job.__dict__[col]) for col in JOB_ATTRIBUTES}
-            self._save_query('jobs', d)
+            self._save_query("jobs", d)
         if save_parameters:
             if isinstance(save_parameters, str):
                 # Save the given job parameter to db
@@ -763,16 +944,27 @@ class SQLJobStorage(SQLStorage, JobStorage):
                 self._save_result(job, rname)
 
     # noinspection PyTypeChecker
-    def read(self, job, get_attributes=True, get_parameters=False, get_results=False, from_process_id=False):
+    def read(
+        self,
+        job,
+        get_attributes=True,
+        get_parameters=False,
+        get_results=False,
+        from_process_id=False,
+    ):
         """Read job from storage"""
         if from_process_id:
             # Query db for jobname and jobid using process_id
-            query = "SELECT jobname, jobid FROM jobs WHERE process_id='{}';".format(job.process_id)
+            query = "SELECT jobname, jobid FROM jobs WHERE process_id='{}';".format(
+                job.process_id
+            )
             row = self.cursor.execute(query).fetchone()
             if not row:
-                raise NotFoundWarning('Job with process_id={} NOT FOUND'.format(job.process_id))
-            job.jobname = row['jobname']
-            job.jobid = row['jobid']
+                raise NotFoundWarning(
+                    "Job with process_id={} NOT FOUND".format(job.process_id)
+                )
+            job.jobname = row["jobname"]
+            job.jobid = row["jobid"]
         if get_attributes:
             # Query db for job description
             query = "SELECT * FROM jobs WHERE jobid='{}';".format(job.jobid)
@@ -783,29 +975,28 @@ class SQLJobStorage(SQLStorage, JobStorage):
             # start_time = dt.datetime.strptime(row['start_time'], DT_FMT)
             # end_time = dt.datetime.strptime(row['end_time'], DT_FMT)
             # destruction_time = dt.datetime.strptime(row['destruction_time'], DT_FMT)
-            job.jobname = row['jobname']
-            job.phase = row['phase']
-            job.quote = row['quote']
-            job.execution_duration = row['execution_duration']
-            job.error = row['error']
-            job.creation_time = row['creation_time']  # creation_time.strftime(DT_FMT)
-            job.start_time = row['start_time']  # start_time.strftime(DT_FMT)
-            job.end_time = row['end_time']  # end_time.strftime(DT_FMT)
-            job.destruction_time = row['destruction_time']  # destruction_time.strftime(DT_FMT)
-            job.owner = row['owner']
-            job.owner_token = row['owner_token']
-            job.run_id = row['run_id']
-            job.process_id = row['process_id']
+            job.jobname = row["jobname"]
+            job.phase = row["phase"]
+            job.quote = row["quote"]
+            job.execution_duration = row["execution_duration"]
+            job.error = row["error"]
+            job.creation_time = row["creation_time"]  # creation_time.strftime(DT_FMT)
+            job.start_time = row["start_time"]  # start_time.strftime(DT_FMT)
+            job.end_time = row["end_time"]  # end_time.strftime(DT_FMT)
+            job.destruction_time = row[
+                "destruction_time"
+            ]  # destruction_time.strftime(DT_FMT)
+            job.owner = row["owner"]
+            job.owner_token = row["owner_token"]
+            job.run_id = row["run_id"]
+            job.process_id = row["process_id"]
         if get_parameters:
             # Query db for job parameters
             query = "SELECT * FROM job_parameters WHERE jobid='{}';".format(job.jobid)
             params = self.cursor.execute(query).fetchall()
             # Format results to a parameter dict
             params_dict = {
-                row['name']: {
-                    'value': row['value'],
-                    'byref': row['byref']
-                }
+                row["name"]: {"value": row["value"], "byref": row["byref"]}
                 for row in params
             }
             job.parameters = params_dict
@@ -816,10 +1007,7 @@ class SQLJobStorage(SQLStorage, JobStorage):
             query = "SELECT * FROM job_results WHERE jobid='{}';".format(job.jobid)
             results = self.cursor.execute(query).fetchall()
             results_dict = {
-                row['name']: {
-                    'url': row['url'],
-                    'content_type': row['content_type']
-                }
+                row["name"]: {"url": row["url"], "content_type": row["content_type"]}
                 for row in results
             }
             job.results = results_dict
@@ -844,13 +1032,13 @@ class SQLJobStorage(SQLStorage, JobStorage):
             where_phase = []
             for p in phase:
                 where_phase.append("phase='{}'".format(p))
-            where.append('({})'.format(" OR ".join(where_phase)))
+            where.append("({})".format(" OR ".join(where_phase)))
         if where_owner:
             where.append("owner='{}'".format(joblist.user.name))
             where.append("owner_token='{}'".format(joblist.user.token))
         query += " WHERE " + " AND ".join(where)
         query += " ORDER BY destruction_time ASC"
-        logger.debug('query = {}'.format(query))
+        logger.debug("query = {}".format(query))
         jobs = self.cursor.execute(query).fetchall()
         return jobs
 
@@ -893,13 +1081,21 @@ class SQLiteJobStorage(SQLiteStorage, SQLJobStorage):
 class PostgreSQLStorage(object):
     """Manage job information storage using PostgreSQL"""
 
-    def __init__(self, host=PGSQL_HOST, port=PGSQL_PORT, database=PGSQL_DATABASE,
-                 user=PGSQL_USER, password=PGSQL_PASSWORD):
+    def __init__(
+        self,
+        host=PGSQL_HOST,
+        port=PGSQL_PORT,
+        database=PGSQL_DATABASE,
+        user=PGSQL_USER,
+        password=PGSQL_PASSWORD,
+    ):
         # Get connector to db_file
         import psycopg2
         import psycopg2.extras
-        self.conn = psycopg2.connect(host=host, port=port, database=database,
-                                     user=user, password=password)
+
+        self.conn = psycopg2.connect(
+            host=host, port=port, database=database, user=user, password=password
+        )
         self.cursor = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
     def __del__(self):

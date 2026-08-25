@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Copyright (c) 2016 by Mathieu Servillat
 # Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
 """
@@ -14,15 +13,46 @@ import base64
 import requests
 import json
 from requests.auth import HTTPBasicAuth
-from flask import Flask, request, abort, redirect, url_for, session, g, current_app, render_template, flash, Response, stream_with_context, send_from_directory
+from flask import (
+    Flask,
+    request,
+    abort,
+    redirect,
+    url_for,
+    session,
+    g,
+    current_app,
+    render_template,
+    flash,
+    Response,
+    stream_with_context,
+    send_from_directory,
+)
 from flask_sqlalchemy import SQLAlchemy
-from flask_security import Security, SQLAlchemyUserDatastore, UserMixin, RoleMixin, login_required, roles_required, utils, hash_password
+from flask_security import (
+    Security,
+    SQLAlchemyUserDatastore,
+    UserMixin,
+    RoleMixin,
+    login_required,
+    roles_required,
+    utils,
+    hash_password,
+)
 from flask_security.forms import LoginForm, RegisterForm
-from flask_login import user_logged_in, user_logged_out, current_user, LoginManager, login_user, logout_user
+from flask_login import (
+    user_logged_in,
+    user_logged_out,
+    current_user,
+    LoginManager,
+    login_user,
+    logout_user,
+)
 from authlib.integrations.flask_client import OAuth
 from flask_security.core import (
     _user_loader as _flask_security_user_loader,
-    _request_loader as _flask_security_request_loader)
+    _request_loader as _flask_security_request_loader,
+)
 from flask_security.utils import config_value as security_config_value
 from flask_admin import Admin
 from flask_admin.contrib import sqla
@@ -32,7 +62,6 @@ from wtforms.validators import InputRequired
 
 from .settings import *
 
-
 # ----------
 # Helper functions
 
@@ -41,23 +70,27 @@ from .settings import *
 def git_version():
     def _minimal_ext_cmd(cmd):
         # construct minimal environment
-        env = {'PATH': '/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/root/bin'}
-        out = subprocess.Popen(cmd, stdout=subprocess.PIPE, env=env, cwd=APP_PATH).communicate()[0]
+        env = {
+            "PATH": "/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/root/bin"
+        }
+        out = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, env=env, cwd=APP_PATH
+        ).communicate()[0]
         return out
 
     try:
         # out = _minimal_ext_cmd(['git', 'rev-parse', 'HEAD'])
-        out = _minimal_ext_cmd(['git', 'log', '-1', '--format=%H'])
+        out = _minimal_ext_cmd(["git", "log", "-1", "--format=%H"])
         if not out:
             logger.warning("Revision id not found, try to read git logs directly")
-            out = _minimal_ext_cmd(['tail', '-1', '.git/logs/HEAD'])
+            out = _minimal_ext_cmd(["tail", "-1", ".git/logs/HEAD"])
             out = out.split(" ")[1]
-        GIT_REVISION = out.strip().decode('ascii')
-        out = _minimal_ext_cmd(['git', 'log', '-1', '--date=short', '--format=%cd'])
+        GIT_REVISION = out.strip().decode("ascii")
+        out = _minimal_ext_cmd(["git", "log", "-1", "--date=short", "--format=%cd"])
         if not out:
             logger.warning("Revision date not found, try to get from index")
-            out = _minimal_ext_cmd(['date', '-r', '.git/index', '+"%Y-%m-%d"'])
-        GIT_DATE = out.strip().decode('ascii')
+            out = _minimal_ext_cmd(["date", "-r", ".git/index", '+"%Y-%m-%d"'])
+        GIT_DATE = out.strip().decode("ascii")
     except Exception as e:
         logger.warning(str(e))
         GIT_REVISION = "Unknown"
@@ -71,7 +104,9 @@ def git_version():
 
 
 app = Flask(__name__, instance_relative_config=True, instance_path=VAR_PATH)
-app.secret_key = b'\ttrLu\xdd\xde\x9f\xd2}\xc1\x0e\xb6\xe6}\x95\xc6\xb1\x8f\xa09\xf5\x1aG'
+app.secret_key = (
+    b"\ttrLu\xdd\xde\x9f\xd2}\xc1\x0e\xb6\xe6}\x95\xc6\xb1\x8f\xa09\xf5\x1aG"
+)
 # app.config.update(EDITABLE_CONFIG)  # Default editable config
 app.config["SESSION_TYPE"] = "filesystem"
 app.config.from_object(__name__)  # load config from this file (see settings.py)
@@ -85,17 +120,17 @@ mail = Mail(app)
 
 def load_config():
     if os.path.isfile(CONFIG_FILE):
-        with open(CONFIG_FILE, 'r') as cf:
+        with open(CONFIG_FILE, "r") as cf:
             econf = yaml.safe_load(cf)
             app.config.update(econf)
-        logger.info('Loading editable config: ' + repr(econf))
+        logger.info("Loading editable config: " + repr(econf))
     else:
         save_config()
 
 
 def save_config():
-    logger.info('Saving editable config')
-    with open(CONFIG_FILE, 'w') as cf:
+    logger.info("Saving editable config")
+    with open(CONFIG_FILE, "w") as cf:
         econf = {k: app.config[k] for k in EDITABLE_CONFIG if k in app.config}
         yaml.dump(econf, cf, default_flow_style=False)
 
@@ -119,9 +154,11 @@ db = SQLAlchemy(app)
 
 
 # Define models for User and Role
-roles_users = db.Table('roles_users',
-                       db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
-                       db.Column('role_id', db.Integer(), db.ForeignKey('role.id')))
+roles_users = db.Table(
+    "roles_users",
+    db.Column("user_id", db.Integer(), db.ForeignKey("user.id")),
+    db.Column("role_id", db.Integer(), db.ForeignKey("role.id")),
+)
 
 
 class Role(db.Model, RoleMixin):
@@ -135,8 +172,8 @@ class Role(db.Model, RoleMixin):
 
 def gen_token(context):
     try:
-        email = context.current_parameters.get('email')
-        token = uuid.uuid5(uuid.NAMESPACE_X500, app.config['APP_PATH'] + email)
+        email = context.current_parameters.get("email")
+        token = uuid.uuid5(uuid.NAMESPACE_X500, app.config["APP_PATH"] + email)
     except:
         token = uuid.uuid4()
     return str(token)
@@ -149,9 +186,13 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(255))
     token = db.Column(db.String(255), default=gen_token)
     active = db.Column(db.Boolean())
-    fs_uniquifier = db.Column(db.String(255), unique=True, nullable=False, default=gen_token)
+    fs_uniquifier = db.Column(
+        db.String(255), unique=True, nullable=False, default=gen_token
+    )
     confirmed_at = db.Column(db.DateTime(), default=datetime.datetime.now)
-    roles = db.relationship('Role', secondary=roles_users, backref=db.backref('users', lazy='dynamic'))
+    roles = db.relationship(
+        "Role", secondary=roles_users, backref=db.backref("users", lazy="dynamic")
+    )
 
     def __repr__(self):
         return self.email
@@ -161,11 +202,11 @@ class User(db.Model, UserMixin):
 
 
 class ExtendedLoginForm(LoginForm):
-    email = StringField('Username or Email Address', [InputRequired()])
+    email = StringField("Username or Email Address", [InputRequired()])
 
 
 class ExtendedRegisterForm(RegisterForm):
-    email = StringField('Username or Email Address', [InputRequired()])
+    email = StringField("Username or Email Address", [InputRequired()])
 
 
 def get_or_create(db_session, model, **kwargs):
@@ -181,8 +222,12 @@ def get_or_create(db_session, model, **kwargs):
 
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 
-security = Security(app, user_datastore,
-                    login_form=ExtendedLoginForm, register_form=ExtendedRegisterForm)
+security = Security(
+    app,
+    user_datastore,
+    login_form=ExtendedLoginForm,
+    register_form=ExtendedRegisterForm,
+)
 #                 login_manager=_get_login_manager(app, anonymous_user=None))
 
 
@@ -194,42 +239,44 @@ security = Security(app, user_datastore,
 # https://github.com/authlib/demo-oauth-client/blob/master/flask-google-login/app.py -> works smoothly !
 
 oauth = OAuth(app)
-idp_names = dict((idp['title'], i) for i, idp in enumerate(OIDC_IDPS))
+idp_names = dict((idp["title"], i) for i, idp in enumerate(OIDC_IDPS))
 for idp in OIDC_IDPS:
     oauth.register(
         name=idp["title"],
         client_id=idp["client_id"],
         client_secret=idp["client_secret"],
         server_metadata_url=idp["url"],
-        client_kwargs={
-            'scope': idp["scope"]
-        }
+        client_kwargs={"scope": idp["scope"]},
     )
 logger.debug("OIDC clients loaded: " + str(oauth._clients.keys()))
 
-@app.route('/accounts/oidc/login', defaults={'idp': ""})
-@app.route('/accounts/oidc/login/', defaults={'idp': ""})
-@app.route('/accounts/oidc/login/<idp>')
+
+@app.route("/accounts/oidc/login", defaults={"idp": ""})
+@app.route("/accounts/oidc/login/", defaults={"idp": ""})
+@app.route("/accounts/oidc/login/<idp>")
 def oidc_login(idp):
     if idp in idp_names:
         session["oidc_idp"] = idp
         logger.debug("Use OIDC IdP " + idp)
     else:
         flash("This OIDC Identity Provider has not been defined: " + idp, "warning")
-        return redirect(url_for('home'), 303)
-    redirect_uri = url_for('oidc_callback', _external=True)  # , idp=idp)
+        return redirect(url_for("home"), 303)
+    redirect_uri = url_for("oidc_callback", _external=True)  # , idp=idp)
     return oauth._clients[session["oidc_idp"]].authorize_redirect(redirect_uri)
 
 
-@app.route('/accounts/oidc/callback')  # , defaults={'idp': 0})
+@app.route("/accounts/oidc/callback")  # , defaults={'idp': 0})
 # @app.route('/accounts/oidc/callback/<idp>')
 def oidc_callback():
     if "oidc_idp" not in session:
         flash("No OIDC Identity Provider has been defined.", "warning")
-        return redirect(url_for('home'), 303)
+        return redirect(url_for("home"), 303)
     elif session["oidc_idp"] not in idp_names:
-        flash("This OIDC Identity Provider has not been defined: " + session["oidc_idp"], "warning")
-        return redirect(url_for('home'), 303)
+        flash(
+            "This OIDC Identity Provider has not been defined: " + session["oidc_idp"],
+            "warning",
+        )
+        return redirect(url_for("home"), 303)
     # Store token
     token = oauth._clients[session["oidc_idp"]].authorize_access_token()
     # session['oidc_access_token'] = token.get('access_token')
@@ -237,12 +284,12 @@ def oidc_callback():
     # Get userinfo
     # user = token.get('userinfo')  # use direct userinfo sent with token (not always present...)
     user = oauth._clients[session["oidc_idp"]].userinfo()
-    session['oidc_user'] = user
+    session["oidc_user"] = user
     logger.debug("user = " + str(user))
     # Get email, or sub if email is not present (sub is always returned)
     oidc_email = user.get("email", None).lower()
     if not oidc_email:
-        logger.warning("No email was found for user. Using \"sub\" to identify user")
+        logger.warning('No email was found for user. Using "sub" to identify user')
         oidc_email = user["sub"]
     # Check if user exists in the database.
     oidc_user = user_datastore.find_user(email=oidc_email)
@@ -250,30 +297,33 @@ def oidc_callback():
         user_datastore.create_user(
             email=oidc_email,
             active=True,
-            roles=['user', 'oidc', 'job_definition', 'job_list'],
+            roles=["user", "oidc", "job_definition", "job_list"],
         )
         db.session.commit()
         oidc_user = user_datastore.find_user(email=oidc_email)
-        logger.info('OIDC user {} is new and was added'.format(oidc_email))
+        logger.info("OIDC user {} is new and was added".format(oidc_email))
     else:
-        logger.info('user {} found in local user database'.format(oidc_email))
+        logger.info("user {} found in local user database".format(oidc_email))
     # Begin user session by logging the user in
     login_user(oidc_user)
     # Send user back to homepage
     return redirect(url_for("home"))
 
 
-@app.route('/accounts/oidc/logout')
+@app.route("/accounts/oidc/logout")
 def oidc_logout():
     if "oidc_idp" not in session:
         flash("No OIDC Identity Provider has been defined.", "warning")
-        return redirect(url_for('home'), 303)
+        return redirect(url_for("home"), 303)
     elif session["oidc_idp"] not in idp_names:
-        flash("This OIDC Identity Provider has not been defined: " + session["oidc_idp"], "warning")
-        return redirect(url_for('home'), 303)
+        flash(
+            "This OIDC Identity Provider has not been defined: " + session["oidc_idp"],
+            "warning",
+        )
+        return redirect(url_for("home"), 303)
     # Revoke token on OIDC IdP
     server_metadata = oauth._clients[session["oidc_idp"]].load_server_metadata()
-    revoke_url = server_metadata.get('revocation_endpoint', None)
+    revoke_url = server_metadata.get("revocation_endpoint", None)
     if revoke_url:
         oauth_client = oauth._clients[session["oidc_idp"]]._get_oauth_client()
         resp = oauth_client.revoke_token(revoke_url)
@@ -296,24 +346,24 @@ def create_db():
     try:
         db.create_all()
         user_datastore.find_or_create_role(
-            name='oidc',
-            description='User from OIDC',
+            name="oidc",
+            description="User from OIDC",
         )
         user_datastore.find_or_create_role(
-            name='user',
-            description='User',
+            name="user",
+            description="User",
         )
         user_datastore.find_or_create_role(
-            name='admin',
-            description='Administrator',
+            name="admin",
+            description="Administrator",
         )
         user_datastore.find_or_create_role(
-            name='job_definition',
-            description='Access to job definition',
+            name="job_definition",
+            description="Access to job definition",
         )
         user_datastore.find_or_create_role(
-            name='job_list',
-            description='Access to job list',
+            name="job_list",
+            description="Access to job list",
         )
         # Create admin user if not found
         if not user_datastore.find_user(email=ADMIN_NAME):
@@ -322,20 +372,20 @@ def create_db():
                 password=hash_password(ADMIN_DEFAULT_PW),
                 token=ADMIN_TOKEN,
                 active=True,
-                roles=['admin', 'job_definition', 'job_list'],
+                roles=["admin", "job_definition", "job_list"],
             )
-            logger.info('Add user to db: ' + ADMIN_NAME)
+            logger.info("Add user to db: " + ADMIN_NAME)
         # Create test user if not found
         if not user_datastore.find_user(email=TESTUSER_NAME):
             user_datastore.create_user(
                 email=TESTUSER_NAME,
                 password=hash_password(TESTUSER_DEFAULT_PW),
                 active=True,
-                roles=['user', 'job_definition', 'job_list'],
+                roles=["user", "job_definition", "job_list"],
             )
-            logger.info('Add user to db: ' + TESTUSER_NAME)
+            logger.info("Add user to db: " + TESTUSER_NAME)
         db.session.commit()
-        logger.debug('Database created or updated')
+        logger.debug("Database created or updated")
     except Exception as e:
         db.session.rollback()
         logger.warning(str(e))
@@ -352,14 +402,14 @@ with app.app_context():
 
 # Customized User model for SQL-Admin
 class UserView(sqla.ModelView):
-    column_searchable_list = ('email',)
-    column_exclude_list = ('password',)
+    column_searchable_list = ("email",)
+    column_exclude_list = ("password",)
     # form_excluded_columns = ('password',)
     column_auto_select_related = True
     form_overrides = dict(password=PasswordField)
 
     def is_accessible(self):
-        return current_user.has_role('admin')
+        return current_user.has_role("admin")
 
 
 # Customized Role model for SQL-Admin
@@ -367,11 +417,11 @@ class RoleView(sqla.ModelView):
     # Prevent administration of Roles unless the currently logged-in user has the "admin" role
 
     def is_accessible(self):
-        return current_user.has_role('admin')
+        return current_user.has_role("admin")
 
 
 # Initialize Flask-Admin
-admin = Admin(app, url='/admin')  # removed for Py3.13: , template_mode='bootstrap3'
+admin = Admin(app, url="/admin")  # removed for Py3.13: , template_mode='bootstrap3'
 
 # Add Flask-Admin views_old for Users and Roles
 admin.add_view(UserView(User, db.session))
@@ -385,129 +435,131 @@ admin.add_view(RoleView(Role, db.session))
 @user_logged_in.connect_via(app)
 def on_user_logged_in(sender, user):
     logger.info(user.email + " (" + session.get("oidc_idp", "Local") + ")")
-    #session['server_url'] = app.config['UWS_SERVER_URL_JS']
-    session['auth'] = base64.b64encode((current_user.email + ':' + str(current_user.token)).encode())
+    # session['server_url'] = app.config['UWS_SERVER_URL_JS']
+    session["auth"] = base64.b64encode(
+        (current_user.email + ":" + str(current_user.token)).encode()
+    )
     # quick request to server (will create user on server)
     try:
-        response = uws_server_request('/jdl', method='GET')
+        response = uws_server_request("/jdl", method="GET")
     except requests.exceptions.RequestException as e:
         error_msg = "Server connection error: " + str(e)
-        flash(error_msg, 'warning')
-    flash('"{}" is now logged in'.format(user.email), 'info')
+        flash(error_msg, "warning")
+    flash('"{}" is now logged in'.format(user.email), "info")
+
 
 @user_logged_out.connect_via(app)
 def on_user_logged_out(sender, user):
     logger.info(user.email)
-    flash('"{}" is now logged out'.format(user.email), 'info')
+    flash('"{}" is now logged out'.format(user.email), "info")
     session.clear()
 
 
-@app.route('/accounts/profile', methods=['GET', 'POST'])
+@app.route("/accounts/profile", methods=["GET", "POST"])
 @login_required
 def profile():
     logger.debug(current_user.__dict__)
-    order = ['email', 'token']
+    order = ["email", "token"]
     profile = {
-        'email': {
-            'value': current_user.email,
-            'label': 'Username or Email Address',
-            'description': '',
-            'disabled': True
+        "email": {
+            "value": current_user.email,
+            "label": "Username or Email Address",
+            "description": "",
+            "disabled": True,
         },
-        'token': {
-            'value': current_user.token,
-            'label': 'Token',
-            'description': 'Persistent ID of the user on the UWS server',
-        }
-
+        "token": {
+            "value": current_user.token,
+            "label": "Token",
+            "description": "Persistent ID of the user on the UWS server",
+        },
     }
-    if request.method == 'POST':
-        token = request.form.get('token')
+    if request.method == "POST":
+        token = request.form.get("token")
         if token:
             if token != current_user.token:
                 current_user.token = token
                 user_datastore.put(current_user)
                 user_datastore.commit()
                 logger.debug(current_user.__dict__)
-                flash('Token of user {} has been updated'.format(current_user.email))
+                flash("Token of user {} has been updated".format(current_user.email))
         else:
-            flash('No token found in form')
-        return redirect(url_for('profile'), 303)
-    return render_template('profile.html', order=order, profile=profile)
+            flash("No token found in form")
+        return redirect(url_for("profile"), 303)
+    return render_template("profile.html", order=order, profile=profile)
 
 
-@app.route('/admin/preferences', methods=['GET', 'POST'])
+@app.route("/admin/preferences", methods=["GET", "POST"])
 @login_required
-@roles_required('admin')
+@roles_required("admin")
 def preferences():
-    if request.method == 'POST':
-        logger.debug('Modify editable config')
+    if request.method == "POST":
+        logger.debug("Modify editable config")
         for key, value in request.form.items():
             if key in EDITABLE_CONFIG:
                 app.config[key] = str(value)
         save_config()
-        flash('Preferences successfully updated', 'info')
-        return redirect(url_for('preferences'), 303)
-    return render_template('preferences.html')
+        flash("Preferences successfully updated", "info")
+        return redirect(url_for("preferences"), 303)
+    return render_template("preferences.html")
 
 
-@app.route('/admin/server_accounts', methods=['GET'])
+@app.route("/admin/server_accounts", methods=["GET"])
 @login_required
-@roles_required('admin')
+@roles_required("admin")
 def server_accounts():
     # Get users from server
-    return render_template('server_accounts.html')
+    return render_template("server_accounts.html")
 
 
-@app.route('/admin/add_client_user', methods=['POST'])
+@app.route("/admin/add_client_user", methods=["POST"])
 @login_required
-@roles_required('admin')
+@roles_required("admin")
 def import_server_account():
-    email = request.form.get('name', None)
-    token = request.form.get('token', None)
+    email = request.form.get("name", None)
+    token = request.form.get("token", None)
     if email and token:
         if not user_datastore.find_user(email=email):
             user = user_datastore.create_user(
                 email=email,
                 token=token,
                 active=True,
-                roles=['user'],
+                roles=["user"],
             )
             db.session.commit()
-            logger.info('User {} added'.format(email))
-            flash('User added, please enter new password and save record', 'success')
+            logger.info("User {} added".format(email))
+            flash("User added, please enter new password and save record", "success")
             return {"user_id": user.get_id_db()}
         # Already exist
-        logger.warning('Cannot create user (already exists)')
+        logger.warning("Cannot create user (already exists)")
         abort(409)
     else:
         # Missing email/token
-        logger.warning('Cannot create user (missing email/token)')
+        logger.warning("Cannot create user (missing email/token)")
         abort(400)
 
 
-@app.route('/admin/server_jobs', methods=['GET'])
+@app.route("/admin/server_jobs", methods=["GET"])
 @login_required
-@roles_required('admin')
+@roles_required("admin")
 def server_jobs():
     # Get jobs from server
-    return render_template('server_jobs.html')
+    return render_template("server_jobs.html")
 
 
-@app.route('/admin/server_log', methods=['GET'])
+@app.route("/admin/server_log", methods=["GET"])
 @login_required
-@roles_required('admin')
+@roles_required("admin")
 def server_log():
     # Get jobs from server
-    return render_template('show_log.html', title='Server Log', logfile='server.log')
+    return render_template("show_log.html", title="Server Log", logfile="server.log")
 
 
-@app.route('/admin/client_log', methods=['GET'])
+@app.route("/admin/client_log", methods=["GET"])
 @login_required
-@roles_required('admin')
+@roles_required("admin")
 def client_log():
     # Get jobs from server
-    return render_template('show_log.html', title='Client Log', logfile='client.log')
+    return render_template("show_log.html", title="Client Log", logfile="client.log")
 
 
 # ----------
@@ -519,61 +571,69 @@ def add_url_to_context():
     return dict(url=request.url)
 
 
-@app.route('/favicon.ico')
+@app.route("/favicon.ico")
 def favicon():
-    return send_from_directory(APP_PATH, 'favicon.ico')
+    return send_from_directory(APP_PATH, "favicon.ico")
 
 
-@app.route('/')
+@app.route("/")
 def home():
     """Home page"""
     # logger.debug('app.config = {}'.format(app.config))
-    logger.debug('session = {}'.format(session.__str__()))
-    logger.debug('config = '.format({k: app.config[k] for k in EDITABLE_CONFIG if k in app.config}))
-    logger.debug('g = {}'.format(g.__dict__))
+    logger.debug("session = {}".format(session.__str__()))
+    logger.debug(
+        "config = ".format(
+            {k: app.config[k] for k in EDITABLE_CONFIG if k in app.config}
+        )
+    )
+    logger.debug("g = {}".format(g.__dict__))
     date, version = git_version()
-    return render_template('home.html', git_date=date, git_version=version)
+    return render_template("home.html", git_date=date, git_version=version)
 
 
-@app.route('/jobs', defaults={'jobname': ''})
-@app.route('/jobs/', defaults={'jobname': ''})
-@app.route('/jobs/<jobname>')
-#@login_required
+@app.route("/jobs", defaults={"jobname": ""})
+@app.route("/jobs/", defaults={"jobname": ""})
+@app.route("/jobs/<jobname>")
+# @login_required
 def job_list(jobname):
     """Job list page"""
     logger.info(jobname)
-    return render_template('job_list.html', jobname=jobname)
+    return render_template("job_list.html", jobname=jobname)
 
 
-@app.route('/job_execute', defaults={'jobname': ''})
-@app.route('/job_execute/', defaults={'jobname': ''})
-@app.route('/job_execute/<jobname>')
-#@login_required
+@app.route("/job_execute", defaults={"jobname": ""})
+@app.route("/job_execute/", defaults={"jobname": ""})
+@app.route("/job_execute/<jobname>")
+# @login_required
 def job_execute(jobname):
     """Job execution page"""
     logger.info(jobname)
-    return render_template('job_execute.html', jobname=jobname)
+    return render_template("job_execute.html", jobname=jobname)
 
 
-@app.route('/job_edit/<jobname>/<jobid>')
-#@login_required
+@app.route("/job_edit/<jobname>/<jobid>")
+# @login_required
 def job_edit(jobname, jobid):
     """Job edit page"""
-    logger.info(jobname + ' ' + jobid)
-    return render_template('job_edit.html', jobname=jobname, jobid=jobid)
+    logger.info(jobname + " " + jobid)
+    return render_template("job_edit.html", jobname=jobname, jobid=jobid)
 
 
-@app.route('/job_form/<jobname>')
-#@login_required
+@app.route("/job_form/<jobname>")
+# @login_required
 def job_form(jobname):
     """Job edit page"""
     logger.info(jobname)
-    return render_template('job_form.html', jobname=jobname, init_params=json.dumps(request.args.to_dict(flat=False)))
+    return render_template(
+        "job_form.html",
+        jobname=jobname,
+        init_params=json.dumps(request.args.to_dict(flat=False)),
+    )
 
 
-@app.route('/job_definition', methods=['GET', 'POST'], defaults={'jobname': ''})
-@app.route('/job_definition/', methods=['GET', 'POST'], defaults={'jobname': ''})
-@app.route('/job_definition/<path:jobname>', methods=['GET'])
+@app.route("/job_definition", methods=["GET", "POST"], defaults={"jobname": ""})
+@app.route("/job_definition/", methods=["GET", "POST"], defaults={"jobname": ""})
+@app.route("/job_definition/<path:jobname>", methods=["GET"])
 def job_definition(jobname):
     """Show form for new job definition"""
     logger.info(jobname)
@@ -591,9 +651,9 @@ def job_definition(jobname):
     # Show form
     # Set is_admin (will show validate buttons)
     is_admin = False
-    if current_user.is_authenticated and current_user.has_role('admin'):
+    if current_user.is_authenticated and current_user.has_role("admin"):
         is_admin = True
-    return render_template('job_definition.html', jobname=jobname, is_admin=is_admin)
+    return render_template("job_definition.html", jobname=jobname, is_admin=is_admin)
 
 
 # @app.route('/jdl/import_jdl', methods=['POST'])
@@ -651,41 +711,48 @@ def job_definition(jobname):
 # Proxy (to avoid cross domain calls and add Auth header)
 
 
-@app.route('/proxy/<path:uri>', methods=['GET', 'POST', 'DELETE'])
+@app.route("/proxy/<path:uri>", methods=["GET", "POST", "DELETE"])
 def proxy(uri):
-    response = uws_server_request('/' + uri, method=request.method, init_request=request)
-    #logger.debug(response.headers.__dict__)
+    response = uws_server_request(
+        "/" + uri, method=request.method, init_request=request
+    )
+    # logger.debug(response.headers.__dict__)
     # def generate():
     #     for chunk in r.iter_content(CHUNK_SIZE):
     #         yield chunk
     # return Response(stream_with_context(generate()), content_type = r.headers['content-type'])
     headers = {}
-    for k in ['content-length', 'content-disposition']:  #, 'content-encoding']:
-        if k in response.headers.__dict__['_store']:
+    for k in ["content-length", "content-disposition"]:  # , 'content-encoding']:
+        if k in response.headers.__dict__["_store"]:
             headers[k] = response.headers[k]
-    return Response(response, status=response.status_code, content_type=response.headers.get('content-type', None), headers=headers)
+    return Response(
+        response,
+        status=response.status_code,
+        content_type=response.headers.get("content-type", None),
+        headers=headers,
+    )
 
 
-def uws_server_request(uri, method='GET', init_request=None):
-    server_url = app.config['UWS_SERVER_URL']
+def uws_server_request(uri, method="GET", init_request=None):
+    server_url = app.config["UWS_SERVER_URL"]
     # Remove server_url from uri if present (uri is expected to be a relative path)
-    uri = uri.replace(server_url, '')
+    uri = uri.replace(server_url, "")
     # Add auth information (Basic, Token...)
     auth = None
-    if app.config['UWS_AUTH'] == 'Basic':
+    if app.config["UWS_AUTH"] == "Basic":
         if current_user.is_authenticated:
             auth = HTTPBasicAuth(current_user.email, current_user.token)
         else:
-            auth = HTTPBasicAuth('anonymous', 'anonymous')
+            auth = HTTPBasicAuth("anonymous", "anonymous")
     # Send request
-    if method == 'DELETE':
-        response = requests.delete('{}{}'.format(server_url, uri), auth=auth)
-    elif method == 'POST':
-        post={}
+    if method == "DELETE":
+        response = requests.delete("{}{}".format(server_url, uri), auth=auth)
+    elif method == "POST":
+        post = {}
         if init_request:
             for key in list(init_request.form.keys()):
                 value = init_request.form.getlist(key)
-                logger.debug('POST {}: {}'.format(key, value))
+                logger.debug("POST {}: {}".format(key, value))
                 if len(value) == 1:
                     post[key] = value[0]
                 else:
@@ -693,15 +760,19 @@ def uws_server_request(uri, method='GET', init_request=None):
         files = {}
         if init_request:
             for fname in list(init_request.files.keys()):
-                logger.debug('file: ' + fname)
+                logger.debug("file: " + fname)
                 fp = init_request.files[fname]
                 files[fname] = (fp.filename, fp.stream, fp.content_type, fp.headers)
-        response = requests.post('{}{}'.format(server_url, uri), data=post, files=files, auth=auth)
+        response = requests.post(
+            "{}{}".format(server_url, uri), data=post, files=files, auth=auth
+        )
     else:
         params = {}
         if init_request:
             params = init_request.args
-        response = requests.get('{}{}'.format(server_url, uri), params=params, auth=auth)
+        response = requests.get(
+            "{}{}".format(server_url, uri), params=params, auth=auth
+        )
     # Return response
     logger.debug("{} {}{} ({})".format(method, server_url, uri, response.status_code))
     return response
@@ -711,8 +782,8 @@ def uws_server_request(uri, method='GET', init_request=None):
 # run server
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Run local web server
-    #run(app, host='localhost', port=8080, debug=False, reloader=True)
-    app.run(host='localhost', port=8080, debug=True)
+    # run(app, host='localhost', port=8080, debug=False, reloader=True)
+    app.run(host="localhost", port=8080, debug=True)
     pass

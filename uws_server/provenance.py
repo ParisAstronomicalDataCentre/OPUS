@@ -9,6 +9,7 @@ Export UWS job description to a ProvDocument following the W3C PROV standard
 import prov
 import voprov
 from voprov.models.model import VOProvDocument, VOProvBundle, VOPROV, PROV
+
 # from prov.model import ProvDocument, ProvBundle
 from voprov.visualization.dot import prov_to_dot
 from pydotplus.graphviz import InvocationException
@@ -23,9 +24,20 @@ from . import uws_classes
 INTERNAL_PROVENANCE_FILENAME = "internal_provenance.json"
 
 
-def job2prov(jobid, user, depth=1, direction='BACK', members=0, agents=1, model='IVOA',
-             descriptions=0, configuration=1, attributes=1,
-             show_used=False, show_generated=False):
+def job2prov(
+    jobid,
+    user,
+    depth=1,
+    direction="BACK",
+    members=0,
+    agents=1,
+    model="IVOA",
+    descriptions=0,
+    configuration=1,
+    attributes=1,
+    show_used=False,
+    show_generated=False,
+):
     """
     Create ProvDocument based on job description
     :param jobid: UWS job
@@ -56,106 +68,124 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, agents=1, model=
     pdoc = VOProvDocument()
     other_pdocs = []
     w3c = False
-    if model == 'W3C':
+    if model == "W3C":
         w3c = True
 
     # Load job
-    job = uws_classes.Job('', jobid, user, get_attributes=True, get_parameters=True, get_results=True)
+    job = uws_classes.Job(
+        "", jobid, user, get_attributes=True, get_parameters=True, get_results=True
+    )
 
     # Load JDL
     job.jdl.read(job.jobname, jobid=job.jobid)
 
     # Declaring namespaces for various prefixes used in the example
     pdoc.set_default_namespace(VOPROV.uri)
-    pdoc.add_namespace('voprov', VOPROV.uri)
-    pdoc.add_namespace('prov', PROV.uri)
-    pdoc.add_namespace('foaf', 'http://xmlns.com/foaf/0.1/')
-    pdoc.add_namespace('uws', 'http://www.ivoa.net/xml/UWS/v1.1#')
-    pdoc.add_namespace('opus_user', BASE_URL + '/user/')
-    ns_result = 'opus_store'
-    pdoc.add_namespace(ns_result, BASE_URL + '/store/?ID=')
-    pdoc.add_namespace('opus_job', BASE_URL + UWS_SERVER_ENDPOINT + '/')
-    pdoc.add_namespace('opus_jdl', BASE_URL + '/jdl/')
-    pdoc.add_namespace('media-type', 'https://www.w3.org/ns/iana/media-types/')
+    pdoc.add_namespace("voprov", VOPROV.uri)
+    pdoc.add_namespace("prov", PROV.uri)
+    pdoc.add_namespace("foaf", "http://xmlns.com/foaf/0.1/")
+    pdoc.add_namespace("uws", "http://www.ivoa.net/xml/UWS/v1.1#")
+    pdoc.add_namespace("opus_user", BASE_URL + "/user/")
+    ns_result = "opus_store"
+    pdoc.add_namespace(ns_result, BASE_URL + "/store/?ID=")
+    pdoc.add_namespace("opus_job", BASE_URL + UWS_SERVER_ENDPOINT + "/")
+    pdoc.add_namespace("opus_jdl", BASE_URL + "/jdl/")
+    pdoc.add_namespace("media-type", "https://www.w3.org/ns/iana/media-types/")
     ns_jdl = job.jobname
-    pdoc.add_namespace(ns_jdl, BASE_URL + '/jdl/' + job.jobname + '/votable#')
+    pdoc.add_namespace(ns_jdl, BASE_URL + "/jdl/" + job.jobname + "/votable#")
     # ns_job = job.jobname + '/' + job.jobid
     # pdoc.add_namespace(ns_job, BASE_URL + '/jdl/' + job.jobname + '/votable#')
 
     # Activity
-    act_id = 'opus_job:' + job.jobname + '/' + job.jobid
+    act_id = "opus_job:" + job.jobname + "/" + job.jobid
     act = pdoc.activity(act_id, startTime=job.start_time, endTime=job.end_time)
-    act.add_attributes({
-        'prov:label': job.jobname,  # + '/' + job.jobid,
-    })
+    act.add_attributes(
+        {
+            "prov:label": job.jobname,  # + '/' + job.jobid,
+        }
+    )
 
     # Descriptions
     if descriptions:
-        adescid = '#' + job.jobname + "#description"
+        adescid = "#" + job.jobname + "#description"
         adescbundle = pdoc.bundle(adescid)
         setattr(adescbundle, "_label", adescid)
         # ActivityDescription
-        adesc = adescbundle.activityDescription('opus_jdl:' + job.jobname, job.jobname)
-        adesc.add_attributes({
-            'prov:label': job.jobname,
-        })
-        pdoc.isDescribedBy(act, adesc)  #, other_attributes={
+        adesc = adescbundle.activityDescription("opus_jdl:" + job.jobname, job.jobname)
+        adesc.add_attributes(
+            {
+                "prov:label": job.jobname,
+            }
+        )
+        pdoc.isDescribedBy(act, adesc)  # , other_attributes={
         #    'prov:type': 'voprov:Description',
-        #})
+        # })
         adattrs = {}
-        for pkey in ['name', 'annotation', 'version', 'type', 'subtype', 'doculink']:
+        for pkey in ["name", "annotation", "version", "type", "subtype", "doculink"]:
             pvalue = job.jdl.content.get(pkey)
             if pvalue:
-                if pkey == 'annotation':
-                    adattrs['voprov:description'] = pvalue
+                if pkey == "annotation":
+                    adattrs["voprov:description"] = pvalue
                 else:
-                    adattrs['voprov:' + pkey] = pvalue
-        for pkey in ['executionDuration', 'quote']:
+                    adattrs["voprov:" + pkey] = pvalue
+        for pkey in ["executionDuration", "quote"]:
             pvalue = job.jdl.content.get(pkey)
             if pvalue:
-                adattrs['uws:' + pkey] = pvalue
+                adattrs["uws:" + pkey] = pvalue
         adesc.add_attributes(adattrs)
 
         if descriptions > 1:
             # UsageDescription
             uds = []
-            for ename, edict in job.jdl.content.get('used', {}).items():
+            for ename, edict in job.jdl.content.get("used", {}).items():
                 ed = ""
                 edattrs = {}
                 for ekey, evalue in edict.items():
-                    if evalue and ekey not in ['default']:
+                    if evalue and ekey not in ["default"]:
                         if evalue:
-                            if ekey == 'content_type':
+                            if ekey == "content_type":
                                 # EntityDescription
-                                ed = 'media-type:' + evalue
-                                pdoc.entityDescription(ed, evalue, other_attributes={'prov:label': evalue})
-                            elif ekey == 'annotation':
-                                edattrs['voprov:description'] = evalue
+                                ed = "media-type:" + evalue
+                                pdoc.entityDescription(
+                                    ed, evalue, other_attributes={"prov:label": evalue}
+                                )
+                            elif ekey == "annotation":
+                                edattrs["voprov:description"] = evalue
                             else:
-                                edattrs['voprov:' + ekey] = evalue
-                edattrs['prov:label'] = ename
-                uds.append(adescbundle.usageDescription('opus_jdl:' + job.jobname + '#' + ename, adesc, ename))
+                                edattrs["voprov:" + ekey] = evalue
+                edattrs["prov:label"] = ename
+                uds.append(
+                    adescbundle.usageDescription(
+                        "opus_jdl:" + job.jobname + "#" + ename, adesc, ename
+                    )
+                )
                 uds[-1].add_attributes(edattrs)
                 if ed:
                     pdoc.isRelatedTo(ed, uds[-1])
             # GenerationDescription
             gds = []
-            for ename, edict in job.jdl.content.get('generated', {}).items():
+            for ename, edict in job.jdl.content.get("generated", {}).items():
                 ed = ""
                 edattrs = {}
                 for ekey, evalue in edict.items():
-                    if evalue and ekey not in ['default']:
+                    if evalue and ekey not in ["default"]:
                         if evalue:
-                            if ekey == 'content_type':
+                            if ekey == "content_type":
                                 # EntityDescription
-                                ed = 'media-type:' + evalue
-                                pdoc.entityDescription(ed, evalue, other_attributes={'prov:label': evalue})
-                            elif ekey == 'annotation':
-                                edattrs['voprov:description'] = evalue
+                                ed = "media-type:" + evalue
+                                pdoc.entityDescription(
+                                    ed, evalue, other_attributes={"prov:label": evalue}
+                                )
+                            elif ekey == "annotation":
+                                edattrs["voprov:description"] = evalue
                             else:
-                                edattrs['voprov:' + ekey] = evalue
-                edattrs['prov:label'] = ename
-                gds.append(adescbundle.generationDescription('opus_jdl:' + job.jobname + '#' + ename, adesc, ename))
+                                edattrs["voprov:" + ekey] = evalue
+                edattrs["prov:label"] = ename
+                gds.append(
+                    adescbundle.generationDescription(
+                        "opus_jdl:" + job.jobname + "#" + ename, adesc, ename
+                    )
+                )
                 gds[-1].add_attributes(edattrs)
                 if ed:
                     pdoc.isRelatedTo(ed, gds[-1])
@@ -163,95 +193,114 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, agents=1, model=
             if configuration:
                 # ParameterDescription
                 pds = []
-                for pname, pdict in job.jdl.content.get('parameters', {}).items():
+                for pname, pdict in job.jdl.content.get("parameters", {}).items():
                     pdattrs = {}
                     for pkey, pvalue in pdict.items():
                         if pvalue:
-                            if pkey == 'annotation':
-                                pdattrs['voprov:description'] = pvalue
+                            if pkey == "annotation":
+                                pdattrs["voprov:description"] = pvalue
                             else:
-                                pdattrs['voprov:' + pkey] = pvalue
-                    pdattrs['prov:label'] = pname
-                    pdname = 'opus_jdl:' + job.jobname + '#' + pname
-                    pds.append(adescbundle.parameterDescription(pdname, adesc, pname, pdict.get('type', 'char')))
+                                pdattrs["voprov:" + pkey] = pvalue
+                    pdattrs["prov:label"] = pname
+                    pdname = "opus_jdl:" + job.jobname + "#" + pname
+                    pds.append(
+                        adescbundle.parameterDescription(
+                            pdname, adesc, pname, pdict.get("type", "char")
+                        )
+                    )
                     pds[-1].add_attributes(pdattrs)
 
         # Agent: contact for the job in ActivityDescription
         if agents:
-            contact_name = job.jdl.content.get('contact_name')
-            contact_email = job.jdl.content.get('contact_email')
+            contact_name = job.jdl.content.get("contact_name")
+            contact_email = job.jdl.content.get("contact_email")
             if contact_email and not contact_name:
                 contact_name = contact_email
             if contact_name:
                 # Is contact name in the server user list?
                 contact_id = contact_name
                 users_dicts = job.storage.get_users()
-                users = [u['name'] for u in users_dicts]
+                users = [u["name"] for u in users_dicts]
                 if contact_id in users:
-                    contact_id = 'opus_user:' + contact_id
+                    contact_id = "opus_user:" + contact_id
                 contact = pdoc.agent(contact_id)
-                contact.add_attributes({
-                    'prov:label': contact_name,
-                    #'foaf:name': contact_name,
-                })
+                contact.add_attributes(
+                    {
+                        "prov:label": contact_name,
+                        #'foaf:name': contact_name,
+                    }
+                )
                 if contact_email:
-                    contact.add_attributes({
-                        'foaf:mbox': "<mailto:{}>".format(contact_email)
-                    })
+                    contact.add_attributes(
+                        {"foaf:mbox": "<mailto:{}>".format(contact_email)}
+                    )
                 # Link to ActivityDescription
-                pdoc.influence(adesc, contact, other_attributes={
-                    'prov:role': 'contact'
-                })
+                pdoc.influence(
+                    adesc, contact, other_attributes={"prov:role": "contact"}
+                )
 
     # Agent: owner of the job
     if agents:
-        owner = pdoc.agent('opus_user:' + job.owner)
-        owner.add_attributes({
-            'prov:label': job.owner,
-            #'foaf:name': job.owner,
-        })
-        act.wasAssociatedWith(owner, attributes={
-            'prov:role': 'owner'
-        })
+        owner = pdoc.agent("opus_user:" + job.owner)
+        owner.add_attributes(
+            {
+                "prov:label": job.owner,
+                #'foaf:name': job.owner,
+            }
+        )
+        act.wasAssociatedWith(owner, attributes={"prov:role": "owner"})
 
     # Parameters
     if configuration:
         # Add Parameter Collection?
         # all_params = pdoc.collection('opus_job:' + job.jobname + '/' + job.jobid + '/parameters')
-        aconfid = '#' + job.jobid + '#configuration'  # + '/' + job.jobid + '/parameters'
+        aconfid = (
+            "#" + job.jobid + "#configuration"
+        )  # + '/' + job.jobid + '/parameters'
         aconfbundle = pdoc.bundle(aconfid)
         setattr(aconfbundle, "_label", aconfid)
         params = []
-        for pname, pdict in job.jdl.content.get('parameters', {}).items():
+        for pname, pdict in job.jdl.content.get("parameters", {}).items():
             # Add Parameter
             if pname in job.parameters:
                 # the parameter was defined for this activity
-                value = job.parameters[pname]['value']
+                value = job.parameters[pname]["value"]
             else:
                 # the default value was used
-                value = pdict['default']
+                value = pdict["default"]
             str_value = str(value)
-            show_value = (str_value[:25] + '...') if len(str_value) > 25 else str_value
+            show_value = (str_value[:25] + "...") if len(str_value) > 25 else str_value
             pattrs = {
-                'prov:label': pname + " = " + show_value,
+                "prov:label": pname + " = " + show_value,
             }
-            params.append(aconfbundle.parameter('opus_job:' + job.jobname + '/' + job.jobid + '/parameters/' + pname, pname, value))
+            params.append(
+                aconfbundle.parameter(
+                    "opus_job:"
+                    + job.jobname
+                    + "/"
+                    + job.jobid
+                    + "/parameters/"
+                    + pname,
+                    pname,
+                    value,
+                )
+            )
             params[-1].add_attributes(pattrs)
             # Activity-Parameter relation
             pdoc.wasConfiguredBy(act, params[-1], "Parameter")
             # Link to ParameterDescription
             if descriptions > 1:
-                pdname = 'opus_jdl:' + job.jobname + '#' + pname
+                pdname = "opus_jdl:" + job.jobname + "#" + pname
                 pdoc.isDescribedBy(params[-1], pdname)
             else:
                 # Add attributes to the parameter directly
                 pdattrs = {}
                 for pkey, pvalue in pdict.items():
                     if pvalue:
-                        if pkey == 'annotation':
-                            pdattrs['voprov:description'] = pvalue
+                        if pkey == "annotation":
+                            pdattrs["voprov:description"] = pvalue
                         else:
-                            pdattrs['voprov:' + pkey] = pvalue
+                            pdattrs["voprov:" + pkey] = pvalue
                 params[-1].add_attributes(pdattrs)
             # Member of Collection
             # all_params.hadMember(params[-1])
@@ -261,36 +310,46 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, agents=1, model=
 
     # Used entities
     used_entities = []
-    if (depth != 0 and direction == 'BACK') or show_used:
+    if (depth != 0 and direction == "BACK") or show_used:
         # Explore used entities for the activity if depth > 0
         e_in = []
-        for pname, pdict in job.jdl.content.get('used', {}).items():
+        for pname, pdict in job.jdl.content.get("used", {}).items():
             # Look for value and entity record and get pqn (local id)
-            value = job.parameters.get(pname, {}).get('value', '')
+            value = job.parameters.get(pname, {}).get("value", "")
             label = pname
-            entity_id = job.parameters.get(pname, {}).get('entity_id', None)
-            logger.debug('Search for entity {} (pname={}, value={})'.format(entity_id, pname, value))
+            entity_id = job.parameters.get(pname, {}).get("entity_id", None)
+            logger.debug(
+                "Search for entity {} (pname={}, value={})".format(
+                    entity_id, pname, value
+                )
+            )
             entity = job.storage.get_entity(entity_id, silent=True)
             if entity:
                 # Entity recorded in DB
                 used_entities.append(entity_id)
-                pqns = [ns_result + ':' + entity_id]
-                label = entity['file_name']
-                location = entity['access_url']
-                logger.debug('Input entity found: {}'.format(entity))
-            elif '//' in value:
+                pqns = [ns_result + ":" + entity_id]
+                label = entity["file_name"]
+                location = entity["access_url"]
+                logger.debug("Input entity found: {}".format(entity))
+            elif "//" in value:
                 # Entity is a file or a URL (not a value or an ID)
-                pqns = [value.split('//')[-1]]  # removes file:// if present, or longer path
+                pqns = [
+                    value.split("//")[-1]
+                ]  # removes file:// if present, or longer path
                 used_entities.append(pqns[0])
                 location = value
-                logger.debug('No record found for input entity {}={}, assuming it is a file or a URL'.format(pname, value))
+                logger.debug(
+                    "No record found for input entity {}={}, assuming it is a file or a URL".format(
+                        pname, value
+                    )
+                )
             else:
                 # Entity is a value or an ID
                 location = None
-                if '*' in pdict['multiplicity'] or int(pdict['multiplicity']) > 1:
-                    sep = pdict.get('separator', ' ')
-                    if ',' in value:
-                        sep = ','
+                if "*" in pdict["multiplicity"] or int(pdict["multiplicity"]) > 1:
+                    sep = pdict.get("separator", " ")
+                    if "," in value:
+                        sep = ","
                     pqns = value.split(sep)
                 else:
                     pqns = [value]
@@ -298,36 +357,42 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, agents=1, model=
             for pqn in pqns:
                 # Add Entity
                 e_in.append(pdoc.entity(pqn))
-                e_in[-1].add_attributes({
-                    'prov:label': label,
-                    # 'prov:value': value,
-                    'prov:location': location,
-                    # 'prov:type': pdict['datatype'],
-                })
+                e_in[-1].add_attributes(
+                    {
+                        "prov:label": label,
+                        # 'prov:value': value,
+                        "prov:location": location,
+                        # 'prov:type': pdict['datatype'],
+                    }
+                )
                 # Add Used relation
-                act.used(e_in[-1], attributes={
-                    'prov:role': pname
-                })
+                act.used(e_in[-1], attributes={"prov:role": pname})
                 # Link to description
                 ed = ""
-                if 'content_type' in pdict:
-                    ed = 'media-type:' + pdict['content_type']
+                if "content_type" in pdict:
+                    ed = "media-type:" + pdict["content_type"]
                 if descriptions > 1 and ed:
                     pdoc.isDescribedBy(pqn, ed)
                 # Explores entity origin if known entity and depth > 1
-                if entity and depth != 1 and direction == 'BACK':
-                    if depth != 1 and entity.get('jobid'):
+                if entity and depth != 1 and direction == "BACK":
+                    if depth != 1 and entity.get("jobid"):
                         other_pdocs.append(
                             job2prov(
-                                entity['jobid'], job.user,
-                                depth=depth-2, direction=direction, members=members, agents=agents, model=model,
-                                descriptions=descriptions, configuration=configuration,
-                                show_generated=True
+                                entity["jobid"],
+                                job.user,
+                                depth=depth - 2,
+                                direction=direction,
+                                members=members,
+                                agents=agents,
+                                model=model,
+                                descriptions=descriptions,
+                                configuration=configuration,
+                                show_generated=True,
                             )
                         )
 
     # Generated entities (if depth > 0)
-    if (depth != 0 and direction == 'FORWARD') or show_generated:
+    if (depth != 0 and direction == "FORWARD") or show_generated:
         # Check if internal provenance is given, add as a generated bundle? or directly?
         ipfile = os.path.join(JOBDATA_PATH, jobid, INTERNAL_PROVENANCE_FILENAME)
         ipbundle = None
@@ -353,7 +418,9 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, agents=1, model=
                     current_job_used = current_job.pop("used")
                     for ent_id in current_job_used:
                         if ent_id in prov_dict["entity"]:
-                            used_ent = pdoc.entity(ent_id, other_attributes=prov_dict["entity"][ent_id])
+                            used_ent = pdoc.entity(
+                                ent_id, other_attributes=prov_dict["entity"][ent_id]
+                            )
                             used_type = current_job_used[ent_id].get("prov:type", None)
                             logger.debug(used_type)
                             # Software: link with activity description rather than activity
@@ -361,50 +428,57 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, agents=1, model=
                                 # in adescbundle? or pdoc?
                                 l = prov_dict["entity"][ent_id].get("voprov:name", "")
                                 l += " "
-                                l += prov_dict["entity"][ent_id].get("voprov:version", "")
-                                used_ent.add_attributes({"prov:label": l})
-                                pdoc.influence(adesc, ent_id, other_attributes={
-                                    'prov:type': 'hasDependency'
-                                })
-                            else:
-                                act.used(
-                                    ent_id,
-                                    attributes=current_job_used[ent_id]
+                                l += prov_dict["entity"][ent_id].get(
+                                    "voprov:version", ""
                                 )
+                                used_ent.add_attributes({"prov:label": l})
+                                pdoc.influence(
+                                    adesc,
+                                    ent_id,
+                                    other_attributes={"prov:type": "hasDependency"},
+                                )
+                            else:
+                                act.used(ent_id, attributes=current_job_used[ent_id])
                 # Add generated relation to act, and entities if relevant
                 if "generated" in current_job:
                     current_job_generated = current_job.pop("generated")
                     for ent_id in current_job_generated:
                         if ent_id in prov_dict["entity"]:
-                            pdoc.entity(ent_id, other_attributes=prov_dict["entity"][ent_id])
+                            pdoc.entity(
+                                ent_id, other_attributes=prov_dict["entity"][ent_id]
+                            )
                             pdoc.wasGeneratedBy(
-                                ent_id, act,
-                                other_attributes=current_job_generated[ent_id]
+                                ent_id,
+                                act,
+                                other_attributes=current_job_generated[ent_id],
                             )
                 # Add associated relation to act, and agents if relevant
                 if "associated" in current_job:
                     current_job_associated = current_job.pop("associated")
                     for agt_id in current_job_associated:
                         if agt_id in prov_dict["agent"]:
-                            pdoc.agent(agt_id, other_attributes=prov_dict["agent"][agt_id])
+                            pdoc.agent(
+                                agt_id, other_attributes=prov_dict["agent"][agt_id]
+                            )
                             pdoc.wasAssociatedWith(
-                                act, agt_id,
-                                other_attributes=current_job_generated[ent_id]
+                                act,
+                                agt_id,
+                                other_attributes=current_job_generated[ent_id],
                             )
                 # Add ActivityDescription dependencies
                 if "dependency" in current_job:
                     current_job_dependency = current_job.pop("dependency")
                     for ent_id in current_job_dependency:
                         # in adescbundle? or pdoc?
-                        pdoc.entity(ent_id, other_attributes=prov_dict["entity"][ent_id])
+                        pdoc.entity(
+                            ent_id, other_attributes=prov_dict["entity"][ent_id]
+                        )
                         pdoc.influence(
-                            adesc, ent_id,
-                            other_attributes={
-                                'prov:role': 'dependency'
-                        })
+                            adesc, ent_id, other_attributes={"prov:role": "dependency"}
+                        )
                 # Add Activity attributes
                 for k, v in current_job.items():
-                    #logger.debug(k, v)
+                    # logger.debug(k, v)
                     if k not in act._attributes:
                         act.add_attributes({k: v})
             # Create a bundle for the internal provenance
@@ -417,42 +491,47 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, agents=1, model=
         # Add job results as entities
         e_out = []
         for rname in job.results:
-            if rname not in ['stdout', 'stderr', 'provjson', 'provxml', 'provsvg']:
-                entity_id = job.results[rname]['entity_id']
+            if rname not in ["stdout", "stderr", "provjson", "provxml", "provsvg"]:
+                entity_id = job.results[rname]["entity_id"]
                 # entity_id = job.jobid + '_' + rname
                 # if entity_id:
                 entity = job.storage.get_entity(entity_id, silent=True)
                 if entity:
-                    entity_id = entity['entity_id']
-                    rqn = ns_result + ':' + entity_id
-                    content_type = entity['content_type']
+                    entity_id = entity["entity_id"]
+                    rqn = ns_result + ":" + entity_id
+                    content_type = entity["content_type"]
                 else:
                     entity_id = rname
-                    rqn = ':' + entity_id
-                    content_type = job.results[rname]['content_type']
+                    rqn = ":" + entity_id
+                    content_type = job.results[rname]["content_type"]
                 # Only show result if it is not already used (case of config files sometimes)
                 if entity_id not in used_entities:
                     # Add Entity
                     e_out.append(pdoc.entity(rqn))
                     eattrs = {
-                        'prov:location': job.results[rname]['url'],
-                        'voprov:content_type': content_type,
+                        "prov:location": job.results[rname]["url"],
+                        "voprov:content_type": content_type,
                     }
                     pdict = {}
                     if entity:
-                        eattrs['prov:label'] = entity['file_name']
-                        eattrs['voprov:result_name'] = entity['result_name']
-                        pdict = job.jdl.content['generated'].get(entity['result_name'], {})
-                    if not 'prov:label' in eattrs:
-                        eattrs['prov:label'] = rname
+                        eattrs["prov:label"] = entity["file_name"]
+                        eattrs["voprov:result_name"] = entity["result_name"]
+                        pdict = job.jdl.content["generated"].get(
+                            entity["result_name"], {}
+                        )
+                    if not "prov:label" in eattrs:
+                        eattrs["prov:label"] = rname
                     e_out[-1].add_attributes(eattrs)
                     # Add Generation relation
-                    e_out[-1].wasGeneratedBy(act, attributes={
-                        'prov:role': rname,
-                    })
-                    #for e in e_in:
+                    e_out[-1].wasGeneratedBy(
+                        act,
+                        attributes={
+                            "prov:role": rname,
+                        },
+                    )
+                    # for e in e_in:
                     #    e_out[-1].wasDerivedFrom(e)
-                    #if agent:
+                    # if agent:
                     #    e_out[-1].wasAttributedTo(owner, attributes={
                     #        'prov:role': 'owner',
                     #    })
@@ -460,26 +539,34 @@ def job2prov(jobid, user, depth=1, direction='BACK', members=0, agents=1, model=
                     if entity.get("from_entity", None) and ipbundle:
                         e_from = ipbundle.get_record(entity["from_entity"])[0]
                         e_out[-1].wasDerivedFrom(e_from)
-                        #copy_act = pdoc.activity(act_id + '_copy_to_datastore', other_attributes={"prov:label": "copy_to_datastore"})
-                        #copy_act.wasInformedBy(act)
-                        #copy_act.used(entity["from_entity"])
-                        #e_out[-1].wasGeneratedBy(copy_act)
+                        # copy_act = pdoc.activity(act_id + '_copy_to_datastore', other_attributes={"prov:label": "copy_to_datastore"})
+                        # copy_act.wasInformedBy(act)
+                        # copy_act.used(entity["from_entity"])
+                        # e_out[-1].wasGeneratedBy(copy_act)
                     # Add EntityDescription if exists
                     if pdict and descriptions > 1:
-                        if 'content_type' in pdict:
-                            ed = 'media-type:' + pdict['content_type']
+                        if "content_type" in pdict:
+                            ed = "media-type:" + pdict["content_type"]
                             pdoc.isDescribedBy(rqn, ed)
                     # Search forward for activities that used this entity
-                    if entity and depth != 1 and direction == 'FORWARD':
-                        used_query = job.storage.session.query(job.storage.Used).filter_by(entity_id=entity_id)
+                    if entity and depth != 1 and direction == "FORWARD":
+                        used_query = job.storage.session.query(
+                            job.storage.Used
+                        ).filter_by(entity_id=entity_id)
                         used_rows = used_query.all()
                         for row in used_rows:
                             other_pdocs.append(
                                 job2prov(
-                                    row.jobid, job.user,
-                                    depth=depth-2, direction=direction, members=members, agents=agents, model=model,
-                                    descriptions=descriptions, configuration=configuration,
-                                    show_used=True
+                                    row.jobid,
+                                    job.user,
+                                    depth=depth - 2,
+                                    direction=direction,
+                                    members=members,
+                                    agents=agents,
+                                    model=model,
+                                    descriptions=descriptions,
+                                    configuration=configuration,
+                                    show_used=True,
                                 )
                             )
 
@@ -521,7 +608,7 @@ def prov2json(prov_doc, fname):
     :param fname: file name
     :return:
     """
-    prov_doc.serialize(fname, format='json')
+    prov_doc.serialize(fname, format="json")
 
 
 def prov2xml(prov_doc, fname):
@@ -531,16 +618,22 @@ def prov2xml(prov_doc, fname):
     :param fname: file name
     :return:
     """
-    prov_doc.serialize(fname, format='xml')
+    prov_doc.serialize(fname, format="xml")
 
 
-def prov2dot(prov_doc, attributes=True, direction='BT'):
+def prov2dot(prov_doc, attributes=True, direction="BT"):
     """
     Convert ProvDocument to dot graphical format
     :param prov_doc:
     :return:
     """
-    dot = prov_to_dot(prov_doc, use_labels=True, show_element_attributes=attributes, show_relation_attributes=attributes, direction=direction)
+    dot = prov_to_dot(
+        prov_doc,
+        use_labels=True,
+        show_element_attributes=attributes,
+        show_relation_attributes=attributes,
+        direction=direction,
+    )
     return dot
 
 
@@ -555,18 +648,18 @@ def prov2svg(prov_doc, fname):
         dot = prov2dot(prov_doc)
         svg_content = dot.create(format="svg")
     except InvocationException as e:
-        svg_content = '''
+        svg_content = """
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg xmlns="http://www.w3.org/2000/svg" version="1.0"
 	width="38" height="32"  viewBox="0 0 39.875 33.6667">
 <path style="stroke: none; fill: #323296;" d="M 10,0 L 30.5,0 39.875,17.5 30.5,33.6667 10,33.6667 L 0,17.5 L 10,0 z"/>
 </svg>
-'''
+"""
     with open(fname, "wb") as f:
         f.write(svg_content)
 
 
-def prov2svg_content(prov_doc, attributes=True, direction='BT'):
+def prov2svg_content(prov_doc, attributes=True, direction="BT"):
     """
     Convert ProvDocument to dot graphical format then svg
     :param prov_doc:
@@ -576,17 +669,17 @@ def prov2svg_content(prov_doc, attributes=True, direction='BT'):
         dot = prov2dot(prov_doc, attributes=attributes, direction=direction)
         svg_content = dot.create(format="svg")
     except InvocationException as e:
-        svg_content = '''
+        svg_content = """
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg xmlns="http://www.w3.org/2000/svg" version="1.0"
 	width="38" height="32"  viewBox="0 0 39.875 33.6667">
 <path style="stroke: none; fill: #323296;" d="M 10,0 L 30.5,0 39.875,17.5 30.5,33.6667 10,33.6667 L 0,17.5 L 10,0 z"/>
 </svg>
-'''
+"""
     return svg_content
 
 
-def prov2png_content(prov_doc, attributes=True, direction='BT'):
+def prov2png_content(prov_doc, attributes=True, direction="BT"):
     """
     Convert ProvDocument to dot graphical format then png
     :param prov_doc:
@@ -622,10 +715,19 @@ def prov2dict(prov_doc):
         if rec_type == voprov.models.model.PROV_ENTITY:
             prov_dict["entity"][rec_id] = rec_attributes
         # Store usage or generation and its attributes
-        if rec_type == voprov.models.model.PROV_USAGE or rec_type == voprov.models.model.PROV_GENERATION:
-            act_id = rec_attributes.pop("voprov:activity", rec_attributes.pop("prov:activity", None))
-            ent_id = rec_attributes.pop("voprov:entity", rec_attributes.pop("prov:entity", None))
-            rec_role = rec_attributes.pop("voprov:role", rec_attributes.pop("prov:role", None))
+        if (
+            rec_type == voprov.models.model.PROV_USAGE
+            or rec_type == voprov.models.model.PROV_GENERATION
+        ):
+            act_id = rec_attributes.pop(
+                "voprov:activity", rec_attributes.pop("prov:activity", None)
+            )
+            ent_id = rec_attributes.pop(
+                "voprov:entity", rec_attributes.pop("prov:entity", None)
+            )
+            rec_role = rec_attributes.pop(
+                "voprov:role", rec_attributes.pop("prov:role", None)
+            )
             if rec_role:
                 rec_attributes["prov:role"] = rec_role
             if act_id and ent_id:
@@ -638,14 +740,20 @@ def prov2dict(prov_doc):
                 else:
                     if not "generated" in prov_dict["activity"][act_id]:
                         prov_dict["activity"][act_id]["generated"] = {}
-                    prov_dict["activity"][act_id]["generated"][ent_id] = {"role": rec_role}
+                    prov_dict["activity"][act_id]["generated"][ent_id] = {
+                        "role": rec_role
+                    }
         # Store agent and its attributes
         if rec_type == voprov.models.model.PROV_AGENT:
             prov_dict["agent"][rec_id] = rec_attributes
         # Store attribution and its attributes
         if rec_type == voprov.models.model.PROV_ATTRIBUTION:
-            ent_id = rec_attributes.pop("voprov:entity", rec_attributes.pop("prov:entity", None))
-            agt_id = rec_attributes.pop("voprov:agent", rec_attributes.pop("prov:agent", None))
+            ent_id = rec_attributes.pop(
+                "voprov:entity", rec_attributes.pop("prov:entity", None)
+            )
+            agt_id = rec_attributes.pop(
+                "voprov:agent", rec_attributes.pop("prov:agent", None)
+            )
             if ent_id and agt_id:
                 ent_id = str(ent_id)
                 agt_id = str(agt_id)
@@ -654,8 +762,12 @@ def prov2dict(prov_doc):
                 prov_dict["entity"][ent_id]["attributed"][agt_id] = rec_attributes
         # Store association and its attributes
         if rec_type == voprov.models.model.PROV_ASSOCIATION:
-            act_id = rec_attributes.pop("voprov:activity", rec_attributes.pop("prov:activity", None))
-            agt_id = rec_attributes.pop("voprov:agent", rec_attributes.pop("prov:agent", None))
+            act_id = rec_attributes.pop(
+                "voprov:activity", rec_attributes.pop("prov:activity", None)
+            )
+            agt_id = rec_attributes.pop(
+                "voprov:agent", rec_attributes.pop("prov:agent", None)
+            )
             if ent_id and agt_id:
                 ent_id = str(ent_id)
                 agt_id = str(agt_id)

@@ -24,7 +24,7 @@ class EntityStore(object):
         """
         BUF_SIZE = 65536  # lets read stuff in 64kb chunks!
         sha1 = hashlib.sha1()
-        with open(fname, 'rb') as f:
+        with open(fname, "rb") as f:
             while True:
                 data = f.read(BUF_SIZE)
                 if not data:
@@ -51,8 +51,7 @@ class EntityStore(object):
         return 0
 
     def entity_delete(self):
-        """Delete entity from the Store
-        """
+        """Delete entity from the Store"""
         pass
 
 
@@ -83,7 +82,5 @@ class SQLEntityStore(EntityStore):
         return 0
 
     def entity_delete(self):
-        """Delete entity from the Store
-        """
+        """Delete entity from the Store"""
         pass
-
