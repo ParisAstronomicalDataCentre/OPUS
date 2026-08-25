@@ -371,7 +371,7 @@ class RoleView(sqla.ModelView):
 
 
 # Initialize Flask-Admin
-admin = Admin(app, template_mode='bootstrap3', url='/admin')
+admin = Admin(app, url='/admin')  # removed for Py3.13: , template_mode='bootstrap3'
 
 # Add Flask-Admin views_old for Users and Roles
 admin.add_view(UserView(User, db.session))
@@ -492,6 +492,22 @@ def import_server_account():
 def server_jobs():
     # Get jobs from server
     return render_template('server_jobs.html')
+
+
+@app.route('/admin/server_log', methods=['GET'])
+@login_required
+@roles_required('admin')
+def server_log():
+    # Get jobs from server
+    return render_template('show_log.html', title='Server Log', logfile='server.log')
+
+
+@app.route('/admin/client_log', methods=['GET'])
+@login_required
+@roles_required('admin')
+def client_log():
+    # Get jobs from server
+    return render_template('show_log.html', title='Client Log', logfile='client.log')
 
 
 # ----------
