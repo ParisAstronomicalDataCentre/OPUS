@@ -166,7 +166,7 @@ def gen_token(context):
     try:
         email = context.current_parameters.get("email")
         token = uuid.uuid5(uuid.NAMESPACE_X500, app.config["APP_PATH"] + email)
-    except:
+    except Exception:
         token = uuid.uuid4()
     return str(token)
 

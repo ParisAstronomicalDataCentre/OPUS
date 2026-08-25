@@ -623,7 +623,7 @@ def create_new_job_definition():
             jdl.save("tmp/" + jobname)
         else:
             abort_500("No jobname given")
-    except:
+    except Exception:
         abort_500_except()
     # Response
     return {"jobname": jobname}
@@ -678,7 +678,7 @@ def import_job_definition():
                 jdl.save("tmp/" + jobname)
             else:
                 abort_500("No jobname found for file " + f.filename)
-    except:
+    except Exception:
         abort_500_except()
     # Return code 200 and jobname
     return {"jobname": jobname}
@@ -706,7 +706,7 @@ def validation_request_job_definition(jobname):
             abort_500("No JDL file found for " + jobname)
     except HTTPError as e:
         raise e
-    except:
+    except Exception:
         abort_500_except()
     # Return code 200
     return {"jobname": jobname}
@@ -773,7 +773,7 @@ def validate_job_definition(jobname):
             logger.info("No job script found for validation: " + script_src)
             abort_500("No job script found for " + jobname)
             # redirect('/client/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
-    except:
+    except Exception:
         abort_500_except()
     # Return code 200
     return {"jobname": jobname}
@@ -794,7 +794,7 @@ def convert_jdl(jobname):
         uws_jdl.update_vot(jobname)
     except UserWarning as e:
         abort_404(e.args[0])
-    except:
+    except Exception:
         abort_500_except()
     return f"JDL converted for {jobname}"
 
@@ -818,7 +818,7 @@ def cp_script(jobname):
             logger.info("No job script found for job: " + jobname)
             abort_500("No job script found for " + jobname)
             # redirect('/client/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
-    except:
+    except Exception:
         abort_500_except()
     # Return code 200
     response.content_type = "text/plain; charset=UTF-8"
@@ -858,7 +858,7 @@ def get_script(jobname):
             abort_403()
     except UserWarning as e:
         abort_404(e.args[0])
-    except:
+    except Exception:
         abort_500_except()
 
 
@@ -882,7 +882,7 @@ def get_jdl_json(jobname):
         #     abort_403()
     except UserWarning as e:
         abort_404(e.args[0])
-    except:
+    except Exception:
         abort_500_except()
 
 
@@ -918,7 +918,7 @@ def get_jdl(jobname):
         #     abort_403()
     except UserWarning as e:
         abort_404(e.args[0])
-    except:
+    except Exception:
         abort_500_except()
 
 
@@ -968,7 +968,7 @@ def delete_jdl(jobname):
             logger.warning("No job script found: " + script_src)
             abort_500("No job script found for " + jobname)
             # redirect('/client/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
-    except:
+    except Exception:
         abort_500_except()
     # Return code 200
     return {"jobname": jobname}
@@ -1038,7 +1038,7 @@ def download_entity():
         abort_404(str(e))
     except UserWarning as e:
         abort_500(e.args[0])
-    except:
+    except Exception:
         abort_500_except()
 
 
@@ -1108,7 +1108,7 @@ def get_result_file(jobid, rname):  # , rfname):
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
-    except:
+    except Exception:
         abort_500_except()
 
 
@@ -1219,7 +1219,7 @@ def provsap():
         abort_400(e.args[0])
     except storage.NotFoundWarning as e:
         abort_404(str(e))
-    except:
+    except Exception:
         abort_500_except()
 
 
@@ -1335,7 +1335,7 @@ def maintenance(jobname):
         for line in report:
             logger.warning(line)
         abort_403(str(e))
-    except:
+    except Exception:
         for line in report:
             logger.warning(line)
         abort_500_except()
@@ -1424,7 +1424,7 @@ def job_event():
         abort_404(str(e))
     except UserWarning as e:
         abort_500(e.args[0])
-    except:
+    except Exception:
         abort_500_except()
     # Response
     response.content_type = "text/plain; charset=UTF-8"
@@ -1467,7 +1467,7 @@ def get_joblist(jobname):
         abort_404(str(e))
     except UserWarning as e:
         abort_500(e.args[0])
-    except:
+    except Exception:
         abort_500_except()
 
 
@@ -1504,7 +1504,7 @@ def create_job(jobname):
             msg="STDERR output:\n" + e.output,
             msg_public="Cannot connect to the computing cluster",
         )
-    except:
+    except Exception:
         abort_500_except()
     # Response
     redirect(BASE_URL + UWS_SERVER_ENDPOINT + "/" + jobname + "/" + job.jobid, 303)
@@ -1590,7 +1590,7 @@ def get_job(jobname, jobid):
         abort_404(str(e))
     except UserWarning as e:
         abort_500(e.args[0])
-    except:
+    except Exception:
         abort_500_except()
 
 
@@ -1620,7 +1620,7 @@ def delete_job(jobname, jobid):
             msg="STDERR output:\n" + e.output,
             msg_public="Cannot connect to the computing cluster",
         )
-    except:
+    except Exception:
         abort_500_except()
     # Response
     redirect(BASE_URL + UWS_SERVER_ENDPOINT + "/" + jobname, 303)
@@ -1652,7 +1652,7 @@ def post_job(jobname, jobid):
             msg="STDERR output:\n" + e.output,
             msg_public="Cannot connect to the computing cluster",
         )
-    except:
+    except Exception:
         abort_500_except()
     redirect(BASE_URL + UWS_SERVER_ENDPOINT + "/" + jobname, 303)
 
@@ -1683,7 +1683,7 @@ def get_phase(jobname, jobid):
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
-    except:
+    except Exception:
         abort_500_except()
 
 
@@ -1742,7 +1742,7 @@ def post_phase(jobname, jobid):
             msg="STDERR output:\n" + e.output,
             msg_public="Cannot connect to the computing cluster",
         )
-    except:
+    except Exception:
         abort_500_except()
     # Response
     redirect(BASE_URL + UWS_SERVER_ENDPOINT + "/" + jobname + "/" + jobid, 303)
@@ -1774,7 +1774,7 @@ def get_executionduration(jobname, jobid):
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
-    except:
+    except Exception:
         abort_500_except()
 
 
@@ -1817,7 +1817,7 @@ def post_executionduration(jobname, jobid):
         abort_404(str(e))
     except UserWarning as e:
         abort_500(e.args[0])
-    except:
+    except Exception:
         abort_500_except()
     # Response
     redirect(BASE_URL + UWS_SERVER_ENDPOINT + "/" + jobname + "/" + jobid, 303)
@@ -1849,7 +1849,7 @@ def get_destruction(jobname, jobid):
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
-    except:
+    except Exception:
         abort_500_except()
 
 
@@ -1891,7 +1891,7 @@ def post_destruction(jobname, jobid):
         abort_404(str(e))
     except UserWarning as e:
         abort_500(e.args[0])
-    except:
+    except Exception:
         abort_500_except()
     # Response
     redirect(BASE_URL + UWS_SERVER_ENDPOINT + "/" + jobname + "/" + jobid, 303)
@@ -1924,7 +1924,7 @@ def get_error(jobname, jobid):
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
-    except:
+    except Exception:
         abort_500_except()
 
 
@@ -1954,7 +1954,7 @@ def get_quote(jobname, jobid):
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
-    except:
+    except Exception:
         abort_500_except()
 
 
@@ -1986,7 +1986,7 @@ def get_parameters(jobname, jobid):
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
-    except:
+    except Exception:
         abort_500_except()
 
 
@@ -2017,7 +2017,7 @@ def get_parameter(jobname, jobid, pname):
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
-    except:
+    except Exception:
         abort_500_except()
 
 
@@ -2056,7 +2056,7 @@ def post_parameter(jobname, jobid, pname):
         abort_404(str(e))
     except UserWarning as e:
         abort_500(e.args[0])
-    except:
+    except Exception:
         abort_500_except()
     # Response
     redirect(
@@ -2093,7 +2093,7 @@ def get_results(jobname, jobid):
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
-    except:
+    except Exception:
         abort_500_except()
 
 
@@ -2124,7 +2124,7 @@ def get_result(jobname, jobid, rname):
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
-    except:
+    except Exception:
         abort_500_except()
 
 
@@ -2155,7 +2155,7 @@ def get_stdout(jobname, jobid):
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
-    except:
+    except Exception:
         abort_500_except()
 
 
@@ -2186,7 +2186,7 @@ def get_stderr(jobname, jobid):
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
-    except:
+    except Exception:
         abort_500_except()
 
 
@@ -2221,7 +2221,7 @@ def get_prov(jobname, jobid, provtype):
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
-    except:
+    except Exception:
         abort_500_except()
 
 
@@ -2251,7 +2251,7 @@ def get_owner(jobname, jobid):
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
-    except:
+    except Exception:
         abort_500_except()
 
 
