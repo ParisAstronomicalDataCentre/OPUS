@@ -358,7 +358,7 @@ class TestJobSequence:
         # job_event EXECUTING
         url = "/handler/job_event"
         post = {"jobid": "0", "phase": "EXECUTING"}
-        response = test_app.post(url, post, extra_environ=dict(REMOTE_ADDR="127.0.0.1"))
+        response = test_app.post(url, post, extra_environ={"REMOTE_ADDR": "127.0.0.1"})
         print(url)
         print(" --> " + response.status)
         assert response.status_int == 200
@@ -366,7 +366,7 @@ class TestJobSequence:
         self.assert_job_phase(jobid, "EXECUTING")
         # job_event COMPLETED
         post = {"jobid": "0", "phase": "COMPLETED"}
-        response = test_app.post(url, post, extra_environ=dict(REMOTE_ADDR="127.0.0.1"))
+        response = test_app.post(url, post, extra_environ={"REMOTE_ADDR": "127.0.0.1"})
         print(url)
         print(" --> " + response.status)
         assert response.status_int == 200

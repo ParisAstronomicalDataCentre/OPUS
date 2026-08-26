@@ -987,7 +987,6 @@ class Job:
         if new_phase == "ERROR" and self.phase != "ERROR":
             self.end_time = now.strftime(DT_FMT)
         # Update phase
-        previous_phase = self.phase
         self.phase = new_phase
         # Save job description
         self.storage.save(self)

@@ -52,12 +52,14 @@ class Manager:
     # workdir_path = '.'
     # results_path = '.'
 
-    def _make_batch(self, job, jobid_var="$$", get_input_files=[]):
+    def _make_batch(self, job, jobid_var="$$", get_input_files=None):
         """Make batch file to run the job and signal status to the UWS server directly
 
         Returns:
             batch file content as a string
         """
+        if get_input_files is None:
+            get_input_files = []
         jd = f"{self.jobdata_path}/{job.jobid}"
         wd = f"{self.workdir_path}/{job.jobid}"
         rs = f"{self.results_path}/{job.jobid}"
@@ -487,12 +489,14 @@ class SLURMManager(Manager):
         self.workdir_path = SLURM_WORKDIR_PATH
         self.results_path = SLURM_RESULTS_PATH
 
-    def _make_sbatch(self, job, get_input_files=[]):
+    def _make_sbatch(self, job, get_input_files=None):
         """Make sbatch file content for given job
 
         Returns:
             sbatch file content as a string
         """
+        if get_input_files is None:
+            get_input_files = []
         jd = f"{self.jobdata_path}/{job.jobid}"
         duration = dt.timedelta(0, int(job.execution_duration))
         # duration format is 00:01:00 for 1 min

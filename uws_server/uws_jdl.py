@@ -89,10 +89,10 @@ class JDLFile:
     """
 
     def __init__(self, jdl_path=JDL_PATH, scripts_path=SCRIPTS_PATH):
-        self.content = dict(
-            control_parameters=CONTROL_PARAMETERS,
-            control_parameters_keys=CONTROL_PARAMETERS_KEYS,
-        )
+        self.content = {
+            "control_parameters": CONTROL_PARAMETERS,
+            "control_parameters_keys": CONTROL_PARAMETERS_KEYS,
+        }
         self.extension = ""
         self.jdl_path = "."
         self.scripts_path = "."
@@ -248,10 +248,10 @@ class JDLFile:
 class JSONFile(JDLFile):
 
     def __init__(self, jdl_path=JDL_PATH, scripts_path=SCRIPTS_PATH):
-        self.content = dict(
-            control_parameters=CONTROL_PARAMETERS,
-            control_parameters_keys=CONTROL_PARAMETERS_KEYS,
-        )
+        self.content = {
+            "control_parameters": CONTROL_PARAMETERS,
+            "control_parameters_keys": CONTROL_PARAMETERS_KEYS,
+        }
         self.extension = ".json"
         self.jdl_path = os.path.join(jdl_path, "json")
         self.scripts_path = scripts_path
@@ -306,10 +306,10 @@ class VOTFile(JDLFile):
     }
 
     def __init__(self, jdl_path=JDL_PATH, scripts_path=SCRIPTS_PATH):
-        self.content = dict(
-            control_parameters=CONTROL_PARAMETERS,
-            control_parameters_keys=CONTROL_PARAMETERS_KEYS,
-        )
+        self.content = {
+            "control_parameters": CONTROL_PARAMETERS,
+            "control_parameters_keys": CONTROL_PARAMETERS_KEYS,
+        }
         self.extension = "_vot.xml"
         self.jdl_path = os.path.join(jdl_path, "votable")
         self.scripts_path = scripts_path
@@ -1063,10 +1063,10 @@ class VOTFile(JDLFile):
 class WADLFile(JDLFile):
 
     def __init__(self, jdl_path=JDL_PATH, scripts_path=SCRIPTS_PATH):
-        self.content = dict(
-            control_parameters=CONTROL_PARAMETERS,
-            control_parameters_keys=CONTROL_PARAMETERS_KEYS,
-        )
+        self.content = {
+            "control_parameters": CONTROL_PARAMETERS,
+            "control_parameters_keys": CONTROL_PARAMETERS_KEYS,
+        }
         self.extension = ".wadl"
         self.jdl_path = os.path.join(jdl_path, "wadl")
         self.scripts_path = scripts_path
@@ -1308,13 +1308,6 @@ def read_par(jobname):
     name, type, parameter mode, default value, lower limit, upper limit, prompt
     See: http://heasarc.gsfc.nasa.gov/ftools/others/pfiles.html
     """
-    type_dict = {
-        "b": "xs:boolean",
-        "i": "xs:long",
-        "r": "xs:double",
-        "s": "xs:string",
-        "f": "xs:string",
-    }
     filename = jobname + ".par"
     from astropy.io import ascii
 
@@ -1323,17 +1316,14 @@ def read_par(jobname):
     job_par = data
     for p in job_par:
         # Set if parameter is required (mode q and a)
-        required = "false"
         if ("q" in p["mode"]) or ("a" in p["mode"]):
             required = "true"
         # If param is an integer or a real, add lower and upper limits (if not 0,0)
-        lowup = ""
         if (("i" in p["type"]) or ("r" in p["type"])) and (
             p["lower"] != "0" and p["upper"] != 0
         ):
             lowup = ' lower="%s" upper="%s"' % (p["lower"], p["upper"])
         # If param is a string (but not 'mode'), does it have limited choices?
-        choices = ""
         if ("s" in p["type"]) and (p["lower"] != "") and (p["name"] != "mode"):
             choices = ' choices="%s"' % (p["lower"])
         # Write param block to file

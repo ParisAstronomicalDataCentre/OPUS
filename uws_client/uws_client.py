@@ -231,7 +231,7 @@ security = Security(
 # https://github.com/authlib/demo-oauth-client/blob/master/flask-google-login/app.py -> works smoothly !
 
 oauth = OAuth(app)
-idp_names = dict((idp["title"], i) for i, idp in enumerate(OIDC_IDPS))
+idp_names = {idp["title"]: i for i, idp in enumerate(OIDC_IDPS)}
 for idp in OIDC_IDPS:
     oauth.register(
         name=idp["title"],
@@ -398,7 +398,7 @@ class UserView(sqla.ModelView):
     column_exclude_list = ("password",)
     # form_excluded_columns = ('password',)
     column_auto_select_related = True
-    form_overrides = dict(password=PasswordField)
+    form_overrides = {"password": PasswordField}
 
     def is_accessible(self):
         return current_user.has_role("admin")
@@ -560,7 +560,7 @@ def client_log():
 
 @app.context_processor
 def add_url_to_context():
-    return dict(url=request.url)
+    return {"url": request.url}
 
 
 @app.route("/favicon.ico")

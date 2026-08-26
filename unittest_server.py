@@ -47,7 +47,7 @@ class TestGet(unittest.TestCase):
 
     def test_get(self):
         # Initialize db, must be localhost
-        response = test_app.get("/db/test", extra_environ=dict(REMOTE_ADDR="127.0.0.1"))
+        response = test_app.get("/db/test", extra_environ={"REMOTE_ADDR": "127.0.0.1"})
         self.assertEqual(response.status_int, 303)
         self.assertRegex(response.location, "/db/show")
         print("DB initialized")
@@ -110,7 +110,7 @@ class TestJobUpdate(unittest.TestCase):
 
     def test_update(self):
         # Initialize db, must be localhost
-        response = test_app.get("/db/test", extra_environ=dict(REMOTE_ADDR="127.0.0.1"))
+        response = test_app.get("/db/test", extra_environ={"REMOTE_ADDR": "127.0.0.1"})
         print("DB initialized")
         self.assertEqual(response.status_int, 303)
         self.assertRegex(response.location, "/db/show")
@@ -189,7 +189,7 @@ class TestJobUpdateParam(unittest.TestCase):
 
     def test_update_param(self):
         # Initialize db, must be localhost
-        response = test_app.get("/db/test", extra_environ=dict(REMOTE_ADDR="127.0.0.1"))
+        response = test_app.get("/db/test", extra_environ={"REMOTE_ADDR": "127.0.0.1"})
         print("DB initialized")
         self.assertEqual(response.status_int, 303)
         self.assertRegex(response.location, "/db/show")
@@ -236,7 +236,7 @@ class TestJobAbort(unittest.TestCase):
 
     def test_abort(self):
         # Initialize db, must be localhost
-        response = test_app.get("/db/test", extra_environ=dict(REMOTE_ADDR="127.0.0.1"))
+        response = test_app.get("/db/test", extra_environ={"REMOTE_ADDR": "127.0.0.1"})
         print("DB initialized")
         self.assertEqual(response.status_int, 303)
         self.assertRegex(response.location, "/db/show")
@@ -282,7 +282,7 @@ class TestJobDelete(unittest.TestCase):
 
     def test_delete(self):
         # Initialize db, must be localhost
-        response = test_app.get("/db/test", extra_environ=dict(REMOTE_ADDR="127.0.0.1"))
+        response = test_app.get("/db/test", extra_environ={"REMOTE_ADDR": "127.0.0.1"})
         print("DB initialized")
         self.assertEqual(response.status_int, 303)
         self.assertRegex(response.location, "/db/show")
@@ -341,7 +341,7 @@ class TestJobSequence(unittest.TestCase):
 
     def test_job_sequence(self):
         # Initialize db, must be localhost
-        response = test_app.get("/db/test", extra_environ=dict(REMOTE_ADDR="127.0.0.1"))
+        response = test_app.get("/db/test", extra_environ={"REMOTE_ADDR": "127.0.0.1"})
         print("DB initialized")
         self.assertEqual(response.status_int, 303)
         self.assertRegex(response.location, "/db/show")
@@ -383,7 +383,7 @@ class TestJobSequence(unittest.TestCase):
         # job_event EXECUTING
         url = "/handler/job_event"
         post = {"jobid": "0", "phase": "EXECUTING"}
-        response = test_app.post(url, post, extra_environ=dict(REMOTE_ADDR="127.0.0.1"))
+        response = test_app.post(url, post, extra_environ={"REMOTE_ADDR": "127.0.0.1"})
         print(url)
         print(" --> " + response.status)
         self.assertEqual(response.status_int, 200)
@@ -391,7 +391,7 @@ class TestJobSequence(unittest.TestCase):
         self.assert_job_phase(jobid, "EXECUTING")
         # job_event COMPLETED
         post = {"jobid": "0", "phase": "COMPLETED"}
-        response = test_app.post(url, post, extra_environ=dict(REMOTE_ADDR="127.0.0.1"))
+        response = test_app.post(url, post, extra_environ={"REMOTE_ADDR": "127.0.0.1"})
         print(url)
         print(" --> " + response.status)
         self.assertEqual(response.status_int, 200)

@@ -644,10 +644,10 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                     for row in elist:
                         if str(row.entity_id) in kwargs["file_name"]:
                             # Entity has the expected entity_id in its name
-                            entity = dict(
-                                (col, getattr(row, col))
-                                for col in row.__table__.columns.keys()
-                            )
+                            entity = {
+                                col: getattr(row, col)
+                                for col in row.__table__.columns
+                            }
                             entity_id = entity["entity_id"]
                             logger.info(
                                 "Entity found for {} with same hash, and file_name contains entity_id".format(
@@ -658,10 +658,10 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                             kwargs.get("jobid")
                         ) or str(row.jobid) in kwargs["file_name"]:
                             # Entity has the jobid that generated it in its name
-                            entity = dict(
-                                (col, getattr(row, col))
-                                for col in row.__table__.columns.keys()
-                            )
+                            entity = {
+                                col: getattr(row, col)
+                                for col in row.__table__.columns
+                            }
                             entity_id = entity["entity_id"]
                             logger.info(
                                 "Entity found for {} with same hash, and file_name contains jobid".format(
@@ -680,10 +680,10 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                                 row.file_name == kwargs["file_name"]
                             ):
                                 # Entity has already been used by the same job (and is now exposed as a UWS result)
-                                entity = dict(
-                                    (col, getattr(row, col))
-                                    for col in row.__table__.columns.keys()
-                                )
+                                entity = {
+                                    col: getattr(row, col)
+                                    for col in row.__table__.columns
+                                }
                                 entity_id = entity["entity_id"]
                                 logger.info(
                                     "Entity found for {} with same hash, was used by the same job and is now exposed as a UWS result".format(
@@ -706,9 +706,9 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             )
             if row:
                 entity_id = kwargs["value"]
-                entity = dict(
-                    (col, getattr(row, col)) for col in row.__table__.columns.keys()
-                )
+                entity = {
+                    col: getattr(row, col) for col in row.__table__.columns
+                }
                 logger.info(f"Entity found with value=entity_id={entity_id}")
             else:
                 # Not found in entity store, is it an entity_id or a simple value ?
@@ -724,9 +724,9 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                     .first()
                 )
                 if row:
-                    entity = dict(
-                        (col, getattr(row, col)) for col in row.__table__.columns.keys()
-                    )
+                    entity = {
+                        col: getattr(row, col) for col in row.__table__.columns
+                    }
                     logger.info(
                         f"Entity found from given entity_id={entity_id}"
                     )
@@ -791,7 +791,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                 return {}
             else:
                 raise NotFoundWarning(f'Result "{entity_id}" NOT FOUND')
-        return dict((col, getattr(row, col)) for col in row.__table__.columns.keys())
+        return {col: getattr(row, col) for col in row.__table__.columns}
 
     def search_entity(
         self,
@@ -815,9 +815,9 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                 raise NotFoundWarning(
                     f"Entity with jobid={jobid} and result_name={result_name} NOT FOUND"
                 )
-            return dict(
-                (col, getattr(row, col)) for col in row.__table__.columns.keys()
-            )
+            return {
+                col: getattr(row, col) for col in row.__table__.columns
+            }
         elif file_name and hash:
             query = self.session.query(self.Entity).filter_by(
                 file_name=file_name, hash=hash
@@ -827,17 +827,17 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                 raise NotFoundWarning(
                     f"Entity with file_name={file_name} and hash={hash} NOT FOUND"
                 )
-            return dict(
-                (col, getattr(row, col)) for col in row.__table__.columns.keys()
-            )
+            return {
+                col: getattr(row, col) for col in row.__table__.columns
+            }
         elif hash:
             query = self.session.query(self.Entity).filter_by(hash=hash)
             row = query.first()
             if not row:
                 raise NotFoundWarning(f"Entity with hash={hash} NOT FOUND")
-            return dict(
-                (col, getattr(row, col)) for col in row.__table__.columns.keys()
-            )
+            return {
+                col: getattr(row, col) for col in row.__table__.columns
+            }
         else:
             pass
         pass

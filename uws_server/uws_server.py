@@ -4,8 +4,11 @@
 """ """
 
 import copy
+import datetime as dt
 import io
+import os
 import re
+import shutil
 import smtplib
 import sys
 import threading
@@ -14,6 +17,7 @@ from email.mime.text import MIMEText
 from subprocess import CalledProcessError
 
 import requests
+from blinker import signal
 from bottle import (
     Bottle,
     HTTPError,
@@ -25,7 +29,54 @@ from bottle import (
     static_file,
 )
 
-from .uws_classes import *
+from . import managers, storage, uws_jdl
+from .settings import (
+    ACTIVE_PHASES,
+    ADMIN_EMAIL,
+    ADMIN_NAME,
+    ALLOW_ANONYMOUS,
+    APP_PATH,
+    APP_TOKENS,
+    BASE_IP,
+    BASE_URL,
+    CHECK_OWNER,
+    CHECK_PERMISSIONS,
+    DEBUG,
+    DT_FMT,
+    JDL,
+    JOB_EVENT_TOKEN,
+    JOB_SERVERS,
+    JOBDATA_PATH,
+    MAIL_PORT,
+    MAIL_SERVER,
+    MAINTENANCE_TOKEN,
+    MANAGER,
+    NJOBS_MAX,
+    PHASE_CONVERT,
+    PHASES,
+    RESULTS_PATH,
+    SCIM_ENDPOINT,
+    SCRIPTS_PATH,
+    SENDER_EMAIL,
+    STORAGE,
+    TERMINAL_PHASES,
+    TRUSTED_CLIENTS,
+    USE_ARCHIVED_PHASE,
+    UWS_CLIENT_ENDPOINT,
+    UWS_SERVER_ENDPOINT,
+    WAIT_TIME_MAX,
+    CustomAdapter,
+    logger_init,
+)
+from .uws_classes import (
+    EntityAccessDenied,
+    Job,
+    JobAccessDenied,
+    JobList,
+    TooManyJobs,
+    User,
+    special_users,
+)
 
 # Note: this import will also import .settings
 
@@ -106,28 +157,27 @@ def set_user(jobname=None):
         user = User(user_name, user_token)
     # Add user name at the end of each log entry
     logger = CustomAdapter(logger_init, {"username": user.name})
-    if user == User("anonymous", "anonymous") and ALLOW_ANONYMOUS == False:
+    if user == User("anonymous", "anonymous") and not ALLOW_ANONYMOUS:
         abort_403("User anomymous not allowed on this server")
     # Add user if not in db
     job_storage = getattr(storage, STORAGE + "JobStorage")()
     job_storage.add_user(user.name, token=user.token)
     # Check and add roles from APP_TOKEN
-    if APP_TOKENS:
-        if user_token in APP_TOKENS.keys():
-            # An application token was found and roles will be added
-            active = APP_TOKENS[user_token]["active"]
-            app_name = APP_TOKENS[user_token]["name"]
-            app_jobs = APP_TOKENS[user_token]["jobs"]
-            logger.debug(
-                f"APP_TOKEN {app_name} found for user {user_name}, roles associated: {app_jobs}"
-            )
-            for jobname in app_jobs:
-                if job_storage.has_role(user_name, user_token, jobname):
-                    if not active:
-                        job_storage.remove_role(user_name, user_token, role=jobname)
-                else:
-                    if active:
-                        job_storage.add_role(user_name, user_token, role=jobname)
+    if APP_TOKENS and user_token in APP_TOKENS:
+        # An application token was found and roles will be added
+        active = APP_TOKENS[user_token]["active"]
+        app_name = APP_TOKENS[user_token]["name"]
+        app_jobs = APP_TOKENS[user_token]["jobs"]
+        logger.debug(
+            f"APP_TOKEN {app_name} found for user {user_name}, roles associated: {app_jobs}"
+        )
+        for jobname in app_jobs:
+            if job_storage.has_role(user_name, user_token, jobname):
+                if not active:
+                    job_storage.remove_role(user_name, user_token, role=jobname)
+            else:
+                if active:
+                    job_storage.add_role(user_name, user_token, role=jobname)
     return user
 
 
@@ -212,7 +262,7 @@ def is_admin(func):
 # ----------
 
 
-class BadRequest(Exception):
+class BadRequestError(Exception):
     pass
 
 
@@ -336,7 +386,7 @@ def send_mail(send_to, subject, msg):
         server.quit()
     except Exception:
         logger.error("Unable to send email")
-        raise HTTPError(424, "Unable to send email")
+        raise HTTPError(424, "Unable to send email") from None
 
 
 # ----------
@@ -345,7 +395,7 @@ def send_mail(send_to, subject, msg):
 
 
 @app.get(SCIM_ENDPOINT + "/ServiceProviderConfig")
-def SCIM_ServiceProviderConfig():
+def scim_ServiceProviderConfig():
     scim_config = {
         "schemas": ["urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig"],
         "patch": {"supported": False},
@@ -361,7 +411,7 @@ def SCIM_ServiceProviderConfig():
 
 
 @app.get(SCIM_ENDPOINT + "/Schemas")
-def SCIM_Schemas():
+def scim_Schemas():
     scim_schemas = {
         "id": "urn:ietf:params:scim:schemas:core:2.0:User",
         "name": "User",
@@ -413,7 +463,7 @@ def SCIM_Schemas():
 
 
 @app.get(SCIM_ENDPOINT + "/ResourceTypes")
-def SCIM_ResourceTypes():
+def scim_ResourceTypes():
     scim_resourcetypes = {
         "itemsPerPage": 1,
         "startIndex": 1,
@@ -432,7 +482,7 @@ def SCIM_ResourceTypes():
 
 
 @app.get(SCIM_ENDPOINT + "/ResourceTypes/User")
-def SCIM_ResourceTypes_User():
+def scim_ResourceTypes_User():
     scim_resourcetypes = {
         "id": "Users",
         "schemas": ["urn:scim:schemas:core:2.0:ResourceType"],
@@ -524,7 +574,7 @@ def patch_user(name):
         users = job_storage.get_users(name=name, token=token)
         u = users[0]
         if u:
-            for k in request.POST.keys():
+            for k in request.POST:
                 if k in ["token", "roles", "active"]:
                     u[k] = request.POST[k]
                     # save modified user
@@ -871,7 +921,7 @@ def get_jdl_json(jobname):
     """
     user = set_user()
     try:
-        db = getattr(storage, STORAGE + "JobStorage")()
+        getattr(storage, STORAGE + "JobStorage")()
         # if not CHECK_PERMISSIONS or db.has_access(user, jobname) or 'tmp/' in jobname:
         # Get JDL content
         jdl = getattr(uws_jdl, JDL)()
@@ -894,9 +944,9 @@ def get_jdl(jobname):
     :return: VOTable file
     """
     # logger.info(jobname)
-    user = set_user()
+    # user = set_user()
     try:
-        db = getattr(storage, STORAGE + "JobStorage")()
+        # db = getattr(storage, STORAGE + "JobStorage")()
         # if not CHECK_PERMISSIONS or db.has_access(user, jobname):
         # Get JDL content
         jdl = getattr(uws_jdl, JDL)()
@@ -997,7 +1047,7 @@ def download_entity():
     user = set_user()
     try:
         if "ID" not in request.query:
-            raise UserWarning('"ID" is not specified in request')
+            raise UserWarning('"ID" is not specified in request') from None
         entity_id = request.query["ID"]
         # logger.debug('Init storage for entity {}'.format(entity_id))
         job_storage = getattr(storage, STORAGE + "JobStorage")()
@@ -1044,7 +1094,7 @@ def download_entity():
 
 # TODO: function will be deprecated (replaced by /store)
 @app.route("/store_old/<jobid>/<rname>")  # /<rfname>')
-def get_result_file(jobid, rname):  # , rfname):
+def get_result_file_old(jobid, rname):  # , rfname):
     """Get result file <rname> for job <jobid>
 
     Returns:
@@ -1128,7 +1178,7 @@ def provsap():
     user = set_user()
     try:
         if "ID" not in request.query:
-            raise UserWarning('"ID" is not specified in request')
+            raise UserWarning('"ID" is not specified in request') from None
         kwargs = {}
         kwargs["depth"] = request.query.get("DEPTH", 1)
         kwargs["model"] = request.query.get("MODEL", "IVOA")
@@ -1212,10 +1262,10 @@ def provsap():
             )
             return b"\n".join(result.readlines())
         else:
-            raise BadRequest(
+            raise BadRequestError(
                 f"Bad value for RESPONSEFORMAT ({format}).\nAvailable values are ('PROV-JSON', 'PROV-XML', 'PROV-SVG')."
             )
-    except BadRequest as e:
+    except BadRequestError as e:
         abort_400(e.args[0])
     except storage.NotFoundWarning as e:
         abort_404(str(e))
@@ -1406,18 +1456,18 @@ def job_event():
                                 + new_phase
                                 + " for job "
                                 + job.jobid
-                            )
+                            ) from None
                     # Change job status
                     job.change_status(new_phase, msg)
                     logger.info(
                         f"Phase {cur_phase} --> {new_phase} for job {job.jobname} {job.jobid}"
                     )
                 else:
-                    raise UserWarning("Phase is already " + new_phase)
+                    raise UserWarning(f"Phase is already {new_phase}") from None
             else:
-                raise UserWarning("Unknown event sent for job " + job.jobid)
+                raise UserWarning(f"Unknown event sent for job {job.jobid}") from None
         else:
-            raise UserWarning("jobid is not defined in POST")
+            raise UserWarning("jobid is not defined in POST") from None
     except JobAccessDenied as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
@@ -1640,7 +1690,7 @@ def post_job(jobname, jobid):
             job.delete()
             logger.info(f"{jobname} {jobid} DELETED")
         else:
-            raise UserWarning("ACTION=DELETE is not specified in POST")
+            raise UserWarning("ACTION=DELETE is not specified in POST") from None
     except JobAccessDenied as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
@@ -1708,7 +1758,7 @@ def post_phase(jobname, jobid):
                 )
                 # Check if phase is PENDING
                 if job.phase not in ["PENDING"]:
-                    raise UserWarning("Job has to be in PENDING phase")
+                    raise UserWarning("Job has to be in PENDING phase") from None
                 # Start job
                 job.start()
                 logger.info(
@@ -1728,9 +1778,9 @@ def post_phase(jobname, jobid):
                 job.abort()
                 logger.info(f"{jobname} {jobid} ABORTED")
             else:
-                raise UserWarning("PHASE=" + new_phase + " not expected")
+                raise UserWarning("PHASE=" + new_phase + " not expected") from None
         else:
-            raise UserWarning("PHASE keyword is not specified in POST")
+            raise UserWarning("PHASE keyword is not specified in POST") from None
     except JobAccessDenied as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
@@ -1792,13 +1842,13 @@ def post_executionduration(jobname, jobid):
         logger.info(f"{jobname} {jobid}")
         # Get value from POST
         if "EXECUTIONDURATION" not in request.forms:
-            raise UserWarning("EXECUTIONDURATION keyword required")
+            raise UserWarning("EXECUTIONDURATION keyword required") from None
         new_value = request.forms.get("EXECUTIONDURATION")
         # Check new value
         try:
             new_value = int(new_value)
         except ValueError:
-            raise UserWarning("Execution duration must be an integer or a float")
+            raise UserWarning("Execution duration must be an integer or a float") from None
         # Get job properties from DB
         job = Job(jobname, jobid, user)
         if job.phase == "PENDING":
@@ -1810,7 +1860,7 @@ def post_executionduration(jobname, jobid):
         else:
             raise UserWarning(
                 f'Job "{jobid}" must be in PENDING state (currently {job.phase}) to change execution duration'
-            )
+            ) from None
     except JobAccessDenied as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
@@ -1867,7 +1917,7 @@ def post_destruction(jobname, jobid):
         logger.info(f"{jobname} {jobid}")
         # Get value from POST
         if "DESTRUCTION" not in request.forms:
-            raise UserWarning("DESTRUCTION keyword required")
+            raise UserWarning("DESTRUCTION keyword required") from None
         new_value = request.forms.get("DESTRUCTION")
         # Check if ISO8601 format, truncate if unconverted data remains
         try:
@@ -1878,7 +1928,7 @@ def post_destruction(jobname, jobid):
             else:
                 raise UserWarning(
                     f"Destruction time must be in ISO8601 format ({str(e)})"
-                )
+                ) from None
         # Get job properties from DB
         job = Job(jobname, jobid, user)
         # Change value
@@ -2035,7 +2085,7 @@ def post_parameter(jobname, jobid, pname):
         logger.info(f"pname={pname} {jobname} {jobid}")
         # Get value from POST
         if "VALUE" not in request.forms:
-            raise UserWarning("VALUE keyword required")
+            raise UserWarning("VALUE keyword required") from None
         new_value = request.forms.get("VALUE")
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_parameters=True)
@@ -2049,7 +2099,7 @@ def post_parameter(jobname, jobid, pname):
         else:
             raise UserWarning(
                 f'Job "{jobid}" must be in PENDING state (currently {job.phase}) to change parameter'
-            )
+            ) from None
     except JobAccessDenied as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
