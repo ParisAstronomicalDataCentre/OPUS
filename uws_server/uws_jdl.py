@@ -119,9 +119,7 @@ class JDLFile:
         # Check if JDL file exists on server?
         jobnames_jdl = [f.split("/")[-1].split(self.extension)[0] for f in flist]
         jobnames_all = [
-            j
-            for j in jobnames_jdl
-            if os.path.isfile(f"{self.scripts_path}/{j}.sh")
+            j for j in jobnames_jdl if os.path.isfile(f"{self.scripts_path}/{j}.sh")
         ]
         return jobnames_all
 
@@ -915,9 +913,7 @@ class VOTFile(JDLFile):
             xmlns = "{" + jdl_tree.nsmap[None] + "}"
             # print xmlns
             # Read parameters description
-            resource_block = jdl_tree.find(
-                f".//{xmlns}RESOURCE[@ID='{raw_jobname}']"
-            )
+            resource_block = jdl_tree.find(f".//{xmlns}RESOURCE[@ID='{raw_jobname}']")
             # print resource_block
             job_def = {
                 "name": resource_block.get("name"),
@@ -1146,15 +1142,11 @@ class WADLFile(JDLFile):
             "control_job_parameters",
             "set_job_parameters",
         ]:
-            params_block[block] = jdl_tree.find(
-                f".//{xmlns}request[@id='{block}']"
-            )
+            params_block[block] = jdl_tree.find(f".//{xmlns}request[@id='{block}']")
             for pelt in jdl_params:
                 params_block[block].append(copy.copy(pelt))
         # Insert parameters as options
-        param_opts_block = jdl_tree.find(
-            f".//{xmlns}param[@name='parameter-name']"
-        )
+        param_opts_block = jdl_tree.find(f".//{xmlns}param[@name='parameter-name']")
         for poelt in jdl_popts:
             param_opts_block.append(poelt)
         # Insert results as options
@@ -1162,9 +1154,7 @@ class WADLFile(JDLFile):
         for roelt in jdl_ropts:
             result_opts_block.append(roelt)
         # Insert default execution duration
-        execdur_block = jdl_tree.find(
-            f".//{xmlns}param[@name='EXECUTIONDURATION']"
-        )
+        execdur_block = jdl_tree.find(f".//{xmlns}param[@name='EXECUTIONDURATION']")
         execdur_block.set("default", self.content["executionduration"])
         # Insert default quote
         quote_block = jdl_tree.find(f".//{xmlns}representation[@id='quote']")
@@ -1241,14 +1231,10 @@ class WADLFile(JDLFile):
             # job_def['contact_affil'] = joblist_block.get('contact_affil')
             job_def["contact_email"] = joblist_block.get("contact_email")
             # Read execution duration
-            execdur_block = jdl_tree.find(
-                f".//{xmlns}param[@name='EXECUTIONDURATION']"
-            )
+            execdur_block = jdl_tree.find(f".//{xmlns}param[@name='EXECUTIONDURATION']")
             job_def["executionduration"] = execdur_block.get("default")
             # Read default quote
-            quote_block = jdl_tree.find(
-                f".//{xmlns}representation[@id='quote']"
-            )
+            quote_block = jdl_tree.find(f".//{xmlns}representation[@id='quote']")
             job_def["quote"] = quote_block.get("default")
             # Log wadl access
             frame, filename, line_number, function_name, lines, index = inspect.stack()[

@@ -645,8 +645,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                         if str(row.entity_id) in kwargs["file_name"]:
                             # Entity has the expected entity_id in its name
                             entity = {
-                                col: getattr(row, col)
-                                for col in row.__table__.columns
+                                col: getattr(row, col) for col in row.__table__.columns
                             }
                             entity_id = entity["entity_id"]
                             logger.info(
@@ -654,13 +653,14 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                                     kwargs["file_name"]
                                 )
                             )
-                        elif "jobid" in kwargs and str(row.jobid) == str(
-                            kwargs.get("jobid")
-                        ) or str(row.jobid) in kwargs["file_name"]:
+                        elif (
+                            "jobid" in kwargs
+                            and str(row.jobid) == str(kwargs.get("jobid"))
+                            or str(row.jobid) in kwargs["file_name"]
+                        ):
                             # Entity has the jobid that generated it in its name
                             entity = {
-                                col: getattr(row, col)
-                                for col in row.__table__.columns
+                                col: getattr(row, col) for col in row.__table__.columns
                             }
                             entity_id = entity["entity_id"]
                             logger.info(
@@ -676,9 +676,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                                 )
                                 .first()
                             )
-                            if used and (
-                                row.file_name == kwargs["file_name"]
-                            ):
+                            if used and (row.file_name == kwargs["file_name"]):
                                 # Entity has already been used by the same job (and is now exposed as a UWS result)
                                 entity = {
                                     col: getattr(row, col)
@@ -695,9 +693,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         if "value" in kwargs:
             for k in ["name"]:
                 if k not in kwargs:
-                    raise UserWarning(
-                        f"Attribute {k} is missing to register an entity"
-                    )
+                    raise UserWarning(f"Attribute {k} is missing to register an entity")
             # entity is a value or an ID
             row = (
                 self.session.query(self.Entity)
@@ -706,9 +702,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             )
             if row:
                 entity_id = kwargs["value"]
-                entity = {
-                    col: getattr(row, col) for col in row.__table__.columns
-                }
+                entity = {col: getattr(row, col) for col in row.__table__.columns}
                 logger.info(f"Entity found with value=entity_id={entity_id}")
             else:
                 # Not found in entity store, is it an entity_id or a simple value ?
@@ -724,12 +718,8 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                     .first()
                 )
                 if row:
-                    entity = {
-                        col: getattr(row, col) for col in row.__table__.columns
-                    }
-                    logger.info(
-                        f"Entity found from given entity_id={entity_id}"
-                    )
+                    entity = {col: getattr(row, col) for col in row.__table__.columns}
+                    logger.info(f"Entity found from given entity_id={entity_id}")
             else:
                 # Generate unique identifier for the new entity
                 entity_id = ENTITY_ID_GEN(**kwargs)
@@ -815,9 +805,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                 raise NotFoundWarning(
                     f"Entity with jobid={jobid} and result_name={result_name} NOT FOUND"
                 )
-            return {
-                col: getattr(row, col) for col in row.__table__.columns
-            }
+            return {col: getattr(row, col) for col in row.__table__.columns}
         elif file_name and hash:
             query = self.session.query(self.Entity).filter_by(
                 file_name=file_name, hash=hash
@@ -827,17 +815,13 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                 raise NotFoundWarning(
                     f"Entity with file_name={file_name} and hash={hash} NOT FOUND"
                 )
-            return {
-                col: getattr(row, col) for col in row.__table__.columns
-            }
+            return {col: getattr(row, col) for col in row.__table__.columns}
         elif hash:
             query = self.session.query(self.Entity).filter_by(hash=hash)
             row = query.first()
             if not row:
                 raise NotFoundWarning(f"Entity with hash={hash} NOT FOUND")
-            return {
-                col: getattr(row, col) for col in row.__table__.columns
-            }
+            return {col: getattr(row, col) for col in row.__table__.columns}
         else:
             pass
         pass
@@ -936,12 +920,12 @@ class SQLJobStorage(SQLStorage, JobStorage):
         """Read job from storage"""
         if from_process_id:
             # Query db for jobname and jobid using process_id
-            query = f"SELECT jobname, jobid FROM jobs WHERE process_id='{job.process_id}';"
+            query = (
+                f"SELECT jobname, jobid FROM jobs WHERE process_id='{job.process_id}';"
+            )
             row = self.cursor.execute(query).fetchone()
             if not row:
-                raise NotFoundWarning(
-                    f"Job with process_id={job.process_id} NOT FOUND"
-                )
+                raise NotFoundWarning(f"Job with process_id={job.process_id} NOT FOUND")
             job.jobname = row["jobname"]
             job.jobid = row["jobid"]
         if get_attributes:

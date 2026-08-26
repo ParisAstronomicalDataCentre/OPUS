@@ -261,7 +261,8 @@ PHASE_CONVERT = {
         "administrator. The job may or may not have been initiated",
     },
     "SUSPENDED": {
-        "phase": "SUSPENDED", "msg": "Job has an allocation, but execution has been suspended"
+        "phase": "SUSPENDED",
+        "msg": "Job has an allocation, but execution has been suspended",
     },
 }
 

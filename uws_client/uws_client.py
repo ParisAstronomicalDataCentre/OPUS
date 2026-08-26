@@ -573,9 +573,7 @@ def home():
     """Home page"""
     # logger.debug('app.config = {}'.format(app.config))
     logger.debug(f"session = {session.__str__()}")
-    logger.debug(
-        "config = "
-    )
+    logger.debug("config = ")
     logger.debug(f"g = {g.__dict__}")
     date, version = git_version()
     return render_template("home.html", git_date=date, git_version=version)
@@ -760,9 +758,7 @@ def uws_server_request(uri, method="GET", init_request=None):
         params = {}
         if init_request:
             params = init_request.args
-        response = requests.get(
-            f"{server_url}{uri}", params=params, auth=auth
-        )
+        response = requests.get(f"{server_url}{uri}", params=params, auth=auth)
     # Return response
     logger.debug(f"{method} {server_url}{uri} ({response.status_code})")
     return response

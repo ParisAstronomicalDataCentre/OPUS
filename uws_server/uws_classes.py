@@ -700,9 +700,7 @@ class Job:
                             from_entity=eid,
                             **einfo,
                         )
-                        logger.info(
-                            f"Entity added to job {self.jobid}: {str(entity)}"
-                        )
+                        logger.info(f"Entity added to job {self.jobid}: {str(entity)}")
         # Read results.yml to know generated results (those that are located in the results directory)
         rf_name = os.path.join(JOBDATA_PATH, self.jobid, "results.yml")
         result_list = {}

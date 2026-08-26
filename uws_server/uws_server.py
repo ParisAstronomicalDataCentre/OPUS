@@ -1131,9 +1131,7 @@ def get_result_file_old(jobid, rname):  # , rfname):
         # response.content_type = 'text/plain; charset=UTF-8'
         # return str(job.results[result]['url'])
         content_type = job.results[rname]["content_type"]
-        logger.debug(
-            f"{job.jobname} {jobid} {rname} {rfname} {content_type}"
-        )
+        logger.debug(f"{job.jobname} {jobid} {rname} {rfname} {content_type}")
         response.set_header("Content-type", content_type)
         if any(
             x in content_type
@@ -1439,9 +1437,7 @@ def job_event():
                 if new_phase == "ERROR":
                     msg = request.POST.get("error_msg", "")
                     job.change_status("ERROR", msg)
-                    logger.info(
-                        f"ERROR reported for job {job.jobname} {job.jobid}"
-                    )
+                    logger.info(f"ERROR reported for job {job.jobname} {job.jobid}")
                 elif new_phase not in [cur_phase]:
                     # Convert phase if needed
                     if new_phase not in PHASES:
@@ -1848,15 +1844,15 @@ def post_executionduration(jobname, jobid):
         try:
             new_value = int(new_value)
         except ValueError:
-            raise UserWarning("Execution duration must be an integer or a float") from None
+            raise UserWarning(
+                "Execution duration must be an integer or a float"
+            ) from None
         # Get job properties from DB
         job = Job(jobname, jobid, user)
         if job.phase == "PENDING":
             # Change value
             job.set_attribute("execution_duration", new_value)
-            logger.info(
-                f"{jobname} {jobid} set execution_duration={str(new_value)}"
-            )
+            logger.info(f"{jobname} {jobid} set execution_duration={str(new_value)}")
         else:
             raise UserWarning(
                 f'Job "{jobid}" must be in PENDING state (currently {job.phase}) to change execution duration'
@@ -2093,9 +2089,7 @@ def post_parameter(jobname, jobid, pname):
         # Change value
         if job.phase == "PENDING":
             job.set_parameter(pname, new_value)
-            logger.info(
-                f"{jobname} {jobid} set parameter {pname}={new_value}"
-            )
+            logger.info(f"{jobname} {jobid} set parameter {pname}={new_value}")
         else:
             raise UserWarning(
                 f'Job "{jobid}" must be in PENDING state (currently {job.phase}) to change parameter'

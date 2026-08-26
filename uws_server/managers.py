@@ -580,9 +580,7 @@ class SLURMManager(Manager):
         )
         # Copy job description file
         jdl_fname = job.jdl._get_filename(job.jobname)
-        get_input_files.append(
-            f"scp -p {self.ssh_arg_uws}:{jdl_fname} {jd}"
-        )
+        get_input_files.append(f"scp -p {self.ssh_arg_uws}:{jdl_fname} {jd}")
         # Copy input files to workdir_path (scp if uploaded from form, or wget if given as a URI)
         for fname in files["form"]:
             # cmd = ['scp',

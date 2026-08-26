@@ -229,9 +229,7 @@ def job2prov(
                     }
                 )
                 if contact_email:
-                    contact.add_attributes(
-                        {"foaf:mbox": f"<mailto:{contact_email}>"}
-                    )
+                    contact.add_attributes({"foaf:mbox": f"<mailto:{contact_email}>"})
                 # Link to ActivityDescription
                 pdoc.influence(
                     adesc, contact, other_attributes={"prov:role": "contact"}
