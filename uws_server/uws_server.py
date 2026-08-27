@@ -67,6 +67,7 @@ from .settings import (
     WAIT_TIME_MAX,
     CustomAdapter,
     logger_init,
+    logger,
 )
 from .uws_classes import (
     EntityAccessDenied,
