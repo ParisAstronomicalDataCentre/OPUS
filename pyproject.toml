@@ -26,7 +26,7 @@ dependencies = [
     "networkx",
     "python-dateutil",
     "psutil",
-    "psycopg2",
+    "psycopg2-binary",
     "pydot",
     "pydotplus",
     "pytest",
