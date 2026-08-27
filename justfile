@@ -35,25 +35,18 @@ ruff path="src":
 
 # Run OPUS server
 server:
-    conda deactivate
-    uv run python run_server.py
+    uv run uvicorn app_server:asgi_app --host localhost --port 8082 --workers 1
 
 # Run OPUS client
 client:
-    conda deactivate
-    uv run python run_client.py
-
-server_uvicorn:
-    uv run uvicorn app_server:asgi_app --host localhost --port 8082 --workers 1
-
-client_uvicorn:
     uv run uvicorn app_client:asgi_app --host localhost --port 8080 --workers 1
 
 start:
-    uv run uvicorn app_server:asgi_app --host localhost --port 8082 --workers 1 &
-    uv run uvicorn app_client:asgi_app --host localhost --port 8080 --workers 1 &
-    sudo
+    uv run uvicorn app_server:asgi_app --host localhost --port 8082 --workers 1 --root-path /opus_server &
+    @sleep 1
+    uv run uvicorn app_client:asgi_app --host localhost --port 8080 --workers 1 --root-path /opus_client &
+    @sleep 1
+    sudo nginx -c `pwd`/nginx/nginx.conf
 
 stop:
     pkill -f uvicorn
-    sudo nginx -s stop
