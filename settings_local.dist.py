@@ -19,11 +19,11 @@
 BASE_URL = "http://localhost:8082"
 UWS_CLIENT_ENDPOINT = "http://localhost:8080"
 BASE_IP = "127.0.0.1"
-# For web servers, e.g. Apache2
+# For web servers, e.g. Apache2, Nginx
 # BASE_URL = 'http://localhost/opus_server'
-# UWS_CLIENT_ENDPOINT = '/opus_client'  # Recommended with opus_server (i.e. relative from BASE_URL)
+# UWS_CLIENT_ENDPOINT = 'http://localhost/opus_client'  # Recommended with opus_server (can be relative from BASE_URL)
 # BASE_IP = '127.0.0.1'
-LOCAL_USER = "www"  # Apache user (may be www, _www, apache...)
+LOCAL_USER = "www"  # web server user (may be www_data, www, _www, apache...)
 # UWS_SERVER_ENDPOINT = '/uws'
 # SCIM_ENDPOINT = '/scim'
 
