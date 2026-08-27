@@ -49,4 +49,6 @@ start:
     sudo nginx -c `pwd`/nginx/nginx.conf
 
 stop:
-    pkill -f uvicorn
+    pkill -f uvicorn || true
+    @sleep 1
+    sudo nginx -s stop
