@@ -48,3 +48,12 @@ server_uvicorn:
 
 client_uvicorn:
     uv run uvicorn app_client:asgi_app --host localhost --port 8080 --workers 1
+
+start:
+    uv run uvicorn app_server:asgi_app --host localhost --port 8082 --workers 1 &
+    uv run uvicorn app_client:asgi_app --host localhost --port 8080 --workers 1 &
+    sudo
+
+stop:
+    pkill -f uvicorn
+    sudo nginx -s stop
