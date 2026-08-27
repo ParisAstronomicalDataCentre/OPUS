@@ -781,7 +781,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                 return {}
             else:
                 raise NotFoundWarning(f'Result "{entity_id}" NOT FOUND')
-        return {col: getattr(row, col) for col in row.__table__.columns}
+        return {col.name: getattr(row, col.name) for col in row.__table__.columns}
 
     def search_entity(
         self,
@@ -805,7 +805,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                 raise NotFoundWarning(
                     f"Entity with jobid={jobid} and result_name={result_name} NOT FOUND"
                 )
-            return {col: getattr(row, col) for col in row.__table__.columns}
+            return {col.name: getattr(row, col.name) for col in row.__table__.columns}
         elif file_name and hash:
             query = self.session.query(self.Entity).filter_by(
                 file_name=file_name, hash=hash
@@ -815,13 +815,13 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                 raise NotFoundWarning(
                     f"Entity with file_name={file_name} and hash={hash} NOT FOUND"
                 )
-            return {col: getattr(row, col) for col in row.__table__.columns}
+            return {col.name: getattr(row, col.name) for col in row.__table__.columns}
         elif hash:
             query = self.session.query(self.Entity).filter_by(hash=hash)
             row = query.first()
             if not row:
                 raise NotFoundWarning(f"Entity with hash={hash} NOT FOUND")
-            return {col: getattr(row, col) for col in row.__table__.columns}
+            return {col.name: getattr(row, col.name) for col in row.__table__.columns}
         else:
             pass
         pass
