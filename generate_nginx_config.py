@@ -8,7 +8,9 @@ print(f"OPUS directory is: {curdir}")
 # --- Configuration Variables ---
 # Update these to match your setup
 OPUS_ROOT = curdir
-LOGS_DIR = f"{VAR_PATH if VAR_PATH.startswith('/') else OPUS_ROOT + '/' + VAR_PATH}/logs"
+LOGS_DIR = (
+    f"{VAR_PATH if VAR_PATH.startswith('/') else OPUS_ROOT + '/' + VAR_PATH}/logs"
+)
 OPUS_CLIENT_PORT = 8080
 OPUS_SERVER_PORT = 8082
 
