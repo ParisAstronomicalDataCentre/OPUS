@@ -1,10 +1,14 @@
 import os
 
+from settings_local import VAR_PATH
+
+curdir = os.path.dirname(__file__)
+print(f"OPUS directory is: {curdir}")
+
 # --- Configuration Variables ---
 # Update these to match your setup
-OPUS_ROOT = "/Users/mservillat/Professionnel/GIT/OPUS"
-LOGS_DIR = f"{OPUS_ROOT}/var/logs"
-STATIC_DIR = f"{OPUS_ROOT}/uws_client/static"
+OPUS_ROOT = curdir
+LOGS_DIR = f"{VAR_PATH if VAR_PATH.startswith('/') else OPUS_ROOT + '/' + VAR_PATH}/logs"
 OPUS_CLIENT_PORT = 8080
 OPUS_SERVER_PORT = 8082
 
@@ -32,13 +36,12 @@ http {{
     server {{
 
         listen 80;
-        server_name localhost;
+        server_name chorus.obspm.fr;
 
-        # Static files
-        location /opus_client/static/ {{
-            root {OPUS_ROOT}/uws_client;
-            # alias {STATIC_DIR}/;
+        location = /favicon.ico {{
+            alias {OPUS_ROOT}/favicon.ico;
             expires 30d;
+            add_header Cache-Control "public, no-transform";
         }}
 
         # Opus Client
@@ -47,6 +50,13 @@ http {{
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header Authorization $http_authorization;
+        }}
+
+        # Static files
+        location /static/ {{
+            proxy_pass http://opus_client/static/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
         }}
 
         # Opus Server
