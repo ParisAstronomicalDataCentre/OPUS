@@ -58,6 +58,7 @@ from .settings import (
     SCIM_ENDPOINT,
     SCRIPTS_PATH,
     SENDER_EMAIL,
+    SQLALCHEMY_DB,
     STORAGE,
     TERMINAL_PHASES,
     TRUSTED_CLIENTS,
