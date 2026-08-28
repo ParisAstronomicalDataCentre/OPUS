@@ -17,6 +17,7 @@ the number of database access (in the case of a relational database)
 """
 
 import datetime as dt
+from datetime import datetime, date
 
 # from entity_store import *
 import hashlib
@@ -33,8 +34,22 @@ from sqlalchemy import (
     create_engine,
 )
 from sqlalchemy.orm import declarative_base, sessionmaker
+import sqlite3
 
 from .settings import *
+
+# ---------
+# Register a Custom Adapter for SQLite
+
+def adapt_datetime(dt: datetime) -> str:
+    return dt.isoformat()
+
+def adapt_date(d: date) -> str:
+    return d.isoformat()
+
+# Register the adapters globally
+sqlite3.register_adapter(datetime, adapt_datetime)
+sqlite3.register_adapter(date, adapt_date)
 
 # ---------
 # Exceptions/Warnings
@@ -330,7 +345,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         if not row:
             d = {
                 "name": name,
-                "first_connection": dt.datetime.now(),
+                "first_connection": datetime.now(),
             }
             if token:
                 d["token"] = token
@@ -934,10 +949,10 @@ class SQLJobStorage(SQLStorage, JobStorage):
             row = self.cursor.execute(query).fetchone()
             if not row:
                 raise NotFoundWarning(f'Job "{job.jobid}" NOT FOUND')
-            # creation_time = dt.datetime.strptime(job['creation_time'], DT_FMT)
-            # start_time = dt.datetime.strptime(row['start_time'], DT_FMT)
-            # end_time = dt.datetime.strptime(row['end_time'], DT_FMT)
-            # destruction_time = dt.datetime.strptime(row['destruction_time'], DT_FMT)
+            # creation_time = datetime.strptime(job['creation_time'], DT_FMT)
+            # start_time = datetime.strptime(row['start_time'], DT_FMT)
+            # end_time = datetime.strptime(row['end_time'], DT_FMT)
+            # destruction_time = datetime.strptime(row['destruction_time'], DT_FMT)
             job.jobname = row["jobname"]
             job.phase = row["phase"]
             job.quote = row["quote"]
