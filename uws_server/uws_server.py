@@ -47,6 +47,7 @@ from .settings import (
     JOB_EVENT_TOKEN,
     JOB_SERVERS,
     JOBDATA_PATH,
+    LOG_PATH,
     MAIL_PORT,
     MAIL_SERVER,
     MAINTENANCE_TOKEN,
