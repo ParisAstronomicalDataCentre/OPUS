@@ -48,6 +48,7 @@ from .settings import (
     JOB_SERVERS,
     JOBDATA_PATH,
     LOG_PATH,
+    LOG_FILE_SUFFIX,
     MAIL_PORT,
     MAIL_SERVER,
     MAINTENANCE_TOKEN,
