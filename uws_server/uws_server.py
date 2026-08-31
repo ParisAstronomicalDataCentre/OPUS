@@ -1111,51 +1111,54 @@ def get_result_file_old(jobid, rname):  # , rfname):
     try:
         # Get job properties from DB
         job = Job("", jobid, user, get_attributes=False, get_results=True)
-        # Check if result exists
-        if rname not in job.results:
-            raise storage.NotFoundWarning(
-                f'Result "{rname}" NOT FOUND for job "{jobid}"'
-            )
-        # Return result
-        result_details = {
-            "stdout": "stdout.log",
-            "stderr": "stderr.log",
-            "provjson": "provenance.json",
-            "provxml": "provenance.xml",
-            "provsvg": "provenance.svg",
-        }
-        if rname in result_details:
-            rfname = result_details[rname]
-        else:
-            rfname = job.get_result_filename(rname)
-        if rname in ["stdout", "stderr"]:
-            return static_file(
-                rfname, root=f"{JOBDATA_PATH}/{job.jobid}", mimetype="text"
-            )
-        # response.content_type = 'text/plain; charset=UTF-8'
-        # return str(job.results[result]['url'])
-        content_type = job.results[rname]["content_type"]
-        logger.debug(f"{job.jobname} {jobid} {rname} {rfname} {content_type}")
-        response.set_header("Content-type", content_type)
-        if any(
-            x in content_type
-            for x in ["text", "xml", "json", "image/png", "image/jpeg"]
-        ):
-            return static_file(
-                rfname,
-                root=f"{RESULTS_PATH}/{job.jobid}",
-                mimetype=content_type,
-            )
-        else:
-            response.set_header(
-                "Content-Disposition", f'attachment; filename="{rfname}"'
-            )
-            return static_file(
-                rfname,
-                root=f"{RESULTS_PATH}/{job.jobid}",
-                mimetype=content_type,
-                download=True,
-            )
+        try:
+            # Check if result exists
+            if rname not in job.results:
+                raise storage.NotFoundWarning(
+                    f'Result "{rname}" NOT FOUND for job "{jobid}"'
+                )
+            # Return result
+            result_details = {
+                "stdout": "stdout.log",
+                "stderr": "stderr.log",
+                "provjson": "provenance.json",
+                "provxml": "provenance.xml",
+                "provsvg": "provenance.svg",
+            }
+            if rname in result_details:
+                rfname = result_details[rname]
+            else:
+                rfname = job.get_result_filename(rname)
+            if rname in ["stdout", "stderr"]:
+                return static_file(
+                    rfname, root=f"{JOBDATA_PATH}/{job.jobid}", mimetype="text"
+                )
+            # response.content_type = 'text/plain; charset=UTF-8'
+            # return str(job.results[result]['url'])
+            content_type = job.results[rname]["content_type"]
+            logger.debug(f"{job.jobname} {jobid} {rname} {rfname} {content_type}")
+            response.set_header("Content-type", content_type)
+            if any(
+                x in content_type
+                for x in ["text", "xml", "json", "image/png", "image/jpeg"]
+            ):
+                return static_file(
+                    rfname,
+                    root=f"{RESULTS_PATH}/{job.jobid}",
+                    mimetype=content_type,
+                )
+            else:
+                response.set_header(
+                    "Content-Disposition", f'attachment; filename="{rfname}"'
+                )
+                return static_file(
+                    rfname,
+                    root=f"{RESULTS_PATH}/{job.jobid}",
+                    mimetype=content_type,
+                    download=True,
+                )
+        finally:
+            job.close()
     except JobAccessDenied as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
@@ -1304,82 +1307,88 @@ def maintenance(jobname):
             report.append(f"Maintenance checks for {jobname}...")
             # Get joblist
             joblist = JobList(jobname, user, where_owner=False, include_archived=True)
-            now = dt.datetime.now()
-            for j in joblist.jobs:
-                # For each job:
-                job = Job(
-                    jobname,
-                    j["jobid"],
-                    user,
-                    get_attributes=True,
-                    get_parameters=True,
-                    get_results=True,
-                )
-                report.append(
-                    f"[{jobname} {job.jobid} {job.creation_time} {job.phase}]"
-                )
-                # Check consistency of dates (destruction_time > end_time > start_time > creation_time)
-                creation_time = (
-                    None
-                    if not job.creation_time
-                    else dt.datetime.strptime(job.creation_time, DT_FMT)
-                )
-                start_time = (
-                    None
-                    if not job.start_time
-                    else dt.datetime.strptime(job.start_time, DT_FMT)
-                )
-                end_time = (
-                    None
-                    if not job.end_time
-                    else dt.datetime.strptime(job.end_time, DT_FMT)
-                )
-                destruction_time = (
-                    None
-                    if not job.destruction_time
-                    else dt.datetime.strptime(job.destruction_time, DT_FMT)
-                )
-                if creation_time and start_time and (creation_time > start_time):
-                    report.append("  creation_time > start_time")
-                if start_time and end_time and (start_time > end_time):
-                    report.append("  start_time > end_time")
-                if end_time and destruction_time and (end_time > destruction_time):
-                    report.append("  end_time > destruction_time")
-                # Check if start_time is set
-                if not start_time and job.phase not in ["PENDING", "QUEUED"]:
-                    report.append("  Start time not set")
-                if not end_time and job.phase in TERMINAL_PHASES:
-                    report.append("  End time not set")
-                # Check status if phase is not terminal (or for all jobs?)
-                if job.phase not in TERMINAL_PHASES:
-                    report.append("  Job is not in a terminal phase")
-                    phase = job.phase
-                    new_phase = job.get_status()  # will update the phase from manager
-                    if new_phase != phase:
+            try:
+                now = dt.datetime.now()
+                for j in joblist.jobs:
+                    # For each job:
+                    job = Job(
+                        jobname,
+                        j["jobid"],
+                        user,
+                        get_attributes=True,
+                        get_parameters=True,
+                        get_results=True,
+                    )
+                    try:
                         report.append(
-                            f"  Status has been updated: {phase} --> {new_phase}"
+                            f"[{jobname} {job.jobid} {job.creation_time} {job.phase}]"
                         )
-                # If destruction time is passed, delete or archive job
-                if destruction_time and (destruction_time < now):
-                    # TODO: effective deletion or archiving of job
-                    if USE_ARCHIVED_PHASE:
-                        if job.phase in ["COMPLETED", "ABORTED", "ERROR"]:
-                            job.archive()
-                            report.append(
-                                f"  Job has been archived (destruction_time={job.destruction_time})"
-                            )
-                        else:
-                            # job.delete()
-                            report.append(
-                                f"  Job has been deleted (destruction_time={job.destruction_time})"
-                            )
-                            pass
-                    else:
-                        # job.delete()
-                        report.append(
-                            f"  Job has been deleted (destruction_time={job.destruction_time})"
+                        # Check consistency of dates (destruction_time > end_time > start_time > creation_time)
+                        creation_time = (
+                            None
+                            if not job.creation_time
+                            else dt.datetime.strptime(job.creation_time, DT_FMT)
                         )
-                        pass
+                        start_time = (
+                            None
+                            if not job.start_time
+                            else dt.datetime.strptime(job.start_time, DT_FMT)
+                        )
+                        end_time = (
+                            None
+                            if not job.end_time
+                            else dt.datetime.strptime(job.end_time, DT_FMT)
+                        )
+                        destruction_time = (
+                            None
+                            if not job.destruction_time
+                            else dt.datetime.strptime(job.destruction_time, DT_FMT)
+                        )
+                        if creation_time and start_time and (creation_time > start_time):
+                            report.append("  creation_time > start_time")
+                        if start_time and end_time and (start_time > end_time):
+                            report.append("  start_time > end_time")
+                        if end_time and destruction_time and (end_time > destruction_time):
+                            report.append("  end_time > destruction_time")
+                        # Check if start_time is set
+                        if not start_time and job.phase not in ["PENDING", "QUEUED"]:
+                            report.append("  Start time not set")
+                        if not end_time and job.phase in TERMINAL_PHASES:
+                            report.append("  End time not set")
+                        # Check status if phase is not terminal (or for all jobs?)
+                        if job.phase not in TERMINAL_PHASES:
+                            report.append("  Job is not in a terminal phase")
+                            phase = job.phase
+                            new_phase = job.get_status()  # will update the phase from manager
+                            if new_phase != phase:
+                                report.append(
+                                    f"  Status has been updated: {phase} --> {new_phase}"
+                                )
+                        # If destruction time is passed, delete or archive job
+                        if destruction_time and (destruction_time < now):
+                            # TODO: effective deletion or archiving of job
+                            if USE_ARCHIVED_PHASE:
+                                if job.phase in ["COMPLETED", "ABORTED", "ERROR"]:
+                                    job.archive()
+                                    report.append(
+                                        f"  Job has been archived (destruction_time={job.destruction_time})"
+                                    )
+                                else:
+                                    # job.delete()
+                                    report.append(
+                                        f"  Job has been deleted (destruction_time={job.destruction_time})"
+                                    )
+                                    pass
+                            else:
+                                # job.delete()
+                                report.append(
+                                    f"  Job has been deleted (destruction_time={job.destruction_time})"
+                                )
+                                pass
+                    finally:
+                        job.close()
+            finally:
+                joblist.close()
         report.append("Done\n")
         for line in report:
             logger.warning(line)
@@ -1432,40 +1441,43 @@ def job_event():
                 get_results=True,
                 from_process_id=True,
             )
-            # Update job
-            if "phase" in request.POST:
-                cur_phase = job.phase
-                new_phase = request.POST["phase"]
-                msg = ""
-                # If phase=ERROR, add error message if available and change job status
-                if new_phase == "ERROR":
-                    msg = request.POST.get("error_msg", "")
-                    job.change_status("ERROR", msg)
-                    logger.info(f"ERROR reported for job {job.jobname} {job.jobid}")
-                elif new_phase not in [cur_phase]:
-                    # Convert phase if needed
-                    if new_phase not in PHASES:
-                        if new_phase in PHASE_CONVERT:
-                            new_msg = PHASE_CONVERT[new_phase]["msg"]
-                            new_phase = PHASE_CONVERT[new_phase]["phase"]
-                            if new_phase in ["ERROR", "ABORTED"]:
-                                msg = new_msg
-                        else:
-                            raise UserWarning(
-                                "Unknown new phase "
-                                + new_phase
-                                + " for job "
-                                + job.jobid
-                            ) from None
-                    # Change job status
-                    job.change_status(new_phase, msg)
-                    logger.info(
-                        f"Phase {cur_phase} --> {new_phase} for job {job.jobname} {job.jobid}"
-                    )
+            try:
+                # Update job
+                if "phase" in request.POST:
+                    cur_phase = job.phase
+                    new_phase = request.POST["phase"]
+                    msg = ""
+                    # If phase=ERROR, add error message if available and change job status
+                    if new_phase == "ERROR":
+                        msg = request.POST.get("error_msg", "")
+                        job.change_status("ERROR", msg)
+                        logger.info(f"ERROR reported for job {job.jobname} {job.jobid}")
+                    elif new_phase not in [cur_phase]:
+                        # Convert phase if needed
+                        if new_phase not in PHASES:
+                            if new_phase in PHASE_CONVERT:
+                                new_msg = PHASE_CONVERT[new_phase]["msg"]
+                                new_phase = PHASE_CONVERT[new_phase]["phase"]
+                                if new_phase in ["ERROR", "ABORTED"]:
+                                    msg = new_msg
+                            else:
+                                raise UserWarning(
+                                    "Unknown new phase "
+                                    + new_phase
+                                    + " for job "
+                                    + job.jobid
+                                ) from None
+                        # Change job status
+                        job.change_status(new_phase, msg)
+                        logger.info(
+                            f"Phase {cur_phase} --> {new_phase} for job {job.jobname} {job.jobid}"
+                        )
+                    else:
+                        raise UserWarning(f"Phase is already {new_phase}") from None
                 else:
-                    raise UserWarning(f"Phase is already {new_phase}") from None
-            else:
-                raise UserWarning(f"Unknown event sent for job {job.jobid}") from None
+                    raise UserWarning(f"Unknown event sent for job {job.jobid}") from None
+            finally:
+                job.close()
         else:
             raise UserWarning("jobid is not defined in POST") from None
     except JobAccessDenied as e:
@@ -1508,7 +1520,10 @@ def get_joblist(jobname):
         # TODO: UWS v1.1 LAST keyword
         last = request.query.get("LAST", None)
         joblist = JobList(jobname, user, phase=phase, after=after, last=last)
-        xml_out = joblist.to_xml()
+        try:
+            xml_out = joblist.to_xml()
+        finally:
+            joblist.close()
         response.content_type = "text/xml; charset=UTF-8"
         return xml_out
     except JobAccessDenied as e:
@@ -1535,13 +1550,16 @@ def create_job(jobname):
         # TODO: Check if form submitted correctly, detect file size overflow?
         # Set new job description from POSTed parameters
         job = Job(jobname, "", user, from_post=request)
-        logger.info(f"{jobname} {job.jobid} CREATED and PENDING")
-        # If PHASE=RUN, start job
-        if request.forms.get("PHASE") == "RUN":
-            job.start()
-            logger.info(
-                f"{jobname} {job.jobid} QUEUED with process_id={str(job.process_id)}"
-            )
+        try:
+            logger.info(f"{jobname} {job.jobid} CREATED and PENDING")
+            # If PHASE=RUN, start job
+            if request.forms.get("PHASE") == "RUN":
+                job.start()
+                logger.info(
+                    f"{jobname} {job.jobid} QUEUED with process_id={str(job.process_id)}"
+                )
+        finally:
+            job.close()
     except UserWarning as e:
         abort_500(e.args[0])
     except TooManyJobs:
@@ -1587,49 +1605,52 @@ def get_job(jobname, jobid):
             get_parameters=True,
             get_results=True,
         )
-        # UWS v1.1 blocking behaviour
-        if job.phase in ACTIVE_PHASES:
-            client_phase = request.query.get("PHASE", job.phase)
-            wait_time = int(request.query.get("WAIT", 0))
-            if wait_time > WAIT_TIME_MAX:
-                wait_time = WAIT_TIME_MAX
-            if wait_time == -1:
-                wait_time = WAIT_TIME_MAX
-            if (client_phase == job.phase) and (wait_time > 0):
-                change_status_signal = signal("job_status")
-                change_status_event = threading.Event()
+        try:
+            # UWS v1.1 blocking behaviour
+            if job.phase in ACTIVE_PHASES:
+                client_phase = request.query.get("PHASE", job.phase)
+                wait_time = int(request.query.get("WAIT", 0))
+                if wait_time > WAIT_TIME_MAX:
+                    wait_time = WAIT_TIME_MAX
+                if wait_time == -1:
+                    wait_time = WAIT_TIME_MAX
+                if (client_phase == job.phase) and (wait_time > 0):
+                    change_status_signal = signal("job_status")
+                    change_status_event = threading.Event()
 
-                def receiver(sender, **kw):
-                    logger.info(
-                        "{}: {} is now {}".format(
-                            sender, kw.get("sig_jobid"), kw.get("sig_phase")
+                    def receiver(sender, **kw):
+                        logger.info(
+                            "{}: {} is now {}".format(
+                                sender, kw.get("sig_jobid"), kw.get("sig_phase")
+                            )
                         )
-                    )
-                    # Set event if job changed
-                    if (kw.get("sig_jobid") == jobid) and (
-                        kw.get("sig_phase") != job.phase
-                    ):
-                        change_status_event.set()
-                        return f"{jobid}: signal received and job updated"
-                    return f"{jobid}: signal received but job not concerned"
+                        # Set event if job changed
+                        if (kw.get("sig_jobid") == jobid) and (
+                            kw.get("sig_phase") != job.phase
+                        ):
+                            change_status_event.set()
+                            return f"{jobid}: signal received and job updated"
+                        return f"{jobid}: signal received but job not concerned"
 
-                # Connect to signal
-                change_status_signal.connect(receiver)
-                # Wait for signal event
-                logger.info(f"{jobid}: Blocking for {wait_time} seconds")
-                event_is_set = change_status_event.wait(wait_time)
-                logger.info(f"{jobid}: Continue execution")
-                change_status_signal.disconnect(receiver)
-                # Reload job if necessary
-                if event_is_set:
-                    job = Job(
-                        jobname,
-                        jobid,
-                        user,
-                        get_attributes=True,
-                        get_parameters=True,
-                        get_results=True,
-                    )
+                    # Connect to signal
+                    change_status_signal.connect(receiver)
+                    # Wait for signal event
+                    logger.info(f"{jobid}: Blocking for {wait_time} seconds")
+                    event_is_set = change_status_event.wait(wait_time)
+                    logger.info(f"{jobid}: Continue execution")
+                    change_status_signal.disconnect(receiver)
+                    # Reload job if necessary
+                    if event_is_set:
+                        job = Job(
+                            jobname,
+                            jobid,
+                            user,
+                            get_attributes=True,
+                            get_parameters=True,
+                            get_results=True,
+                        )
+        finally:
+            job.close()
         # Return job description in UWS format
         xml_out = job.to_xml()
         response.content_type = "text/xml; charset=UTF-8"
@@ -1658,8 +1679,11 @@ def delete_job(jobname, jobid):
         logger.info(f"{jobname} {jobid}")
         # Get job properties from DB
         job = Job(jobname, jobid, user)
-        # Delete job
-        job.delete()
+        try:
+            # Delete job
+            job.delete()
+        finally:
+            job.close()
         logger.info(f"{jobname} {jobid} DELETED")
     except JobAccessDenied as e:
         abort_403(str(e))
@@ -1686,8 +1710,11 @@ def post_job(jobname, jobid):
         if request.forms.get("ACTION") == "DELETE":
             # Get job properties from DB
             job = Job(jobname, jobid, user)
-            # Delete job
-            job.delete()
+            try:
+                # Delete job
+                job.delete()
+            finally:
+                job.close()
             logger.info(f"{jobname} {jobid} DELETED")
         else:
             raise UserWarning("ACTION=DELETE is not specified in POST") from None
@@ -1726,9 +1753,12 @@ def get_phase(jobname, jobid):
         # logger.info('{} {}'.format(jobname, jobid))
         # Get job properties from DB
         job = Job(jobname, jobid, user)
-        # Return value
-        response.content_type = "text/plain; charset=UTF-8"
-        return job.phase
+        try:
+            # Return value
+            response.content_type = "text/plain; charset=UTF-8"
+            return job.phase
+        finally:
+            job.close()
     except JobAccessDenied as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
@@ -1756,11 +1786,14 @@ def post_phase(jobname, jobid):
                 job = Job(
                     jobname, jobid, user, get_attributes=True, get_parameters=True
                 )
-                # Check if phase is PENDING
-                if job.phase not in ["PENDING"]:
-                    raise UserWarning("Job has to be in PENDING phase") from None
-                # Start job
-                job.start()
+                try:
+                    # Check if phase is PENDING
+                    if job.phase not in ["PENDING"]:
+                        raise UserWarning("Job has to be in PENDING phase") from None
+                    # Start job
+                    job.start()
+                finally:
+                    job.close()
                 logger.info(
                     f"{jobname} {jobid} STARTED with process_id={str(job.process_id)}"
                 )
@@ -1774,8 +1807,11 @@ def post_phase(jobname, jobid):
                     get_parameters=True,
                     get_results=True,
                 )
-                # Abort job
-                job.abort()
+                try:
+                    # Abort job
+                    job.abort()
+                finally:
+                    job.close()
                 logger.info(f"{jobname} {jobid} ABORTED")
             else:
                 raise UserWarning("PHASE=" + new_phase + " not expected") from None
@@ -1817,9 +1853,12 @@ def get_executionduration(jobname, jobid):
         logger.info(f"{jobname} {jobid}")
         # Get job properties from DB
         job = Job(jobname, jobid, user)
-        # Return value
-        response.content_type = "text/plain; charset=UTF-8"
-        return str(job.execution_duration)
+        try:
+            # Return value
+            response.content_type = "text/plain; charset=UTF-8"
+            return str(job.execution_duration)
+        finally:
+            job.close()
     except JobAccessDenied as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
@@ -1853,14 +1892,17 @@ def post_executionduration(jobname, jobid):
             ) from None
         # Get job properties from DB
         job = Job(jobname, jobid, user)
-        if job.phase == "PENDING":
-            # Change value
-            job.set_attribute("execution_duration", new_value)
-            logger.info(f"{jobname} {jobid} set execution_duration={str(new_value)}")
-        else:
-            raise UserWarning(
-                f'Job "{jobid}" must be in PENDING state (currently {job.phase}) to change execution duration'
-            ) from None
+        try:
+            if job.phase == "PENDING":
+                # Change value
+                job.set_attribute("execution_duration", new_value)
+                logger.info(f"{jobname} {jobid} set execution_duration={str(new_value)}")
+            else:
+                raise UserWarning(
+                    f'Job "{jobid}" must be in PENDING state (currently {job.phase}) to change execution duration'
+                ) from None
+        finally:
+            job.close()
     except JobAccessDenied as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
@@ -1892,9 +1934,12 @@ def get_destruction(jobname, jobid):
         logger.info(f"{jobname} {jobid}")
         # Get job properties from DB
         job = Job(jobname, jobid, user)
-        # Return value
-        response.content_type = "text/plain; charset=UTF-8"
-        return job.destruction_time
+        try:
+            # Return value
+            response.content_type = "text/plain; charset=UTF-8"
+            return job.destruction_time
+        finally:
+            job.close()
     except JobAccessDenied as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
@@ -1931,9 +1976,12 @@ def post_destruction(jobname, jobid):
                 ) from None
         # Get job properties from DB
         job = Job(jobname, jobid, user)
-        # Change value
-        # job.set_destruction_time(new_value)
-        job.set_attribute("destruction_time", new_value)
+        try:
+            # Change value
+            # job.set_destruction_time(new_value)
+            job.set_attribute("destruction_time", new_value)
+        finally:
+            job.close()
         logger.info(f"{jobname} {jobid} set destruction_time={new_value}")
     except JobAccessDenied as e:
         abort_403(str(e))
@@ -1967,9 +2015,12 @@ def get_error(jobname, jobid):
         logger.info(f"{jobname} {jobid}")
         # Get job properties from DB
         job = Job(jobname, jobid, user)
-        # Return value
-        response.content_type = "text/plain; charset=UTF-8"
-        return job.error
+        try:
+            # Return value
+            response.content_type = "text/plain; charset=UTF-8"
+            return job.error
+        finally:
+            job.close()
     except JobAccessDenied as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
@@ -1997,9 +2048,12 @@ def get_quote(jobname, jobid):
         logger.info(f"{jobname} {jobid}")
         # Get job properties from DB
         job = Job(jobname, jobid, user)
-        # Return value
-        response.content_type = "text/plain; charset=UTF-8"
-        return str(job.quote)
+        try:
+            # Return value
+            response.content_type = "text/plain; charset=UTF-8"
+            return str(job.quote)
+        finally:
+            job.close()
     except JobAccessDenied as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
@@ -2028,8 +2082,11 @@ def get_parameters(jobname, jobid):
         logger.info(f"{jobname} {jobid}")
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_parameters=True)
-        # Return job parameters in UWS format
-        xml_out = job.parameters_to_xml()
+        try:
+            # Return job parameters in UWS format
+            xml_out = job.parameters_to_xml()
+        finally:
+            job.close()
         response.content_type = "text/xml; charset=UTF-8"
         return xml_out
     except JobAccessDenied as e:
@@ -2055,14 +2112,17 @@ def get_parameter(jobname, jobid, pname):
         logger.info("param=" + pname + " " + jobname + " " + jobid)
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_parameters=True)
-        # Check if param exists
-        if pname not in job.parameters:
-            raise storage.NotFoundWarning(
-                f'Parameter "{pname}" NOT FOUND for job "{jobid}"'
-            )
-        # Return parameter
-        response.content_type = "text/plain; charset=UTF-8"
-        return str(job.parameters[pname]["value"])
+        try:
+            # Check if param exists
+            if pname not in job.parameters:
+                raise storage.NotFoundWarning(
+                    f'Parameter "{pname}" NOT FOUND for job "{jobid}"'
+                )
+            # Return parameter
+            response.content_type = "text/plain; charset=UTF-8"
+            return str(job.parameters[pname]["value"])
+        finally:
+            job.close()
     except JobAccessDenied as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
@@ -2089,15 +2149,18 @@ def post_parameter(jobname, jobid, pname):
         new_value = request.forms.get("VALUE")
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_parameters=True)
-        # TODO: Check if new_value format is correct (from JDL?)
-        # Change value
-        if job.phase == "PENDING":
-            job.set_parameter(pname, new_value)
-            logger.info(f"{jobname} {jobid} set parameter {pname}={new_value}")
-        else:
-            raise UserWarning(
-                f'Job "{jobid}" must be in PENDING state (currently {job.phase}) to change parameter'
-            ) from None
+        try:
+            # TODO: Check if new_value format is correct (from JDL?)
+            # Change value
+            if job.phase == "PENDING":
+                job.set_parameter(pname, new_value)
+                logger.info(f"{jobname} {jobid} set parameter {pname}={new_value}")
+            else:
+                raise UserWarning(
+                    f'Job "{jobid}" must be in PENDING state (currently {job.phase}) to change parameter'
+                ) from None
+        finally:
+            job.close()
     except JobAccessDenied as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
@@ -2133,8 +2196,11 @@ def get_results(jobname, jobid):
         logger.info(f"{jobname} {jobid}")
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_results=True)
-        # Return job results in UWS format
-        xml_out = job.results_to_xml()
+        try:
+            # Return job results in UWS format
+            xml_out = job.results_to_xml()
+        finally:
+            job.close()
         response.content_type = "text/xml; charset=UTF-8"
         return xml_out
     except JobAccessDenied as e:
@@ -2160,14 +2226,17 @@ def get_result(jobname, jobid, rname):
         logger.info(f"rname={rname} {jobname} {jobid}")
         # Get job properties from DB
         job = Job(jobname, jobid, user, get_results=True)
-        # Check if result exists
-        if rname not in job.results:
-            raise storage.NotFoundWarning(
-                f'Result "{rname}" NOT FOUND for job "{jobid}"'
-            )
-        # Return result
-        response.content_type = "text/plain; charset=UTF-8"
-        return str(job.results[rname]["url"])
+        try:
+            # Check if result exists
+            if rname not in job.results:
+                raise storage.NotFoundWarning(
+                    f'Result "{rname}" NOT FOUND for job "{jobid}"'
+                )
+            # Return result
+            response.content_type = "text/plain; charset=UTF-8"
+            return str(job.results[rname]["url"])
+        finally:
+            job.close()
     except JobAccessDenied as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
@@ -2292,9 +2361,12 @@ def get_owner(jobname, jobid):
         logger.info(f"{jobname} {jobid}")
         # Get job properties from DB
         job = Job(jobname, jobid, user)
-        # Return value
-        response.content_type = "text/plain; charset=UTF-8"
-        return job.owner
+        try:
+            # Return value
+            response.content_type = "text/plain; charset=UTF-8"
+            return job.owner
+        finally:
+            job.close()
     except JobAccessDenied as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:

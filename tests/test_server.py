@@ -25,9 +25,12 @@ def create_job():
     job = uws_server.Job(
         jobname, "", uws_server.User("test_", "test_"), from_post=request
     )
-    job.storage.save(job)
-    print(f"\n\nFill db with job test_ {job.jobid}\n")
-    return job.jobid
+    try:
+        job.storage.save(job)
+        print(f"\n\nFill db with job test_ {job.jobid}\n")
+        return job.jobid
+    finally:
+        job.close()
 
 
 @pytest.fixture

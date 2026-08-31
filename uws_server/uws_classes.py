@@ -274,6 +274,12 @@ class Job:
         if not self.jobname:
             logger.debug(f"Attribute jobname not given for jobid {self.jobid}")
 
+
+    def close(self):
+        if hasattr(self, "storage") and self.storage is not None:
+            self.storage.close()
+            self.storage = None
+
     # ----------
     # Method to read job description from JDL file
     # ----------
@@ -305,6 +311,9 @@ class Job:
 
     def set_from_post(self, post, files):
         """Set attributes and parameters from POST"""
+        logger.info(
+            f"POST: {post}"
+        )
         # Read JDL
         self.jdl.read(self.jobname)
         # Pop UWS attributes keywords from POST or set by default
@@ -323,6 +332,9 @@ class Job:
                     "byref": False,
                     "entity_id": None,
                 }
+                logger.info(
+                    f'Control parameter: "{pname}" = {value}'
+                )
                 if pname in UWS_PARAMETERS:
                     pname = upper2underscore(
                         pname.split("uws_")[-1]
@@ -442,6 +454,10 @@ class Job:
                     "byref": False,
                     "entity_id": None,
                 }
+                logger.info(
+                    f'Parameter in JDL: "{pname}" = {value}'
+                )
+
         # Other POST parameters
         for pname in post:
             # Those parameters won't be used for job control, or stored as used entities, but they will be loaded
@@ -453,7 +469,9 @@ class Job:
                     "byref": False,
                     "entity_id": None,
                 }
-        # Upload files for multipart/form-data
+                logger.info(
+                    f'Parameter not in JDL: "{pname}" = {value}'
+                )
         # for fname, f in files.iteritems():
         # Save to storage
         self.storage.save(self, save_attributes=True, save_parameters=True)
@@ -1044,6 +1062,11 @@ class JobList:
             where_owner=where_owner,
             include_archived=include_archived,
         )
+
+    def close(self):
+        if hasattr(self, "storage") and self.storage is not None:
+            self.storage.close()
+            self.storage = None
 
     def to_xml(self):
         """Returns the XML representation of jobs (uws:jobs)"""

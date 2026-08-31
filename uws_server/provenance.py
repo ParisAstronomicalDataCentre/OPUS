@@ -73,125 +73,223 @@ def job2prov(
     job = uws_classes.Job(
         "", jobid, user, get_attributes=True, get_parameters=True, get_results=True
     )
+    try:
+        # Load JDL
+        job.jdl.read(job.jobname, jobid=job.jobid)
 
-    # Load JDL
-    job.jdl.read(job.jobname, jobid=job.jobid)
+        # Declaring namespaces for various prefixes used in the example
+        pdoc.set_default_namespace(VOPROV.uri)
+        pdoc.add_namespace("voprov", VOPROV.uri)
+        pdoc.add_namespace("prov", PROV.uri)
+        pdoc.add_namespace("foaf", "http://xmlns.com/foaf/0.1/")
+        pdoc.add_namespace("uws", "http://www.ivoa.net/xml/UWS/v1.1#")
+        pdoc.add_namespace("opus_user", BASE_URL + "/user/")
+        ns_result = "opus_store"
+        pdoc.add_namespace(ns_result, BASE_URL + "/store/?ID=")
+        pdoc.add_namespace("opus_job", BASE_URL + UWS_SERVER_ENDPOINT + "/")
+        pdoc.add_namespace("opus_jdl", BASE_URL + "/jdl/")
+        pdoc.add_namespace("media-type", "https://www.w3.org/ns/iana/media-types/")
+        ns_jdl = job.jobname
+        pdoc.add_namespace(ns_jdl, BASE_URL + "/jdl/" + job.jobname + "/votable#")
+        # ns_job = job.jobname + '/' + job.jobid
+        # pdoc.add_namespace(ns_job, BASE_URL + '/jdl/' + job.jobname + '/votable#')
 
-    # Declaring namespaces for various prefixes used in the example
-    pdoc.set_default_namespace(VOPROV.uri)
-    pdoc.add_namespace("voprov", VOPROV.uri)
-    pdoc.add_namespace("prov", PROV.uri)
-    pdoc.add_namespace("foaf", "http://xmlns.com/foaf/0.1/")
-    pdoc.add_namespace("uws", "http://www.ivoa.net/xml/UWS/v1.1#")
-    pdoc.add_namespace("opus_user", BASE_URL + "/user/")
-    ns_result = "opus_store"
-    pdoc.add_namespace(ns_result, BASE_URL + "/store/?ID=")
-    pdoc.add_namespace("opus_job", BASE_URL + UWS_SERVER_ENDPOINT + "/")
-    pdoc.add_namespace("opus_jdl", BASE_URL + "/jdl/")
-    pdoc.add_namespace("media-type", "https://www.w3.org/ns/iana/media-types/")
-    ns_jdl = job.jobname
-    pdoc.add_namespace(ns_jdl, BASE_URL + "/jdl/" + job.jobname + "/votable#")
-    # ns_job = job.jobname + '/' + job.jobid
-    # pdoc.add_namespace(ns_job, BASE_URL + '/jdl/' + job.jobname + '/votable#')
-
-    # Activity
-    act_id = "opus_job:" + job.jobname + "/" + job.jobid
-    act = pdoc.activity(act_id, startTime=job.start_time, endTime=job.end_time)
-    act.add_attributes(
-        {
-            "prov:label": job.jobname,  # + '/' + job.jobid,
-        }
-    )
-
-    # Descriptions
-    if descriptions:
-        adescid = "#" + job.jobname + "#description"
-        adescbundle = pdoc.bundle(adescid)
-        adescbundle._label = adescid
-        # ActivityDescription
-        adesc = adescbundle.activityDescription("opus_jdl:" + job.jobname, job.jobname)
-        adesc.add_attributes(
+        # Activity
+        act_id = "opus_job:" + job.jobname + "/" + job.jobid
+        act = pdoc.activity(act_id, startTime=job.start_time, endTime=job.end_time)
+        act.add_attributes(
             {
-                "prov:label": job.jobname,
+                "prov:label": job.jobname,  # + '/' + job.jobid,
             }
         )
-        pdoc.isDescribedBy(act, adesc)  # , other_attributes={
-        #    'prov:type': 'voprov:Description',
-        # })
-        adattrs = {}
-        for pkey in ["name", "annotation", "version", "type", "subtype", "doculink"]:
-            pvalue = job.jdl.content.get(pkey)
-            if pvalue:
-                if pkey == "annotation":
-                    adattrs["voprov:description"] = pvalue
-                else:
-                    adattrs["voprov:" + pkey] = pvalue
-        for pkey in ["executionDuration", "quote"]:
-            pvalue = job.jdl.content.get(pkey)
-            if pvalue:
-                adattrs["uws:" + pkey] = pvalue
-        adesc.add_attributes(adattrs)
 
-        if descriptions > 1:
-            # UsageDescription
-            uds = []
-            for ename, edict in job.jdl.content.get("used", {}).items():
-                ed = ""
-                edattrs = {}
-                for ekey, evalue in edict.items():
-                    if evalue and ekey not in ["default"]:
-                        if evalue:
-                            if ekey == "content_type":
-                                # EntityDescription
-                                ed = "media-type:" + evalue
-                                pdoc.entityDescription(
-                                    ed, evalue, other_attributes={"prov:label": evalue}
-                                )
-                            elif ekey == "annotation":
-                                edattrs["voprov:description"] = evalue
-                            else:
-                                edattrs["voprov:" + ekey] = evalue
-                edattrs["prov:label"] = ename
-                uds.append(
-                    adescbundle.usageDescription(
-                        "opus_jdl:" + job.jobname + "#" + ename, adesc, ename
+        # Descriptions
+        if descriptions:
+            adescid = "#" + job.jobname + "#description"
+            adescbundle = pdoc.bundle(adescid)
+            adescbundle._label = adescid
+            # ActivityDescription
+            adesc = adescbundle.activityDescription("opus_jdl:" + job.jobname, job.jobname)
+            adesc.add_attributes(
+                {
+                    "prov:label": job.jobname,
+                }
+            )
+            pdoc.isDescribedBy(act, adesc)  # , other_attributes={
+            #    'prov:type': 'voprov:Description',
+            # })
+            adattrs = {}
+            for pkey in ["name", "annotation", "version", "type", "subtype", "doculink"]:
+                pvalue = job.jdl.content.get(pkey)
+                if pvalue:
+                    if pkey == "annotation":
+                        adattrs["voprov:description"] = pvalue
+                    else:
+                        adattrs["voprov:" + pkey] = pvalue
+            for pkey in ["executionDuration", "quote"]:
+                pvalue = job.jdl.content.get(pkey)
+                if pvalue:
+                    adattrs["uws:" + pkey] = pvalue
+            adesc.add_attributes(adattrs)
+
+            if descriptions > 1:
+                # UsageDescription
+                uds = []
+                for ename, edict in job.jdl.content.get("used", {}).items():
+                    ed = ""
+                    edattrs = {}
+                    for ekey, evalue in edict.items():
+                        if evalue and ekey not in ["default"]:
+                            if evalue:
+                                if ekey == "content_type":
+                                    # EntityDescription
+                                    ed = "media-type:" + evalue
+                                    pdoc.entityDescription(
+                                        ed, evalue, other_attributes={"prov:label": evalue}
+                                    )
+                                elif ekey == "annotation":
+                                    edattrs["voprov:description"] = evalue
+                                else:
+                                    edattrs["voprov:" + ekey] = evalue
+                    edattrs["prov:label"] = ename
+                    uds.append(
+                        adescbundle.usageDescription(
+                            "opus_jdl:" + job.jobname + "#" + ename, adesc, ename
+                        )
+                    )
+                    uds[-1].add_attributes(edattrs)
+                    if ed:
+                        pdoc.isRelatedTo(ed, uds[-1])
+                # GenerationDescription
+                gds = []
+                for ename, edict in job.jdl.content.get("generated", {}).items():
+                    ed = ""
+                    edattrs = {}
+                    for ekey, evalue in edict.items():
+                        if evalue and ekey not in ["default"]:
+                            if evalue:
+                                if ekey == "content_type":
+                                    # EntityDescription
+                                    ed = "media-type:" + evalue
+                                    pdoc.entityDescription(
+                                        ed, evalue, other_attributes={"prov:label": evalue}
+                                    )
+                                elif ekey == "annotation":
+                                    edattrs["voprov:description"] = evalue
+                                else:
+                                    edattrs["voprov:" + ekey] = evalue
+                    edattrs["prov:label"] = ename
+                    gds.append(
+                        adescbundle.generationDescription(
+                            "opus_jdl:" + job.jobname + "#" + ename, adesc, ename
+                        )
+                    )
+                    gds[-1].add_attributes(edattrs)
+                    if ed:
+                        pdoc.isRelatedTo(ed, gds[-1])
+                # Configuration descriptions
+                if configuration:
+                    # ParameterDescription
+                    pds = []
+                    for pname, pdict in job.jdl.content.get("parameters", {}).items():
+                        pdattrs = {}
+                        for pkey, pvalue in pdict.items():
+                            if pvalue:
+                                if pkey == "annotation":
+                                    pdattrs["voprov:description"] = pvalue
+                                else:
+                                    pdattrs["voprov:" + pkey] = pvalue
+                        pdattrs["prov:label"] = pname
+                        pdname = "opus_jdl:" + job.jobname + "#" + pname
+                        pds.append(
+                            adescbundle.parameterDescription(
+                                pdname, adesc, pname, pdict.get("type", "char")
+                            )
+                        )
+                        pds[-1].add_attributes(pdattrs)
+
+            # Agent: contact for the job in ActivityDescription
+            if agents:
+                contact_name = job.jdl.content.get("contact_name")
+                contact_email = job.jdl.content.get("contact_email")
+                if contact_email and not contact_name:
+                    contact_name = contact_email
+                if contact_name:
+                    # Is contact name in the server user list?
+                    contact_id = contact_name
+                    users_dicts = job.storage.get_users()
+                    users = [u["name"] for u in users_dicts]
+                    if contact_id in users:
+                        contact_id = "opus_user:" + contact_id
+                    contact = pdoc.agent(contact_id)
+                    contact.add_attributes(
+                        {
+                            "prov:label": contact_name,
+                            #'foaf:name': contact_name,
+                        }
+                    )
+                    if contact_email:
+                        contact.add_attributes({"foaf:mbox": f"<mailto:{contact_email}>"})
+                    # Link to ActivityDescription
+                    pdoc.influence(
+                        adesc, contact, other_attributes={"prov:role": "contact"}
+                    )
+
+        # Agent: owner of the job
+        if agents:
+            owner = pdoc.agent("opus_user:" + job.owner)
+            owner.add_attributes(
+                {
+                    "prov:label": job.owner,
+                    #'foaf:name': job.owner,
+                }
+            )
+            act.wasAssociatedWith(owner, attributes={"prov:role": "owner"})
+
+        # Parameters
+        if configuration:
+            # Add Parameter Collection?
+            # all_params = pdoc.collection('opus_job:' + job.jobname + '/' + job.jobid + '/parameters')
+            aconfid = (
+                "#" + job.jobid + "#configuration"
+            )  # + '/' + job.jobid + '/parameters'
+            aconfbundle = pdoc.bundle(aconfid)
+            aconfbundle._label = aconfid
+            params = []
+            for pname, pdict in job.jdl.content.get("parameters", {}).items():
+                # Add Parameter
+                if pname in job.parameters:
+                    # the parameter was defined for this activity
+                    value = job.parameters[pname]["value"]
+                else:
+                    # the default value was used
+                    value = pdict["default"]
+                str_value = str(value)
+                show_value = (str_value[:25] + "...") if len(str_value) > 25 else str_value
+                pattrs = {
+                    "prov:label": pname + " = " + show_value,
+                }
+                params.append(
+                    aconfbundle.parameter(
+                        "opus_job:"
+                        + job.jobname
+                        + "/"
+                        + job.jobid
+                        + "/parameters/"
+                        + pname,
+                        pname,
+                        value,
                     )
                 )
-                uds[-1].add_attributes(edattrs)
-                if ed:
-                    pdoc.isRelatedTo(ed, uds[-1])
-            # GenerationDescription
-            gds = []
-            for ename, edict in job.jdl.content.get("generated", {}).items():
-                ed = ""
-                edattrs = {}
-                for ekey, evalue in edict.items():
-                    if evalue and ekey not in ["default"]:
-                        if evalue:
-                            if ekey == "content_type":
-                                # EntityDescription
-                                ed = "media-type:" + evalue
-                                pdoc.entityDescription(
-                                    ed, evalue, other_attributes={"prov:label": evalue}
-                                )
-                            elif ekey == "annotation":
-                                edattrs["voprov:description"] = evalue
-                            else:
-                                edattrs["voprov:" + ekey] = evalue
-                edattrs["prov:label"] = ename
-                gds.append(
-                    adescbundle.generationDescription(
-                        "opus_jdl:" + job.jobname + "#" + ename, adesc, ename
-                    )
-                )
-                gds[-1].add_attributes(edattrs)
-                if ed:
-                    pdoc.isRelatedTo(ed, gds[-1])
-            # Configuration descriptions
-            if configuration:
-                # ParameterDescription
-                pds = []
-                for pname, pdict in job.jdl.content.get("parameters", {}).items():
+                params[-1].add_attributes(pattrs)
+                # Activity-Parameter relation
+                pdoc.wasConfiguredBy(act, params[-1], "Parameter")
+                # Link to ParameterDescription
+                if descriptions > 1:
+                    pdname = "opus_jdl:" + job.jobname + "#" + pname
+                    pdoc.isDescribedBy(params[-1], pdname)
+                else:
+                    # Add attributes to the parameter directly
                     pdattrs = {}
                     for pkey, pvalue in pdict.items():
                         if pvalue:
@@ -199,357 +297,80 @@ def job2prov(
                                 pdattrs["voprov:description"] = pvalue
                             else:
                                 pdattrs["voprov:" + pkey] = pvalue
-                    pdattrs["prov:label"] = pname
-                    pdname = "opus_jdl:" + job.jobname + "#" + pname
-                    pds.append(
-                        adescbundle.parameterDescription(
-                            pdname, adesc, pname, pdict.get("type", "char")
-                        )
-                    )
-                    pds[-1].add_attributes(pdattrs)
+                    params[-1].add_attributes(pdattrs)
+                # Member of Collection
+                # all_params.hadMember(params[-1])
+            # Activity-Collection relation
+            # pdoc.influence(act, all_params)
+            logger.debug(pdoc._bundles)
 
-        # Agent: contact for the job in ActivityDescription
-        if agents:
-            contact_name = job.jdl.content.get("contact_name")
-            contact_email = job.jdl.content.get("contact_email")
-            if contact_email and not contact_name:
-                contact_name = contact_email
-            if contact_name:
-                # Is contact name in the server user list?
-                contact_id = contact_name
-                users_dicts = job.storage.get_users()
-                users = [u["name"] for u in users_dicts]
-                if contact_id in users:
-                    contact_id = "opus_user:" + contact_id
-                contact = pdoc.agent(contact_id)
-                contact.add_attributes(
-                    {
-                        "prov:label": contact_name,
-                        #'foaf:name': contact_name,
-                    }
-                )
-                if contact_email:
-                    contact.add_attributes({"foaf:mbox": f"<mailto:{contact_email}>"})
-                # Link to ActivityDescription
-                pdoc.influence(
-                    adesc, contact, other_attributes={"prov:role": "contact"}
-                )
-
-    # Agent: owner of the job
-    if agents:
-        owner = pdoc.agent("opus_user:" + job.owner)
-        owner.add_attributes(
-            {
-                "prov:label": job.owner,
-                #'foaf:name': job.owner,
-            }
-        )
-        act.wasAssociatedWith(owner, attributes={"prov:role": "owner"})
-
-    # Parameters
-    if configuration:
-        # Add Parameter Collection?
-        # all_params = pdoc.collection('opus_job:' + job.jobname + '/' + job.jobid + '/parameters')
-        aconfid = (
-            "#" + job.jobid + "#configuration"
-        )  # + '/' + job.jobid + '/parameters'
-        aconfbundle = pdoc.bundle(aconfid)
-        aconfbundle._label = aconfid
-        params = []
-        for pname, pdict in job.jdl.content.get("parameters", {}).items():
-            # Add Parameter
-            if pname in job.parameters:
-                # the parameter was defined for this activity
-                value = job.parameters[pname]["value"]
-            else:
-                # the default value was used
-                value = pdict["default"]
-            str_value = str(value)
-            show_value = (str_value[:25] + "...") if len(str_value) > 25 else str_value
-            pattrs = {
-                "prov:label": pname + " = " + show_value,
-            }
-            params.append(
-                aconfbundle.parameter(
-                    "opus_job:"
-                    + job.jobname
-                    + "/"
-                    + job.jobid
-                    + "/parameters/"
-                    + pname,
-                    pname,
-                    value,
-                )
-            )
-            params[-1].add_attributes(pattrs)
-            # Activity-Parameter relation
-            pdoc.wasConfiguredBy(act, params[-1], "Parameter")
-            # Link to ParameterDescription
-            if descriptions > 1:
-                pdname = "opus_jdl:" + job.jobname + "#" + pname
-                pdoc.isDescribedBy(params[-1], pdname)
-            else:
-                # Add attributes to the parameter directly
-                pdattrs = {}
-                for pkey, pvalue in pdict.items():
-                    if pvalue:
-                        if pkey == "annotation":
-                            pdattrs["voprov:description"] = pvalue
-                        else:
-                            pdattrs["voprov:" + pkey] = pvalue
-                params[-1].add_attributes(pdattrs)
-            # Member of Collection
-            # all_params.hadMember(params[-1])
-        # Activity-Collection relation
-        # pdoc.influence(act, all_params)
-        logger.debug(pdoc._bundles)
-
-    # Used entities
-    used_entities = []
-    if (depth != 0 and direction == "BACK") or show_used:
-        # Explore used entities for the activity if depth > 0
-        e_in = []
-        for pname, pdict in job.jdl.content.get("used", {}).items():
-            # Look for value and entity record and get pqn (local id)
-            value = job.parameters.get(pname, {}).get("value", "")
-            label = pname
-            entity_id = job.parameters.get(pname, {}).get("entity_id", None)
-            logger.debug(
-                f"Search for entity {entity_id} (pname={pname}, value={value})"
-            )
-            entity = job.storage.get_entity(entity_id, silent=True)
-            if entity:
-                # Entity recorded in DB
-                used_entities.append(entity_id)
-                pqns = [ns_result + ":" + entity_id]
-                label = entity["file_name"]
-                location = entity["access_url"]
-                logger.debug(f"Input entity found: {entity}")
-            elif "//" in value:
-                # Entity is a file or a URL (not a value or an ID)
-                pqns = [
-                    value.split("//")[-1]
-                ]  # removes file:// if present, or longer path
-                used_entities.append(pqns[0])
-                location = value
+        # Used entities
+        used_entities = []
+        if (depth != 0 and direction == "BACK") or show_used:
+            # Explore used entities for the activity if depth > 0
+            e_in = []
+            for pname, pdict in job.jdl.content.get("used", {}).items():
+                # Look for value and entity record and get pqn (local id)
+                value = job.parameters.get(pname, {}).get("value", "")
+                label = pname
+                entity_id = job.parameters.get(pname, {}).get("entity_id", None)
                 logger.debug(
-                    f"No record found for input entity {pname}={value}, assuming it is a file or a URL"
+                    f"Search for entity {entity_id} (pname={pname}, value={value})"
                 )
-            else:
-                # Entity is a value or an ID
-                location = None
-                if "*" in pdict["multiplicity"] or int(pdict["multiplicity"]) > 1:
-                    sep = pdict.get("separator", " ")
-                    if "," in value:
-                        sep = ","
-                    pqns = value.split(sep)
-                else:
-                    pqns = [value]
-            # For each entity corresponding to this role
-            for pqn in pqns:
-                # Add Entity
-                e_in.append(pdoc.entity(pqn))
-                e_in[-1].add_attributes(
-                    {
-                        "prov:label": label,
-                        # 'prov:value': value,
-                        "prov:location": location,
-                        # 'prov:type': pdict['datatype'],
-                    }
-                )
-                # Add Used relation
-                act.used(e_in[-1], attributes={"prov:role": pname})
-                # Link to description
-                ed = ""
-                if "content_type" in pdict:
-                    ed = "media-type:" + pdict["content_type"]
-                if descriptions > 1 and ed:
-                    pdoc.isDescribedBy(pqn, ed)
-                # Explores entity origin if known entity and depth > 1
-                if entity and depth != 1 and direction == "BACK":
-                    if depth != 1 and entity.get("jobid"):
-                        other_pdocs.append(
-                            job2prov(
-                                entity["jobid"],
-                                job.user,
-                                depth=depth - 2,
-                                direction=direction,
-                                members=members,
-                                agents=agents,
-                                model=model,
-                                descriptions=descriptions,
-                                configuration=configuration,
-                                show_generated=True,
-                            )
-                        )
-
-    # Generated entities (if depth > 0)
-    if (depth != 0 and direction == "FORWARD") or show_generated:
-        # Check if internal provenance is given, add as a generated bundle? or directly?
-        ipfile = os.path.join(JOBDATA_PATH, jobid, INTERNAL_PROVENANCE_FILENAME)
-        ipbundle = None
-        if os.path.isfile(ipfile):
-            ipdoc = voprov.read(ipfile, format="json")
-            ipid = "#" + job.jobid + "#internal_provenance"
-            logger.debug(ipid)
-            logger.debug(str(ipdoc.namespaces))
-            # Create dictionary
-            prov_dict = prov2dict(ipdoc)
-            # Add namespaces
-            for prefix, uri in prov_dict["prefix"].items():
-                if prefix == "default":
-                    # pdoc.set_default_namespace(uri)
-                    pass
-                else:
-                    pdoc.add_namespace(prefix, uri)
-            # Look for current_job in activity
-            if "current_job" in prov_dict["activity"]:
-                current_job = prov_dict["activity"].pop("current_job")
-                # Add used relation to act, and entities if relevant
-                if "used" in current_job:
-                    current_job_used = current_job.pop("used")
-                    for ent_id in current_job_used:
-                        if ent_id in prov_dict["entity"]:
-                            used_ent = pdoc.entity(
-                                ent_id, other_attributes=prov_dict["entity"][ent_id]
-                            )
-                            used_type = current_job_used[ent_id].get("prov:type", None)
-                            logger.debug(used_type)
-                            # Software: link with activity description rather than activity
-                            if used_type == "Software":
-                                # in adescbundle? or pdoc?
-                                l = prov_dict["entity"][ent_id].get("voprov:name", "")
-                                l += " "
-                                l += prov_dict["entity"][ent_id].get(
-                                    "voprov:version", ""
-                                )
-                                used_ent.add_attributes({"prov:label": l})
-                                pdoc.influence(
-                                    adesc,
-                                    ent_id,
-                                    other_attributes={"prov:type": "hasDependency"},
-                                )
-                            else:
-                                act.used(ent_id, attributes=current_job_used[ent_id])
-                # Add generated relation to act, and entities if relevant
-                if "generated" in current_job:
-                    current_job_generated = current_job.pop("generated")
-                    for ent_id in current_job_generated:
-                        if ent_id in prov_dict["entity"]:
-                            pdoc.entity(
-                                ent_id, other_attributes=prov_dict["entity"][ent_id]
-                            )
-                            pdoc.wasGeneratedBy(
-                                ent_id,
-                                act,
-                                other_attributes=current_job_generated[ent_id],
-                            )
-                # Add associated relation to act, and agents if relevant
-                if "associated" in current_job:
-                    current_job_associated = current_job.pop("associated")
-                    for agt_id in current_job_associated:
-                        if agt_id in prov_dict["agent"]:
-                            pdoc.agent(
-                                agt_id, other_attributes=prov_dict["agent"][agt_id]
-                            )
-                            pdoc.wasAssociatedWith(
-                                act,
-                                agt_id,
-                                other_attributes=current_job_generated[ent_id],
-                            )
-                # Add ActivityDescription dependencies
-                if "dependency" in current_job:
-                    current_job_dependency = current_job.pop("dependency")
-                    for ent_id in current_job_dependency:
-                        # in adescbundle? or pdoc?
-                        pdoc.entity(
-                            ent_id, other_attributes=prov_dict["entity"][ent_id]
-                        )
-                        pdoc.influence(
-                            adesc, ent_id, other_attributes={"prov:role": "dependency"}
-                        )
-                # Add Activity attributes
-                for k, v in current_job.items():
-                    # logger.debug(k, v)
-                    if k not in act._attributes:
-                        act.add_attributes({k: v})
-            # Create a bundle for the internal provenance
-            # ipbundle = VOProvBundle(namespaces=ipdoc.get_registered_namespaces(), identifier=ipid)
-            # ipbundle.set_default_namespace(ipdoc.ipdoc.get_default_namespace())
-            # setattr(ipbundle, "_label", ipid)
-            # ipbundle.update(ipdoc)
-            # pdoc.add_bundle(ipbundle)
-            # pdoc.wasGeneratedBy(ipbundle.identifier, act)
-        # Add job results as entities
-        e_out = []
-        for rname in job.results:
-            if rname not in ["stdout", "stderr", "provjson", "provxml", "provsvg"]:
-                entity_id = job.results[rname]["entity_id"]
-                # entity_id = job.jobid + '_' + rname
-                # if entity_id:
                 entity = job.storage.get_entity(entity_id, silent=True)
                 if entity:
-                    entity_id = entity["entity_id"]
-                    rqn = ns_result + ":" + entity_id
-                    content_type = entity["content_type"]
-                else:
-                    entity_id = rname
-                    rqn = ":" + entity_id
-                    content_type = job.results[rname]["content_type"]
-                # Only show result if it is not already used (case of config files sometimes)
-                if entity_id not in used_entities:
-                    # Add Entity
-                    e_out.append(pdoc.entity(rqn))
-                    eattrs = {
-                        "prov:location": job.results[rname]["url"],
-                        "voprov:content_type": content_type,
-                    }
-                    pdict = {}
-                    if entity:
-                        eattrs["prov:label"] = entity["file_name"]
-                        eattrs["voprov:result_name"] = entity["result_name"]
-                        pdict = job.jdl.content["generated"].get(
-                            entity["result_name"], {}
-                        )
-                    if "prov:label" not in eattrs:
-                        eattrs["prov:label"] = rname
-                    e_out[-1].add_attributes(eattrs)
-                    # Add Generation relation
-                    e_out[-1].wasGeneratedBy(
-                        act,
-                        attributes={
-                            "prov:role": rname,
-                        },
+                    # Entity recorded in DB
+                    used_entities.append(entity_id)
+                    pqns = [ns_result + ":" + entity_id]
+                    label = entity["file_name"]
+                    location = entity["access_url"]
+                    logger.debug(f"Input entity found: {entity}")
+                elif "//" in value:
+                    # Entity is a file or a URL (not a value or an ID)
+                    pqns = [
+                        value.split("//")[-1]
+                    ]  # removes file:// if present, or longer path
+                    used_entities.append(pqns[0])
+                    location = value
+                    logger.debug(
+                        f"No record found for input entity {pname}={value}, assuming it is a file or a URL"
                     )
-                    # for e in e_in:
-                    #    e_out[-1].wasDerivedFrom(e)
-                    # if agent:
-                    #    e_out[-1].wasAttributedTo(owner, attributes={
-                    #        'prov:role': 'owner',
-                    #    })
-                    # Add derivation link from internal provenance
-                    if entity.get("from_entity", None) and ipbundle:
-                        e_from = ipbundle.get_record(entity["from_entity"])[0]
-                        e_out[-1].wasDerivedFrom(e_from)
-                        # copy_act = pdoc.activity(act_id + '_copy_to_datastore', other_attributes={"prov:label": "copy_to_datastore"})
-                        # copy_act.wasInformedBy(act)
-                        # copy_act.used(entity["from_entity"])
-                        # e_out[-1].wasGeneratedBy(copy_act)
-                    # Add EntityDescription if exists
-                    if pdict and descriptions > 1:
-                        if "content_type" in pdict:
-                            ed = "media-type:" + pdict["content_type"]
-                            pdoc.isDescribedBy(rqn, ed)
-                    # Search forward for activities that used this entity
-                    if entity and depth != 1 and direction == "FORWARD":
-                        used_query = job.storage.session.query(
-                            job.storage.Used
-                        ).filter_by(entity_id=entity_id)
-                        used_rows = used_query.all()
-                        for row in used_rows:
+                else:
+                    # Entity is a value or an ID
+                    location = None
+                    if "*" in pdict["multiplicity"] or int(pdict["multiplicity"]) > 1:
+                        sep = pdict.get("separator", " ")
+                        if "," in value:
+                            sep = ","
+                        pqns = value.split(sep)
+                    else:
+                        pqns = [value]
+                # For each entity corresponding to this role
+                for pqn in pqns:
+                    # Add Entity
+                    e_in.append(pdoc.entity(pqn))
+                    e_in[-1].add_attributes(
+                        {
+                            "prov:label": label,
+                            # 'prov:value': value,
+                            "prov:location": location,
+                            # 'prov:type': pdict['datatype'],
+                        }
+                    )
+                    # Add Used relation
+                    act.used(e_in[-1], attributes={"prov:role": pname})
+                    # Link to description
+                    ed = ""
+                    if "content_type" in pdict:
+                        ed = "media-type:" + pdict["content_type"]
+                    if descriptions > 1 and ed:
+                        pdoc.isDescribedBy(pqn, ed)
+                    # Explores entity origin if known entity and depth > 1
+                    if entity and depth != 1 and direction == "BACK":
+                        if depth != 1 and entity.get("jobid"):
                             other_pdocs.append(
                                 job2prov(
-                                    row.jobid,
+                                    entity["jobid"],
                                     job.user,
                                     depth=depth - 2,
                                     direction=direction,
@@ -558,9 +379,191 @@ def job2prov(
                                     model=model,
                                     descriptions=descriptions,
                                     configuration=configuration,
-                                    show_used=True,
+                                    show_generated=True,
                                 )
                             )
+
+        # Generated entities (if depth > 0)
+        if (depth != 0 and direction == "FORWARD") or show_generated:
+            # Check if internal provenance is given, add as a generated bundle? or directly?
+            ipfile = os.path.join(JOBDATA_PATH, jobid, INTERNAL_PROVENANCE_FILENAME)
+            ipbundle = None
+            if os.path.isfile(ipfile):
+                ipdoc = voprov.read(ipfile, format="json")
+                ipid = "#" + job.jobid + "#internal_provenance"
+                logger.debug(ipid)
+                logger.debug(str(ipdoc.namespaces))
+                # Create dictionary
+                prov_dict = prov2dict(ipdoc)
+                # Add namespaces
+                for prefix, uri in prov_dict["prefix"].items():
+                    if prefix == "default":
+                        # pdoc.set_default_namespace(uri)
+                        pass
+                    else:
+                        pdoc.add_namespace(prefix, uri)
+                # Look for current_job in activity
+                if "current_job" in prov_dict["activity"]:
+                    current_job = prov_dict["activity"].pop("current_job")
+                    # Add used relation to act, and entities if relevant
+                    if "used" in current_job:
+                        current_job_used = current_job.pop("used")
+                        for ent_id in current_job_used:
+                            if ent_id in prov_dict["entity"]:
+                                used_ent = pdoc.entity(
+                                    ent_id, other_attributes=prov_dict["entity"][ent_id]
+                                )
+                                used_type = current_job_used[ent_id].get("prov:type", None)
+                                logger.debug(used_type)
+                                # Software: link with activity description rather than activity
+                                if used_type == "Software":
+                                    # in adescbundle? or pdoc?
+                                    l = prov_dict["entity"][ent_id].get("voprov:name", "")
+                                    l += " "
+                                    l += prov_dict["entity"][ent_id].get(
+                                        "voprov:version", ""
+                                    )
+                                    used_ent.add_attributes({"prov:label": l})
+                                    pdoc.influence(
+                                        adesc,
+                                        ent_id,
+                                        other_attributes={"prov:type": "hasDependency"},
+                                    )
+                                else:
+                                    act.used(ent_id, attributes=current_job_used[ent_id])
+                    # Add generated relation to act, and entities if relevant
+                    if "generated" in current_job:
+                        current_job_generated = current_job.pop("generated")
+                        for ent_id in current_job_generated:
+                            if ent_id in prov_dict["entity"]:
+                                pdoc.entity(
+                                    ent_id, other_attributes=prov_dict["entity"][ent_id]
+                                )
+                                pdoc.wasGeneratedBy(
+                                    ent_id,
+                                    act,
+                                    other_attributes=current_job_generated[ent_id],
+                                )
+                    # Add associated relation to act, and agents if relevant
+                    if "associated" in current_job:
+                        current_job_associated = current_job.pop("associated")
+                        for agt_id in current_job_associated:
+                            if agt_id in prov_dict["agent"]:
+                                pdoc.agent(
+                                    agt_id, other_attributes=prov_dict["agent"][agt_id]
+                                )
+                                pdoc.wasAssociatedWith(
+                                    act,
+                                    agt_id,
+                                    other_attributes=current_job_generated[ent_id],
+                                )
+                    # Add ActivityDescription dependencies
+                    if "dependency" in current_job:
+                        current_job_dependency = current_job.pop("dependency")
+                        for ent_id in current_job_dependency:
+                            # in adescbundle? or pdoc?
+                            pdoc.entity(
+                                ent_id, other_attributes=prov_dict["entity"][ent_id]
+                            )
+                            pdoc.influence(
+                                adesc, ent_id, other_attributes={"prov:role": "dependency"}
+                            )
+                    # Add Activity attributes
+                    for k, v in current_job.items():
+                        # logger.debug(k, v)
+                        if k not in act._attributes:
+                            act.add_attributes({k: v})
+                # Create a bundle for the internal provenance
+                # ipbundle = VOProvBundle(namespaces=ipdoc.get_registered_namespaces(), identifier=ipid)
+                # ipbundle.set_default_namespace(ipdoc.ipdoc.get_default_namespace())
+                # setattr(ipbundle, "_label", ipid)
+                # ipbundle.update(ipdoc)
+                # pdoc.add_bundle(ipbundle)
+                # pdoc.wasGeneratedBy(ipbundle.identifier, act)
+            # Add job results as entities
+            e_out = []
+            for rname in job.results:
+                if rname not in ["stdout", "stderr", "provjson", "provxml", "provsvg"]:
+                    entity_id = job.results[rname]["entity_id"]
+                    # entity_id = job.jobid + '_' + rname
+                    # if entity_id:
+                    entity = job.storage.get_entity(entity_id, silent=True)
+                    if entity:
+                        entity_id = entity["entity_id"]
+                        rqn = ns_result + ":" + entity_id
+                        content_type = entity["content_type"]
+                    else:
+                        entity_id = rname
+                        rqn = ":" + entity_id
+                        content_type = job.results[rname]["content_type"]
+                    # Only show result if it is not already used (case of config files sometimes)
+                    if entity_id not in used_entities:
+                        # Add Entity
+                        e_out.append(pdoc.entity(rqn))
+                        eattrs = {
+                            "prov:location": job.results[rname]["url"],
+                            "voprov:content_type": content_type,
+                        }
+                        pdict = {}
+                        if entity:
+                            eattrs["prov:label"] = entity["file_name"]
+                            eattrs["voprov:result_name"] = entity["result_name"]
+                            pdict = job.jdl.content["generated"].get(
+                                entity["result_name"], {}
+                            )
+                        if "prov:label" not in eattrs:
+                            eattrs["prov:label"] = rname
+                        e_out[-1].add_attributes(eattrs)
+                        # Add Generation relation
+                        e_out[-1].wasGeneratedBy(
+                            act,
+                            attributes={
+                                "prov:role": rname,
+                            },
+                        )
+                        # for e in e_in:
+                        #    e_out[-1].wasDerivedFrom(e)
+                        # if agent:
+                        #    e_out[-1].wasAttributedTo(owner, attributes={
+                        #        'prov:role': 'owner',
+                        #    })
+                        # Add derivation link from internal provenance
+                        if entity.get("from_entity", None) and ipbundle:
+                            e_from = ipbundle.get_record(entity["from_entity"])[0]
+                            e_out[-1].wasDerivedFrom(e_from)
+                            # copy_act = pdoc.activity(act_id + '_copy_to_datastore', other_attributes={"prov:label": "copy_to_datastore"})
+                            # copy_act.wasInformedBy(act)
+                            # copy_act.used(entity["from_entity"])
+                            # e_out[-1].wasGeneratedBy(copy_act)
+                        # Add EntityDescription if exists
+                        if pdict and descriptions > 1:
+                            if "content_type" in pdict:
+                                ed = "media-type:" + pdict["content_type"]
+                                pdoc.isDescribedBy(rqn, ed)
+                        # Search forward for activities that used this entity
+                        if entity and depth != 1 and direction == "FORWARD":
+                            with job.storage.get_session() as session:
+                                used_query = session.query(
+                                    job.storage.Used
+                                ).filter_by(entity_id=entity_id)
+                                used_rows = used_query.all()
+                            for row in used_rows:
+                                other_pdocs.append(
+                                    job2prov(
+                                        row.jobid,
+                                        job.user,
+                                        depth=depth - 2,
+                                        direction=direction,
+                                        members=members,
+                                        agents=agents,
+                                        model=model,
+                                        descriptions=descriptions,
+                                        configuration=configuration,
+                                        show_used=True,
+                                    )
+                                )
+    finally:
+        job.close()
 
     # Merge all prov documents
     for opdoc in other_pdocs:
