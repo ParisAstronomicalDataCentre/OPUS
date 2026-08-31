@@ -343,13 +343,13 @@ class Job:
                     setattr(self, pname, value)
         # Save job as is for now
         self.storage.save(self, save_attributes=True, save_parameters=True)
-        # Search input entities in POST/files
+        # Search input/used entities in POST/files
         upload_dir = os.path.join(UPLOADS_PATH, self.jobid)
         for pname in self.jdl.content.get("used", {}):
             entity = {}
             content_type = self.jdl.content["used"][pname].get("content_type", None)
             if pname in list(files.keys()):
-                # 1/ Parameter is a file from the form
+                # 1/ Parameter is a file from the form (so an entity)
                 post_p = post.pop(pname)
                 f = files[pname]
                 if not os.path.isdir(upload_dir):
@@ -368,12 +368,12 @@ class Job:
                     owner=self.user.name,
                     content_type=content_type,
                 )
-                # Parameter value is set to the filename
+                # Parameter value is thus set to the filename (in the upload dir for the job)
+                value = "file://" + f.filename
                 # url = ARCHIVE_URL.format(ID=entity['entity_id'])
                 # if url.startswith('/'):
                 #     url = '{}{}'.format(BASE_URL, url)
                 # value = url
-                value = "file://" + f.filename
             else:
                 # 2/ Parameter is a value, possibly an ID (set from post or by default)
                 # TODO: identify and store array of values
@@ -387,15 +387,17 @@ class Job:
                     # Set value to its default
                     value = self.jdl.content["used"][pname]["default"]
                     logger.info(f'Input "{pname}" set by default: {value}')
-                # 3/ Try to convert value/ID to a URL and upload
-                url = self.jdl.content["used"][pname]["url"]
-                if url:
-                    if url == "file://$ID":
-                        # expecting a file, is value an URL already ?
+                # 3/ Try to convert value/ID to a URL and download
+                url_jdl = self.jdl.content["used"][pname]["url"]
+                if url_jdl:
+                    if url_jdl == "file://$ID":
+                        # expecting a file according to JDL, but pname is in POST, so the value is probably a URL
                         furl = value
                     else:
-                        furl = url.replace("$ID", value)
+                        # take URL given in JDL, and replace $ID
+                        furl = url_jdl.replace("$ID", value)
                     try:
+                        # try to download the furl
                         r = requests.get(furl, allow_redirects=True)
                         if r.status_code == 200:
                             cd = r.headers.get("content-disposition")
@@ -405,7 +407,6 @@ class Job:
                             open(os.path.join(upload_dir, filename), "wb").write(
                                 r.content
                             )
-                            # Parameter value is set to the file name on server
                             logger.info(
                                 f'Input "{pname}" is a URL and was downloaded : {furl}'
                             )
@@ -417,12 +418,13 @@ class Job:
                                 owner=self.user.name,
                                 content_type=content_type,
                             )
+                            # Parameter value is converted to the file name on server
+                            value = "file://" + filename
                             # Parameter value is set to the URL of the file in the Entity Store
                             # url = ARCHIVE_URL.format(ID=entity['entity_id'])
                             # if url.startswith('/'):
                             #     url = '{}{}'.format(BASE_URL, url)
                             # value = url
-                            value = "file://" + filename
                     except Exception as e:
                         logger.warning(
                             f'Cannot upload URL for input "{pname}": {furl}\n{e}'
@@ -430,16 +432,27 @@ class Job:
                         raise UserWarning(
                             f'cannot upload URL for input "{pname}": {furl}'
                         )
-                # TODO: 4/ check if value is an ID that already exists in the entity store ? other attribute ?
+                else:
+                    # no value in url_jdl (url in JDL)
+                    # 4/ check if value is an ID that already exists in the entity store
+                    entity_id = value
+                    entity = self.storage.get_entity(entity_id, silent=False)
+                    if entity:
+                        # convert value to file dir+name in store
+                        value = f"{entity.file_dir}/{entity.file_name}"
+                        logger.info(
+                            f'Input "{pname}" found in the entity store with ID={entity_id}: {value}'
+                        )
+                    pass
                 if not entity:
                     pass
-            # Store Input entity in UWS parameters
+            # Add Input entity to UWS parameters
             self.parameters[pname] = {
                 "value": value,
                 "byref": True,
                 "entity_id": entity.get("entity_id", None),
             }
-        # Search parameters in POST
+        # Search JDL defined parameters in POST
         for pname in self.jdl.content.get("parameters", {}):
             # Check if it is a used entity
             if pname not in self.parameters:
@@ -448,6 +461,7 @@ class Job:
                 if pname in post:
                     value = post.pop(pname)
                 else:
+                    # pname not in post, so use default value given in JDL
                     value = self.jdl.content["parameters"][pname]["default"]
                 self.parameters[pname] = {
                     "value": value,
@@ -457,6 +471,9 @@ class Job:
                 logger.info(
                     f'Parameter in JDL: "{pname}" = {value}'
                 )
+            else:
+                # pname not found in POST
+                pass
 
         # Other POST parameters
         for pname in post:
