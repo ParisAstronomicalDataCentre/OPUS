@@ -690,7 +690,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                             if str(row.entity_id) in kwargs["file_name"]:
                                 # Entity has the expected entity_id in its name
                                 entity = {
-                                    col: getattr(row, col) for col in row.__table__.columns
+                                    col.name: getattr(row, col.name) for col in row.__table__.columns
                                 }
                                 entity_id = entity["entity_id"]
                                 logger.info(
@@ -705,7 +705,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                             ):
                                 # Entity has the jobid that generated it in its name
                                 entity = {
-                                    col: getattr(row, col) for col in row.__table__.columns
+                                    col.name: getattr(row, col.name) for col in row.__table__.columns
                                 }
                                 entity_id = entity["entity_id"]
                                 logger.info(
@@ -724,7 +724,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                                 if used and (row.file_name == kwargs["file_name"]):
                                     # Entity has already been used by the same job (and is now exposed as a UWS result)
                                     entity = {
-                                        col: getattr(row, col)
+                                        col.name: getattr(row, col.name)
                                         for col in row.__table__.columns
                                     }
                                     entity_id = entity["entity_id"]
@@ -747,7 +747,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                 )
                 if row:
                     entity_id = kwargs["value"]
-                    entity = {col: getattr(row, col) for col in row.__table__.columns}
+                    entity = {col.name: getattr(row, col.name) for col in row.__table__.columns}
                     logger.info(f"Entity found with value=entity_id={entity_id}")
                 else:
                     # Not found in entity store, is it an entity_id or a simple value ?
@@ -763,7 +763,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                         .first()
                     )
                     if row:
-                        entity = {col: getattr(row, col) for col in row.__table__.columns}
+                        entity = {col.name: getattr(row, col.name) for col in row.__table__.columns}
                         logger.info(f"Entity found from given entity_id={entity_id}")
                 else:
                     # Generate unique identifier for the new entity
