@@ -41,6 +41,9 @@ server:
 client:
     uv run uvicorn app_client:asgi_app --host localhost --port 8080 --workers 1
 
+nginx_conf:
+    uv run python generate_nginx_config.py
+
 start:
     uv run uvicorn app_server:asgi_app --host localhost --port 8082 --workers 1 --root-path /opus_server &
     @sleep 1
