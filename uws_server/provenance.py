@@ -616,7 +616,7 @@ def prov2xml(prov_doc, fname):
     prov_doc.serialize(fname, format="xml")
 
 
-def prov2dot(prov_doc, attributes=True, direction="BT"):
+def prov2dot(prov_doc, attributes=True, direction="LR"):
     """
     Convert ProvDocument to dot graphical format
     :param prov_doc:
