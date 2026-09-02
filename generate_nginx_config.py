@@ -1,6 +1,7 @@
 import os
+from urllib.parse import urlparse
 
-from settings_local import VAR_PATH
+from settings_local import VAR_PATH, BASE_URL
 
 curdir = os.path.dirname(__file__)
 print(f"OPUS directory is: {curdir}")
@@ -13,6 +14,7 @@ LOGS_DIR = (
 )
 OPUS_CLIENT_PORT = 8080
 OPUS_SERVER_PORT = 8082
+server_name = f"{urlparse(BASE_URL).netloc}"
 
 # Output path for nginx.conf
 NGINX_CONF_PATH = f"{OPUS_ROOT}/nginx/nginx.conf"
@@ -38,7 +40,7 @@ http {{
     server {{
 
         listen 80;
-        server_name chorus.obspm.fr;
+        server_name {server_name};
 
         location = /favicon.ico {{
             alias {OPUS_ROOT}/favicon.ico;
