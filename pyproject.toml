@@ -22,7 +22,7 @@ dependencies = [
     "Flask-Security-Too",
     "Flask-SQLAlchemy",
     "lxml",
-    "prov",
+    "prov==2.5.3",
     "networkx",
     "python-dateutil",
     "psutil",

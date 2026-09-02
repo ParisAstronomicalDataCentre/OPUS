@@ -1496,7 +1496,7 @@ requires-dist = [
     { name = "flask-sqlalchemy" },
     { name = "lxml" },
     { name = "networkx" },
-    { name = "prov" },
+    { name = "prov", specifier = "==2.5.3" },
     { name = "psutil" },
     { name = "psycopg2-binary" },
     { name = "pydot" },
@@ -1559,11 +1559,16 @@ wheels = [
 
 [[package]]
 name = "prov"
-version = "3.1.0"
+version = "2.5.3"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/b5/64/2357152813c37d0b02d605f96de4c072c9016b46b3c57908f89e25d95bf9/prov-3.1.0.tar.gz", hash = "sha256:e3ecbf6345e46b1958b286bd1b090c5baffa942015ecf04b44a8cc63830f8a92", size = 274265, upload-time = "2026-08-07T19:31:50.809Z" }
+dependencies = [
+    { name = "networkx" },
+    { name = "pydot" },
+    { name = "python-dateutil" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b4/ed/0c655acd4a9621f41423dfa5abc91d3c1bb13821e01bbcd650894e99fd96/prov-2.5.3.tar.gz", hash = "sha256:b4d236cf01c3b33bdfdf7d5f67af24d31c4716f259e0fb731e8dfacf3d54469e", size = 216734, upload-time = "2026-08-08T17:29:58.925Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/99/a2/0d328e04d5c6279efbaeedb9998d6dd6ad47552c6f889fa1098ed7d071b6/prov-3.1.0-py3-none-any.whl", hash = "sha256:c70f2785e353bc3366f4711d7a5488380249026498fcf6274c71f783f2773545", size = 673103, upload-time = "2026-08-07T19:31:49.201Z" },
+    { url = "https://files.pythonhosted.org/packages/99/77/b1b161a7fbe2adea1319c7914eee9efe1a0a06e4568258fb1900ef4758f9/prov-2.5.3-py3-none-any.whl", hash = "sha256:1dfb1eae6ab50e48337bc242b7e69ef64abf0152304f003b63e7a8dcb3a7a363", size = 604851, upload-time = "2026-08-08T17:29:57.171Z" },
 ]
 
 [[package]]
