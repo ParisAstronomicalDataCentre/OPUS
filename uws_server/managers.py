@@ -397,14 +397,15 @@ class LocalManager(Manager):
         jdl_fname = job.jdl._get_filename(job.jobname)
         get_input_files.append(f"cp -p {jdl_fname} {jd}")
         # Copy input files to workdir_path (scp if uploaded from form, or wget if given as a URI)
-        for fname in files["form"]:
+        for fname in files["path"]:
+            fname_wd = fname.split("/")[-1]
             # shutil.copy(
             #     '{}/{}/{}'.format(UPLOADS_PATH, job.jobid, fname),
             #     '{}/{}'.format(wd, fname))
             get_input_files.append(
-                f"cp -p {UPLOADS_PATH}/{job.jobid}/{fname} {wd}/{fname}"
+                f"cp -p {fname} {wd}/input_{fname_wd}"
             )
-        for furl in files["URI"]:
+        for furl in files["url"]:
             fname = furl.split("/")[-1]
             # response = requests.get(furl, stream=True)
             # with open('{}/{}'.format(wd, fname), 'wb') as out_file:
@@ -582,16 +583,17 @@ class SLURMManager(Manager):
         jdl_fname = job.jdl._get_filename(job.jobname)
         get_input_files.append(f"scp -p {self.ssh_arg_uws}:{jdl_fname} {jd}")
         # Copy input files to workdir_path (scp if uploaded from form, or wget if given as a URI)
-        for fname in files["form"]:
+        for fname in files["path"]:
+            fname_wd = fname.split("/")[-1]
             # cmd = ['scp',
             #        '{}/{}/{}'.format(UPLOADS_PATH, job.jobid, fname),
             #        '{}:{}/{}'.format(self.ssh_arg, wd, fname)]
             # # logger.debug(' '.join(cmd))
             # sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
             get_input_files.append(
-                f"scp -p {self.ssh_arg_uws}:{UPLOADS_PATH}/{job.jobid}/{fname} {wd}/{fname}"
+                f"scp -p {self.ssh_arg_uws}:{fname} {wd}/input_{fname_wd}"
             )
-        for furl in files["URI"]:
+        for furl in files["url"]:
             # fname = furl.split('/')[-1]
             # cmd = ['ssh', self.ssh_arg,
             #        'wget -q {} -O {}/{}'.format(furl, wd, fname)]

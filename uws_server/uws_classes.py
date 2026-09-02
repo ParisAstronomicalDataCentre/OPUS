@@ -295,14 +295,14 @@ class Job:
         if rname in self.parameters:
             # The result filename is a defined parameter of the job
             fname = self.parameters[rname]["value"]
-            fname = fname.split("file://")[-1]
+            fname = fname.split("/")[-1]
         elif rname in self.jdl.content["parameters"]:
             # The result filename is a parameter with a default value in the JDL
             fname = self.jdl.content["parameters"][rname]["default"]
         else:
             # The result filename is the name given as default in the JDL
             fname = self.jdl.content["generated"][rname]["default"]
-        logger.debug(f"Result filename for {rname} is {fname}")
+        logger.debug(f"Result filename for '{rname}' is {fname}")
         return fname
 
     # ----------
@@ -312,18 +312,18 @@ class Job:
     def set_from_post(self, post, files):
         """Set attributes and parameters from POST"""
         logger.info(
-            f"POST: {post}"
+            f"POST: {post.__dict__}"
         )
         # Read JDL
         self.jdl.read(self.jobname)
-        # Pop UWS attributes keywords from POST or set by default
         self.execution_duration = self.jdl.content.get(
             "executionDuration", EXECUTION_DURATION_DEF
         )
-        # Pop internal attributes
+        # OPUS internal attributes
         for pname in ["control_parameters", "csrf_token"]:
             if pname in post:
                 post.pop(pname)
+        # UWS standard attributes keywords, and other control paramerters (e.g. SLURM)
         for pname in CONTROL_PARAMETERS_KEYS:
             if pname in post:
                 value = post.pop(pname)
@@ -333,125 +333,135 @@ class Job:
                     "entity_id": None,
                 }
                 logger.info(
-                    f'Control parameter: "{pname}" = {value}'
+                    f"Control parameter: '{pname}' = {value}"
                 )
                 if pname in UWS_PARAMETERS:
+                    # remove the prefix uws_ to update the class attribute
                     pname = upper2underscore(
                         pname.split("uws_")[-1]
-                    )  # remove the prefix uws_ to update the class attribute
+                    )
                     # self.parameters[pname] = {'value': value, 'byref': False}
                     setattr(self, pname, value)
+
         # Save job as is for now
         self.storage.save(self, save_attributes=True, save_parameters=True)
-        # Search input/used entities in POST/files
-        upload_dir = os.path.join(UPLOADS_PATH, self.jobid)
+
+        job_upload_dir = os.path.join(UPLOADS_PATH, self.jobid)
+
+        # Search input/used entities as defined in JDL
         for pname in self.jdl.content.get("used", {}):
+
             entity = {}
             content_type = self.jdl.content["used"][pname].get("content_type", None)
+            url_jdl = self.jdl.content["used"][pname].get("url", None)
+
+            # TODO: identify and store array of values
+
+            # 1/ Input is a file from the form (so an entity)
             if pname in list(files.keys()):
-                # 1/ Parameter is a file from the form (so an entity)
-                post_p = post.pop(pname)
+                post_p = post.pop(pname)  # pop pname as the case is treated
                 f = files[pname]
-                if not os.path.isdir(upload_dir):
-                    os.makedirs(upload_dir)
-                f.save(os.path.join(upload_dir, f.filename))
-                # value = f.filename
+                if not os.path.isdir(job_upload_dir):
+                    os.makedirs(job_upload_dir)
+                f.save(os.path.join(job_upload_dir, f.filename))
                 logger.info(
-                    f'Input "{pname}" is a file and was downloaded ({f.filename})'
+                    f"Input '{pname}' is a file from the form and was uploaded as {f.filename}"
                 )
-                # Check if file already exists in entity store (hash + ID in name or jobid) and add in Used table
+                # Add in Used table, check if file already exists in entity store (hash + ID in name or jobid) and
                 entity = self.storage.register_entity(
                     file_name=f.filename,
-                    file_dir=upload_dir,
+                    file_dir=job_upload_dir,
                     used_jobid=self.jobid,
                     used_role=pname,
                     owner=self.user.name,
                     content_type=content_type,
                 )
-                # Parameter value is thus set to the filename (in the upload dir for the job)
-                value = "file://" + f.filename
+                # Input value is set to the filename (in the upload dir for the job)
+                value = f"file://{job_upload_dir}/{f.filename}"
                 # url = ARCHIVE_URL.format(ID=entity['entity_id'])
                 # if url.startswith('/'):
                 #     url = '{}{}'.format(BASE_URL, url)
                 # value = url
             else:
-                # 2/ Parameter is a value, possibly an ID (set from post or by default)
-                # TODO: identify and store array of values
+
+                # 2/ Input is a value
                 if pname in post:
                     # Get value from post
                     value = post.pop(pname)
                     logger.info(
-                        f'Input "{pname}" is a value (or an identifier, or a URL): {value}'
+                        f"Input '{pname}' is a value set from form (identifier or URL): {value}"
                     )
                 else:
                     # Set value to its default
                     value = self.jdl.content["used"][pname]["default"]
-                    logger.info(f'Input "{pname}" set by default: {value}')
-                # 3/ Try to convert value/ID to a URL and download
-                url_jdl = self.jdl.content["used"][pname]["url"]
-                if url_jdl:
-                    if url_jdl == "file://$ID":
-                        # expecting a file according to JDL, but pname is in POST, so the value is probably a URL
+                    logger.info(
+                        f"Input '{pname}' is a value set by default (identifier or URL): {value}"
+                    )
+
+                # 3/ Input is given as an Archive relative path (see ARCHIVE and Archive settings)
+                # TODO
+
+                # 4/ Input is an identifier in the entity store
+                store_url = f"{BASE_URL}/store?ID="
+                store_url_proxy = f"{UWS_CLIENT_ENDPOINT}/proxy/store?ID="
+                if store_url in value:
+                    entity_id = value.split(store_url)[1]
+                elif store_url_proxy in value:
+                    entity_id = value.split(store_url_proxy)[1]
+                else:
+                    entity_id = value
+                entity = self.storage.get_entity(entity_id, silent=False)
+                if entity:
+                    # convert value to file dir+name in store
+                    value = f"file://{entity.get('file_dir')}/{entity.get('file_name')}"
+                    logger.info(
+                        f"Input '{pname}' found in the entity store with ID={entity_id}: {value}"
+                    )
+
+                else:
+                    # 5/ Input is a URL
+                    furl = ""
+                    if any(s in value for s in ["http://", "https://"]):
                         furl = value
-                    else:
+                    elif url_jdl:
                         # take URL given in JDL, and replace $ID
                         furl = url_jdl.replace("$ID", value)
+                    # try to upload file from URL
                     try:
-                        # try to download the furl
                         r = requests.get(furl, allow_redirects=True)
                         if r.status_code == 200:
                             cd = r.headers.get("content-disposition")
                             filename = get_filename_from_cd(cd)
-                            if not os.path.isdir(upload_dir):
-                                os.makedirs(upload_dir)
-                            open(os.path.join(upload_dir, filename), "wb").write(
-                                r.content
-                            )
-                            logger.info(
-                                f'Input "{pname}" is a URL and was downloaded : {furl}'
-                            )
+                            if not os.path.isdir(job_upload_dir):
+                                os.makedirs(job_upload_dir)
+                            open(os.path.join(job_upload_dir, filename), "wb").write(r.content)
                             entity = self.storage.register_entity(
                                 file_name=filename,
-                                file_dir=upload_dir,
+                                file_dir=job_upload_dir,
                                 used_jobid=self.jobid,
                                 used_role=pname,
                                 owner=self.user.name,
                                 content_type=content_type,
                             )
-                            # Parameter value is converted to the file name on server
-                            value = "file://" + filename
-                            # Parameter value is set to the URL of the file in the Entity Store
-                            # url = ARCHIVE_URL.format(ID=entity['entity_id'])
-                            # if url.startswith('/'):
-                            #     url = '{}{}'.format(BASE_URL, url)
-                            # value = url
+                            # Parameter value is converted to the file name on server (uploaded in job_upload_dir)
+                            value = f"file://{job_upload_dir}/{filename}"
+                            logger.info(
+                                f"Input '{pname}' is given as a URL and was uploaded: {furl}"
+                            )
                     except Exception as e:
                         logger.warning(
-                            f'Cannot upload URL for input "{pname}": {furl}\n{e}'
+                            f"Cannot upload URL for input '{pname}': {furl}\n{e}"
                         )
                         raise UserWarning(
-                            f'cannot upload URL for input "{pname}": {furl}'
-                        )
-                else:
-                    # no value in url_jdl (url in JDL)
-                    # 4/ check if value is an ID that already exists in the entity store
-                    entity_id = value
-                    entity = self.storage.get_entity(entity_id, silent=False)
-                    if entity:
-                        # convert value to file dir+name in store
-                        value = f"{entity.file_dir}/{entity.file_name}"
-                        logger.info(
-                            f'Input "{pname}" found in the entity store with ID={entity_id}: {value}'
-                        )
-                    pass
-                if not entity:
-                    pass
+                            f"Cannot upload URL for input '{pname}': {furl}"
+                        ) from None
             # Add Input entity to UWS parameters
             self.parameters[pname] = {
                 "value": value,
                 "byref": True,
                 "entity_id": entity.get("entity_id", None),
             }
+
         # Search JDL defined parameters in POST
         for pname in self.jdl.content.get("parameters", {}):
             # Check if it is a used entity
@@ -460,17 +470,20 @@ class Job:
                 ptype = self.jdl.content["parameters"][pname]["datatype"]
                 if pname in post:
                     value = post.pop(pname)
+                    logger.info(
+                        f"Parameter in JDL (set by POST): '{pname}' = {value}"
+                    )
                 else:
                     # pname not in post, so use default value given in JDL
                     value = self.jdl.content["parameters"][pname]["default"]
+                    logger.info(
+                        f"Parameter in JDL (set to default): '{pname}' = {value}"
+                    )
                 self.parameters[pname] = {
                     "value": value,
                     "byref": False,
                     "entity_id": None,
                 }
-                logger.info(
-                    f'Parameter in JDL: "{pname}" = {value}'
-                )
             else:
                 # pname not found in POST
                 pass
@@ -487,7 +500,7 @@ class Job:
                     "entity_id": None,
                 }
                 logger.info(
-                    f'Parameter not in JDL: "{pname}" = {value}'
+                    f"Parameter not in JDL: '{pname}' = {value}"
                 )
         # for fname, f in files.iteritems():
         # Save to storage
@@ -530,7 +543,7 @@ class Job:
         """
         self.jdl.read(self.jobname)
         params = ["# Required parameters"]
-        files = {"URI": [], "form": []}
+        files = {"url": [], "path": []}
         # Job parameters
         for pname, pdict in self.parameters.items():
             pvalue = pdict["value"]
@@ -538,12 +551,13 @@ class Job:
                 # Prepare file upload and convert param value for files
                 # Test if file is given as a URI, prefixed by http*
                 if any(s in pvalue for s in ["http://", "https://"]):
-                    files["URI"].append(pvalue)
-                    pvalue = pvalue.split("/")[-1]
+                    files["url"].append(pvalue)
+                    pvalue = pvalue.split('/')[-1]
                 # Test if file was uploaded from the form, and given the "file://" prefix (see self.set_from_post())
-                if "file://" in pvalue:
-                    pvalue = pvalue.split("file://")[-1]
-                    files["form"].append(pvalue)
+                elif "file://" in pvalue:
+                    fname = pvalue.split('file://')[-1]
+                    files["path"].append(fname)
+                    pvalue = f"input_{fname.split('/')[-1]}"
             params.append(pname + '="' + pvalue + '"')
         # Used
         params.append("# Used")
@@ -552,12 +566,13 @@ class Job:
                 pvalue = pdict["default"]
                 if get_files:
                     if any(s in pvalue for s in ["http://", "https://"]):
-                        files["URI"].append(pvalue)
-                        pvalue = pvalue.split("/")[-1]
+                        files["url"].append(pvalue)
+                        pvalue = pvalue.split('/')[-1]
                     # Test if file was uploaded from the form, and given the "file://" prefix (see self.set_from_post())
                     if "file://" in pvalue:
-                        pvalue = pvalue.split("file://")[-1]
-                        files["form"].append(pvalue)
+                        fname = pvalue.split('file://')[-1]
+                        files["path"].append(fname)
+                        pvalue = f"input_{fname.split('/')[-1]}"
                 params.append(pname + '="' + pvalue + '"')
         # Results
         params.append("# Results")

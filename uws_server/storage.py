@@ -603,7 +603,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                         .first()
                     )
                     if entity:
-                        logger.debug(entity)
+                        # logger.debug(entity)
                         rrow_dict["file_name"] = entity.entity_id + "_" + entity.file_name
                         rrow_dict["hash"] = entity.hash
                     results_dict[rrow.name] = rrow_dict
