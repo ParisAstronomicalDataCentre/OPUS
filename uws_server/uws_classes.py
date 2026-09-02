@@ -312,7 +312,7 @@ class Job:
     def set_from_post(self, post, files):
         """Set attributes and parameters from POST"""
         logger.info(
-            f"POST: {str(post)}"
+            f"POST: {dict(post)}"
         )
         # Read JDL
         self.jdl.read(self.jobname)
@@ -471,7 +471,7 @@ class Job:
                 if pname in post:
                     value = post.pop(pname)
                     logger.info(
-                        f"Parameter in JDL (set by POST): '{pname}' = {value}"
+                        f"Parameter in JDL (set from POST): '{pname}' = {value}"
                     )
                 else:
                     # pname not in post, so use default value given in JDL
