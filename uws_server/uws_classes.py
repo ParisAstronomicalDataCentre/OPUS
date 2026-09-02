@@ -312,7 +312,7 @@ class Job:
     def set_from_post(self, post, files):
         """Set attributes and parameters from POST"""
         logger.info(
-            f"POST: {post.__dict__}"
+            f"POST: {str(post)}"
         )
         # Read JDL
         self.jdl.read(self.jobname)
