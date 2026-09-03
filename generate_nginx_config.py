@@ -43,7 +43,10 @@ http {{
         server_name {server_name};
 
         location = /favicon.ico {{
-            alias {OPUS_ROOT}/favicon.ico;
+            proxy_pass http://opus_client/favicon.ico ;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header Authorization $http_authorization;
             expires 30d;
             add_header Cache-Control "public, no-transform";
         }}
