@@ -9,7 +9,7 @@
     <PARAM name="contact_email" value="admin@opus" arraysize="*" datatype="char" utype="voprov:Agent.email"/>
     <PARAM name="executionDuration" value="20" datatype="int" utype="uws:Job.executionDuration"/>
     <PARAM name="quote" value="10" datatype="int" utype="uws:Job.quote"/>
-    <PARAM name="script" value="sleep 10&#13;&#10;echo $text &gt; $output&#13;&#10;" arraysize="*" datatype="char"/>
+    <PARAM name="script" value="sleep 5&#13;&#10;echo $text &gt; $output&#13;&#10;" arraysize="*" datatype="char"/>
     <GROUP name="InputParams">
       <PARAM ID="text" name="text" datatype="char" value="Hello World" arraysize="*">
         <DESCRIPTION>Input text for test job</DESCRIPTION>
