@@ -5,7 +5,7 @@
 
 var samp_client = ( function($) {
 	"use strict";
-    
+
 	var jss = {},
 	metadata = {
 		"samp.name": "OPUS",
@@ -14,7 +14,7 @@ var samp_client = ( function($) {
 		"author.name": "Mathieu Servillat",
 		"author.affiliation": "Observatoire de Paris, LUTH",
 		"author.mail": "mathieu.servillat@obspm.fr"
-			
+
 	},
 	MTYPE_VOTABLE = "table.load.votable",
 	MTYPE_GEOJSON = "table.load.geojson",
@@ -278,9 +278,9 @@ var samp_client = ( function($) {
 		sender.send();
 	}
 
-	$(window).unload(function() {
-		unregister();
-	});
+	$(window).on('beforeunload', function() {
+    unregister();
+  });
 
 	/* Exports. */
 	jss.samp_votable = samp_votable;
