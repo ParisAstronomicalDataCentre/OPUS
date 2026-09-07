@@ -411,9 +411,8 @@ if MANAGER == "SLURM":
 if not os.path.isabs(VAR_PATH):
     VAR_PATH = os.path.join(APP_PATH, VAR_PATH)
 SQLITE_FILE = VAR_PATH + "/db/" + SQLITE_FILE_NAME
-if STORAGE_TYPE == "SQLite":
-    # Path to sqlite db file
-    SQLALCHEMY_DB = "sqlite:///" + SQLITE_FILE
+# Path to sqlite db file
+SQLALCHEMY_DB = "sqlite:///" + SQLITE_FILE
 if STORAGE_TYPE == "PostgreSQL":
     SQLALCHEMY_DB = f"postgresql://{PGSQL_USER}:{PGSQL_PASSWORD}@{PGSQL_HOST}:{PGSQL_PORT}/{PGSQL_DATABASE}"
 # Logging

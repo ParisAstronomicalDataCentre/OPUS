@@ -16,8 +16,8 @@ therefore it is possible to retrieve only attributes, parameters or results so a
 the number of database access (in the case of a relational database)
 """
 
-import datetime as dt
 from datetime import datetime, date
+import os
 
 # from entity_store import *
 import hashlib
@@ -37,18 +37,18 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 import sqlite3
 from contextlib import contextmanager
 
-from .settings import *
+from .settings import logger, SHA_ALGO, SQLALCHEMY_DB, STORAGE_TYPE, TOKEN_GEN, JOB_ATTRIBUTES, ARCHIVE, RESULTS_PATH, UPLOADS_PATH, ARCHIVE_URL, BASE_URL, SQLITE_FILE, PGSQL_HOST, PGSQL_PORT, PGSQL_DATABASE, PGSQL_USER, PGSQL_PASSWORD, ENTITY_ID_GEN
 
 
 # ---------
 # Register a Custom Adapter for SQLite
 
 
-def adapt_datetime(dt: datetime) -> str:
-    return dt.isoformat()
+def adapt_datetime(value: datetime) -> str:
+    return value.isoformat()
 
-def adapt_date(d: date) -> str:
-    return d.isoformat()
+def adapt_date(value: date) -> str:
+    return value.isoformat()
 
 # Register the adapters globally
 sqlite3.register_adapter(datetime, adapt_datetime)

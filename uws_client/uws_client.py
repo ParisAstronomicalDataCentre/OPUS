@@ -10,6 +10,7 @@ import datetime
 import json
 import subprocess
 import uuid
+import os
 
 import requests
 import yaml
@@ -52,7 +53,7 @@ from requests.auth import HTTPBasicAuth
 from wtforms import PasswordField, StringField
 from wtforms.validators import InputRequired
 
-from .settings import *
+from .settings import logger, VAR_PATH, APP_PATH, CONFIG_FILE, EDITABLE_CONFIG, OIDC_IDPS, ADMIN_NAME, ADMIN_DEFAULT_PW, ADMIN_TOKEN, TESTUSER_NAME, TESTUSER_DEFAULT_PW, PERMANENT_SESSION_LIFETIME, SQLALCHEMY_TRACK_MODIFICATIONS, SQLALCHEMY_TRACK_MODIFICATIONS, SECURITY_BLUEPRINT_NAME, SECURITY_FLASH_MESSAGES, SECURITY_URL_PREFIX, SECURITY_PASSWORD_SALT, SECURITY_USER_IDENTITY_ATTRIBUTES, SECURITY_REGISTERABLE, SECURITY_SEND_REGISTER_EMAIL, SECURITY_CHANGEABLE, SECURITY_SEND_PASSWORD_CHANGE_EMAIL, MAIL_SERVER, MAIL_PORT, SENDER_EMAIL, MAIL_USE_SSL, MAIL_USE_TLS, SQLALCHEMY_DATABASE_URI, SECURITY_POST_LOGIN_VIEW, SECURITY_POST_LOGOUT_VIEW, SECURITY_EMAIL_SENDER, UWS_CLIENT_ENDPOINT, UWS_SERVER_URL_JS, BASE_URL, UWS_SERVER_URL, UWS_SERVER_ENDPOINT, SCIM_ENDPOINT, UWS_AUTH, CLIENT_TITLE, HOME_CONTENT
 
 # ----------
 # Helper functions
@@ -102,6 +103,7 @@ app.secret_key = (
 # app.config.update(EDITABLE_CONFIG)  # Default editable config
 app.config["SESSION_TYPE"] = "filesystem"
 app.config.from_object(__name__)  # load config from this file (see settings.py)
+# app.config.from_object(".settings")  # load config from settings.py
 
 mail = Mail(app)
 

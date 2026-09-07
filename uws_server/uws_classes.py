@@ -6,6 +6,7 @@ Defines classes for UWS objects job and job_list
 """
 
 import datetime as dt
+import os
 import re
 import shutil
 import urllib.error
@@ -18,7 +19,7 @@ import yaml
 from blinker import signal
 
 from . import managers, storage, uws_jdl
-from .settings import *
+from .settings import logger, ARCHIVE_URL, ADMIN_NAME, ADMIN_TOKEN, JOB_EVENT_TOKEN, MAINTENANCE_TOKEN, CHECK_PERMISSIONS, CHECK_OWNER, STORAGE, MANAGER, JDL, ACTIVE_PHASES, NJOBS_MAX, DESTRUCTION_INTERVAL, EXECUTION_DURATION_DEF, DT_FMT, CONTROL_PARAMETERS_KEYS, UWS_PARAMETERS, UPLOADS_PATH, BASE_URL, UWS_CLIENT_ENDPOINT, JOBDATA_PATH, RESULTS_PATH, UWS_SERVER_ENDPOINT, GENERATE_PROV, JOB_ATTRIBUTES, JOB_ID_GEN
 
 # ---------
 # Exceptions/Warnings
