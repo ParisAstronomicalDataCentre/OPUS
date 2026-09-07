@@ -1510,7 +1510,7 @@ requires-dist = [
     { name = "uvicorn" },
     { name = "voprov" },
     { name = "webtest" },
-    { name = "wtforms", specifier = "==3.2.1" },
+    { name = "wtforms" },
 ]
 
 [package.metadata.requires-dev]
