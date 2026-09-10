@@ -760,6 +760,7 @@ def uws_server_request(uri, method="GET", init_request=None):
         params = {}
         if init_request:
             params = init_request.args
+        logger.debug(f"{method} {server_url}{uri} {params} {auth})")
         response = requests.get(f"{server_url}{uri}", params=params, auth=auth)
     # Return response
     logger.debug(f"{method} {server_url}{uri} ({response.status_code})")

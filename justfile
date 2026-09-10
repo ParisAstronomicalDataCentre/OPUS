@@ -55,3 +55,13 @@ stop:
     pkill -f uvicorn || true
     @sleep 1
     sudo nginx -s stop
+
+docker_build:
+    docker build -t opus-app .
+
+docker_run:
+    docker run -p 80:80 --add-host="opus-docker.localhost:127.0.0.1" --name opus-container opus-app &
+
+docker_rm_all:
+    docker stop $(docker ps -a -q)
+    docker rm $(docker ps -a -q)

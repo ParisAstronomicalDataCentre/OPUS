@@ -1,0 +1,3 @@
+
+- change endpoint from /rest to /uws
+- set this endpoint via UWS_SERVER_ENDPOINT in settings_local.py if default is not adapted (e.g. keep UWS_SERVER_ENDPOINT = '/rest')

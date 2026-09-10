@@ -832,9 +832,13 @@ class Job:
                 # TODO: merge with internal provenance (retrieve entity identifiers and save them instead ?
                 provenance.prov2json(pdoc, rfdir + "provenance.json")
                 provenance.prov2xml(pdoc, rfdir + "provenance.xml")
-                provenance.prov2svg(pdoc, rfdir + "provenance.svg")
             except Exception as e:
                 logger.error("ERROR in provenance files creation: " + str(e))
+                raise
+            try:
+                provenance.prov2svg(pdoc, rfdir + "provenance.svg")
+            except Exception as e:
+                logger.error("ERROR in provenance svg creation: " + str(e))
                 raise
             for ptype in ptypes:
                 # PROV JSON

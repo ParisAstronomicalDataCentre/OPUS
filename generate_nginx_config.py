@@ -73,6 +73,10 @@ http {{
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header Authorization $http_authorization;
         }}
+
+        location / {{
+            return 301 /opus_client/;
+        }}
     }}
 }}
 """
