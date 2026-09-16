@@ -1,0 +1,55 @@
+FROM python:3.11-slim
+
+# Installer Nginx et git
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl git graphviz nginx && \
+    rm -rf /var/lib/apt/lists/* && \
+    apt-get clean
+
+# Install uv
+RUN pip install uv
+
+RUN mkdir -p /opt/opus
+WORKDIR /opt/opus
+
+# Copy pyproject.toml and install les dependencies
+COPY README.md ./
+COPY pyproject.toml .
+COPY uv.lock ./
+
+# set environment with uv
+RUN uv sync
+
+# Create /opt/opus and copy uws_client/ and uws_server/
+COPY favicon* ./
+COPY .git ./.git
+COPY .htaccess ./.htaccess
+COPY uws_client/ /opt/opus/uws_client/
+COPY uws_server/ /opt/opus/uws_server/
+COPY uws_client/app.py ./app_client.py
+COPY uws_server/app.py ./app_server.py
+COPY settings_docker.py ./settings_local.py
+COPY generate_nginx_config.py ./generate_nginx_config.py
+COPY docker_set_host.py ./docker_set_host.py
+
+RUN mkdir -p /opt/opus/var/logs
+RUN mkdir -p /var/opt/opus/logs
+
+# Configuration de l'environnement
+ENV PYTHONUNBUFFERED=1
+ENV PATH="/usr/local/bin:$PATH"
+RUN uv run /opt/opus/generate_nginx_config.py
+# RUN uv run /opt/opus/docker_set_host.py
+
+# Exposition du port
+EXPOSE 80
+
+# Copier la configuration Nginx
+COPY nginx/nginx.conf /etc/nginx/nginx.conf
+
+# Copy the script
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+
+# Use the script in CMD
+CMD ["/start.sh"]
