@@ -108,6 +108,11 @@ EXECUTION_DURATION_MAX = 3600  # in seconds
 # Maximum wait time (UWS1.1)
 WAIT_TIME_MAX = 600  # in seconds
 
+# Maximum size of a urlencoded request body, or of the non-file fields of a multipart
+# request (bottle.BaseRequest.MEMFILE_MAX, bottle default is 100kB). Uploaded files are
+# not limited by this value (stored on disk). Aligned on nginx client_max_body_size (1m).
+MEMFILE_MAX = 1024 * 1024  # in bytes
+
 # ARCHIVED phase (UWS1.1)
 USE_ARCHIVED_PHASE = True
 

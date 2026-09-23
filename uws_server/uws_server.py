@@ -19,6 +19,7 @@ from subprocess import CalledProcessError
 import requests
 from blinker import signal
 from bottle import (
+    BaseRequest,
     Bottle,
     HTTPError,
     abort,
@@ -53,6 +54,7 @@ from .settings import (
     MAIL_SERVER,
     MAINTENANCE_TOKEN,
     MANAGER,
+    MEMFILE_MAX,
     NJOBS_MAX,
     PHASE_CONVERT,
     PHASES,
@@ -86,6 +88,7 @@ from .uws_classes import (
 
 # Create a new application
 app = Bottle()
+BaseRequest.MEMFILE_MAX = MEMFILE_MAX
 
 
 # ----------
@@ -326,11 +329,16 @@ def abort_500_except(msg=None, msg_public=None):
     """Show exception and traceback on web page if DEBUG=true
 
     Returns:
+        HTTPError status if the exception is an HTTPError
         500 Internal Server Error
         500 Internal Server Error + traceback (on DEBUG=true)
     """
     # message = "{0}: {1!r}".format(type().__name__, ex.args)
     exc_info = sys.exc_info()
+    # Keep status of HTTPError raised in the try block (e.g. 413 from bottle, 403, 404)
+    if isinstance(exc_info[1], HTTPError):
+        logger.warning(f"{exc_info[1].status}: {exc_info[1].body}")
+        raise exc_info[1]
     tb = traceback.format_exception(*exc_info)
     message = "".join(tb)
     if msg:
