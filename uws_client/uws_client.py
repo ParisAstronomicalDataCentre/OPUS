@@ -503,7 +503,7 @@ def preferences():
         save_config()
         flash("Preferences successfully updated", "info")
         return redirect(url_for("preferences"), 303)
-    return render_template("preferences.html")
+    return render_template("preferences.html", defaults=SETTINGS_CONFIG)
 
 
 @app.route("/admin/server_accounts", methods=["GET"])

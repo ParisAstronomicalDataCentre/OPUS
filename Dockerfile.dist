@@ -24,6 +24,7 @@ RUN uv sync --locked --no-dev --no-install-project
 COPY favicon* ./
 COPY .git ./.git
 COPY .htaccess ./.htaccess
+COPY opus_config/ /opt/opus/opus_config/
 COPY uws_client/ /opt/opus/uws_client/
 COPY uws_server/ /opt/opus/uws_server/
 COPY uws_client/app.py ./app_client.py

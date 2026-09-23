@@ -37,6 +37,7 @@ dependencies = [
     "rdflib",
     "WebTest",
     "WTForms",  # ==3.1.2
+    "pydantic-settings>=2.15.0",
 ]
 
 [build-system]
@@ -44,7 +45,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["uws_client", "uws_server"]
+packages = ["opus_config", "uws_client", "uws_server"]
 
 [dependency-groups]
 dev = [
@@ -60,6 +61,10 @@ line-length = 88
 target-version = "py310"
 select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "SIM"]
 ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# Settings are uppercase, as the environment variables (OPUS_<NAME>) and Flask config
+"opus_config/*" = ["N802"]
 
 # Black configuration
 [tool.black]
