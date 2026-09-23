@@ -43,6 +43,26 @@ class EntityAccessDenied(Exception):
     pass
 
 
+class ParameterTooLong(Exception):
+    """Parameter value is longer than its storage column"""
+
+    pass
+
+
+# Maximum length of parameter values, as defined for the storage columns (see storage.py)
+PARAMETER_MAX_LENGTH = {"runId": 64}  # jobs.run_id
+PARAMETER_MAX_LENGTH_DEF = 255  # job_parameters.value
+
+
+def check_parameter_length(pname, value):
+    """Raise ParameterTooLong if value cannot be stored (PostgreSQL rejects it, SQLite does not)"""
+    max_length = PARAMETER_MAX_LENGTH.get(pname, PARAMETER_MAX_LENGTH_DEF)
+    if isinstance(value, str) and len(value) > max_length:
+        raise ParameterTooLong(
+            f"Value of parameter '{pname}' is too long ({len(value)} characters, max {max_length})"
+        )
+
+
 # ---------
 # Helper function
 
@@ -315,6 +335,9 @@ class Job:
         logger.info(
             f"POST: {dict(post)}"
         )
+        # Check values before anything is saved
+        for pname, value in post.items():
+            check_parameter_length(pname, value)
         # Read JDL
         self.jdl.read(self.jobname)
         self.execution_duration = self.jdl.content.get(
@@ -525,6 +548,7 @@ class Job:
 
     def set_parameter(self, pname, value):
         """Set job attribute and save to storage"""
+        check_parameter_length(pname, value)
         self.parameters[pname]["value"] = value
         # self.save_description()
         self.storage.save(

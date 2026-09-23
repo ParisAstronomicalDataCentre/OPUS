@@ -194,6 +194,11 @@ class TestJobUpdateParam:
         assert response.status_int == 303
         assert "/" + jobname + "/" + jobid in response.location
         self.assert_job_attribute(jobid, "parameters/input", "test_updated")
+        # Value too long to be stored
+        post = {"VALUE": "x" * 256}
+        response = test_app.post(url, post, status=400)
+        assert response.status_int == 400
+        self.assert_job_attribute(jobid, "parameters/input", "test_updated")
         # Change parameter of COMPLETED job
         job = uws_server.Job(jobname, jobid, uws_server.User("test_", "test_"))
         job.change_status("COMPLETED")
@@ -206,6 +211,19 @@ class TestJobUpdateParam:
         print(" --> " + response.html.pre.string)
         assert response.status_int == 500
         self.assert_job_attribute(jobid, "parameters/input", "test_updated")
+
+
+class TestParameterLength:
+    """Test creation of jobs with parameter values too long to be stored"""
+
+    def test_create_too_long(self):
+        url = UWS_EP + "/" + jobname
+        for post in [{"runId": "r" * 65}, {"input": "x" * 256}]:
+            response = test_app.post(url, post, status=400)
+            print(url + " " + str({k: len(v) for k, v in post.items()}))
+            print(" --> " + response.status)
+            assert response.status_int == 400
+            assert "too long" in response.text
 
 
 class TestJobAbort:

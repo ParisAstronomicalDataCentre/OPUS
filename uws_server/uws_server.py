@@ -79,6 +79,7 @@ from .uws_classes import (
     Job,
     JobAccessDenied,
     JobList,
+    ParameterTooLong,
     TooManyJobs,
     User,
     special_users,
@@ -274,10 +275,10 @@ class BadRequestError(Exception):
 
 
 def abort_400(msg=""):
-    """HTTP Error 403
+    """HTTP Error 400
 
     Returns:
-        403 Forbidden
+        400 Bad Request
     """
     logger.warning(f"Bad Request: {msg} ({request.urlparts.path})")
     abort(400, f"{msg}")
@@ -1550,6 +1551,7 @@ def create_job(jobname):
 
     Returns:
         303 See other: /<jobname>/<jobid> (on success)
+        400 Bad Request (on ParameterTooLong)
         500 Internal Server Error (on error)
     """
     # Create new jobid for new job
@@ -1568,6 +1570,8 @@ def create_job(jobname):
                 )
         finally:
             job.close()
+    except ParameterTooLong as e:
+        abort_400(str(e))
     except UserWarning as e:
         abort_500(e.args[0])
     except TooManyJobs:
@@ -2145,6 +2149,7 @@ def post_parameter(jobname, jobid, pname):
 
     Returns:
         303 See other: /<jobname>/<jobid>/parameters (on success)
+        400 Bad Request (on ParameterTooLong)
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
@@ -2169,6 +2174,8 @@ def post_parameter(jobname, jobid, pname):
                 ) from None
         finally:
             job.close()
+    except ParameterTooLong as e:
+        abort_400(str(e))
     except JobAccessDenied as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
