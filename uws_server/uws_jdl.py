@@ -14,7 +14,13 @@ import json
 import lxml.etree as ETree
 import yaml
 
-from .settings import *
+import os
+from .settings import (
+    settings,
+    CONTROL_PARAMETERS,
+    CONTROL_PARAMETERS_KEYS,
+    logger,
+)
 
 # ---------
 # jdl.content structure (class or dict?)
@@ -88,7 +94,7 @@ class JDLFile:
     by the UWS server: save(), read().
     """
 
-    def __init__(self, jdl_path=JDL_PATH, scripts_path=SCRIPTS_PATH):
+    def __init__(self, jdl_path=settings.JDL_PATH, scripts_path=settings.SCRIPTS_PATH):
         self.content = {
             "control_parameters": CONTROL_PARAMETERS,
             "control_parameters_keys": CONTROL_PARAMETERS_KEYS,
@@ -108,7 +114,7 @@ class JDLFile:
     def _get_filename(self, jobname, jobid=None):
         fn = f"{self.jdl_path}/{jobname}{self.extension}"
         if jobid:
-            fn_jobid = f"{JOBDATA_PATH}/{jobid}/{jobname}{self.extension}"
+            fn_jobid = f"{settings.JOBDATA_PATH}/{jobid}/{jobname}{self.extension}"
             if os.path.isfile(fn_jobid):
                 fn = fn_jobid
         # logger.info('JDL filename: ' + fn)
@@ -235,7 +241,7 @@ class JDLFile:
                 "generated": results,
                 "used": used,
                 "executionDuration": post.get(
-                    "executionDuration", EXECUTION_DURATION_DEF
+                    "executionDuration", settings.EXECUTION_DURATION_DEF
                 ),
                 "quote": post.get("quote", ""),
                 "script": post.get("script", ""),
@@ -245,7 +251,7 @@ class JDLFile:
 
 class JSONFile(JDLFile):
 
-    def __init__(self, jdl_path=JDL_PATH, scripts_path=SCRIPTS_PATH):
+    def __init__(self, jdl_path=settings.JDL_PATH, scripts_path=settings.SCRIPTS_PATH):
         self.content = {
             "control_parameters": CONTROL_PARAMETERS,
             "control_parameters_keys": CONTROL_PARAMETERS_KEYS,
@@ -303,7 +309,7 @@ class VOTFile(JDLFile):
         "file": "file",
     }
 
-    def __init__(self, jdl_path=JDL_PATH, scripts_path=SCRIPTS_PATH):
+    def __init__(self, jdl_path=settings.JDL_PATH, scripts_path=settings.SCRIPTS_PATH):
         self.content = {
             "control_parameters": CONTROL_PARAMETERS,
             "control_parameters_keys": CONTROL_PARAMETERS_KEYS,
@@ -1058,7 +1064,7 @@ class VOTFile(JDLFile):
 
 class WADLFile(JDLFile):
 
-    def __init__(self, jdl_path=JDL_PATH, scripts_path=SCRIPTS_PATH):
+    def __init__(self, jdl_path=settings.JDL_PATH, scripts_path=settings.SCRIPTS_PATH):
         self.content = {
             "control_parameters": CONTROL_PARAMETERS,
             "control_parameters_keys": CONTROL_PARAMETERS_KEYS,
@@ -1118,7 +1124,7 @@ class WADLFile(JDLFile):
             ETree.SubElement(roelt, "doc").text = r.get("annotation", "")
             jdl_ropts.append(roelt)
         # Read WADL UWS template as XML Tree
-        filename = f"{JDL_PATH}/uws_template.wadl"
+        filename = f"{settings.JDL_PATH}/uws_template.wadl"
         with open(filename) as f:
             jdl_string = f.read()
         jdl_tree = ETree.fromstring(jdl_string)

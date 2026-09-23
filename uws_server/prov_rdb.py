@@ -20,12 +20,12 @@ from sqlalchemy import (
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-from .settings import *
+from .settings import settings
 
 
 class ProvDB:
 
-    def __init__(self, db_string=SQLALCHEMY_DB):
+    def __init__(self, db_string=settings.SQLALCHEMY_DB):
         self.engine = create_engine(
             db_string
         )  # , connect_args={'check_same_thread': False})

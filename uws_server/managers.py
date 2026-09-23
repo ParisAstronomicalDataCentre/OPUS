@@ -19,9 +19,10 @@ import datetime as dt
 import re
 import subprocess as sp
 
-from .settings import *
+import os
+from .settings import settings, PHASE_CONVERT, SLURM_PARAMETERS, logger
 
-if MANAGER == "Local":
+if settings.MANAGER == "Local":
     import signal
     import threading
 
@@ -42,10 +43,10 @@ class Manager:
 
     def __init__(self):
         # PATHs
-        self.scripts_path = SCRIPTS_PATH
-        self.jobdata_path = JOBDATA_PATH
-        self.workdir_path = LOCAL_WORKDIR_PATH
-        self.results_path = RESULTS_PATH
+        self.scripts_path = settings.SCRIPTS_PATH
+        self.jobdata_path = settings.JOBDATA_PATH
+        self.workdir_path = settings.LOCAL_WORKDIR_PATH
+        self.results_path = settings.RESULTS_PATH
 
     # jobdata_path = '.'
     # scripts_path = '.'
@@ -84,11 +85,11 @@ class Manager:
                 '    if [ -z "$2" ]',
                 "    then",
                 "        curl -k -s -o $jd/job_curl_signal_$1.log"
-                f' -d "jobid=$JOBID" -d "phase=$1" {BASE_URL}/handler/job_event',
+                f' -d "jobid=$JOBID" -d "phase=$1" {settings.BASE_URL}/handler/job_event',
                 "    else",
                 '        echo "$1 $2"',
                 "        curl -k -s -o $jd/job_curl_signal_$1.log"
-                f' -d "jobid=$JOBID" -d "phase=$1" --data-urlencode "error_msg=$2" {BASE_URL}/handler/job_event',
+                f' -d "jobid=$JOBID" -d "phase=$1" --data-urlencode "error_msg=$2" {settings.BASE_URL}/handler/job_event',
                 "    fi",
                 "}",
                 "error_handler() {",
@@ -142,7 +143,7 @@ class Manager:
                 "    else",
                 "        for fresult in $flist; do",
                 "            hash=`shasum -a "
-                + SHA_ALGO
+                + settings.SHA_ALGO
                 + " $fresult | awk '{{print $1}}'`",
                 "            echo $fresult: >> $jd/results.yml",
                 '            echo "  result_name: {rname}" >> $jd/results.yml',
@@ -291,16 +292,16 @@ class LocalManager(Manager):
 
     def __init__(self):
         # PATHs
-        self.scripts_path = SCRIPTS_PATH
-        self.jobdata_path = JOBDATA_PATH
-        self.workdir_path = LOCAL_WORKDIR_PATH
-        self.results_path = RESULTS_PATH
+        self.scripts_path = settings.SCRIPTS_PATH
+        self.jobdata_path = settings.JOBDATA_PATH
+        self.workdir_path = settings.LOCAL_WORKDIR_PATH
+        self.results_path = settings.RESULTS_PATH
 
     def _send_signal(self, process_id, phase, error_msg=""):
         data = {"jobid": process_id, "phase": phase}
         if error_msg:
             data["error_msg"] = error_msg
-        url = f"{BASE_URL}/handler/job_event"
+        url = f"{settings.BASE_URL}/handler/job_event"
         response = requests.post(url, data)
         logger.info(f"job event sent {response.content}")
         if response.status_code != 200:
@@ -479,16 +480,16 @@ class SLURMManager(Manager):
 
     def __init__(self):
         # Set basic attributes
-        self.host = SLURM_URL
-        self.user = SLURM_USER
-        self.mail = SLURM_MAIL_USER
+        self.host = settings.SLURM_URL
+        self.user = settings.SLURM_USER
+        self.mail = settings.SLURM_MAIL_USER
         self.ssh_arg = self.user + "@" + self.host
-        self.ssh_arg_uws = LOCAL_USER + "@" + BASE_URL.split("://")[-1]
+        self.ssh_arg_uws = settings.LOCAL_USER + "@" + settings.BASE_URL.split("://")[-1]
         # PATHs
-        self.scripts_path = SLURM_SCRIPTS_PATH
-        self.jobdata_path = SLURM_JOBDATA_PATH
-        self.workdir_path = SLURM_WORKDIR_PATH
-        self.results_path = SLURM_RESULTS_PATH
+        self.scripts_path = settings.SLURM_SCRIPTS_PATH
+        self.jobdata_path = settings.SLURM_JOBDATA_PATH
+        self.workdir_path = settings.SLURM_WORKDIR_PATH
+        self.results_path = settings.SLURM_RESULTS_PATH
 
     def _make_sbatch(self, job, get_input_files=None):
         """Make sbatch file content for given job
@@ -519,9 +520,9 @@ class SLURMManager(Manager):
         # Insert server/job specific sbatch commands
         for k in SLURM_PARAMETERS:
             subk = k.split("slurm_")[-1]
-            if subk in SLURM_SBATCH_DEFAULT:
+            if subk in settings.SLURM_SBATCH_DEFAULT:
                 # Check if parameter is given in job.parameters or use default
-                v = job.parameters.get(k, {"value": SLURM_SBATCH_DEFAULT[subk]})
+                v = job.parameters.get(k, {"value": settings.SLURM_SBATCH_DEFAULT[subk]})
                 sbatch.append("#SBATCH --{}={}".format(subk, v["value"]))
             elif k in job.parameters:
                 v = job.parameters.get(k)
@@ -564,7 +565,7 @@ class SLURMManager(Manager):
                 raise
         get_input_files = []
         # Create parameter file
-        param_file_local = f"{TEMP_PATH}/{job.jobid}_parameters.sh"
+        param_file_local = f"{settings.TEMP_PATH}/{job.jobid}_parameters.sh"
         param_file_distant = f"{jd}/parameters.sh"
         with open(param_file_local, "w") as f:
             # parameters are a list of key=value (easier for bash sourcing)
@@ -601,7 +602,7 @@ class SLURMManager(Manager):
             # sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
             get_input_files.append(f"curl -OJ {furl}")
         # Create sbatch file
-        sbatch_file_local = f"{TEMP_PATH}/{job.jobid}_sbatch.sh"
+        sbatch_file_local = f"{settings.TEMP_PATH}/{job.jobid}_sbatch.sh"
         sbatch_file_distant = f"{jd}/sbatch.sh"
         with open(sbatch_file_local, "w") as f:
             sbatch = self._make_sbatch(job, get_input_files=get_input_files)
@@ -700,17 +701,17 @@ class SLURMManager(Manager):
             "scp",
             "-rp",
             f"{self.ssh_arg}:{self.jobdata_path}/{job.jobid}",
-            JOBDATA_PATH,
+            settings.JOBDATA_PATH,
         ]
         logger.debug(" ".join(cmd))
         sp.check_output(cmd, stderr=sp.STDOUT, universal_newlines=True)
         # Retrieve results
-        if COPY_RESULTS:
+        if settings.COPY_RESULTS:
             cmd = [
                 "scp",
                 "-rp",
                 f"{self.ssh_arg}:{self.results_path}/{job.jobid}",
-                RESULTS_PATH,
+                settings.RESULTS_PATH,
             ]
             logger.debug(" ".join(cmd))
             try:
@@ -722,7 +723,7 @@ class SLURMManager(Manager):
         """Copy job script to SLURM server"""
         cmd = [
             "scp",
-            f"{SCRIPTS_PATH}/{jobname}.sh",
+            f"{settings.SCRIPTS_PATH}/{jobname}.sh",
             f"{self.ssh_arg}:{self.scripts_path}/{jobname}.sh",
         ]
         logger.debug(" ".join(cmd))

@@ -53,7 +53,12 @@ from requests.auth import HTTPBasicAuth
 from wtforms import PasswordField, StringField
 from wtforms.validators import InputRequired
 
-from .settings import settings, logger, VAR_PATH, APP_PATH, CONFIG_FILE, EDITABLE_CONFIG, OIDC_IDPS, ADMIN_NAME, ADMIN_DEFAULT_PW, ADMIN_TOKEN, TESTUSER_NAME, TESTUSER_DEFAULT_PW, PERMANENT_SESSION_LIFETIME, SQLALCHEMY_TRACK_MODIFICATIONS, SQLALCHEMY_TRACK_MODIFICATIONS, SECURITY_BLUEPRINT_NAME, SECURITY_FLASH_MESSAGES, SECURITY_URL_PREFIX, SECURITY_PASSWORD_SALT, SECURITY_USER_IDENTITY_ATTRIBUTES, SECURITY_REGISTERABLE, SECURITY_SEND_REGISTER_EMAIL, SECURITY_CHANGEABLE, SECURITY_SEND_PASSWORD_CHANGE_EMAIL, MAIL_SERVER, MAIL_PORT, SENDER_EMAIL, MAIL_USE_SSL, MAIL_USE_TLS, SQLALCHEMY_DATABASE_URI, SECURITY_POST_LOGIN_VIEW, SECURITY_POST_LOGOUT_VIEW, SECURITY_EMAIL_SENDER, UWS_CLIENT_ENDPOINT, UWS_SERVER_URL_JS, BASE_URL, UWS_SERVER_URL, UWS_SERVER_ENDPOINT, SCIM_ENDPOINT, UWS_AUTH, CLIENT_TITLE, HOME_CONTENT
+from .settings import (
+    settings,
+    APP_PATH,
+    EDITABLE_CONFIG,
+    logger,
+)
 
 # ----------
 # Helper functions
@@ -96,12 +101,12 @@ def git_version():
 # Create the application instance :)
 
 
-app = Flask(__name__, instance_relative_config=True, instance_path=VAR_PATH)
+app = Flask(__name__, instance_relative_config=True, instance_path=settings.VAR_PATH)
 app.secret_key = settings.SECRET_KEY.get_secret_value()
 # app.config.update(EDITABLE_CONFIG)  # Default editable config
 app.config["SESSION_TYPE"] = "filesystem"
-app.config.from_object(__name__)  # load config from this file (see settings.py)
-# app.config.from_object(".settings")  # load config from settings.py
+app.config.from_object("uws_client.settings")  # Flask-Security config and EDITABLE_CONFIG
+app.config.from_mapping(settings.export())  # settings (see opus_config/client.py)
 
 mail = Mail(app)
 
@@ -111,8 +116,8 @@ mail = Mail(app)
 
 
 def load_config():
-    if os.path.isfile(CONFIG_FILE):
-        with open(CONFIG_FILE) as cf:
+    if os.path.isfile(settings.CONFIG_FILE):
+        with open(settings.CONFIG_FILE) as cf:
             econf = yaml.safe_load(cf)
             app.config.update(econf)
         logger.info("Loading editable config: " + repr(econf))
@@ -127,7 +132,7 @@ SETTINGS_CONFIG = {k: app.config[k] for k in EDITABLE_CONFIG if k in app.config}
 
 def save_config():
     logger.info("Saving editable config")
-    with open(CONFIG_FILE, "w") as cf:
+    with open(settings.CONFIG_FILE, "w") as cf:
         econf = {
             k: app.config[k]
             for k in EDITABLE_CONFIG
@@ -240,8 +245,8 @@ security = Security(
 # https://github.com/authlib/demo-oauth-client/blob/master/flask-google-login/app.py -> works smoothly !
 
 oauth = OAuth(app)
-idp_names = {idp["title"]: i for i, idp in enumerate(OIDC_IDPS)}
-for idp in OIDC_IDPS:
+idp_names = {idp["title"]: i for i, idp in enumerate(settings.OIDC_IDPS)}
+for idp in settings.OIDC_IDPS:
     oauth.register(
         name=idp["title"],
         client_id=idp["client_id"],
@@ -367,24 +372,24 @@ def create_db():
             description="Access to job list",
         )
         # Create admin user if not found
-        if not user_datastore.find_user(email=ADMIN_NAME):
+        if not user_datastore.find_user(email=settings.ADMIN_NAME):
             user_datastore.create_user(
-                email=ADMIN_NAME,
-                password=hash_password(ADMIN_DEFAULT_PW),
-                token=ADMIN_TOKEN,
+                email=settings.ADMIN_NAME,
+                password=hash_password(settings.ADMIN_DEFAULT_PW.get_secret_value()),
+                token=settings.ADMIN_TOKEN.get_secret_value(),
                 active=True,
                 roles=["admin", "job_definition", "job_list"],
             )
-            logger.info("Add user to db: " + ADMIN_NAME)
+            logger.info("Add user to db: " + settings.ADMIN_NAME)
         # Create test user if not found
-        if not user_datastore.find_user(email=TESTUSER_NAME):
+        if not user_datastore.find_user(email=settings.TESTUSER_NAME):
             user_datastore.create_user(
-                email=TESTUSER_NAME,
-                password=hash_password(TESTUSER_DEFAULT_PW),
+                email=settings.TESTUSER_NAME,
+                password=hash_password(settings.TESTUSER_DEFAULT_PW.get_secret_value()),
                 active=True,
                 roles=["user", "job_definition", "job_list"],
             )
-            logger.info("Add user to db: " + TESTUSER_NAME)
+            logger.info("Add user to db: " + settings.TESTUSER_NAME)
         db.session.commit()
         logger.debug("Database created or updated")
     except Exception as e:

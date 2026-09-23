@@ -27,9 +27,9 @@ for the secrets can be generated from it:
 
 The secrets `OPUS_SECRET_KEY` and `OPUS_SECURITY_PASSWORD_SALT` are required, the client does not start without them.
 
-**Note:** the file `$OPUS_DIR/settings_local.py` used by previous versions is still read (with a deprecation
-warning), with a lower priority than `.env`. It can be converted to a `.env` file, keeping the salt used until now
-(changing the salt invalidates all the existing passwords of the client users):
+**Note:** the file `$OPUS_DIR/settings_local.py` used by previous versions is no longer read (OPUS does not start if
+it is present without a `.env` file). It can be converted to a `.env` file, keeping the salt used until now
+(changing the salt invalidates all the existing passwords of the client users), and should then be removed:
 
     $ python generate_env.py --from settings_local.py > .env
 

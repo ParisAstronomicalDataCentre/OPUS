@@ -18,13 +18,9 @@ import os
 
 import bleach
 
-from opus_config import APP_PATH, ClientSettings
+from opus_config import APP_PATH, ClientSettings  # noqa: F401 (APP_PATH is imported from here)
 
 settings = ClientSettings()
-
-# Compatibility: settings as module-level names (e.g. BASE_URL), to be replaced by
-# settings.<NAME> in the modules that import them
-globals().update(settings.export())
 
 # Editable configuration keywords (can be modified from the preference web page by the
 # admin only), stored in CONFIG_FILE and override the settings

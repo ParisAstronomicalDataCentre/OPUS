@@ -1,6 +1,6 @@
 """
 Settings for the tests, set as environment variables before uws_server is imported
-(environment variables have priority over .env and settings_local.py)
+(environment variables have priority over .env)
 """
 
 import datetime as dt

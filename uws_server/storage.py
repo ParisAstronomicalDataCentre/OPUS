@@ -37,7 +37,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 import sqlite3
 from contextlib import contextmanager
 
-from .settings import logger, SHA_ALGO, SQLALCHEMY_DB, STORAGE_TYPE, TOKEN_GEN, JOB_ATTRIBUTES, ARCHIVE, RESULTS_PATH, UPLOADS_PATH, ARCHIVE_URL, BASE_URL, SQLITE_FILE, PGSQL_HOST, PGSQL_PORT, PGSQL_DATABASE, PGSQL_USER, PGSQL_PASSWORD, ENTITY_ID_GEN
+from .settings import settings, JOB_ATTRIBUTES, logger
 
 
 # ---------
@@ -148,7 +148,7 @@ class EntityStorage:
         :return: hax hash
         """
         BUF_SIZE = 65536  # lets read stuff in 64kb chunks!
-        sha = getattr(hashlib, "sha" + SHA_ALGO)()
+        sha = getattr(hashlib, "sha" + settings.SHA_ALGO)()
         with open(path, "rb") as f:
             while True:
                 data = f.read(BUF_SIZE)
@@ -198,7 +198,7 @@ class EntityStorage:
 
 class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
 
-    def __init__(self, db_string=SQLALCHEMY_DB):
+    def __init__(self, db_string=settings.SQLALCHEMY_DB):
         self.engine = create_engine(
             db_string
         )  # , connect_args={'check_same_thread': False})
@@ -208,7 +208,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         # dt_regexp = u'(\d+)/(\d+)/(\d+)T(\d+):(\d+):(\d+)'
         # myDateTime = DateTime().with_variant(sqlite.DATETIME(storage_format=dt_format, regexp=dt_regexp), 'sqlite')
         # myDateTime = DateTime().with_variant(sqlite.TIMESTAMP(), 'sqlite')
-        if STORAGE_TYPE == "SQLite":
+        if settings.STORAGE_TYPE == "SQLite":
             myDateTime = DateTime().with_variant(String(19), "sqlite")
             myBoolean = Boolean().with_variant(String(5), "sqlite")
         else:
@@ -260,7 +260,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         class User(self.Base):
             __tablename__ = "users"
             name = Column(String(80), primary_key=True)
-            token = Column(String(255), default=TOKEN_GEN)
+            token = Column(String(255), default=settings.new_token)
             roles = Column(String(255), default="")
             active = Column(Boolean(), default=True)
             first_connection = Column(myDateTime)
@@ -667,12 +667,12 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                     logger.warning(f"No file_dir given for file entity: {kwargs}")
                     kwargs["file_dir"] = "."
                 # Redefine file_dir if ARCHIVE is Local (the generated file has been copied to RESULTS_PATH)
-                if ARCHIVE == "Local":
+                if settings.ARCHIVE == "Local":
                     if "result_name" in kwargs:
-                        kwargs["file_dir"] = os.path.join(RESULTS_PATH, kwargs["jobid"])
+                        kwargs["file_dir"] = os.path.join(settings.RESULTS_PATH, kwargs["jobid"])
                     elif "used_jobid" in kwargs:
                         kwargs["file_dir"] = os.path.join(
-                            UPLOADS_PATH, kwargs["used_jobid"]
+                            settings.UPLOADS_PATH, kwargs["used_jobid"]
                         )
                 # Compute hash if not given (look for file in file_dir)
                 if "hash" not in kwargs:
@@ -767,7 +767,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                         logger.info(f"Entity found from given entity_id={entity_id}")
                 else:
                     # Generate unique identifier for the new entity
-                    entity_id = ENTITY_ID_GEN(**kwargs)
+                    entity_id = settings.new_entity_id(**kwargs)
 
             # Check if entity is being used (pop used_jobid and used_role and add Used entry)
             if "used_jobid" in kwargs:
@@ -790,9 +790,9 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                 kwargs["entity_id"] = entity_id
                 # Define access_url if not given
                 if "access_url" not in kwargs:
-                    url = ARCHIVE_URL.format(ID=entity_id)
+                    url = settings.ARCHIVE_URL.format(ID=entity_id)
                     if url.startswith("/"):
-                        url = f"{BASE_URL}{url}"
+                        url = f"{settings.BASE_URL}{url}"
                     kwargs["access_url"] = url
                 # Store info in DB
                 e = self.Entity(**kwargs)
@@ -1062,7 +1062,7 @@ class SQLJobStorage(SQLStorage, JobStorage):
 class SQLiteStorage:
     """Manage job information storage using SQLite"""
 
-    def __init__(self, db_file=SQLITE_FILE):
+    def __init__(self, db_file=settings.SQLITE_FILE):
         # Get connector to db_file
 
         import sqlite3
@@ -1095,11 +1095,11 @@ class PostgreSQLStorage:
 
     def __init__(
         self,
-        host=PGSQL_HOST,
-        port=PGSQL_PORT,
-        database=PGSQL_DATABASE,
-        user=PGSQL_USER,
-        password=PGSQL_PASSWORD,
+        host=settings.PGSQL_HOST,
+        port=settings.PGSQL_PORT,
+        database=settings.PGSQL_DATABASE,
+        user=settings.PGSQL_USER,
+        password=settings.PGSQL_PASSWORD.get_secret_value(),
     ):
         # Get connector to db_file
         import psycopg2

@@ -19,7 +19,15 @@ import yaml
 from blinker import signal
 
 from . import managers, storage, uws_jdl
-from .settings import logger, ARCHIVE_URL, ADMIN_NAME, ADMIN_TOKEN, JOB_EVENT_TOKEN, MAINTENANCE_TOKEN, CHECK_PERMISSIONS, CHECK_OWNER, STORAGE, MANAGER, JDL, ACTIVE_PHASES, NJOBS_MAX, DESTRUCTION_INTERVAL, EXECUTION_DURATION_DEF, DT_FMT, CONTROL_PARAMETERS_KEYS, UWS_PARAMETERS, UPLOADS_PATH, BASE_URL, UWS_CLIENT_ENDPOINT, JOBDATA_PATH, RESULTS_PATH, UWS_SERVER_ENDPOINT, GENERATE_PROV, JOB_ATTRIBUTES, JOB_ID_GEN
+from .settings import (
+    settings,
+    ACTIVE_PHASES,
+    CONTROL_PARAMETERS_KEYS,
+    DT_FMT,
+    JOB_ATTRIBUTES,
+    UWS_PARAMETERS,
+    logger,
+)
 
 # ---------
 # Exceptions/Warnings
@@ -119,20 +127,20 @@ class User:
         return self.name == other.name and self.token == other.token
 
     def check_admin(self):
-        return self == User(ADMIN_NAME, ADMIN_TOKEN)
+        return self == User(settings.ADMIN_NAME, settings.ADMIN_TOKEN.get_secret_value())
 
 
 special_users = [
-    User(ADMIN_NAME, ADMIN_TOKEN),
-    User("job_event", JOB_EVENT_TOKEN),
-    User("maintenance", MAINTENANCE_TOKEN),
+    User(settings.ADMIN_NAME, settings.ADMIN_TOKEN.get_secret_value()),
+    User("job_event", settings.JOB_EVENT_TOKEN.get_secret_value()),
+    User("maintenance", settings.MAINTENANCE_TOKEN.get_secret_value()),
     User("test_", "test_"),
 ]
 
 
 def check_permissions(job):
     """Check if user has rights to create/edit such a job, else raise JobAccessDenied"""
-    if CHECK_PERMISSIONS:
+    if settings.CHECK_PERMISSIONS:
         if job.user in special_users:
             # logger.debug('Permission granted for special user {} (job {}/{})'.format(job.user.name, job.jobname, job.jobid))
             pass
@@ -148,7 +156,7 @@ def check_permissions(job):
 
 def check_owner(job):
     """Check if user has rights to create/edit such a job, else raise JobAccessDenied"""
-    if CHECK_OWNER:
+    if settings.CHECK_OWNER:
         if job.user in special_users:
             pass
         else:
@@ -211,40 +219,40 @@ class Job:
         else:
             if not jobid:
                 # Create new jobid
-                jobid = JOB_ID_GEN()
+                jobid = settings.new_job_id()
             self.jobid = jobid
             self.process_id = None
         self.user = user
         # Link to the storage, e.g. SQLite, see settings.py
         # self.storage = storage.__dict__[STORAGE + 'JobStorage']()
         # logger.debug('Init storage for job {}'.format(self.jobid))
-        self.storage = getattr(storage, STORAGE + "JobStorage")()
+        self.storage = getattr(storage, settings.STORAGE + "JobStorage")()
 
         # Check if user has rights to create/edit such a job, else raise JobAccessDenied
         check_permissions(self)
 
         # Link to the job manager, e.g. SLURM, see settings.py
         # self.manager = managers.__dict__[MANAGER + 'Manager']()
-        self.manager = getattr(managers, MANAGER + "Manager")()
+        self.manager = getattr(managers, settings.MANAGER + "Manager")()
         # Prepare jdl attribute, see settings.py
         # self.jdl = uws_jdl.__dict__[JDL]()
-        self.jdl = getattr(uws_jdl, JDL)()
+        self.jdl = getattr(uws_jdl, settings.JDL)()
 
         # Fill job attributes
         if from_post:
             # Check if max number of running jobs is not reached
             jobs = self.storage.get_list(self, phase=ACTIVE_PHASES, where_owner=True)
-            if NJOBS_MAX and len(jobs) >= NJOBS_MAX:
+            if settings.NJOBS_MAX and len(jobs) >= settings.NJOBS_MAX:
                 raise TooManyJobs(
-                    f"Maximum number of active jobs reached for {user.name} ({NJOBS_MAX})"
+                    f"Maximum number of active jobs reached for {user.name} ({settings.NJOBS_MAX})"
                 )
             # Create a new PENDING job and save to storage
             now = dt.datetime.now()
             destruction = dt.timedelta(
-                DESTRUCTION_INTERVAL
+                settings.DESTRUCTION_INTERVAL
             )  # default interval for UWS server
             duration = dt.timedelta(
-                0, EXECUTION_DURATION_DEF
+                0, settings.EXECUTION_DURATION_DEF
             )  # default duration of 60s, from jdl ?
             self.phase = "PENDING"
             self.quote = duration.total_seconds()
@@ -341,7 +349,7 @@ class Job:
         # Read JDL
         self.jdl.read(self.jobname)
         self.execution_duration = self.jdl.content.get(
-            "executionDuration", EXECUTION_DURATION_DEF
+            "executionDuration", settings.EXECUTION_DURATION_DEF
         )
         # OPUS internal attributes
         for pname in ["control_parameters", "csrf_token"]:
@@ -370,7 +378,7 @@ class Job:
         # Save job as is for now
         self.storage.save(self, save_attributes=True, save_parameters=True)
 
-        job_upload_dir = os.path.join(UPLOADS_PATH, self.jobid)
+        job_upload_dir = os.path.join(settings.UPLOADS_PATH, self.jobid)
 
         # Search input/used entities as defined in JDL
         for pname in self.jdl.content.get("used", {}):
@@ -426,8 +434,8 @@ class Job:
                 # TODO
 
                 # 4/ Input is an identifier in the entity store
-                store_url = f"{BASE_URL}/store?ID="
-                store_url_proxy = f"{UWS_CLIENT_ENDPOINT}/proxy/store?ID="
+                store_url = f"{settings.BASE_URL}/store?ID="
+                store_url_proxy = f"{settings.UWS_CLIENT_ENDPOINT}/proxy/store?ID="
                 if store_url in value:
                     entity_id = value.split(store_url)[1]
                 elif store_url_proxy in value:
@@ -636,9 +644,9 @@ class Job:
                 eid = pdict.get("entity_id", 0)
                 if eid and eid != "0":
                     # Convert to URL for XML output
-                    url = ARCHIVE_URL.format(ID=pdict["entity_id"])
+                    url = settings.ARCHIVE_URL.format(ID=pdict["entity_id"])
                     if url.startswith("/"):
-                        url = f"{BASE_URL}{url}"
+                        url = f"{settings.BASE_URL}{url}"
                     value = url
                 value = urllib.parse.quote_plus(urllib.parse.unquote_plus(value))
                 by_ref = str(pdict["byref"]).lower()
@@ -746,7 +754,7 @@ class Job:
     def add_results(self):
         now = dt.datetime.now()
         # TODO: retrieve entity identifiers from internal provenance if present
-        ip_name = os.path.join(JOBDATA_PATH, self.jobid, "internal_provenance.json")
+        ip_name = os.path.join(settings.JOBDATA_PATH, self.jobid, "internal_provenance.json")
         if os.path.isfile(ip_name):
             with open(ip_name) as f:
                 pdoc = yaml.safe_load(f)
@@ -758,13 +766,13 @@ class Job:
                         fdir, fname = os.path.split(eattr["prov:location"])
                         einfo["file_name"] = fname
                         if os.path.isfile(
-                            os.path.join(RESULTS_PATH, self.jobid, fname)
+                            os.path.join(settings.RESULTS_PATH, self.jobid, fname)
                         ):
-                            einfo["file_dir"] = os.path.join(RESULTS_PATH, self.jobid)
+                            einfo["file_dir"] = os.path.join(settings.RESULTS_PATH, self.jobid)
                         elif os.path.isfile(
-                            os.path.join(UPLOADS_PATH, self.jobid, fname)
+                            os.path.join(settings.UPLOADS_PATH, self.jobid, fname)
                         ):
-                            einfo["file_dir"] = os.path.join(UPLOADS_PATH, self.jobid)
+                            einfo["file_dir"] = os.path.join(settings.UPLOADS_PATH, self.jobid)
                         elif fdir:
                             einfo["file_dir"] = fdir
                         else:
@@ -777,7 +785,7 @@ class Job:
                         )
                         logger.info(f"Entity added to job {self.jobid}: {str(entity)}")
         # Read results.yml to know generated results (those that are located in the results directory)
-        rf_name = os.path.join(JOBDATA_PATH, self.jobid, "results.yml")
+        rf_name = os.path.join(settings.JOBDATA_PATH, self.jobid, "results.yml")
         result_list = {}
         if os.path.isfile(rf_name):
             with open(rf_name) as rf:
@@ -821,11 +829,11 @@ class Job:
 
     def add_logs(self):
         # Link job logs stdout and stderr (added as a result)
-        rfdir = f"{JOBDATA_PATH}/{self.jobid}/"
+        rfdir = f"{settings.JOBDATA_PATH}/{self.jobid}/"
         for rname in ["stdout", "stderr"]:
             rfname = rname + ".log"
             if os.path.isfile(rfdir + rfname):
-                url = f"{BASE_URL}/{UWS_SERVER_ENDPOINT}/{self.jobname}/{self.jobid}/{rname}"
+                url = f"{settings.BASE_URL}/{settings.UWS_SERVER_ENDPOINT}/{self.jobname}/{self.jobid}/{rname}"
                 rattr = {
                     "access_url": url,
                     "content_type": "text/plain",
@@ -840,10 +848,10 @@ class Job:
     def add_provenance(self):
         # Create PROV files (added as a result)
         logger.debug("Adding provenance")
-        if GENERATE_PROV:
+        if settings.GENERATE_PROV:
             from . import provenance
 
-            rfdir = f"{JOBDATA_PATH}/{self.jobid}/"
+            rfdir = f"{settings.JOBDATA_PATH}/{self.jobid}/"
             ptypes = ["json", "xml", "svg"]
             content_types = {
                 "json": "application/json",
@@ -869,7 +877,7 @@ class Job:
                 rname = "prov" + ptype
                 rfname = "provenance." + ptype
                 if os.path.isfile(rfdir + rfname):
-                    url = f"{BASE_URL}/{UWS_SERVER_ENDPOINT}/{self.jobname}/{self.jobid}/prov{ptype}"
+                    url = f"{settings.BASE_URL}/{settings.UWS_SERVER_ENDPOINT}/{self.jobname}/{self.jobid}/prov{ptype}"
                     rattr = {
                         "access_url": url,
                         "content_type": content_types[ptype],
@@ -949,15 +957,15 @@ class Job:
             # Send command to manager
             self.manager.delete(self)
         # Remove uploaded files corresponding to jobid if needed
-        uploads_dir = f"{UPLOADS_PATH}/{self.jobid}"
+        uploads_dir = f"{settings.UPLOADS_PATH}/{self.jobid}"
         if os.path.isdir(uploads_dir):
             shutil.rmtree(uploads_dir)
         # Remove jobdata files corresponding to jobid if needed
-        jobdata_dir = f"{JOBDATA_PATH}/{self.jobid}"
+        jobdata_dir = f"{settings.JOBDATA_PATH}/{self.jobid}"
         if os.path.isdir(jobdata_dir):
             shutil.rmtree(jobdata_dir)
         # Remove results files corresponding to jobid if needed
-        results_dir = f"{RESULTS_PATH}/{self.jobid}"
+        results_dir = f"{settings.RESULTS_PATH}/{self.jobid}"
         if os.path.isdir(results_dir):
             shutil.rmtree(results_dir)
         # Remove job and entities from storage
@@ -1105,7 +1113,7 @@ class JobList:
         self.user = user
         # Link to the storage, e.g. SQLiteStorage, see settings.py
         # logger.debug('Init storage for joblist')
-        self.storage = getattr(storage, STORAGE + "JobStorage")()
+        self.storage = getattr(storage, settings.STORAGE + "JobStorage")()
 
         # Check if user has rights to create/edit such a job, else raise JobAccessDenied
         check_permissions(self)
@@ -1155,7 +1163,7 @@ class JobList:
         }
         xml_jobs = ETree.Element("uws:jobs", attrib=xmlns_uris)
         for job in self.jobs:
-            href = "{}/{}/{}".format(BASE_URL, self.jobname, job["jobid"])
+            href = "{}/{}/{}".format(settings.BASE_URL, self.jobname, job["jobid"])
             xml_job = ETree.SubElement(
                 xml_jobs,
                 "uws:jobref",

@@ -26,7 +26,7 @@ test_app = TestApp(uws_server.app)  # , extra_environ=dict(REMOTE_USER='test'))
 
 jobname = "ctbin"
 
-UWS_EP = uws_server.UWS_SERVER_ENDPOINT
+UWS_EP = uws_server.settings.UWS_SERVER_ENDPOINT
 
 
 class TestGet(unittest.TestCase):

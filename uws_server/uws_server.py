@@ -32,47 +32,16 @@ from bottle import (
 
 from . import managers, storage, uws_jdl
 from .settings import (
+    settings,
     ACTIVE_PHASES,
-    ADMIN_EMAIL,
-    ADMIN_NAME,
-    ALLOW_ANONYMOUS,
     APP_PATH,
-    APP_TOKENS,
-    BASE_IP,
-    BASE_URL,
-    CHECK_OWNER,
-    CHECK_PERMISSIONS,
-    DEBUG,
-    DT_FMT,
-    JDL,
-    JOB_EVENT_TOKEN,
-    JOB_SERVERS,
-    JOBDATA_PATH,
-    LOG_PATH,
-    LOG_FILE_SUFFIX,
-    MAIL_PORT,
-    MAIL_SERVER,
-    MAINTENANCE_TOKEN,
-    MANAGER,
-    MEMFILE_MAX,
-    NJOBS_MAX,
-    PHASE_CONVERT,
-    PHASES,
-    RESULTS_PATH,
-    SCIM_ENDPOINT,
-    SCRIPTS_PATH,
-    SENDER_EMAIL,
-    SQLALCHEMY_DB,
-    STORAGE,
-    TERMINAL_PHASES,
-    TRUSTED_CLIENTS,
-    USE_ARCHIVED_PHASE,
-    UWS_CLIENT_ENDPOINT,
-    UWS_SERVER_ENDPOINT,
-    WAIT_TIME_MAX,
     CustomAdapter,
-    logger_init,
+    DT_FMT,
+    PHASES,
+    PHASE_CONVERT,
+    TERMINAL_PHASES,
     logger,
+    logger_init,
 )
 from .uws_classes import (
     EntityAccessDenied,
@@ -89,7 +58,7 @@ from .uws_classes import (
 
 # Create a new application
 app = Bottle()
-BaseRequest.MEMFILE_MAX = MEMFILE_MAX
+BaseRequest.MEMFILE_MAX = settings.MEMFILE_MAX
 
 
 # ----------
@@ -165,17 +134,17 @@ def set_user(jobname=None):
         user = User(user_name, user_token)
     # Add user name at the end of each log entry
     logger = CustomAdapter(logger_init, {"username": user.name})
-    if user == User("anonymous", "anonymous") and not ALLOW_ANONYMOUS:
+    if user == User("anonymous", "anonymous") and not settings.ALLOW_ANONYMOUS:
         abort_403("User anomymous not allowed on this server")
     # Add user if not in db
-    job_storage = getattr(storage, STORAGE + "JobStorage")()
+    job_storage = getattr(storage, settings.STORAGE + "JobStorage")()
     job_storage.add_user(user.name, token=user.token)
     # Check and add roles from APP_TOKEN
-    if APP_TOKENS and user_token in APP_TOKENS:
+    if settings.APP_TOKENS and user_token in settings.APP_TOKENS:
         # An application token was found and roles will be added
-        active = APP_TOKENS[user_token]["active"]
-        app_name = APP_TOKENS[user_token]["name"]
-        app_jobs = APP_TOKENS[user_token]["jobs"]
+        active = settings.APP_TOKENS[user_token]["active"]
+        app_name = settings.APP_TOKENS[user_token]["name"]
+        app_jobs = settings.APP_TOKENS[user_token]["jobs"]
         logger.debug(
             f"APP_TOKEN {app_name} found for user {user_name}, roles associated: {app_jobs}"
         )
@@ -206,10 +175,10 @@ def is_job_server(func):
     def is_job_server_wrapper(*args, **kwargs):
         # IP or part of an IP has to be in the JOB_SERVERS list
         ip = get_real_ip()
-        matching = [x for x in JOB_SERVERS if x in ip]
+        matching = [x for x in settings.JOB_SERVERS if x in ip]
         if matching:
             logger.info(
-                f"Access authorized to {request.urlparts.path} for {ip} ({JOB_SERVERS[matching[0]]})"
+                f"Access authorized to {request.urlparts.path} for {ip} ({settings.JOB_SERVERS[matching[0]]})"
             )
             pass
         else:
@@ -225,10 +194,10 @@ def is_client_trusted(func):
     def is_client_trusted_wrapper(*args, **kwargs):
         # IP or part of an IP has to be in the TRUSTED_CLIENTS list
         ip = get_real_ip()
-        matching = [x for x in TRUSTED_CLIENTS if x in ip]
+        matching = [x for x in settings.TRUSTED_CLIENTS if x in ip]
         if matching:
             logger.info(
-                f"Access authorized to {request.urlparts.path} for {ip} ({TRUSTED_CLIENTS[matching[0]]})"
+                f"Access authorized to {request.urlparts.path} for {ip} ({settings.TRUSTED_CLIENTS[matching[0]]})"
             )
             pass
         else:
@@ -243,7 +212,7 @@ def is_localhost(func):
 
     def is_localhost_wrapper(*args, **kwargs):
         ip = get_real_ip()
-        if ip != BASE_IP and ip != "::1" and ip != "127.0.0.1":
+        if ip != settings.BASE_IP and ip != "::1" and ip != "127.0.0.1":
             abort_403(f"{ip} is not localhost")
         return func(*args, **kwargs)
 
@@ -345,7 +314,7 @@ def abort_500_except(msg=None, msg_public=None):
     if msg:
         message += msg
     logger.error("\n" + message)
-    if DEBUG:
+    if settings.DEBUG:
         abort(500, message)
     else:
         if not msg_public:
@@ -366,9 +335,9 @@ def home():
     logger.info("  Python sys.exec_prefix: " + sys.exec_prefix)
     resp_status_code = 0
     try:
-        client_url = UWS_CLIENT_ENDPOINT
+        client_url = settings.UWS_CLIENT_ENDPOINT
         if "http" not in client_url:
-            client_url = BASE_URL + UWS_CLIENT_ENDPOINT
+            client_url = settings.BASE_URL + settings.UWS_CLIENT_ENDPOINT
         resp = requests.get(client_url)
         resp_status_code = resp.status_code
     except Exception as e:
@@ -388,14 +357,14 @@ def favicon():
 
 def send_mail(send_to, subject, msg):
     try:
-        server = smtplib.SMTP(MAIL_SERVER, MAIL_PORT)
+        server = smtplib.SMTP(settings.MAIL_SERVER, settings.MAIL_PORT)
         # server.starttls()
         # server.login("YOUR EMAIL ADDRESS", "YOUR PASSWORD")
         mail_text = MIMEText(msg, "plain")
         mail_text["Subject"] = subject
-        mail_text["From"] = SENDER_EMAIL
+        mail_text["From"] = settings.SENDER_EMAIL
         mail_text["To"] = send_to
-        server.sendmail(SENDER_EMAIL, send_to, mail_text.as_string())
+        server.sendmail(settings.SENDER_EMAIL, send_to, mail_text.as_string())
         server.quit()
     except Exception:
         logger.error("Unable to send email")
@@ -407,7 +376,7 @@ def send_mail(send_to, subject, msg):
 # ----------
 
 
-@app.get(SCIM_ENDPOINT + "/ServiceProviderConfig")
+@app.get(settings.SCIM_ENDPOINT + "/ServiceProviderConfig")
 def scim_ServiceProviderConfig():
     scim_config = {
         "schemas": ["urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig"],
@@ -423,7 +392,7 @@ def scim_ServiceProviderConfig():
     return scim_config
 
 
-@app.get(SCIM_ENDPOINT + "/Schemas")
+@app.get(settings.SCIM_ENDPOINT + "/Schemas")
 def scim_Schemas():
     scim_schemas = {
         "id": "urn:ietf:params:scim:schemas:core:2.0:User",
@@ -475,7 +444,7 @@ def scim_Schemas():
     return scim_schemas
 
 
-@app.get(SCIM_ENDPOINT + "/ResourceTypes")
+@app.get(settings.SCIM_ENDPOINT + "/ResourceTypes")
 def scim_ResourceTypes():
     scim_resourcetypes = {
         "itemsPerPage": 1,
@@ -494,7 +463,7 @@ def scim_ResourceTypes():
     return scim_resourcetypes
 
 
-@app.get(SCIM_ENDPOINT + "/ResourceTypes/User")
+@app.get(settings.SCIM_ENDPOINT + "/ResourceTypes/User")
 def scim_ResourceTypes_User():
     scim_resourcetypes = {
         "id": "Users",
@@ -524,16 +493,16 @@ def user2scim(u):
     return user_dict
 
 
-@app.get(SCIM_ENDPOINT + "/Users")
+@app.get(settings.SCIM_ENDPOINT + "/Users")
 @is_client_trusted
 @is_admin
 def get_users():
-    job_storage = getattr(storage, STORAGE + "JobStorage")()
+    job_storage = getattr(storage, settings.STORAGE + "JobStorage")()
     users = job_storage.get_users()
     scim_user_resources = []
     for u in users:
         # do not expose opus-admin
-        if u["name"] != ADMIN_NAME:
+        if u["name"] != settings.ADMIN_NAME:
             scim_user_resources.append(user2scim(u))
     scim_users = {
         "itemsPerPage": 10000,
@@ -543,7 +512,7 @@ def get_users():
     return scim_users
 
 
-@app.post(SCIM_ENDPOINT + "/Users")
+@app.post(settings.SCIM_ENDPOINT + "/Users")
 @is_client_trusted
 @is_admin
 def create_user():
@@ -551,7 +520,7 @@ def create_user():
     if name:
         token = request.POST.get("token", "")
         roles = request.POST.get("roles", None)
-        job_storage = getattr(storage, STORAGE + "JobStorage")()
+        job_storage = getattr(storage, settings.STORAGE + "JobStorage")()
         job_storage.add_user(name, token=token, roles=roles)
         users = job_storage.get_users(name=name)
         if users:
@@ -564,11 +533,11 @@ def create_user():
         abort_500("No user name provided")
 
 
-@app.get(SCIM_ENDPOINT + "/Users/<name>")
+@app.get(settings.SCIM_ENDPOINT + "/Users/<name>")
 @is_client_trusted
 @is_admin
 def get_user(name):
-    job_storage = getattr(storage, STORAGE + "JobStorage")()
+    job_storage = getattr(storage, settings.STORAGE + "JobStorage")()
     users = job_storage.get_users(name=name)
     if users:
         u = users[0]
@@ -577,11 +546,11 @@ def get_user(name):
         abort_404(f"No user found with name {name}")
 
 
-@app.post(SCIM_ENDPOINT + "/Users/<name>")
+@app.post(settings.SCIM_ENDPOINT + "/Users/<name>")
 @is_client_trusted
 @is_admin
 def patch_user(name):
-    job_storage = getattr(storage, STORAGE + "JobStorage")()
+    job_storage = getattr(storage, settings.STORAGE + "JobStorage")()
     token = request.POST.get("user_token", None)
     if token:
         users = job_storage.get_users(name=name, token=token)
@@ -600,11 +569,11 @@ def patch_user(name):
         abort_404(f"No token found for user name {name}")
 
 
-@app.route(SCIM_ENDPOINT + "/Users/<name>", method="DELETE")
+@app.route(settings.SCIM_ENDPOINT + "/Users/<name>", method="DELETE")
 @is_client_trusted
 @is_admin
 def delete_user(name):
-    job_storage = getattr(storage, STORAGE + "JobStorage")()
+    job_storage = getattr(storage, settings.STORAGE + "JobStorage")()
     token = request.POST.get("user_token", None)
     username = job_storage.remove_user(name, token=token)
     if username:
@@ -642,15 +611,15 @@ def get_jobnames():
     try:
         # jobnames = ['copy', 'ctbin']
         # List jdl files (=available jobs)
-        jdl = getattr(uws_jdl, JDL)()
+        jdl = getattr(uws_jdl, settings.JDL)()
         jobnames_all = jdl.get_jobnames()
         jobnames = []
-        if not CHECK_PERMISSIONS or user.check_admin():
+        if not settings.CHECK_PERMISSIONS or user.check_admin():
             jobnames = jobnames_all
         else:
             # keep jobnames accessible to user
             # db = storage.__dict__[STORAGE + 'JobStorage']()
-            db = getattr(storage, STORAGE + "JobStorage")()
+            db = getattr(storage, settings.STORAGE + "JobStorage")()
             roles = db.get_roles(user)
             jobnames = [j for j in jobnames_all if j in roles]
         jobnames.sort()
@@ -680,7 +649,7 @@ def create_new_job_definition():
         if jobname:
             # Create JDL file from job_jdl
             # jdl = uws_jdl.__dict__[JDL]()
-            jdl = getattr(uws_jdl, JDL)()
+            jdl = getattr(uws_jdl, settings.JDL)()
             jdl.set_from_post(request.forms, user)
             # Save as a new job description
             jdl.save("tmp/" + jobname)
@@ -706,7 +675,7 @@ def import_job_definition():
         if f:
             # now = dt.datetime.now().isoformat().split('.')[0]
             # Get jobname from file name (?)
-            jdl = getattr(uws_jdl, JDL)()
+            jdl = getattr(uws_jdl, settings.JDL)()
             jobname = f.filename.split(jdl.extension)[
                 0
             ]  # e.g. remove _vot.xml at the end of filename
@@ -755,14 +724,14 @@ def validation_request_job_definition(jobname):
     # Check if client is trusted (only admin should be allowed to validate a job)
     user = set_user()
     try:
-        jdl = getattr(uws_jdl, JDL)()
+        jdl = getattr(uws_jdl, settings.JDL)()
         jdl_src = f"{jdl.jdl_path}/tmp/{jobname}{jdl.extension}"
         if os.path.isfile(jdl_src):
             # send email to admin
             # mail.
             mail_subject = f"OPUS job validation request: {jobname}"
-            mail_text = f"{mail_subject}\n{BASE_URL}/jdl/tmp/{jobname}/json\n(from: {user.name})"
-            send_mail(ADMIN_EMAIL, mail_subject, mail_text)
+            mail_text = f"{mail_subject}\n{settings.BASE_URL}/jdl/tmp/{jobname}/json\n(from: {user.name})"
+            send_mail(settings.ADMIN_EMAIL, mail_subject, mail_text)
             logger.info("Validation request sent to admin: " + jobname)
         else:
             logger.info("No JDL  found for validation: " + jdl_src)
@@ -785,7 +754,7 @@ def validate_job_definition(jobname):
     try:
         # Copy script and jdl from new
         # jdl = uws_jdl.__dict__[JDL]()
-        jdl = getattr(uws_jdl, JDL)()
+        jdl = getattr(uws_jdl, settings.JDL)()
         jdl_src = f"{jdl.jdl_path}/tmp/{jobname}{jdl.extension}"
         jdl_dst = f"{jdl.jdl_path}/{jobname}{jdl.extension}"
         script_src = f"{jdl.scripts_path}/tmp/{jobname}.sh"
@@ -821,7 +790,7 @@ def validate_job_definition(jobname):
                 )
                 jdl.read(jobname)  # need version for saved files
                 script_dst_save = "{}/saved/{}_v{}_{}.sh".format(
-                    SCRIPTS_PATH, jobname, jdl.content["version"], mt
+                    settings.SCRIPTS_PATH, jobname, jdl.content["version"], mt
                 )
                 os.rename(script_dst, script_dst_save)
                 logger.info("Previous job script saved: " + script_dst_save)
@@ -829,7 +798,7 @@ def validate_job_definition(jobname):
             logger.info("Job script copied: " + script_dst)
             # Copy script to job manager
             # manager = managers.__dict__[MANAGER + 'Manager']()
-            manager = getattr(managers, MANAGER + "Manager")()
+            manager = getattr(managers, settings.MANAGER + "Manager")()
             manager.cp_script(jobname)
             logger.info("Job script copied to work cluster: " + jobname)
         else:
@@ -871,10 +840,10 @@ def cp_script(jobname):
     # Check if client is trusted (only admin should be allowed to validate a job)
     try:
         # Copy script to job manager
-        script_dst = f"{SCRIPTS_PATH}/{jobname}.sh"
+        script_dst = f"{settings.SCRIPTS_PATH}/{jobname}.sh"
         if os.path.isfile(script_dst):
             # manager = managers.__dict__[MANAGER + 'Manager']()
-            manager = getattr(managers, MANAGER + "Manager")()
+            manager = getattr(managers, settings.MANAGER + "Manager")()
             manager.cp_script(jobname)
             logger.info("Job script copied to work cluster: " + jobname)
         else:
@@ -909,10 +878,10 @@ def get_script(jobname):
     #     abort_403()
     user = set_user()
     try:
-        db = getattr(storage, STORAGE + "JobStorage")()
-        if not CHECK_PERMISSIONS or db.has_access(user, jobname):
+        db = getattr(storage, settings.STORAGE + "JobStorage")()
+        if not settings.CHECK_PERMISSIONS or db.has_access(user, jobname):
             # Get JDL content
-            jdl = getattr(uws_jdl, JDL)()
+            jdl = getattr(uws_jdl, settings.JDL)()
             jdl.read_script(jobname)
             logger.info(f"Job script downloaded: {jobname}")
             response.content_type = "text/plain; charset=UTF-8"
@@ -934,10 +903,10 @@ def get_jdl_json(jobname):
     """
     user = set_user()
     try:
-        getattr(storage, STORAGE + "JobStorage")()
+        getattr(storage, settings.STORAGE + "JobStorage")()
         # if not CHECK_PERMISSIONS or db.has_access(user, jobname) or 'tmp/' in jobname:
         # Get JDL content
-        jdl = getattr(uws_jdl, JDL)()
+        jdl = getattr(uws_jdl, settings.JDL)()
         jdl.read(jobname)
         logger.debug(f"JDL downloaded ad JSON: {jobname}")
         return jdl.content
@@ -962,7 +931,7 @@ def get_jdl(jobname):
         # db = getattr(storage, STORAGE + "JobStorage")()
         # if not CHECK_PERMISSIONS or db.has_access(user, jobname):
         # Get JDL content
-        jdl = getattr(uws_jdl, JDL)()
+        jdl = getattr(uws_jdl, settings.JDL)()
         fname = jdl._get_filename(jobname)
         download_dir, download_fname = os.path.split(fname)
         logger.debug(download_fname)
@@ -995,7 +964,7 @@ def delete_jdl(jobname):
     :return:
     """
     try:
-        jdl = getattr(uws_jdl, JDL)()
+        jdl = getattr(uws_jdl, settings.JDL)()
         jdl.read(jobname)  # need version for saved files
         jdl_src = f"{jdl.jdl_path}/{jobname}{jdl.extension}"
         script_src = f"{jdl.scripts_path}/{jobname}.sh"
@@ -1023,7 +992,7 @@ def delete_jdl(jobname):
                 .split(".")[0]
             )
             script_dst_save = "{}/saved/{}_v{}_{}_DELETED.sh".format(
-                SCRIPTS_PATH, jobname, jdl.content["version"], mt
+                settings.SCRIPTS_PATH, jobname, jdl.content["version"], mt
             )
             shutil.move(script_src, script_dst_save)
             logger.info("Job script archived and deleted: " + script_dst_save)
@@ -1044,7 +1013,7 @@ def delete_jdl(jobname):
 
 @app.route("/store/<eid>/<fname>")
 def get_result_file(eid, fname):
-    redirect(BASE_URL + "/store?ID=" + eid, 303)
+    redirect(settings.BASE_URL + "/store?ID=" + eid, 303)
 
 
 @app.route("/store")
@@ -1063,10 +1032,10 @@ def download_entity():
             raise UserWarning('"ID" is not specified in request') from None
         entity_id = request.query["ID"]
         # logger.debug('Init storage for entity {}'.format(entity_id))
-        job_storage = getattr(storage, STORAGE + "JobStorage")()
+        job_storage = getattr(storage, settings.STORAGE + "JobStorage")()
         entity = job_storage.get_entity(entity_id)
 
-        if CHECK_OWNER:
+        if settings.CHECK_OWNER:
             if user in special_users:
                 pass
             else:
@@ -1140,7 +1109,7 @@ def get_result_file_old(jobid, rname):  # , rfname):
                 rfname = job.get_result_filename(rname)
             if rname in ["stdout", "stderr"]:
                 return static_file(
-                    rfname, root=f"{JOBDATA_PATH}/{job.jobid}", mimetype="text"
+                    rfname, root=f"{settings.JOBDATA_PATH}/{job.jobid}", mimetype="text"
                 )
             # response.content_type = 'text/plain; charset=UTF-8'
             # return str(job.results[result]['url'])
@@ -1153,7 +1122,7 @@ def get_result_file_old(jobid, rname):  # , rfname):
             ):
                 return static_file(
                     rfname,
-                    root=f"{RESULTS_PATH}/{job.jobid}",
+                    root=f"{settings.RESULTS_PATH}/{job.jobid}",
                     mimetype=content_type,
                 )
             else:
@@ -1162,7 +1131,7 @@ def get_result_file_old(jobid, rname):  # , rfname):
                 )
                 return static_file(
                     rfname,
-                    root=f"{RESULTS_PATH}/{job.jobid}",
+                    root=f"{settings.RESULTS_PATH}/{job.jobid}",
                     mimetype=content_type,
                     download=True,
                 )
@@ -1213,7 +1182,7 @@ def provsap():
         for id in ids:
             show_generated = True
             # Test if ID is an entity_id, and get the related jobid (that generated the entity)
-            job_storage = getattr(storage, STORAGE + "JobStorage")()
+            job_storage = getattr(storage, settings.STORAGE + "JobStorage")()
             entity = job_storage.get_entity(id, silent=True)
             if entity:
                 jobid = entity.get("jobid")
@@ -1305,12 +1274,12 @@ def maintenance(jobname):
     global logger
     report = []
     try:
-        user = User("maintenance", MAINTENANCE_TOKEN)
+        user = User("maintenance", settings.MAINTENANCE_TOKEN.get_secret_value())
         logger = logger_init
         if jobname != "__all__":
             jobnames = [jobname]
         else:
-            jdl = getattr(uws_jdl, JDL)()
+            jdl = getattr(uws_jdl, settings.JDL)()
             jobnames = jdl.get_jobnames()
         for jobname in jobnames:
             report.append(f"Maintenance checks for {jobname}...")
@@ -1376,7 +1345,7 @@ def maintenance(jobname):
                         # If destruction time is passed, delete or archive job
                         if destruction_time and (destruction_time < now):
                             # TODO: effective deletion or archiving of job
-                            if USE_ARCHIVED_PHASE:
+                            if settings.USE_ARCHIVED_PHASE:
                                 if job.phase in ["COMPLETED", "ABORTED", "ERROR"]:
                                     job.archive()
                                     report.append(
@@ -1435,7 +1404,7 @@ def job_event():
     """
     global logger
     try:
-        user = User("job_event", JOB_EVENT_TOKEN)
+        user = User("job_event", settings.JOB_EVENT_TOKEN.get_secret_value())
         logger = logger_init
         logger.debug(f"with POST={str(request.POST.dict)}")
         if "jobid" in request.POST:
@@ -1507,7 +1476,7 @@ def job_event():
 # ----------
 
 
-@app.route(UWS_SERVER_ENDPOINT + "/<jobname>")
+@app.route(settings.UWS_SERVER_ENDPOINT + "/<jobname>")
 def get_joblist(jobname):
     """Get list for <jobname> jobs
 
@@ -1545,7 +1514,7 @@ def get_joblist(jobname):
         abort_500_except()
 
 
-@app.post(UWS_SERVER_ENDPOINT + "/<jobname>")
+@app.post(settings.UWS_SERVER_ENDPOINT + "/<jobname>")
 def create_job(jobname):
     """Create a new job
 
@@ -1576,8 +1545,8 @@ def create_job(jobname):
         abort_500(e.args[0])
     except TooManyJobs:
         abort_500_except(
-            msg=f"Maximum number of active jobs reached ({NJOBS_MAX})",
-            msg_public=f"Maximum number of active jobs reached ({NJOBS_MAX})",
+            msg=f"Maximum number of active jobs reached ({settings.NJOBS_MAX})",
+            msg_public=f"Maximum number of active jobs reached ({settings.NJOBS_MAX})",
         )
     except CalledProcessError as e:
         abort_500_except(
@@ -1587,7 +1556,7 @@ def create_job(jobname):
     except Exception:
         abort_500_except()
     # Response
-    redirect(BASE_URL + UWS_SERVER_ENDPOINT + "/" + jobname + "/" + job.jobid, 303)
+    redirect(settings.BASE_URL + settings.UWS_SERVER_ENDPOINT + "/" + jobname + "/" + job.jobid, 303)
 
 
 # ----------
@@ -1595,7 +1564,7 @@ def create_job(jobname):
 # ----------
 
 
-@app.route(UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>")
+@app.route(settings.UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>")
 def get_job(jobname, jobid):
     """Get description for job <jobid>
 
@@ -1622,10 +1591,10 @@ def get_job(jobname, jobid):
             if job.phase in ACTIVE_PHASES:
                 client_phase = request.query.get("PHASE", job.phase)
                 wait_time = int(request.query.get("WAIT", 0))
-                if wait_time > WAIT_TIME_MAX:
-                    wait_time = WAIT_TIME_MAX
+                if wait_time > settings.WAIT_TIME_MAX:
+                    wait_time = settings.WAIT_TIME_MAX
                 if wait_time == -1:
-                    wait_time = WAIT_TIME_MAX
+                    wait_time = settings.WAIT_TIME_MAX
                 if (client_phase == job.phase) and (wait_time > 0):
                     change_status_signal = signal("job_status")
                     change_status_event = threading.Event()
@@ -1677,7 +1646,7 @@ def get_job(jobname, jobid):
         abort_500_except()
 
 
-@app.delete(UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>")
+@app.delete(settings.UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>")
 def delete_job(jobname, jobid):
     """Delete job with <jobid>
 
@@ -1709,10 +1678,10 @@ def delete_job(jobname, jobid):
     except Exception:
         abort_500_except()
     # Response
-    redirect(BASE_URL + UWS_SERVER_ENDPOINT + "/" + jobname, 303)
+    redirect(settings.BASE_URL + settings.UWS_SERVER_ENDPOINT + "/" + jobname, 303)
 
 
-@app.post(UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>")
+@app.post(settings.UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>")
 def post_job(jobname, jobid):
     """Alias for delete_job() if ACTION=DELETE"""
     user = set_user()
@@ -1743,7 +1712,7 @@ def post_job(jobname, jobid):
         )
     except Exception:
         abort_500_except()
-    redirect(BASE_URL + UWS_SERVER_ENDPOINT + "/" + jobname, 303)
+    redirect(settings.BASE_URL + settings.UWS_SERVER_ENDPOINT + "/" + jobname, 303)
 
 
 # ----------
@@ -1751,7 +1720,7 @@ def post_job(jobname, jobid):
 # ----------
 
 
-@app.route(UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/phase")
+@app.route(settings.UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/phase")
 def get_phase(jobname, jobid):
     """Get the phase of job <job-id>
 
@@ -1779,7 +1748,7 @@ def get_phase(jobname, jobid):
         abort_500_except()
 
 
-@app.post(UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/phase")
+@app.post(settings.UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/phase")
 def post_phase(jobname, jobid):
     """Change Phase of job <jobid> --> start or abort job
 
@@ -1843,7 +1812,7 @@ def post_phase(jobname, jobid):
     except Exception:
         abort_500_except()
     # Response
-    redirect(BASE_URL + UWS_SERVER_ENDPOINT + "/" + jobname + "/" + jobid, 303)
+    redirect(settings.BASE_URL + settings.UWS_SERVER_ENDPOINT + "/" + jobname + "/" + jobid, 303)
 
 
 # ----------
@@ -1851,7 +1820,7 @@ def post_phase(jobname, jobid):
 # ----------
 
 
-@app.route(UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/executionduration")
+@app.route(settings.UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/executionduration")
 def get_executionduration(jobname, jobid):
     """Get the maximum execution duration of job <jobid>
 
@@ -1879,7 +1848,7 @@ def get_executionduration(jobname, jobid):
         abort_500_except()
 
 
-@app.post(UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/executionduration")
+@app.post(settings.UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/executionduration")
 def post_executionduration(jobname, jobid):
     """Change the maximum execution duration of job <jobid>
 
@@ -1924,7 +1893,7 @@ def post_executionduration(jobname, jobid):
     except Exception:
         abort_500_except()
     # Response
-    redirect(BASE_URL + UWS_SERVER_ENDPOINT + "/" + jobname + "/" + jobid, 303)
+    redirect(settings.BASE_URL + settings.UWS_SERVER_ENDPOINT + "/" + jobname + "/" + jobid, 303)
 
 
 # ----------
@@ -1932,7 +1901,7 @@ def post_executionduration(jobname, jobid):
 # ----------
 
 
-@app.route(UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/destruction")
+@app.route(settings.UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/destruction")
 def get_destruction(jobname, jobid):
     """Get the destruction instant for job <jobid>
 
@@ -1960,7 +1929,7 @@ def get_destruction(jobname, jobid):
         abort_500_except()
 
 
-@app.post(UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/destruction")
+@app.post(settings.UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/destruction")
 def post_destruction(jobname, jobid):
     """Change the destruction instant for job <jobid>
 
@@ -2004,7 +1973,7 @@ def post_destruction(jobname, jobid):
     except Exception:
         abort_500_except()
     # Response
-    redirect(BASE_URL + UWS_SERVER_ENDPOINT + "/" + jobname + "/" + jobid, 303)
+    redirect(settings.BASE_URL + settings.UWS_SERVER_ENDPOINT + "/" + jobname + "/" + jobid, 303)
 
 
 # ----------
@@ -2012,7 +1981,7 @@ def post_destruction(jobname, jobid):
 # ----------
 
 
-@app.route(UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/error")
+@app.route(settings.UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/error")
 def get_error(jobname, jobid):
     """Get any error message associated with job <jobid>
 
@@ -2046,7 +2015,7 @@ def get_error(jobname, jobid):
 # ----------
 
 
-@app.route(UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/quote")
+@app.route(settings.UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/quote")
 def get_quote(jobname, jobid):
     """Get the Quote for job <jobid>
 
@@ -2079,7 +2048,7 @@ def get_quote(jobname, jobid):
 # ----------
 
 
-@app.route(UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/parameters")
+@app.route(settings.UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/parameters")
 def get_parameters(jobname, jobid):
     """Get parameters for job <jobid>
 
@@ -2109,7 +2078,7 @@ def get_parameters(jobname, jobid):
         abort_500_except()
 
 
-@app.route(UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/parameters/<pname>")
+@app.route(settings.UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/parameters/<pname>")
 def get_parameter(jobname, jobid, pname):
     """Get parameter <param> for job <jobid>
 
@@ -2143,7 +2112,7 @@ def get_parameter(jobname, jobid, pname):
         abort_500_except()
 
 
-@app.post(UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/parameters/<pname>")
+@app.post(settings.UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/parameters/<pname>")
 def post_parameter(jobname, jobid, pname):
     """Change the parameter value for job <jobid>
 
@@ -2186,7 +2155,7 @@ def post_parameter(jobname, jobid, pname):
         abort_500_except()
     # Response
     redirect(
-        BASE_URL + UWS_SERVER_ENDPOINT + "/" + jobname + "/" + jobid + "/parameters",
+        settings.BASE_URL + settings.UWS_SERVER_ENDPOINT + "/" + jobname + "/" + jobid + "/parameters",
         303,
     )
 
@@ -2196,7 +2165,7 @@ def post_parameter(jobname, jobid, pname):
 # ----------
 
 
-@app.route(UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/results")
+@app.route(settings.UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/results")
 def get_results(jobname, jobid):
     """Get results for job <jobid>
 
@@ -2226,7 +2195,7 @@ def get_results(jobname, jobid):
         abort_500_except()
 
 
-@app.route(UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/results/<rname>")
+@app.route(settings.UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/results/<rname>")
 def get_result(jobname, jobid, rname):
     """Get result <rname> for job <jobid>
 
@@ -2260,7 +2229,7 @@ def get_result(jobname, jobid, rname):
         abort_500_except()
 
 
-@app.route(UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/stdout")
+@app.route(settings.UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/stdout")
 def get_stdout(jobname, jobid):
     """Get stdout for job <jobid>
 
@@ -2275,7 +2244,7 @@ def get_stdout(jobname, jobid):
         # Get job properties from DB
         # job = Job(jobname, jobid, user, get_results=True)
         logname = "stdout"
-        logroot = f"{JOBDATA_PATH}/{jobid}"
+        logroot = f"{settings.JOBDATA_PATH}/{jobid}"
         if not os.path.isfile(os.path.join(logroot, logname + ".log")):
             # TODO: get from manager if not available, only available when EXECUTING
             raise storage.NotFoundWarning(
@@ -2291,7 +2260,7 @@ def get_stdout(jobname, jobid):
         abort_500_except()
 
 
-@app.route(UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/stderr")
+@app.route(settings.UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/stderr")
 def get_stderr(jobname, jobid):
     """Get stderr for job <jobid>
 
@@ -2306,7 +2275,7 @@ def get_stderr(jobname, jobid):
         # Get job properties from DB
         # job = Job(jobname, jobid, user, get_results=True)
         logname = "stderr"
-        logroot = f"{JOBDATA_PATH}/{jobid}"
+        logroot = f"{settings.JOBDATA_PATH}/{jobid}"
         if not os.path.isfile(os.path.join(logroot, logname + ".log")):
             # TODO: get from manager if not available, only available when EXECUTING
             raise storage.NotFoundWarning(
@@ -2322,7 +2291,7 @@ def get_stderr(jobname, jobid):
         abort_500_except()
 
 
-@app.route(UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/prov<provtype>")
+@app.route(settings.UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/prov<provtype>")
 def get_prov(jobname, jobid, provtype):
     """Get prov for job <jobid>
 
@@ -2337,7 +2306,7 @@ def get_prov(jobname, jobid, provtype):
         # Get job properties from DB
         # job = Job(jobname, jobid, user, get_results=True)
         provname = "provenance." + provtype
-        provroot = f"{JOBDATA_PATH}/{jobid}"
+        provroot = f"{settings.JOBDATA_PATH}/{jobid}"
         if not os.path.isfile(os.path.join(provroot, provname)):
             raise storage.NotFoundWarning(
                 f'Prov file "{provname}" NOT FOUND for job "{jobid}"'
@@ -2362,7 +2331,7 @@ def get_prov(jobname, jobid, provtype):
 # ----------
 
 
-@app.route(UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/owner")
+@app.route(settings.UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/owner")
 def get_owner(jobname, jobid):
     """Get the owner of the job <jobid>
 

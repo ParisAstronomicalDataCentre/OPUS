@@ -12,12 +12,13 @@ from uws_server import uws_server
 
 test_app = webtest.TestApp(uws_server.app)  # , extra_environ=dict(REMOTE_USER='test'))
 
-print(uws_server.SQLALCHEMY_DB)
-print(f"{uws_server.LOG_PATH}/server{uws_server.LOG_FILE_SUFFIX}_debug.log")
+settings = uws_server.settings
+print(settings.SQLALCHEMY_DB)
+print(f"{settings.LOG_PATH}/server{settings.LOG_FILE_SUFFIX}_debug.log")
 
 # server must have a test job (does nothing)
 jobname = "test_"
-UWS_EP = uws_server.UWS_SERVER_ENDPOINT
+UWS_EP = settings.UWS_SERVER_ENDPOINT
 
 
 def create_job():

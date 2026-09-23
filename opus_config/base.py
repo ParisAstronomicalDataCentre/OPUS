@@ -7,57 +7,19 @@ Settings shared by the UWS server and client
 Values are read, by order of priority, from:
     1. environment variables prefixed with OPUS_ (e.g. OPUS_BASE_URL)
     2. the .env file in the OPUS directory (same names, see .env.dist)
-    3. settings_local.py (deprecated, move its content to .env)
-    4. the defaults defined in the settings classes
+    3. the defaults defined in the settings classes
 Dicts and lists are given as JSON in environment variables and .env.
 """
 
-import importlib.util
 import os
 import warnings
 
 from pydantic import SecretStr, field_validator, model_validator
-from pydantic_settings import (
-    BaseSettings,
-    PydanticBaseSettingsSource,
-    SettingsConfigDict,
-)
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Where is located the code of the web app
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 ENV_FILE = os.path.join(APP_PATH, ".env")
-SETTINGS_LOCAL_FILE = os.path.join(APP_PATH, "settings_local.py")
-
-
-class SettingsLocalSource(PydanticBaseSettingsSource):
-    """Values defined in settings_local.py (deprecated, to be moved to .env)"""
-
-    def __init__(self, settings_cls):
-        super().__init__(settings_cls)
-        self.values = {}
-        if os.path.isfile(SETTINGS_LOCAL_FILE):
-            spec = importlib.util.spec_from_file_location(
-                "settings_local", SETTINGS_LOCAL_FILE
-            )
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
-            self.values = {
-                k: v
-                for k, v in vars(module).items()
-                if k in settings_cls.model_fields
-            }
-            if self.values:
-                warnings.warn(
-                    f"{SETTINGS_LOCAL_FILE} is deprecated, move its values to {ENV_FILE}",
-                    DeprecationWarning,
-                    stacklevel=2,
-                )
-
-    def get_field_value(self, field, field_name):
-        return self.values.get(field_name), field_name, False
-
-    def __call__(self):
-        return dict(self.values)
 
 
 class CommonSettings(BaseSettings):
@@ -101,6 +63,22 @@ class CommonSettings(BaseSettings):
         return v if os.path.isabs(v) else os.path.join(APP_PATH, v)
 
     @model_validator(mode="after")
+    def check_settings_local(self):
+        # settings_local.py was used by previous versions, it is no longer read
+        path = os.path.join(APP_PATH, "settings_local.py")
+        if os.path.isfile(path):
+            msg = (
+                f"{path} is no longer read, convert it to {ENV_FILE} with:\n"
+                f"    python generate_env.py --from settings_local.py > .env\n"
+                f"then remove settings_local.py"
+            )
+            if not os.path.isfile(ENV_FILE):
+                # do not start with the default settings instead of the local ones
+                raise RuntimeError(msg)
+            warnings.warn(msg, stacklevel=2)
+        return self
+
+    @model_validator(mode="after")
     def warn_default_secrets(self):
         for name in type(self).model_fields:
             value = getattr(self, name)
@@ -110,23 +88,6 @@ class CommonSettings(BaseSettings):
                     stacklevel=2,
                 )
         return self
-
-    @classmethod
-    def settings_customise_sources(
-        cls,
-        settings_cls,
-        init_settings,
-        env_settings,
-        dotenv_settings,
-        file_secret_settings,
-    ):
-        return (
-            init_settings,
-            env_settings,
-            dotenv_settings,
-            SettingsLocalSource(settings_cls),
-            file_secret_settings,
-        )
 
     def export(self):
         """Dict of all settings and derived values, with secrets revealed

@@ -20,25 +20,6 @@ from opus_config import APP_PATH, ServerSettings  # noqa: F401 (APP_PATH is impo
 
 settings = ServerSettings()
 
-# Compatibility: settings as module-level names (e.g. BASE_URL), to be replaced by
-# settings.<NAME> in the modules that import them
-globals().update(settings.export())
-
-
-### Identifiers and tokens generators (compatibility, see settings.new_job_id()...)
-
-
-def JOB_ID_GEN():
-    return settings.new_job_id()
-
-
-def ENTITY_ID_GEN(**kwargs):
-    return settings.new_entity_id(**kwargs)
-
-
-def TOKEN_GEN(context=None):
-    return settings.new_token(context)
-
 
 ### Control parameters
 

@@ -13,7 +13,8 @@ from voprov.models.model import PROV, VOPROV, VOProvDocument
 from voprov.visualization.dot import prov_to_dot
 
 from . import uws_classes
-from .settings import *
+import os
+from .settings import settings, logger
 
 # examples:
 # http://prov.readthedocs.org/en/latest/usage.html#simple-prov-document
@@ -83,14 +84,14 @@ def job2prov(
         pdoc.add_namespace("prov", PROV.uri)
         pdoc.add_namespace("foaf", "http://xmlns.com/foaf/0.1/")
         pdoc.add_namespace("uws", "http://www.ivoa.net/xml/UWS/v1.1#")
-        pdoc.add_namespace("opus_user", BASE_URL + "/user/")
+        pdoc.add_namespace("opus_user", settings.BASE_URL + "/user/")
         ns_result = "opus_store"
-        pdoc.add_namespace(ns_result, BASE_URL + "/store/?ID=")
-        pdoc.add_namespace("opus_job", BASE_URL + UWS_SERVER_ENDPOINT + "/")
-        pdoc.add_namespace("opus_jdl", BASE_URL + "/jdl/")
+        pdoc.add_namespace(ns_result, settings.BASE_URL + "/store/?ID=")
+        pdoc.add_namespace("opus_job", settings.BASE_URL + settings.UWS_SERVER_ENDPOINT + "/")
+        pdoc.add_namespace("opus_jdl", settings.BASE_URL + "/jdl/")
         pdoc.add_namespace("media-type", "https://www.w3.org/ns/iana/media-types/")
         ns_jdl = job.jobname
-        pdoc.add_namespace(ns_jdl, BASE_URL + "/jdl/" + job.jobname + "/votable#")
+        pdoc.add_namespace(ns_jdl, settings.BASE_URL + "/jdl/" + job.jobname + "/votable#")
         # ns_job = job.jobname + '/' + job.jobid
         # pdoc.add_namespace(ns_job, BASE_URL + '/jdl/' + job.jobname + '/votable#')
 
@@ -386,7 +387,7 @@ def job2prov(
         # Generated entities (if depth > 0)
         if (depth != 0 and direction == "FORWARD") or show_generated:
             # Check if internal provenance is given, add as a generated bundle? or directly?
-            ipfile = os.path.join(JOBDATA_PATH, jobid, INTERNAL_PROVENANCE_FILENAME)
+            ipfile = os.path.join(settings.JOBDATA_PATH, jobid, INTERNAL_PROVENANCE_FILENAME)
             ipbundle = None
             if os.path.isfile(ipfile):
                 ipdoc = voprov.read(ipfile, format="json")
