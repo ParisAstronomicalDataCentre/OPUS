@@ -37,13 +37,13 @@ Check also the other requirement files:
 
 ## Prepare local configuration
 
-Several files in the distribution contain initial settings for the server and the client. The local configuration is done by creating a `settings_local.py` file in the OPUS directory. Settings in this file will overwrite the initial settings. A template is provided and should be copied and modified:
+The settings of the server and the client have default values in the code (package `opus_config`). The local configuration is done in a `.env` file in the OPUS directory, with variables prefixed with `OPUS_`. A template is provided, and a `.env` file with random values for the secrets can be generated from it, then edited:
 
-    $ cp settings_local.dist.py settings_local.py
+    $ python generate_env.py > .env
 
-This file contains confidential tokens and defaults passwords, and any specific configuration of OPUS (Storage, SLURM...). The template is self descriptive for basic features. For more advanced features, see the dedicated page for Settings.
+This file contains confidential tokens and passwords, and any specific configuration of OPUS (URLs, Storage, SLURM...). It should be readable by the web server only, and never be added to git. The template is self descriptive for basic features. For more advanced features, see the dedicated page for Settings.
 
-OPUS stores its logs, job files and database in a dedicated directory, e.g. `OPUS_VAR=/var/opt/opus`. It is declared in `settings_local.py` as `VAR_PATH`. This directory has to be writable by the server and client, so writable by the user running the applications (either the web server user or a local user).
+OPUS stores its logs, job files and database in a dedicated directory, e.g. `OPUS_VAR=/var/opt/opus`. It is declared in `.env` as `OPUS_VAR_PATH`. This directory has to be writable by the server and client, so writable by the user running the applications (either the web server user or a local user).
 
 The unit tests may be run to check the main features of the UWS server:
 
@@ -71,19 +71,19 @@ From a web browser, the OPUS server or client URL should redirect to the OPUS cl
 
 ## Execution with Docker
 
-OPUS can be run in a container (uvicorn + nginx) with a PostgreSQL database. Templates are provided for the image, the services and the settings of the image, they should be copied and modified:
+OPUS can be run in a container (uvicorn + nginx) with a PostgreSQL database. Templates are provided for the image and the services, they should be copied and modified, and the settings of the container are generated in `.env.docker` (with random values for the secrets):
 
     $ cp Dockerfile.dist Dockerfile
     $ cp docker-compose.dist.yml docker-compose.yml
-    $ cp settings_docker.dist.py settings_docker.py
+    $ python generate_env.py --template .env.docker.dist > .env.docker
 
-In `settings_docker.py`, fill in the passwords and tokens (`ADMIN_DEFAULT_PW`, `ADMIN_TOKEN`, `JOB_EVENT_TOKEN`...). `BASE_URL` has to be reachable from inside the container, as jobs use it to report their phase to the server. Then build and start the services:
+The settings in `.env.docker` are given to the container as environment variables (`env_file` in `docker-compose.yml`), they are not part of the image. `OPUS_BASE_URL` has to be reachable from inside the container, as jobs use it to report their phase to the server. Then build and start the services:
 
     $ docker compose up --build -d
 
 The OPUS client is then available at http://localhost/opus_client/. The data (logs, jobs, results) is stored in the `opus_data` volume, and the database in the `db_data` volume.
 
-The ports of PostgreSQL (5432) and Adminer (8081) are exposed for development, and the database password is `opus`: for a deployment on a server, remove those ports and change the password in `docker-compose.yml` (`POSTGRES_PASSWORD`) and in `settings_docker.py` (`PGSQL_PASSWORD`).
+The ports of PostgreSQL (5432) and Adminer (8081) are exposed for development, and the database password is `opus`: for a deployment on a server, remove those ports and change the password in `docker-compose.yml` (`POSTGRES_PASSWORD`) and in `.env.docker` (`OPUS_PGSQL_PASSWORD`).
 
 
 ## Preparing the WSGI web server

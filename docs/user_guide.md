@@ -9,7 +9,7 @@ Administration from the UWS Client
 ### Login as the administrator of OPUS
 
 The default login name is ‘opus-admin‘ and the default password for the UWS Client is set locally in
-`settings_local.py`. This password should be secured and changed after install.
+`.env` (`OPUS_ADMIN_DEFAULT_PW`). This password should be secured and changed after install.
 
 In order to be the administrator of an OPUS UWS Server, the client account ‘opus-admin‘ must have the name and token defines for
 the UWS Server in the variables ADMIN_NAME and ADMIN_TOKEN. The token can be changed in the UWS Client through the Profile page (top-right menu).

@@ -22,6 +22,7 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: always
+    env_file: .env.docker  # OPUS settings (see .env.docker.dist)
     ports:
       - "80:80"
     depends_on:

@@ -1,0 +1,29 @@
+# Ignore all .pyc files
+*.pyc
+*.py~
+*/*.pyc
+.idea/
+.cache
+.pytest_cache
+__pycache__
+data
+prov_examples
+ProvenanceDB.py
+var_data
+apache_opus.conf
+docker-compose.yml
+Dockerfile
+NOTES
+patch_prov
+settings_docker.py
+settings_local.py
+# Settings with secrets (templates: .env.dist, .env.docker.dist)
+.env
+.env.docker
+settings_local_old.py
+wsgi_*
+uws_client/cork_conf
+uws_client/static/libs
+var/
+local_var/
+OPUS-*

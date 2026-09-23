@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 from urllib.parse import urlparse
 
-from settings_local import BASE_URL
+from opus_config import CommonSettings
 
-server_name = f"{urlparse(BASE_URL).netloc}"
+server_name = f"{urlparse(CommonSettings().BASE_URL).netloc}"
 
 def main():
     # 1. Ajoute opus-docker.localhost à /etc/hosts

@@ -5,21 +5,37 @@ OPUS Settings
 Default settings
 ----------------
 
-After installation, the OPUS server and client will work with their default settings, contained in the
-files `$OPUS_DIR/uws_server/settings.py` and `$OPUS_DIR/uws_client/uws_client.py`. Those should never be changed, they are part of the code, but local settings can be set as explained in the following section.
+The settings of the OPUS server and client, with their default values, are defined in the
+package `$OPUS_DIR/opus_config` (`server.py` for the server, `client.py` for the client, and `base.py`
+for the settings shared by both). Those files are part of the code and should not be changed:
+local settings are set as explained in the following section.
 
 
 Local settings
 --------------
 
-The file `$OPUS_DIR/settings_local.py`, if present, is read by OPUS to override the default values.
+Each setting can be set with an environment variable prefixed with `OPUS_` (e.g. `OPUS_BASE_URL`), or in
+the file `$OPUS_DIR/.env` with the same names. Environment variables have priority over the `.env` file.
+Dicts and lists are given as JSON, e.g. `OPUS_JOB_SERVERS='{"127.0.0.1": "localhost"}'`.
 
-This file also contains default tokens that have to be set internally and kept secret to ensure application security. This file should thus have restricted access by the web server only.
+The `.env` file contains the secrets of the application (tokens, passwords, key for the session cookies,
+salt for the passwords), so it should have restricted access by the web server only, and never be added to git.
+The file `$OPUS_DIR/.env.dist` is given as a template, with the main settings. A `.env` file with random values
+for the secrets can be generated from it:
 
-A file `$OPUS_DIR/settings_local.dist.py` is given as a template. It can be copied to `$OPUS_DIR/settings_local.py` to then edit the local settings.
+    $ python generate_env.py > .env
 
+The secrets `OPUS_SECRET_KEY` and `OPUS_SECURITY_PASSWORD_SALT` are required, the client does not start without them.
 
-Local settings may also contain other relevant variables, depending on the desired setting for a server or client.
+**Note:** the file `$OPUS_DIR/settings_local.py` used by previous versions is still read (with a deprecation
+warning), with a lower priority than `.env`. It can be converted to a `.env` file, keeping the salt used until now
+(changing the salt invalidates all the existing passwords of the client users):
+
+    $ python generate_env.py --from settings_local.py > .env
+
+The generators of identifiers and tokens (`JOB_ID_GEN`, `ENTITY_ID_GEN`, `TOKEN_GEN`) can be replaced by
+functions given as import strings, e.g. `OPUS_JOB_ID_GEN=my_generators:job_id` (see
+`$OPUS_DIR/opus_config/generators.py` for their signatures).
 
 
 ### General settings
@@ -142,9 +158,9 @@ The various path defined are build from VAR_PATH by default.
 UWS Client settings
 ===================
 
-The file `$OPUS_DIR/uws_client/uws_client.py` contains all the variables needed by the web client with
+The file `$OPUS_DIR/opus_config/client.py` contains all the variables needed by the web client with
 their default values and descriptions. This file is part of the repository files and it is
-recommended to keep it unchanged. However, all those variables can be overridden from the `$OPUS_DIR/settings_local.py` file.
+recommended to keep it unchanged. However, all those variables can be set in the `$OPUS_DIR/.env` file (see above).
 
 
 | Variable            | Description                                                                                                               |
@@ -156,9 +172,11 @@ recommended to keep it unchanged. However, all those variables can be overridden
 | UWS_SERVER_URL_JS   | URL of the UWS Server as called by javascript, generally set to local url (proxy) to avoid cross-calls                    |
 | UWS_AUTH            | Set to Basic. Authentication protocol with UWS Server                                                                     |
 | ADMIN_NAME          | Login name for the administrator                                                                                          |
-| ADMIN_DEFAULT_PW    | Default password for the administrator (to be changed after install, or kept secret in `uws_client/settings_local.py`)    |
+| ADMIN_DEFAULT_PW    | Default password for the administrator (to be changed after install, or kept secret in `.env`)                            |
 | TESTUSER_NAME       | Login name for testuser                                                                                                   |
-| TESTUSER_DEFAULT_PW | Default password for the administrator (to be changed after install, or kept secret in `uws_client/settings_local.py`)    |
+| TESTUSER_DEFAULT_PW | Default password for testuser (to be changed after install, or kept secret in `.env`)                                    |
+| SECRET_KEY          | Required. Key used to sign the session cookies (random value, changing it logs out all users)                             |
+| SECURITY_PASSWORD_SALT | Required. Salt used to hash the passwords (changing it invalidates all the existing passwords)                         |
 | CLIENT_TITLE        | Title shown on webpages                                                                                           |
 | HOME_CONTENT        | Content of the home page (HTML accepted)                                                                                         |
 

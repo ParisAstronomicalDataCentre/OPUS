@@ -8,3 +8,6 @@ Dockerfile*
 # Allow files for specific files with an !
 !.git/index
 !.git/logs
+# Settings with secrets, given at runtime (env_file)
+.env
+.env.*

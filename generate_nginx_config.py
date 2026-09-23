@@ -1,21 +1,21 @@
 import os
 from urllib.parse import urlparse
 
-from settings_local import VAR_PATH, BASE_URL
+from opus_config import APP_PATH, CommonSettings
 
-curdir = os.path.dirname(__file__)
-print(f"OPUS directory is: {curdir}")
+# VAR_PATH and BASE_URL are read from .env (see .env.dist)
+settings = CommonSettings()
+print(f"OPUS directory is: {APP_PATH}")
 
 # --- Configuration Variables ---
 # Update these to match your setup
-OPUS_ROOT = curdir
-VAR_DIR = VAR_PATH if VAR_PATH.startswith("/") else OPUS_ROOT + "/" + VAR_PATH
-LOGS_DIR = f"{VAR_DIR}/logs"
+OPUS_ROOT = APP_PATH
+LOGS_DIR = f"{settings.VAR_PATH}/logs"
 # pid file and temp dirs, so that nginx does not need root to write in its default paths
-NGINX_DIR = f"{VAR_DIR}/nginx"
+NGINX_DIR = f"{settings.VAR_PATH}/nginx"
 OPUS_CLIENT_PORT = 8080
 OPUS_SERVER_PORT = 8082
-server_name = f"{urlparse(BASE_URL).netloc}"
+server_name = f"{urlparse(settings.BASE_URL).netloc}"
 
 # Output path for nginx.conf
 NGINX_CONF_PATH = f"{OPUS_ROOT}/nginx/nginx.conf"

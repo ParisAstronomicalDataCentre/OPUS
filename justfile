@@ -41,6 +41,10 @@ server:
 client:
     uv run uvicorn app_client:asgi_app --host localhost --port 8080 --workers 1
 
+# Print a .env file with random secrets (e.g. just env > .env)
+env template=".env.dist":
+    @uv run python generate_env.py --template {{ template }}
+
 nginx_conf:
     uv run python generate_nginx_config.py
 
@@ -61,7 +65,7 @@ docker_build:
     docker build -t opus-app .
 
 docker_run:
-    docker run -p 80:80 --add-host="opus-docker.localhost:127.0.0.1" --name opus-container opus-app &
+    docker run -p 80:80 --env-file .env.docker --add-host="opus-docker.localhost:127.0.0.1" --name opus-container opus-app &
 
 docker_rm_all:
     docker stop $(docker ps -a -q)

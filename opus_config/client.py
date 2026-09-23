@@ -5,7 +5,7 @@
 Settings for the UWS client (see base.py for how values are read)
 """
 
-from pydantic import SecretStr, computed_field, model_validator
+from pydantic import Field, SecretStr, computed_field, model_validator
 
 from .base import CommonSettings
 
@@ -35,9 +35,15 @@ class ClientSettings(CommonSettings):
     #  "scope": "openid email profile"}
     OIDC_IDPS: list[dict] = []
 
+    # Required secrets (no default), e.g. generated with: python -c "import secrets; print(secrets.token_urlsafe(32))"
+    # Key used by Flask to sign the session cookies (changing it logs out all users)
+    SECRET_KEY: SecretStr = Field(min_length=16)
+    # Salt used by Flask-Security to hash passwords
+    # WARNING: changing it invalidates all the existing passwords of the client users
+    SECURITY_PASSWORD_SALT: SecretStr = Field(min_length=1)
+
     # Flask-Security
     SECURITY_URL_PREFIX: str = "/accounts"
-    SECURITY_PASSWORD_SALT: SecretStr = SecretStr("test")
 
     # Flask-Mail
     MAIL_USE_SSL: bool = False

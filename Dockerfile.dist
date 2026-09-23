@@ -29,9 +29,7 @@ COPY uws_client/ /opt/opus/uws_client/
 COPY uws_server/ /opt/opus/uws_server/
 COPY uws_client/app.py ./app_client.py
 COPY uws_server/app.py ./app_server.py
-COPY settings_docker.py ./settings_local.py
 COPY generate_nginx_config.py ./generate_nginx_config.py
-COPY docker_set_host.py ./docker_set_host.py
 
 # Install the project itself now that the sources are copied
 RUN uv sync --locked --no-dev
@@ -42,8 +40,8 @@ RUN mkdir -p /var/opt/opus/logs
 # Configuration de l'environnement
 ENV PYTHONUNBUFFERED=1
 ENV PATH="/usr/local/bin:$PATH"
-RUN uv run --no-sync /opt/opus/generate_nginx_config.py
-# RUN uv run /opt/opus/docker_set_host.py
+# Settings are given as environment variables at runtime (env_file: .env.docker in
+# docker-compose.yml), nginx.conf is generated from them at start (see start.sh)
 
 # Exposition du port
 EXPOSE 80
