@@ -122,10 +122,19 @@ def load_config():
         save_config()
 
 
+# Editable config values from settings files, only values that differ are stored
+# in CONFIG_FILE (so that a change in settings_local.py is not hidden by CONFIG_FILE)
+SETTINGS_CONFIG = {k: app.config[k] for k in EDITABLE_CONFIG if k in app.config}
+
+
 def save_config():
     logger.info("Saving editable config")
     with open(CONFIG_FILE, "w") as cf:
-        econf = {k: app.config[k] for k in EDITABLE_CONFIG if k in app.config}
+        econf = {
+            k: app.config[k]
+            for k in EDITABLE_CONFIG
+            if k in app.config and app.config[k] != SETTINGS_CONFIG.get(k)
+        }
         yaml.dump(econf, cf, default_flow_style=False)
 
 

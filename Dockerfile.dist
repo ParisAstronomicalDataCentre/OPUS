@@ -17,8 +17,8 @@ COPY README.md ./
 COPY pyproject.toml .
 COPY uv.lock ./
 
-# set environment with uv
-RUN uv sync
+# set environment with uv (dependencies only, from uv.lock, without dev tools)
+RUN uv sync --locked --no-dev --no-install-project
 
 # Create /opt/opus and copy uws_client/ and uws_server/
 COPY favicon* ./
@@ -32,20 +32,20 @@ COPY settings_docker.py ./settings_local.py
 COPY generate_nginx_config.py ./generate_nginx_config.py
 COPY docker_set_host.py ./docker_set_host.py
 
+# Install the project itself now that the sources are copied
+RUN uv sync --locked --no-dev
+
 RUN mkdir -p /opt/opus/var/logs
 RUN mkdir -p /var/opt/opus/logs
 
 # Configuration de l'environnement
 ENV PYTHONUNBUFFERED=1
 ENV PATH="/usr/local/bin:$PATH"
-RUN uv run /opt/opus/generate_nginx_config.py
+RUN uv run --no-sync /opt/opus/generate_nginx_config.py
 # RUN uv run /opt/opus/docker_set_host.py
 
 # Exposition du port
 EXPOSE 80
-
-# Copier la configuration Nginx
-COPY nginx/nginx.conf /etc/nginx/nginx.conf
 
 # Copy the script
 COPY start.sh /start.sh

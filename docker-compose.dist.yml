@@ -1,8 +1,13 @@
 services:
 
   db:
-    image: postgres
+    image: postgres:18  # pin the major version: a data volume cannot be read by another major version
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U opus -d opus"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     environment:
       - POSTGRES_DB=opus
       - POSTGRES_USER=opus
@@ -20,7 +25,8 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     volumes:
       -  opus_data:/var/opt/opus
     extra_hosts:

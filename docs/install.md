@@ -69,6 +69,23 @@ It is possible to run the application from the command line with a development s
 From a web browser, the OPUS server or client URL should redirect to the OPUS client home page.
 
 
+## Execution with Docker
+
+OPUS can be run in a container (uvicorn + nginx) with a PostgreSQL database. Templates are provided for the image, the services and the settings of the image, they should be copied and modified:
+
+    $ cp Dockerfile.dist Dockerfile
+    $ cp docker-compose.dist.yml docker-compose.yml
+    $ cp settings_docker.dist.py settings_docker.py
+
+In `settings_docker.py`, fill in the passwords and tokens (`ADMIN_DEFAULT_PW`, `ADMIN_TOKEN`, `JOB_EVENT_TOKEN`...). `BASE_URL` has to be reachable from inside the container, as jobs use it to report their phase to the server. Then build and start the services:
+
+    $ docker compose up --build -d
+
+The OPUS client is then available at http://localhost/opus_client/. The data (logs, jobs, results) is stored in the `opus_data` volume, and the database in the `db_data` volume.
+
+The ports of PostgreSQL (5432) and Adminer (8081) are exposed for development, and the database password is `opus`: for a deployment on a server, remove those ports and change the password in `docker-compose.yml` (`POSTGRES_PASSWORD`) and in `settings_docker.py` (`PGSQL_PASSWORD`).
+
+
 ## Preparing the WSGI web server
 
 The WSGI module should then be installed within this virtual environment, and a `wsgi.conf` file generated to setup the

@@ -1,6 +1,11 @@
+# Settings for the Docker image (copied as settings_local.py in the image)
+# Copy this file to settings_docker.py and fill in the empty values (see docs/install.md)
+
 # OPUS global config
 
 BASE_URL = "http://localhost/opus_server"
+UWS_CLIENT_ENDPOINT = "http://localhost/opus_client"
+UWS_SERVER_ENDPOINT = "/uws"
 BASE_IP = "127.0.0.1"
 ADMIN_EMAIL = ""
 ADMIN_NAME = "opus-admin"
