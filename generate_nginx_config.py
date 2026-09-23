@@ -9,9 +9,10 @@ print(f"OPUS directory is: {curdir}")
 # --- Configuration Variables ---
 # Update these to match your setup
 OPUS_ROOT = curdir
-LOGS_DIR = (
-    f"{VAR_PATH if VAR_PATH.startswith('/') else OPUS_ROOT + '/' + VAR_PATH}/logs"
-)
+VAR_DIR = VAR_PATH if VAR_PATH.startswith("/") else OPUS_ROOT + "/" + VAR_PATH
+LOGS_DIR = f"{VAR_DIR}/logs"
+# pid file and temp dirs, so that nginx does not need root to write in its default paths
+NGINX_DIR = f"{VAR_DIR}/nginx"
 OPUS_CLIENT_PORT = 8080
 OPUS_SERVER_PORT = 8082
 server_name = f"{urlparse(BASE_URL).netloc}"
@@ -20,14 +21,23 @@ server_name = f"{urlparse(BASE_URL).netloc}"
 NGINX_CONF_PATH = f"{OPUS_ROOT}/nginx/nginx.conf"
 
 # --- Generate nginx.conf ---
-nginx_config = f"""events {{
+nginx_config = f"""pid       {NGINX_DIR}/nginx.pid;
+error_log {LOGS_DIR}/nginx_error.log;
+
+events {{
     worker_connections 1024;
 }}
 
 http {{
-    # Access and error logs (using variables)
+    # Access log (using variables)
     access_log {LOGS_DIR}/nginx_access.log combined;
-    error_log  {LOGS_DIR}/nginx_error.log;
+
+    # Temp dirs (default ones may be owned by root/nobody)
+    client_body_temp_path {NGINX_DIR}/client_body_temp;
+    proxy_temp_path       {NGINX_DIR}/proxy_temp;
+    fastcgi_temp_path     {NGINX_DIR}/fastcgi_temp;
+    uwsgi_temp_path       {NGINX_DIR}/uwsgi_temp;
+    scgi_temp_path        {NGINX_DIR}/scgi_temp;
 
     # Upstream definitions (uvicorn ports)
     upstream opus_client {{
@@ -84,6 +94,8 @@ http {{
 # --- Write the config file ---
 # Create the nginx directory if it doesn't exist
 os.makedirs(os.path.dirname(NGINX_CONF_PATH), exist_ok=True)
+os.makedirs(LOGS_DIR, exist_ok=True)
+os.makedirs(NGINX_DIR, exist_ok=True)
 
 # Write the config
 with open(NGINX_CONF_PATH, "w") as f:

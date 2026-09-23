@@ -44,17 +44,18 @@ client:
 nginx_conf:
     uv run python generate_nginx_config.py
 
+# Run OPUS server + client behind nginx (as local user, no sudo needed)
 start:
+    nginx -e `pwd`/var/logs/nginx_error.log -c `pwd`/nginx/nginx.conf
     uv run uvicorn app_server:asgi_app --host localhost --port 8082 --workers 1 --root-path /opus_server &
     @sleep 1
     uv run uvicorn app_client:asgi_app --host localhost --port 8080 --workers 1 --root-path /opus_client &
     @sleep 1
-    sudo nginx -c `pwd`/nginx/nginx.conf
 
 stop:
     pkill -f uvicorn || true
     @sleep 1
-    sudo nginx -s stop
+    nginx -e `pwd`/var/logs/nginx_error.log -c `pwd`/nginx/nginx.conf -s stop
 
 docker_build:
     docker build -t opus-app .
