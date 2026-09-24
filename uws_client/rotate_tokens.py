@@ -4,12 +4,11 @@
 """
 Replace the predictable tokens of the client users by random tokens
 
-Previous versions generated the token of a new client user with
-uuid5(APP_PATH + email), which can be computed by anyone who knows the install path and
-the email. The token authenticates the user on the UWS server, and identifies the owner
-of their jobs. This command gives a new random token to those users, in the client
-database and in the server database (users and jobs), which must be on the same host
-(same settings, e.g. in the Docker container).
+Previous versions generated predictable tokens for new client users. The token
+authenticates the user on the UWS server, and identifies the owner of their jobs. This
+command gives a new random token to those users, in the client database and in the
+server database (users and jobs), which must be on the same host (same settings, e.g. in
+the Docker container).
 
     python -m uws_client.rotate_tokens            # dry run: list the users to update
     python -m uws_client.rotate_tokens --apply    # update the databases
@@ -70,7 +69,7 @@ if __name__ == "__main__":
     parser.add_argument("--all", action="store_true", help="update all users (except admin), not only predictable tokens")
     parser.add_argument(
         "--legacy-path", action="append", default=[],
-        help="other install path used by previous versions (APP_PATH is always checked)",
+        help="previous OPUS directory, if the installation was moved",
     )
     args = parser.parse_args()
     rotate(apply=args.apply, rotate_all=args.all, legacy_paths=[APP_PATH, *args.legacy_path])
