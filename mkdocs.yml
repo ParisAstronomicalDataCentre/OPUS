@@ -5,5 +5,6 @@ nav:
 - Overview: 'index.md'
 - Installation: 'install.md'
 - Configuration: 'settings.md'
+- Upgrade to v0.6: 'upgrade.md'
 - User guide: 'user_guide.md'
 - Developer guide: 'dev_guide.md'

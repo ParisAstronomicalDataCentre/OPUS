@@ -1449,7 +1449,7 @@ wheels = [
 
 [[package]]
 name = "opus"
-version = "0.1"
+version = "0.6.0"
 source = { editable = "." }
 dependencies = [
     { name = "argon2-cffi" },

@@ -1,6 +1,6 @@
 [project]
 name = "OPUS"
-version = "0.1"
+version = "0.6.0"
 description = "Job controller server and client based on the IVOA standards UWS and Provenance"
 readme = "README.md"
 requires-python = ">=3.10"
