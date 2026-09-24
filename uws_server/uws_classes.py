@@ -1111,7 +1111,7 @@ class JobList:
         self.jobname = jobname
         self.jobid = "joblist"
         self.user = user
-        # Link to the storage, e.g. SQLiteStorage, see settings.py
+        # Link to the storage, e.g. SQLAlchemyJobStorage, see settings.py
         # logger.debug('Init storage for joblist')
         self.storage = getattr(storage, settings.STORAGE + "JobStorage")()
 
