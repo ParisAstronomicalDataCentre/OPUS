@@ -41,8 +41,8 @@ class CommonSettings(BaseSettings):
     VAR_PATH: str = "local_var"  # store var locally for quick test, prefer e.g. '/var/opt/opus'
 
     # URL of the web server
-    BASE_URL: str = "http://localhost:8082"  # For local debug server with run_server.py
-    UWS_CLIENT_ENDPOINT: str = "http://localhost:8080"  # For local debug server with run_client.py
+    BASE_URL: str = "http://localhost:8082"  # For the development server (just server)
+    UWS_CLIENT_ENDPOINT: str = "http://localhost:8080"  # For the development server (just client)
     UWS_SERVER_ENDPOINT: str = "/uws"
     SCIM_ENDPOINT: str = "/scim"
 
