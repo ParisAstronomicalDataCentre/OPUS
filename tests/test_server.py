@@ -242,6 +242,16 @@ class TestUsers:
         # The first account is unchanged
         assert job_storage.get_users(name=name, token="token1")[0]["roles"] == "test_"
 
+    def test_roles(self):
+        job_storage = getattr(uws_server.storage, settings.STORAGE + "JobStorage")()
+        name = "user_" + settings.new_token()[:8]
+        job_storage.add_user(name, token="token1", roles="test_")
+        job_storage.add_role(name, "token1", role="other_job")
+        assert job_storage.has_role(name, "token1", role="other_job")
+        job_storage.remove_role(name, "token1", role="other_job")
+        assert not job_storage.has_role(name, "token1", role="other_job")
+        assert job_storage.has_role(name, "token1", role="test_")
+
 
 class TestJobAbort:
     """Test abort command on jobs (COMPLETED jobs cannot be aborted)"""

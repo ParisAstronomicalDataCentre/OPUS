@@ -19,7 +19,6 @@ the number of database access (in the case of a relational database)
 from datetime import datetime, date
 import os
 
-# from entity_store import *
 import hashlib
 
 from sqlalchemy import (
@@ -125,7 +124,7 @@ class UserStorage:
         pass
 
     def remove_role(self, name, token, role=""):
-        """Get job list from storage, i.e. access to a job"""
+        """Remove role from user, i.e. access to a job"""
         pass
 
     def has_role(self, name, token, role=""):
@@ -460,7 +459,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             if row:
                 roles = row.roles.split(",")
                 if role in roles:
-                    roles.pop(role)
+                    roles.remove(role)
                     row.roles = ",".join(roles)
                     session.merge(row)
                     session.commit()

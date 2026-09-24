@@ -5,7 +5,6 @@
 SQLAlchemy definition of an IVOA Provenance Relational DB
 """
 
-# from entity_store import *
 from sqlalchemy import (
     BigInteger,
     Boolean,
