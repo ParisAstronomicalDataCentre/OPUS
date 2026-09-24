@@ -1,105 +1,154 @@
 
 # Installation
 
+OPUS can be installed in three ways:
+
+* **locally with `uv` and `just`** (recommended): the server and the client run with uvicorn, optionally behind
+  nginx;
+* **with Docker**: uvicorn and nginx in a container, with a PostgreSQL database in another container;
+* **with Apache and mod_wsgi**, as in previous versions.
+
+To upgrade an existing installation, see [Upgrade to v0.6](upgrade.md).
+
+
 ## Get the code from the git repository
 
-The web application code can be placed in any directory, e.g. `OPUS_DIR=/opt/OPUS`. To create the `OPUS` directory, clone the git repository:
+The web application code can be placed in any directory, e.g. `OPUS_DIR=/opt/opus`. To create the directory, clone
+the git repository, then check out the last version:
 
-    $ git clone https://github.com/ParisAstronomicalDataCentre/OPUS.git
+    $ git clone https://github.com/ParisAstronomicalDataCentre/OPUS.git opus
+    $ cd opus
+    $ git checkout v0.6
 
-Alternatively :
-
-    $ git clone https://gitlab.obspm.fr/mservillat/OPUS.git
-
-
-
-## Setting the environment
-
-OPUS has been tested on MacOS, Debian/Ubuntu and CentOS. The web application generally uses Apache 2 and the WSGI module connected to a Python 3 environment.
-
-The following packages may be needed if not already installed in the environment (e.g. using `yum`, `apt-get`, `pkg`, `brew`... depending on the distribution):
-
-    $ <install_command> git bzip2 graphviz httpd-devel libpq-dev perl-Digest-SHA
-
-The Python 3 environment (last version tested: python-3.11.8) can be installed with Anaconda (check the [https://conda.io/docs/user-guide/install/index.html](Miniconda3
-installation page)). A virtual environment should be created, e.g. with the following commands:
-
-    $ cd $OPUS_DIR
-    $ conda create --name opus python==3.11
-    $ conda activate opus
-    $ pip install -r requirements.txt
-
-Check also the other requirement files:
-* `requirements.txt`: requirements for `pip`
-* `requirements_freeze.txt`: requirements for `pip` with last version tested
-* `requirements_conda.txt`: requirements for `conda` packages
+Alternatively, the repository is also available at https://gitlab.obspm.fr/mservillat/OPUS.git.
 
 
-## Prepare local configuration
+## Local installation with uv and just
 
-The settings of the server and the client have default values in the code (package `opus_config`). The local configuration is done in a `.env` file in the OPUS directory, with variables prefixed with `OPUS_`. A template is provided, and a `.env` file with random values for the secrets can be generated from it, then edited:
+OPUS has been tested on MacOS, Debian/Ubuntu and CentOS, with Python 3.10 and 3.11.
 
-    $ python generate_env.py > .env
+### Requirements
 
-This file contains confidential tokens and passwords, and any specific configuration of OPUS (URLs, Storage, SLURM...). It should be readable by the web server only, and never be added to git. The template is self descriptive for basic features. For more advanced features, see the dedicated page for Settings.
+* [uv](https://docs.astral.sh/uv/) to manage the Python environment and dependencies,
+* [just](https://just.systems/) to run the commands defined in the `justfile` (`just --list` shows them),
+* `git`, `curl` (used by the jobs to report their phase to the server) and `graphviz` (provenance graphs),
+* `nginx`, only to run OPUS behind nginx.
 
-OPUS stores its logs, job files and database in a dedicated directory, e.g. `OPUS_VAR=/var/opt/opus`. It is declared in `.env` as `OPUS_VAR_PATH`. This directory has to be writable by the server and client, so writable by the user running the applications (either the web server user or a local user).
+They can be installed e.g. with `brew`, `apt-get`... depending on the system.
+
+### Python environment
+
+In the OPUS directory, create the virtual environment `.venv` and install the dependencies:
+
+    $ just install          # uv sync --no-dev (or just install-dev, with the development tools)
+
+### Configuration
+
+The settings of the server and the client have default values in the code (package `opus_config`). The local
+configuration is done in a `.env` file in the OPUS directory, with variables prefixed with `OPUS_`. A template is
+provided (`.env.dist`), and a `.env` file with random values for the secrets can be generated from it, then edited:
+
+    $ just env > .env
+    $ chmod 600 .env
+
+This file contains confidential tokens and passwords, and any specific configuration of OPUS (URLs, Storage,
+SLURM...). It should be readable only by the user running OPUS, and never be added to git. The template is self
+descriptive for basic features, for more advanced features see [Configuration](settings.md).
+
+OPUS stores its logs, job files and database in a dedicated directory, declared in `.env` as `OPUS_VAR_PATH`
+(`local_var` in the OPUS directory by default, or e.g. `/var/opt/opus`). This directory has to be writable by the
+user running OPUS. It is created at the first start.
 
 The unit tests may be run to check the main features of the UWS server:
 
-    $ make test
+    $ just test
+
+### Run with the development servers
+
+The server and the client can be run directly with uvicorn, in two different shell sessions:
+
+    $ just server           # UWS server on http://localhost:8082
+    $ just client           # client on http://localhost:8080
+
+With the default settings (`OPUS_BASE_URL=http://localhost:8082` and `OPUS_UWS_CLIENT_ENDPOINT=http://localhost:8080`),
+the client is then available at http://localhost:8080.
+
+### Run behind nginx
+
+nginx gives access to the server and the client on the same port, under `/opus_server` and `/opus_client`. The URLs
+have to be set accordingly in `.env`, e.g.:
+
+    OPUS_BASE_URL=http://localhost/opus_server
+    OPUS_UWS_CLIENT_ENDPOINT=http://localhost/opus_client
+
+Then generate the nginx configuration (`nginx/nginx.conf`, from the settings), and start the server, the client and
+nginx:
+
+    $ just nginx_conf
+    $ just start
+    $ just stop             # to stop them
+
+The client is then available at http://localhost/opus_client/. nginx runs as the local user, with its logs in
+`$OPUS_VAR_PATH/logs` and its temporary files in `$OPUS_VAR_PATH/nginx`. It listens on port 80: this is allowed for
+a local user on MacOS, but on Linux the ports below 1024 are reserved to root (see e.g. the setting
+`net.ipv4.ip_unprivileged_port_start`, or change the port in `generate_nginx_config.py`).
+
+`OPUS_BASE_URL` has to be reachable from the machine running the jobs, as the jobs use it to report their phase to
+the server.
 
 
-## Local execution with developments servers
+## Installation with Docker
 
-It is possible to run the application from the command line with a development server. To test the application, run the following commands in two different shell sessions:
-
-    $ python run_server.py
-    Bottle v0.12.25 server starting up (using WSGIRefServer())...
-    Listening on http://localhost:8082/
-    Hit Ctrl-C to quit.
-
-    $ python run_client.py
-     * Serving Flask app 'uws_client.uws_client'
-     * Debug mode: on
-    WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
-     * Running on http://localhost:8080
-    Press CTRL+C to quit
-
-From a web browser, the OPUS server or client URL should redirect to the OPUS client home page.
-
-
-## Execution with Docker
-
-OPUS can be run in a container (uvicorn + nginx) with a PostgreSQL database. Templates are provided for the image and the services, they should be copied and modified, and the settings of the container are generated in `.env.docker` (with random values for the secrets):
+OPUS can be run in a container (uvicorn + nginx) with a PostgreSQL database. Templates are provided for the image and
+the services, they should be copied and modified, and the settings of the container are generated in `.env.docker`
+(with random values for the secrets):
 
     $ cp Dockerfile.dist Dockerfile
     $ cp docker-compose.dist.yml docker-compose.yml
-    $ python generate_env.py --template .env.docker.dist > .env.docker
+    $ just env .env.docker.dist > .env.docker
+    $ chmod 600 .env.docker
 
-The settings in `.env.docker` are given to the container as environment variables (`env_file` in `docker-compose.yml`), they are not part of the image. `OPUS_BASE_URL` has to be reachable from inside the container, as jobs use it to report their phase to the server. Then build and start the services:
+The settings in `.env.docker` are given to the container as environment variables (`env_file` in
+`docker-compose.yml`), they are not part of the image. `OPUS_BASE_URL` has to be reachable from inside the container,
+as jobs use it to report their phase to the server. Then build and start the services:
 
     $ docker compose up --build -d
 
-The OPUS client is then available at http://localhost/opus_client/. The data (logs, jobs, results) is stored in the `opus_data` volume, and the database in the `db_data` volume.
+The OPUS client is then available at http://localhost/opus_client/. The data (logs, jobs, results) is stored in the
+`opus_data` volume, and the database in the `db_data` volume.
 
-The ports of PostgreSQL (5432) and Adminer (8081) are exposed for development, and the database password is `opus`: for a deployment on a server, remove those ports and change the password in `docker-compose.yml` (`POSTGRES_PASSWORD`) and in `.env.docker` (`OPUS_PGSQL_PASSWORD`).
-
-
-## Preparing the WSGI web server
-
-The WSGI module should then be installed within this virtual environment, and a `wsgi.conf` file generated to setup the
- Apache web server:
-
-    $ pip install mod_wsgi
-    $ mod_wsgi-express module-config
-    $ mod_wsgi-express module-config > wsgi.conf
+The ports of PostgreSQL (5432) and Adminer (8081) are exposed for development, and the database password is `opus`:
+for a deployment on a server, remove those ports and change the password in `docker-compose.yml`
+(`POSTGRES_PASSWORD`) and in `.env.docker` (`OPUS_PGSQL_PASSWORD`).
 
 
-## Web server configuration
+## Installation with Apache and mod_wsgi
 
-With Apache 2 and mod_wsgi, use the script `uws_server/wsgi.py` or create a similar script. In the same way, the client can be run using the script `uws_client/wsgi.py`. For
-convenience, the following links can be created:
+OPUS can also be run by the Apache 2 web server with the WSGI module (mod_wsgi). The Python environment and the
+configuration are prepared as for a local installation (see above: `just install`, then the `.env` file). The
+URLs in `.env` are those given by Apache, e.g.:
+
+    OPUS_BASE_URL=https://example.com/opus_server
+    OPUS_UWS_CLIENT_ENDPOINT=https://example.com/opus_client
+
+The `.env` file has to be readable by the web server user (e.g. `www-data`, `apache`, `_www`...), and
+`OPUS_VAR_PATH` writable by this user.
+
+### WSGI module
+
+The WSGI module should be installed in the Python environment of OPUS, and a `wsgi.conf` file generated to setup the
+Apache web server (it loads the module and sets the Python environment):
+
+    $ uv pip install mod_wsgi
+    $ uv run mod_wsgi-express module-config > wsgi.conf
+
+Note that `uv sync` (or `just install`) removes the packages that are not dependencies of OPUS, such as mod_wsgi:
+use `uv sync --no-dev --inexact` to keep it.
+
+### Web server configuration
+
+The server and the client are run with the scripts `uws_server/wsgi.py` and `uws_client/wsgi.py`. For convenience,
+the following links can be created:
 
     $ cd $OPUS_DIR
     $ ln -sf uws_server/wsgi.py wsgi_server.py
@@ -110,32 +159,33 @@ directory should be `APACHE_CONF=/etc/httpd/conf.d/`; for Debian/Ubuntu, the fil
 `/etc/apache2/sites-available/` with a link from `/etc/apache2/sites-enabled/`, for MacOS the file can be copied
 to `/etc/apache2/other/`).
 
-First copy the WSG module configuration (as root):
+First copy the WSGI module configuration (as root):
 
     # cp wsgi.conf $APACHE_CONF
 
-Then create a `opus.conf` file to define virtual hosts for the OPUS server and client (in `$APACHE_CONF` for example,
-or inside `/etc/apache2/extra/httpd-vhosts.conf` for MacOS), the content would then be:
+Then create a `opus.conf` file to define the virtual host for the OPUS server and client (in `$APACHE_CONF` for
+example, or inside `/etc/apache2/extra/httpd-vhosts.conf` for MacOS). A template is given in
+`apache/apache_opus.dist.conf`, the paths have to be adapted (`/opt/opus` for the OPUS directory, `/var/opt/opus`
+for `OPUS_VAR_PATH`):
 
     <VirtualHost *:80>
         ServerName example.com
         ServerAdmin  a@b.com
-        DocumentRoot /opt/OPUS
-        ErrorLog "/var/www/opus/logs/apache_error.log"
-        CustomLog "/var/www/opus/logs/apache_access.log" combined
-        Header set Access-Control-Allow-Origin "*"
+        DocumentRoot /opt/opus
+        ErrorLog "/var/opt/opus/logs/apache_error.log"
+        CustomLog "/var/opt/opus/logs/apache_access.log" combined
+        WSGIApplicationGroup %{GLOBAL}
         WSGIDaemonProcess opus_client display-name=%{GROUP} processes=1 threads=5
-        WSGIScriptAlias /opus_client "/opt/OPUS/wsgi_client.py" process-group=opus_client
+        WSGIScriptAlias /opus_client "/opt/opus/wsgi_client.py" process-group=opus_client
         WSGIDaemonProcess opus_server display-name=%{GROUP} processes=1 threads=5
-        WSGIScriptAlias /opus_server "/opt/OPUS/wsgi_server.py" process-group=opus_server
-        Alias /static "/opt/OPUS/uws_client/static"
+        WSGIScriptAlias /opus_server "/opt/opus/wsgi_server.py" process-group=opus_server
+        Alias /static "/opt/opus/uws_client/static"
         WSGIPassAuthorization On
-        <Directory "/opt/OPUS">
+        <Directory "/opt/opus">
             AllowOverride None
             Require all granted
         </Directory>
     </VirtualHost>
-
 
 After this configuration, the server must be restarted, and logs checked:
 

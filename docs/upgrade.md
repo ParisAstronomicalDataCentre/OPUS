@@ -21,7 +21,7 @@ Security issues fixed
 | Issue | Impact | Fix in v0.6 | Action on existing installations |
 | ---   | :---   | :---        | :---                             |
 | The key signing the session cookies of the client (`app.secret_key`) was written in the code, so publicly known | Anyone could forge the content of a session cookie (e.g. the state of an OpenID Connect login). The identity of the logged-in user is not affected, as it relies on a random identifier. | The key is the required setting `OPUS_SECRET_KEY` | Generate a random `OPUS_SECRET_KEY` in `.env` (step 3). All users are logged out once. |
-| The token of a new client user was `uuid5(APP_PATH + email)`, computable by anyone who knows the install path (e.g. `/opt/opus` in Docker) and the email. A registered user could check guesses of the path offline against their own token. | The token authenticates the user on the UWS server: access to the jobs and results of other users. | Tokens are random (setting `TOKEN_GEN`) | Replace the existing predictable tokens (step 5) |
+| The token of a new client user was predictable: it could be computed by others. | The token authenticates the user on the UWS server: access to the jobs and results of other users. | Tokens are random (setting `TOKEN_GEN`) | Replace the existing predictable tokens (step 5) |
 | On the server, a request with an existing user name and any token replaced the token of this user in the `users` table | With `CHECK_PERMISSIONS=true`, anyone could get the job permissions (roles) of any user, who then lost them. Access to existing jobs was not affected (owner token of each job). | A user is identified by name + token: another token is another account, without roles | Migrate the `users` table (step 4) |
 | A validation error of the settings could show all the values read, including secrets | Secrets in logs or tracebacks | Values are hidden in validation errors | None |
 
@@ -29,8 +29,8 @@ Security issues fixed
 Main changes
 ------------
 
-* **Settings are read from a `.env` file** (or environment variables prefixed with `OPUS_`), see the page on
-  Settings. `settings_local.py` is no longer read: **OPUS does not start** if it is present without a `.env` file,
+* **Settings are read from a `.env` file** (or environment variables prefixed with `OPUS_`), see
+  [Configuration](settings.md). `settings_local.py` is no longer read: **OPUS does not start** if it is present without a `.env` file,
   to avoid running with the default settings (e.g. `ALLOW_ANONYMOUS=true`, `CHECK_PERMISSIONS=false`).
 * `OPUS_SECRET_KEY` and `OPUS_SECURITY_PASSWORD_SALT` are **required**. The salt used until now was `test`: it has to
   be kept, or all the existing passwords of the client users are invalidated (`generate_env.py --from` does it).
@@ -88,8 +88,8 @@ For a new installation (no `settings_local.py`), generate `.env` from the templa
     $ python -m uws_client.rotate_tokens            # dry run: list the users to update
     $ python -m uws_client.rotate_tokens --apply
 
-If OPUS was installed in another directory before, add `--legacy-path <previous OPUS directory>`, as the old tokens
-were computed from the install path. With `--all`, all the tokens are replaced (except the admin token).
+With `--all`, all the tokens are replaced (except the admin token): this is recommended if the installation was
+moved or copied from another place.
 
 **6. Start OPUS and inform the users**: they have to log in again, and those who use their token outside of the
 web client (scripts, command line) have to get the new one from their profile page.

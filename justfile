@@ -28,6 +28,10 @@ mypy path="src":
     uv run mypy --pretty {{ path }}
     @echo 'mypy ✅'
 
+# Run the tests
+test:
+    uv run pytest -q tests/test_server.py
+
 # Lint python files with ruff
 ruff path="src":
     uv run ruff check {{ path }}
@@ -45,12 +49,13 @@ client:
 env template=".env.dist":
     @uv run python generate_env.py --template {{ template }}
 
+# Generate nginx/nginx.conf from the settings (.env)
 nginx_conf:
     uv run python generate_nginx_config.py
 
 # Run OPUS server + client behind nginx (as local user, no sudo needed)
 start:
-    nginx -e `pwd`/var/logs/nginx_error.log -c `pwd`/nginx/nginx.conf
+    nginx -e stderr -c `pwd`/nginx/nginx.conf
     uv run uvicorn app_server:asgi_app --host localhost --port 8082 --workers 1 --root-path /opus_server &
     @sleep 1
     uv run uvicorn app_client:asgi_app --host localhost --port 8080 --workers 1 --root-path /opus_client &
@@ -59,7 +64,7 @@ start:
 stop:
     pkill -f uvicorn || true
     @sleep 1
-    nginx -e `pwd`/var/logs/nginx_error.log -c `pwd`/nginx/nginx.conf -s stop
+    nginx -e stderr -c `pwd`/nginx/nginx.conf -s stop
 
 docker_build:
     docker build -t opus-app .
