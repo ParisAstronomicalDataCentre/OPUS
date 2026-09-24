@@ -9,7 +9,6 @@ import base64
 import datetime
 import json
 import subprocess
-import uuid
 import os
 
 import requests
@@ -177,12 +176,9 @@ class Role(db.Model, RoleMixin):
 
 
 def gen_token(context):
-    try:
-        email = context.current_parameters.get("email")
-        token = uuid.uuid5(uuid.NAMESPACE_X500, app.config["APP_PATH"] + email)
-    except Exception:
-        token = uuid.uuid4()
-    return str(token)
+    # Random by default (see TOKEN_GEN setting), must not be predictable: the token is
+    # used to authenticate the user on the server, and fs_uniquifier in the session
+    return settings.new_token(context)
 
 
 class User(db.Model, UserMixin):

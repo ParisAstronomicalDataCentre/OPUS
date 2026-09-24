@@ -37,6 +37,15 @@ The generators of identifiers and tokens (`JOB_ID_GEN`, `ENTITY_ID_GEN`, `TOKEN_
 functions given as import strings, e.g. `OPUS_JOB_ID_GEN=my_generators:job_id` (see
 `$OPUS_DIR/opus_config/generators.py` for their signatures).
 
+**Note:** previous versions of the client generated predictable tokens for new users (from the install path and
+the email). The token authenticates the user on the server, so those tokens should be replaced by random tokens, in
+the client and server databases (on the same host, backup both databases before):
+
+    $ python -m uws_client.rotate_tokens          # dry run: list the users to update
+    $ python -m uws_client.rotate_tokens --apply
+
+In Docker: `docker compose exec opus-app uv run --no-sync python -m uws_client.rotate_tokens`.
+
 
 ### General settings
 

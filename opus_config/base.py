@@ -13,9 +13,12 @@ Dicts and lists are given as JSON in environment variables and .env.
 
 import os
 import warnings
+from collections.abc import Callable
 
-from pydantic import SecretStr, field_validator, model_validator
+from pydantic import ImportString, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from . import generators
 
 # Where is located the code of the web app
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
@@ -54,6 +57,10 @@ class CommonSettings(BaseSettings):
     # IMPORTANT: use a random string and keep it secret (same value for server and client)
     ADMIN_TOKEN: SecretStr = SecretStr("TBD")
 
+    # Generator of the tokens of new users, as an import string "module:function"
+    # (see opus_config/generators.py for the default and signature)
+    TOKEN_GEN: ImportString[Callable[..., str]] = generators.token
+
     # Suffix to the log files (set for tests)
     LOG_FILE_SUFFIX: str = ""
 
@@ -88,6 +95,10 @@ class CommonSettings(BaseSettings):
                     stacklevel=2,
                 )
         return self
+
+    def new_token(self, context=None):
+        # context is given by SQLAlchemy when used as a column default
+        return self.TOKEN_GEN(context)
 
     def export(self):
         """Dict of all settings and derived values, with secrets revealed

@@ -73,11 +73,10 @@ class ServerSettings(CommonSettings):
     # Length of uuid identifiers from the right, max=36
     JOB_ID_LENGTH: int = 6
 
-    # Generators of identifiers and tokens, as import strings "module:function"
-    # (see opus_config/generators.py for the defaults and signatures)
+    # Generators of identifiers, as import strings "module:function" (see
+    # opus_config/generators.py for the defaults and signatures, and TOKEN_GEN in base.py)
     JOB_ID_GEN: ImportString[Callable[..., str]] = generators.job_id
     ENTITY_ID_GEN: ImportString[Callable[..., str]] = generators.entity_id
-    TOKEN_GEN: ImportString[Callable[..., str]] = generators.token
 
     ### Archive settings
 
@@ -146,7 +145,7 @@ class ServerSettings(CommonSettings):
             self.SLURM_MAIL_USER = self.ADMIN_EMAIL
         return self
 
-    ### Generate identifiers and tokens
+    ### Generate identifiers
 
     def new_job_id(self):
         return self.JOB_ID_GEN(self.JOB_ID_LENGTH)
@@ -154,10 +153,6 @@ class ServerSettings(CommonSettings):
     def new_entity_id(self, **kwargs):
         # kwargs contains all the known attributes of an entity
         return self.ENTITY_ID_GEN(self.JOB_ID_LENGTH, **kwargs)
-
-    def new_token(self, context=None):
-        # context is given by SQLAlchemy when used as a column default
-        return self.TOKEN_GEN(context)
 
     ### Paths derived from VAR_PATH
 
