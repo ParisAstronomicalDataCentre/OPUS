@@ -227,6 +227,22 @@ class TestParameterLength:
             assert "too long" in response.text
 
 
+class TestUsers:
+    """A user is identified by name + token: same name, other token = other account"""
+
+    def test_accounts_by_name_and_token(self):
+        job_storage = getattr(uws_server.storage, settings.STORAGE + "JobStorage")()
+        name = "user_" + settings.new_token()[:8]
+        job_storage.add_user(name, token="token1", roles="test_")
+        # A request with another token creates another account, without the roles
+        job_storage.add_user(name, token="token2")
+        assert len(job_storage.get_users(name=name)) == 2
+        assert job_storage.has_role(name, "token1", role="test_")
+        assert not job_storage.has_role(name, "token2", role="test_")
+        # The first account is unchanged
+        assert job_storage.get_users(name=name, token="token1")[0]["roles"] == "test_"
+
+
 class TestJobAbort:
     """Test abort command on jobs (COMPLETED jobs cannot be aborted)"""
 

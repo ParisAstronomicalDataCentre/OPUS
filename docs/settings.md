@@ -46,6 +46,14 @@ the client and server databases (on the same host, backup both databases before)
 
 In Docker: `docker compose exec opus-app uv run --no-sync python -m uws_client.rotate_tokens`.
 
+**Note:** on the server, a user is identified by its name and its token: the same name (e.g. an email) can have
+several accounts, one per token (e.g. one per client), each with its own roles and jobs. In a database created
+by a previous version, the primary key of the `users` table is the name only (a warning is logged at start), the
+table has to be migrated (backup the database before):
+
+    $ python -m uws_server.migrate_users          # dry run: show the current schema
+    $ python -m uws_server.migrate_users --apply
+
 
 ### General settings
 

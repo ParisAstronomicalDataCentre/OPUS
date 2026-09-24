@@ -30,7 +30,7 @@ from bottle import (
     static_file,
 )
 
-from . import managers, storage, uws_jdl
+from . import managers, migrate_users, storage, uws_jdl
 from .settings import (
     settings,
     ACTIVE_PHASES,
@@ -59,6 +59,9 @@ from .uws_classes import (
 # Create a new application
 app = Bottle()
 BaseRequest.MEMFILE_MAX = settings.MEMFILE_MAX
+
+# Warn if the users table was created by a previous version (see migrate_users.py)
+migrate_users.check_users_schema()
 
 
 # ----------
@@ -522,7 +525,8 @@ def create_user():
         roles = request.POST.get("roles", None)
         job_storage = getattr(storage, settings.STORAGE + "JobStorage")()
         job_storage.add_user(name, token=token, roles=roles)
-        users = job_storage.get_users(name=name)
+        # the same name may have several accounts (one per token)
+        users = job_storage.get_users(name=name, token=token or None)
         if users:
             u = users[0]
             logger.info("User created: " + name)
@@ -538,7 +542,11 @@ def create_user():
 @is_admin
 def get_user(name):
     job_storage = getattr(storage, settings.STORAGE + "JobStorage")()
-    users = job_storage.get_users(name=name)
+    # the same name may have several accounts (one per token)
+    token = request.query.get("token", None)
+    users = job_storage.get_users(name=name, token=token)
+    if len(users) > 1:
+        abort(409, f"{len(users)} accounts found with name {name}, give the token")
     if users:
         u = users[0]
         return user2scim(u)

@@ -259,8 +259,11 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
 
         class User(self.Base):
             __tablename__ = "users"
+            # A user is identified by name + token: the same name (e.g. an email) can have
+            # several accounts, one per token (e.g. one per client), with their own roles
+            # and jobs (see migrate_users.py for databases created by previous versions)
             name = Column(String(80), primary_key=True)
-            token = Column(String(255), default=settings.new_token)
+            token = Column(String(255), primary_key=True, default=settings.new_token)
             roles = Column(String(255), default="")
             active = Column(Boolean(), default=True)
             first_connection = Column(myDateTime)
@@ -369,8 +372,9 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                     d["token"] = token
                 if roles:
                     d["roles"] = roles
+                # new account (never update the token of an existing account)
                 u = self.User(**d)
-                session.merge(u)
+                session.add(u)
                 session.commit()
                 logger.info(f"User {name} added to db")
             # else:
