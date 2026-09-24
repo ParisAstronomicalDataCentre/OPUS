@@ -23,7 +23,6 @@ RUN uv sync --locked --no-dev --no-install-project
 # Create /opt/opus and copy uws_client/ and uws_server/
 COPY favicon* ./
 COPY .git ./.git
-COPY .htaccess ./.htaccess
 COPY opus_config/ /opt/opus/opus_config/
 COPY uws_client/ /opt/opus/uws_client/
 COPY uws_server/ /opt/opus/uws_server/
