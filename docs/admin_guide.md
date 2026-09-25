@@ -144,13 +144,25 @@ The last lines of the server and client logs can also be seen in the administrat
 
 The server provides a maintenance task that updates the phase of the jobs still running, and archives the jobs
 whose destruction date is passed (their results are deleted, their description is kept, see `USE_ARCHIVED_PHASE`).
-It is run by a request to the server from the server host itself (`<name>` for the jobs of a given name, or
-`__all__`), e.g. once a day with `cron`:
+The server only accepts it from its own host. It is not run automatically: it should be run regularly, e.g. once a
+day with `cron`.
 
-    $ curl http://localhost:8082/handler/maintenance/__all__
+For a local installation (development servers or behind nginx), run in the OPUS directory:
 
-(the URL depends on the installation, e.g. `http://localhost/opus_server/handler/maintenance/__all__` behind
-nginx or Apache).
+    $ just maintenance                      # all the jobs
+    $ just maintenance <jobname>            # only the jobs with this name
+
+e.g. in the crontab of the user running OPUS (the path of `just` may have to be given):
+
+    0 3 * * * cd /opt/opus && just maintenance >> /var/opt/opus/logs/maintenance.log 2>&1
+
+With Docker, run it in the container:
+
+    $ docker compose exec opus-app curl -sS http://localhost:8082/handler/maintenance/__all__
+
+With Apache, send the request to the URL of the server from the server host, e.g.:
+
+    $ curl -sS http://localhost/opus_server/handler/maintenance/__all__
 
 ### Maintenance commands
 

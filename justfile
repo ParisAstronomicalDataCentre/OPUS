@@ -66,6 +66,10 @@ stop:
     @sleep 1
     nginx -e stderr -c `pwd`/nginx/nginx.conf -s stop
 
+# Maintenance of the jobs: update phases, archive expired jobs (from the server host, e.g. daily)
+maintenance jobname="__all__" url="http://localhost:8082":
+    @curl -sS --fail-with-body {{ url }}/handler/maintenance/{{ jobname }}
+
 docker_build:
     docker build -t opus-app .
 
