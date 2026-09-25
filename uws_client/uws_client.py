@@ -19,7 +19,6 @@ from flask import (
     Response,
     abort,
     flash,
-    g,
     redirect,
     render_template,
     request,
@@ -279,22 +278,35 @@ def oidc_callback():
             "warning",
         )
         return redirect(url_for("home"), 303)
-    # Store token
-    token = oauth._clients[session["oidc_idp"]].authorize_access_token()
-    # session['oidc_access_token'] = token.get('access_token')
-    logger.debug("token = " + str(token))
+    # Get the token (access, refresh and id tokens are secrets: never log them)
+    oauth._clients[session["oidc_idp"]].authorize_access_token()
     # Get userinfo
     # user = token.get('userinfo')  # use direct userinfo sent with token (not always present...)
     user = oauth._clients[session["oidc_idp"]].userinfo()
     session["oidc_user"] = user
-    logger.debug("user = " + str(user))
+    logger.debug(f"OIDC userinfo from {session['oidc_idp']} for sub={user.get('sub')}")
     # Get email, or sub if email is not present (sub is always returned)
-    oidc_email = user.get("email", None).lower()
+    email = (user.get("email") or "").lower()
+    email_verified = str(user.get("email_verified")).lower()  # "true", "false" or "none" (not given)
+    if email and email_verified == "false":
+        logger.warning(f"OIDC login refused for {email}: email not verified by the Identity Provider")
+        flash("Your email is not verified by the Identity Provider, cannot sign in.", "warning")
+        return redirect(url_for("home"), 303)
+    oidc_email = email
     if not oidc_email:
         logger.warning('No email was found for user. Using "sub" to identify user')
         oidc_email = user["sub"]
     # Check if user exists in the database.
     oidc_user = user_datastore.find_user(email=oidc_email)
+    if oidc_user and not oidc_user.has_role("oidc") and email_verified != "true":
+        # A local account (not created from OIDC) is only used if the Identity Provider verified the email
+        logger.warning(f"OIDC login refused for {oidc_email}: local account, and email not verified")
+        flash(
+            "A local account exists with this email, and the Identity Provider did not verify the email: "
+            "cannot sign in with this Identity Provider.",
+            "warning",
+        )
+        return redirect(url_for("home"), 303)
     if not oidc_user:
         user_datastore.create_user(
             email=oidc_email,
@@ -460,7 +472,7 @@ def on_user_logged_out(sender, user):
 @app.route("/accounts/profile", methods=["GET", "POST"])
 @login_required
 def profile():
-    logger.debug(current_user.__dict__)
+    logger.debug(f"Profile of {current_user.email}")
     order = ["email", "token"]
     profile = {
         "email": {
@@ -482,7 +494,7 @@ def profile():
                 current_user.token = token
                 user_datastore.put(current_user)
                 user_datastore.commit()
-                logger.debug(current_user.__dict__)
+                logger.debug(f"Profile of {current_user.email}")
                 flash(f"Token of user {current_user.email} has been updated")
         else:
             flash("No token found in form")
@@ -582,9 +594,6 @@ def favicon():
 def home():
     """Home page"""
     # logger.debug('app.config = {}'.format(app.config))
-    logger.debug(f"session = {session.__str__()}")
-    logger.debug("config = ")
-    logger.debug(f"g = {g.__dict__}")
     date, version = git_version()
     return render_template("home.html", git_date=date, git_version=version)
 
@@ -750,7 +759,8 @@ def uws_server_request(uri, method="GET", init_request=None):
         if init_request:
             for key in list(init_request.form.keys()):
                 value = init_request.form.getlist(key)
-                logger.debug(f"POST {key}: {value}")
+                secret = any(w in key.lower() for w in ("token", "password", "secret"))
+                logger.debug(f"POST {key}: {'***' if secret else value}")
                 if len(value) == 1:
                     post[key] = value[0]
                 else:

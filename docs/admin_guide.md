@@ -60,7 +60,10 @@ different from the roles of the users on the server (see **Server Accounts**).
 Users can also create their own account on the registration page of the client (**Register**, next to **Local
 login** in the menu), if it is enabled with `OPUS_SECURITY_REGISTERABLE=true` in `.env` (disabled by default). Users can also
 sign in with an external account if Identity Providers are configured (`OPUS_OIDC_IDPS`, OpenID Connect): their
-account in the client is then created at the first login.
+account in the client is then created at the first login. The account is identified by the email given by the Identity Provider
+(or by its `sub` identifier if no email is given). The login is refused if the Identity Provider indicates that the
+email is not verified (`email_verified`), and a local account (created without OIDC) can only be used if the email
+is verified.
 
 ### Server Accounts
 
