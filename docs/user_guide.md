@@ -2,59 +2,140 @@
 User guide
 ==========
 
+The OPUS client is a web interface to run jobs on an OPUS UWS server, follow their execution, and get their results
+and provenance. The top menu gives access to:
 
-Administration from the UWS Client
-----------------------------------
+* **Execute Job**: fill the form of a job and run it,
+* **Job List**: follow and manage the jobs,
+* **Job Definition**: describe a new job, or view the definition of an existing one.
 
-### Login as the administrator of OPUS
-
-The default login name is ‘opus-admin‘ and the default password for the UWS Client is set locally in
-`.env` (`OPUS_ADMIN_DEFAULT_PW`). This password should be secured and changed after install.
-
-In order to be the administrator of an OPUS UWS Server, the client account ‘opus-admin‘ must have the name and token defines for
-the UWS Server in the variables ADMIN_NAME and ADMIN_TOKEN. The token can be changed in the UWS Client through the Profile page (top-right menu).
-
-From the top-right menu, the administrator can access the following specific pages:
-
-* **Client Preferences**: view and modify the connection to the UWS Server (UWS_SERVER_URL and UWS_AUTH)
-
-* **Client Accounts**: view and modify the client accounts (name and password for the client, token to connect to the
-server)
-
-* **Server Accounts**: view and modify the server accounts (name and token on the server), import accounts to the client
-
-* **Server Jobs**: list available job definitions on the server
+The administration of OPUS (accounts, validation of job definitions...) is described in the
+[Admin guide](admin_guide.md).
 
 
-Job definition editor
----------------------
+Access and accounts
+-------------------
 
-### Create a new job definition
+### Sign in
 
-The Job Definition Editor provides a form to describe a job with a job name, some metadata, an then a list of parameters, expected input data and expected generated results.
+Click **Local login** (top right) and sign in with your email and password. If Identity Providers are configured
+(OpenID Connect), a button is also shown for each of them, to sign in with an external account.
 
-Example jobs are provided in `test_jobs/`. Those files can be imported from the Job Definition Editor.
+Depending on the server configuration, jobs may also be run without being signed in (anonymous user).
 
-Once the job definition form is imported, click the **Submit JDL form** button.
-This will create a temporary job with the prefix `tmp/` that must be validated by the administrator of OPUS.
-The administrator of OPUS should receive a notification by email.
+### Profile and token
 
-### Validate a job definition
+Once signed in, the menu **Signed in as ...** (top right) gives access to:
 
+* **Show profile**: your email and your **token**,
+* **Change password**,
+* **Sign out**.
 
+The client uses your email and your token to authenticate you on the UWS server: they identify your account on the
+server, and the jobs you own. The token is also needed to use the server directly (see
+[Use the REST interface](#use-the-rest-interface-of-the-server)), so keep it secret.
 
-Create and manage jobs from the UWS Client
-------------------------------------------
-
-### Run a job
-
-### Check the status
-
-### Edit the job properties, parameters and results
-
-### Check the job details
+The token can be changed from the profile page. On the server, a user is identified by its name **and** its token:
+with another token, you use another account on the server, with its own jobs and permissions (the jobs created with
+the previous token are no longer visible with the new one).
 
 
+Run a job
+---------
 
-Create and manage jobs using Python uws-client
-----------------------------------------------
+In **Execute Job**, choose a job in the list: its form is displayed, with a description of the job and of each
+parameter. Fill the form:
+
+* the **parameters** of the job (default values are given),
+* the **input files** expected by the job, if any: upload a file, or give its URL or its identifier in OPUS (e.g. a
+  result of a previous job),
+* the **control parameters**: a label for the job (`runId`), which helps finding it in the job list, and the
+  execution duration, destruction date... (optional).
+
+Submit the form: the job is created and started on the server, and its page is displayed.
+
+**Create New Job** gives an empty form for the selected job, and **Edit job definition** opens its definition.
+
+
+Follow the jobs
+---------------
+
+**Job List** shows the jobs for the job name selected in the list (or all jobs), with for each job: its identifier,
+its label (`runId`), its creation time, its **phase**, and buttons to open its page, and to start, abort or delete it.
+Click **Refresh List** to update the list.
+
+The phase of a job follows the UWS pattern:
+
+| Phase       | Meaning                                                           |
+| ---         | :---                                                              |
+| `PENDING`   | The job is created, but not started                               |
+| `QUEUED`    | The job is started, and waits for its execution                   |
+| `EXECUTING` | The job is running                                                |
+| `COMPLETED` | The job ended successfully, its results are available             |
+| `ERROR`     | The job ended with an error (see the details of the job)          |
+| `ABORTED`   | The job was aborted                                               |
+| `ARCHIVED`  | The destruction date of the job is passed: its results were deleted, only its description is kept |
+
+A job and its results are kept until its destruction date (by default 30 days after its creation, depending on the
+server). Archived jobs are not shown in the job list.
+
+
+Job page
+--------
+
+The page of a job shows a summary (identifier, label, creation time, phase, owner), with buttons to start, abort
+or delete the job, and the following sections:
+
+* **Job Properties**: attributes of the job (start and end time, execution duration, destruction date...),
+* **Job Parameters**: values of the parameters (they can be changed while the job is `PENDING`),
+* **Job Results**: files generated by the job, with **Show preview** (for text files) and **Download**,
+* **Job Details**: logs of the execution (`stdout` and `stderr`), and **Get current log** while the job is running.
+
+The buttons at the top give access to:
+
+* **Provenance graph**: a graph of the provenance of the job (its parameters, input files, results, and the
+  description of the job), following the IVOA Provenance Data Model,
+* **Rerun job**: the form of the job, filled with the same parameters, to run a new job,
+* **Edit job definition** and **Back to job list**.
+
+
+Define a new job
+----------------
+
+**Job Definition** opens the Job Definition Editor. A job is described by:
+
+* a name, a description and some metadata (version, contact, type...),
+* its **parameters** (name, type, default value, description...),
+* its expected **input files** (used entities) and **results** (generated entities),
+* the **script** executed by the job: a Bash script, where the parameters, inputs and results are available as
+  variables (e.g. `$text` for a parameter named `text`).
+
+An existing definition can be loaded with **Load JDL** (from the list, or by name), or imported from a file with
+**Import JDL**. Example job definitions are provided in the `test_jobs/` directory of OPUS.
+
+Once the form is filled, click **Submit JDL form**: this creates a temporary job definition named `tmp/<name>`,
+which can be tested. Then click **Request Validation**: the administrator of OPUS receives an email, and has to
+validate the job definition (see the [Admin guide](admin_guide.md)). The job is then available in **Execute Job**.
+
+
+Use the REST interface of the server
+------------------------------------
+
+The UWS server can be used directly, from scripts or the command line, with the REST interface defined by the UWS
+pattern. The requests are authenticated with your email and your token (HTTP Basic authentication), e.g. with
+`curl` (`<server>` being the URL of the server, e.g. `https://example.com/opus_server`):
+
+    # list the jobs of a given job name
+    $ curl -u <email>:<token> <server>/uws/<jobname>
+    # create and start a job (returns the URL of the job)
+    $ curl -u <email>:<token> -d "text=Hello" -d "PHASE=RUN" <server>/uws/<jobname>
+    # get the phase of the job, then its results
+    $ curl -u <email>:<token> <server>/uws/<jobname>/<jobid>/phase
+    $ curl -u <email>:<token> <server>/uws/<jobname>/<jobid>/results
+    # get the provenance of the job (PROV-JSON)
+    $ curl -u <email>:<token> <server>/uws/<jobname>/<jobid>/provjson
+
+The job descriptions are returned in the XML format of the UWS pattern. The descriptions of the available jobs are
+given by `<server>/jdl` (JSON).
+
+Any UWS client can also be used, e.g. the Python package `uws-client` (see `tests/scripttest_dummy.py`).

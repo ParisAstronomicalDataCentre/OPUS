@@ -7,4 +7,5 @@ nav:
 - Configuration: 'settings.md'
 - Upgrade to v0.6: 'upgrade.md'
 - User guide: 'user_guide.md'
+- Admin guide: 'admin_guide.md'
 - Developer guide: 'dev_guide.md'
