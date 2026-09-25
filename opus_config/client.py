@@ -76,12 +76,14 @@ class ClientSettings(CommonSettings):
     @computed_field
     @property
     def SECURITY_POST_LOGIN_VIEW(self) -> str:
-        return self.UWS_CLIENT_ENDPOINT
+        # endpoint (relative URL): valid whatever the host name used to reach the client (an absolute URL
+        # on another host than the request is refused by Flask-Security, error 500)
+        return "home"
 
     @computed_field
     @property
     def SECURITY_POST_LOGOUT_VIEW(self) -> str:
-        return self.UWS_CLIENT_ENDPOINT + self.SECURITY_URL_PREFIX + "/login"
+        return "security.login"
 
     @computed_field
     @property

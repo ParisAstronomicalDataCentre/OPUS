@@ -183,6 +183,23 @@ class TestRegister:
 
 class TestPasswordLogin:
 
+    def test_login_other_host_name(self, client, local_user):
+        """The client is reached with another host name than UWS_CLIENT_ENDPOINT (e.g. opus-docker.localhost
+        instead of localhost): the redirections after login and logout stay on this host"""
+        base_url = "http://opus-docker.localhost"
+        response = client.post("/accounts/login", data={"email": local_user, "password": PASSWORD}, base_url=base_url)
+        assert response.status_code == 302
+        assert response.headers["Location"] in ("/", f"{base_url}/")
+        response = client.get("/accounts/logout", base_url=base_url)
+        assert response.status_code == 302
+        assert response.headers["Location"] in ("/accounts/login", f"{base_url}/accounts/login")
+        # client behind nginx, with a path prefix (uvicorn --root-path /opus_client, i.e. SCRIPT_NAME)
+        prefixed = f"{base_url}/opus_client"
+        response = client.post("/accounts/login", data={"email": local_user, "password": PASSWORD}, base_url=prefixed)
+        assert response.headers["Location"] in ("/opus_client/", f"{base_url}/opus_client/")
+        response = client.get("/accounts/logout", base_url=prefixed)
+        assert response.headers["Location"] in ("/opus_client/accounts/login", f"{base_url}/opus_client/accounts/login")
+
     def test_login_logout(self, client, local_user):
         password_login(client, local_user)
         assert signed_in(client)
