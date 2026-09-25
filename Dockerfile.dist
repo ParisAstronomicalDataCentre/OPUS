@@ -40,14 +40,14 @@ RUN mkdir -p /var/opt/opus/logs
 ENV PYTHONUNBUFFERED=1
 ENV PATH="/usr/local/bin:$PATH"
 # Settings are given as environment variables at runtime (env_file: .env.docker in
-# docker-compose.yml), nginx.conf is generated from them at start (see start.sh)
+# docker-compose.yml), nginx.conf is generated from them at start (see docker-start.sh)
 
 # Exposition du port
 EXPOSE 80
 
 # Copy the script
-COPY start.sh /start.sh
-RUN chmod +x /start.sh
+COPY docker-start.sh /docker-start.sh
+RUN chmod +x /docker-start.sh
 
 # Use the script in CMD
-CMD ["/start.sh"]
+CMD ["/docker-start.sh"]
