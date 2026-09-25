@@ -2,18 +2,21 @@
 # Copyright (c) 2016 by Mathieu Servillat
 # Licensed under MIT (https://github.com/mservillat/uws-server/blob/master/LICENSE)
 """
-Migrate the users table of the server database: primary key (name) -> (name, token)
+Migrate the server database: a user is identified by name + token
 
-A user is identified by name + token: the same name (e.g. an email) can have several
-accounts, one per token. In databases created by previous versions, the primary key of
-the users table is the name only: then a request with an existing name and another token
-fails (instead of creating another account).
+The same name (e.g. an email) can have several accounts, one per token. In databases
+created by previous versions:
+- the primary key of the users table is the name only: then a request with an existing
+  name and another token fails (instead of creating another account)
+- the entities (files in /store) have an owner name, but no owner token: the owner
+  token is added (owner_token column), and set from the jobs that generated or used
+  the entities. This part is also done at the start of the server.
 
     python -m uws_server.migrate_users            # dry run: show the current schema
-    python -m uws_server.migrate_users --apply    # migrate the users table
+    python -m uws_server.migrate_users --apply    # migrate the users and entities tables
 
 Backup the database before --apply. The migration is done in a transaction, and does
-nothing if the table is already migrated.
+nothing if the tables are already migrated.
 """
 
 import argparse
@@ -41,9 +44,54 @@ def check_users_schema(job_storage=None):
     return pk
 
 
+def entities_owner_token(engine):
+    """True if the entities table has the owner_token column"""
+    return "owner_token" in [c["name"] for c in inspect(engine).get_columns("entities")]
+
+
+# Owner token of the entities: from the job that generated the entity, else from a job of the
+# same owner that used it (uploaded file)
+FILL_OWNER_TOKEN = [
+    """UPDATE entities SET owner_token = (
+        SELECT jobs.owner_token FROM jobs WHERE jobs.jobid = entities.jobid AND jobs.owner = entities.owner
+    ) WHERE owner_token IS NULL AND jobid IS NOT NULL""",
+    """UPDATE entities SET owner_token = (
+        SELECT jobs.owner_token FROM used JOIN jobs ON used.jobid = jobs.jobid
+        WHERE used.entity_id = entities.entity_id AND jobs.owner = entities.owner LIMIT 1
+    ) WHERE owner_token IS NULL""",
+]
+
+
+def migrate_entities(job_storage=None):
+    """Add the owner_token column to the entities table, and set it (done at the start of the server)"""
+    job_storage = job_storage or getattr(storage, settings.STORAGE + "JobStorage")()
+    engine = job_storage.engine
+    if entities_owner_token(engine):
+        return False
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE entities ADD COLUMN owner_token VARCHAR(128)"))
+        for query in FILL_OWNER_TOKEN:
+            conn.execute(text(query))
+        unknown = conn.execute(text("SELECT count(*) FROM entities WHERE owner_token IS NULL")).scalar()
+    logger.warning(
+        f"entities table migrated: owner_token column added ({unknown} entities without known owner token, "
+        f"checked by owner name only)"
+    )
+    return True
+
+
 def migrate(apply=False):
     job_storage = getattr(storage, settings.STORAGE + "JobStorage")()
     engine = job_storage.engine
+    # entities: owner token
+    if entities_owner_token(engine):
+        print("entities table: owner_token column present")
+    elif apply:
+        migrate_entities(job_storage)
+        print("entities table: owner_token column added")
+    else:
+        print("entities table: owner_token column missing (added with --apply, or at the start of the server)")
+    # users: primary key
     pk = users_pk(engine)
     print(f"users table ({engine.dialect.name}): primary key {pk}")
     if pk == NEW_PK:
@@ -80,6 +128,6 @@ def migrate(apply=False):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--apply", action="store_true", help="migrate the users table")
+    parser.add_argument("--apply", action="store_true", help="migrate the users and entities tables")
     args = parser.parse_args()
     migrate(apply=args.apply)

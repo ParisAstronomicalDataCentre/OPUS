@@ -406,6 +406,7 @@ class Job:
                     used_jobid=self.jobid,
                     used_role=pname,
                     owner=self.user.name,
+                    owner_token=self.user.token,
                     content_type=content_type,
                 )
                 # Input value is set to the filename (in the upload dir for the job)
@@ -474,6 +475,7 @@ class Job:
                                 used_jobid=self.jobid,
                                 used_role=pname,
                                 owner=self.user.name,
+                                owner_token=self.user.token,
                                 content_type=content_type,
                             )
                             # Parameter value is converted to the file name on server (uploaded in job_upload_dir)
@@ -782,6 +784,8 @@ class Job:
                         # einfo["file_name"] = self.jobid + "_" + fname
                         entity = self.storage.register_entity(
                             from_entity=eid,
+                            owner=self.owner,
+                            owner_token=self.owner_token,
                             **einfo,
                         )
                         logger.info(f"Entity added to job {self.jobid}: {str(entity)}")
@@ -798,6 +802,7 @@ class Job:
                 jobid=self.jobid,
                 creation_time=now.strftime(DT_FMT),
                 owner=self.owner,
+                owner_token=self.owner_token,
                 # result_name = rinfo['result_name'],
                 # result_value = rinfo['result_value'],
                 # hash = rinfo['hash'],

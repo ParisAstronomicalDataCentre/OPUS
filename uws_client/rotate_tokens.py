@@ -20,7 +20,7 @@ client (scripts...) will have to get the new one from their profile page.
 import argparse
 import uuid
 
-from uws_server import storage
+from uws_server import migrate_users, storage
 from uws_server.settings import settings as server_settings
 
 from .settings import APP_PATH, settings
@@ -34,6 +34,7 @@ def legacy_token(email, app_path):
 
 def rotate(apply=False, rotate_all=False, legacy_paths=(APP_PATH,)):
     job_storage = getattr(storage, server_settings.STORAGE + "JobStorage")()
+    migrate_users.migrate_entities(job_storage)  # owner_token of the entities (database of a previous version)
     server = job_storage.Session()
     with app.app_context():
         users = User.query.order_by(User.email).all()
@@ -51,10 +52,15 @@ def rotate(apply=False, rotate_all=False, legacy_paths=(APP_PATH,)):
             new = settings.new_token()
             server_users = server.query(job_storage.User).filter_by(name=user.email, token=old)
             server_jobs = server.query(job_storage.Job).filter_by(owner=user.email, owner_token=old)
-            print(f"  {user.email}: server user {server_users.count()}, server jobs {server_jobs.count()}")
+            server_files = server.query(job_storage.Entity).filter_by(owner=user.email, owner_token=old)
+            print(
+                f"  {user.email}: server user {server_users.count()}, server jobs {server_jobs.count()}, "
+                f"server files {server_files.count()}"
+            )
             if apply:
                 server_users.update({"token": new}, synchronize_session=False)
                 server_jobs.update({"owner_token": new}, synchronize_session=False)
+                server_files.update({"owner_token": new}, synchronize_session=False)
                 server.commit()
                 user.token = new
                 user_datastore.put(user)

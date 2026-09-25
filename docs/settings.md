@@ -49,7 +49,8 @@ In Docker: `docker compose exec opus-app uv run --no-sync python -m uws_client.r
 **Note:** on the server, a user is identified by its name and its token: the same name (e.g. an email) can have
 several accounts, one per token (e.g. one per client), each with its own roles and jobs. In a database created
 by a previous version, the primary key of the `users` table is the name only (a warning is logged at start), the
-table has to be migrated (backup the database before):
+table has to be migrated (backup the database before). The owner of a result file is also identified by name +
+token (`owner_token` column of the `entities` table, added at the start of the server, or by this command):
 
     $ python -m uws_server.migrate_users          # dry run: show the current schema
     $ python -m uws_server.migrate_users --apply

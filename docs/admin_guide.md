@@ -250,7 +250,7 @@ The following commands are run in the OPUS directory (with `uv run` for a `uv` e
 | Command                                    | Description                                                   |
 | ---                                        | :---                                                          |
 | `python generate_env.py > .env`            | Generate a `.env` file with random secrets (see [Installation](install.md)) |
-| `python -m uws_server.migrate_users`       | Migrate the `users` table of a database created by a previous version (see [Upgrade to v0.6](upgrade.md)) |
+| `python -m uws_server.migrate_users`       | Migrate the `users` and `entities` tables of a database created by a previous version (see [Upgrade to v0.6](upgrade.md)) |
 | `python -m uws_client.rotate_tokens`       | Replace the predictable tokens of previous versions (see [Upgrade to v0.6](upgrade.md)) |
 
 They make a dry run by default, and apply the changes with `--apply` (backup the databases before).

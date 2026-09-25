@@ -68,6 +68,49 @@ class TestMigrateUsers:
         assert "Already migrated" in capsys.readouterr().out
 
 
+class TestMigrateEntities:
+
+    @pytest.fixture
+    def old_db(self, tmp_path, monkeypatch):
+        """Server database with the entities table of previous versions (no owner_token)"""
+        path = tmp_path / "old_entities.db"
+        real_storage = storage.SQLAlchemyJobStorage
+        monkeypatch.setattr(storage, "SQLAlchemyJobStorage", lambda: real_storage(db_string=f"sqlite:///{path}"))
+        storage.SQLAlchemyJobStorage().engine.dispose()  # create the tables
+        db = sqlite3.connect(path)
+        db.executescript("""
+            ALTER TABLE entities DROP COLUMN owner_token;
+            INSERT INTO jobs (jobid, jobname, owner, owner_token, phase) VALUES
+                ('j1', 'job1', 'alice', 'alice-token', 'COMPLETED'),
+                ('j2', 'job1', 'alice', 'alice-token2', 'COMPLETED');
+            INSERT INTO entities (entity_id, jobid, owner) VALUES
+                ('generated', 'j1', 'alice'),  -- result of job j1
+                ('uploaded', NULL, 'alice'),  -- file uploaded for job j2
+                ('orphan', NULL, 'alice');
+            INSERT INTO used (entity_id, jobid, owner) VALUES ('uploaded', 'j2', 'alice');
+        """)
+        db.commit()
+        db.close()
+        return path
+
+    def test_migration(self, old_db, capsys):
+        job_storage = storage.SQLAlchemyJobStorage()
+        assert not migrate_users.entities_owner_token(job_storage.engine)
+        # dry run
+        migrate_users.migrate()
+        assert "owner_token column missing" in capsys.readouterr().out
+        assert not migrate_users.entities_owner_token(job_storage.engine)
+        # migration (also done at the start of the server)
+        assert migrate_users.migrate_entities(job_storage)
+        with sqlite3.connect(old_db) as db:
+            tokens = dict(db.execute("SELECT entity_id, owner_token FROM entities").fetchall())
+        assert tokens == {"generated": "alice-token", "uploaded": "alice-token2", "orphan": None}
+        # nothing to do the second time
+        assert not migrate_users.migrate_entities(job_storage)
+        migrate_users.migrate(apply=True)
+        assert "owner_token column present" in capsys.readouterr().out
+
+
 class TestRotateTokens:
 
     def create_user(self, email, token):
@@ -78,17 +121,21 @@ class TestRotateTokens:
         job_storage = storage.SQLAlchemyJobStorage()
         job_storage.add_user(email, token=token)
         with job_storage.get_session() as session:
-            session.add(job_storage.Job(jobid=uuid.uuid4().hex[:8], jobname="job1", owner=email, owner_token=token, phase="COMPLETED"))
+            jobid = uuid.uuid4().hex[:8]
+            session.add(job_storage.Job(jobid=jobid, jobname="job1", owner=email, owner_token=token, phase="COMPLETED"))
+            session.add(job_storage.Entity(entity_id=uuid.uuid4().hex, jobid=jobid, owner=email, owner_token=token))
             session.commit()
 
     def tokens(self, email):
-        """Token in the client, and tokens of the account and of the jobs on the server"""
+        """Token in the client, and tokens of the account and of the jobs (and their files) on the server"""
         with c.app.app_context():
             client_token = c.User.query.filter_by(email=email).one().token
         job_storage = storage.SQLAlchemyJobStorage()
         with job_storage.get_session() as session:
             server = {u.token for u in session.query(job_storage.User).filter_by(name=email)}
             jobs = {j.owner_token for j in session.query(job_storage.Job).filter_by(owner=email)}
+            files = {e.owner_token for e in session.query(job_storage.Entity).filter_by(owner=email)}
+        assert files == jobs
         return client_token, server, jobs
 
     def test_rotation(self, capsys):
@@ -104,7 +151,7 @@ class TestRotateTokens:
         # dry run
         rotate_tokens.rotate()
         out = capsys.readouterr().out
-        assert f"{predictable}: server user 1, server jobs 1" in out and custom not in out and moved not in out
+        assert f"{predictable}: server user 1, server jobs 1, server files 1" in out and custom not in out and moved not in out
         assert self.tokens(predictable) == (legacy, {legacy}, {legacy})
         # replace the predictable tokens (also for another previous install path)
         rotate_tokens.rotate(apply=True, legacy_paths=[rotate_tokens.APP_PATH, "/previous/opus"])

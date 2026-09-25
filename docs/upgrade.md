@@ -23,6 +23,7 @@ Security issues fixed
 | The key signing the session cookies of the client (`app.secret_key`) was written in the code, so publicly known | Anyone could forge the content of a session cookie (e.g. the state of an OpenID Connect login). The identity of the logged-in user is not affected, as it relies on a random identifier. | The key is the required setting `OPUS_SECRET_KEY` | Generate a random `OPUS_SECRET_KEY` in `.env` (step 3). All users are logged out once. |
 | The token of a new client user was predictable: it could be computed by others. | The token authenticates the user on the UWS server: access to the jobs and results of other users. | Tokens are random (setting `TOKEN_GEN`) | Replace the existing predictable tokens (step 5) |
 | On the server, a request with an existing user name and any token replaced the token of this user in the `users` table | With `CHECK_PERMISSIONS=true`, anyone could get the job permissions (roles) of any user, who then lost them. Access to existing jobs was not affected (owner token of each job). | A user is identified by name + token: another token is another account, without roles | Migrate the `users` table (step 4) |
+| With `CHECK_OWNER=true`, a result file (`/store`) could be downloaded by any account with the name of its owner, whatever its token | Access to the results of another account with the same name (e.g. the same email on another client) | The owner of a file is identified by name + token, as for jobs | None: the owner token of the existing files is set at the start of the server, from their jobs (or with step 4). The files without known job are still checked by owner name only |
 | At the login of a user with OpenID Connect, the tokens given by the Identity Provider were written in the debug log of the client, as well as the token of the user in other log lines | Access and refresh tokens readable in `client_debug.log` | Tokens are no longer written in the logs | Remove the lines containing `token = ` from `$OPUS_VAR_PATH/logs/client_debug.log` (or the whole file), and if possible revoke the tokens at the Identity Provider |
 | A user signing in with OpenID Connect was linked to the local account with the same email, even if the Identity Provider did not verify the email | Access to a local account with an Identity Provider allowing unverified emails | The email has to be verified to use a local account, and the login is refused if the email is not verified | None |
 | At the logout of a user signed in with OpenID Connect, its tokens were not revoked on the Identity Provider | The tokens stayed valid until their expiration | The tokens are revoked at logout (if the Identity Provider has a `revocation_endpoint`) | None |
@@ -107,7 +108,9 @@ Note that `OPUS_ADMIN_TOKEN` must not be changed if scripts use it. Then remove 
 For a new installation (no `settings_local.py`), generate `.env` from the template instead:
 `python generate_env.py > .env`.
 
-**4. Migrate the `users` table** of the server database (the server logs a warning at start until it is done):
+**4. Migrate the `users` table** of the server database (the server logs a warning at start until it is done).
+This also adds the owner token to the `entities` table (result files), which is otherwise done at the start of
+the server:
 
     $ python -m uws_server.migrate_users            # dry run: show the current schema
     $ python -m uws_server.migrate_users --apply

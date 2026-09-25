@@ -69,8 +69,10 @@ def reset_log_username():
     """The thread may have handled a request of another user before"""
     set_log_username()
 
-# Warn if the users table was created by a previous version (see migrate_users.py)
+# Warn if the users table was created by a previous version, add the owner token of the entities
+# (see migrate_users.py)
 migrate_users.check_users_schema()
+migrate_users.migrate_entities()
 
 
 # ----------
@@ -1059,16 +1061,11 @@ def download_entity():
         job_storage = getattr(storage, settings.STORAGE + "JobStorage")()
         entity = job_storage.get_entity(entity_id)
 
-        if settings.CHECK_OWNER:
-            if user in special_users:
-                pass
-            else:
-                if entity["owner"] == user.name:
-                    pass
-                else:
-                    raise EntityAccessDenied(
-                        f"User {user.name} is not the owner of the entity"
-                    )
+        if settings.CHECK_OWNER and user not in special_users:
+            # owner = name + token (the token is unknown for some entities registered by previous versions)
+            owner_token = entity.get("owner_token")
+            if entity["owner"] != user.name or (owner_token is not None and owner_token != user.token):
+                raise EntityAccessDenied(f"User {user.name} is not the owner of the entity")
 
         download = (
             entity["entity_id"] + "_" + entity["file_name"]
@@ -1088,7 +1085,7 @@ def download_entity():
         #     response.set_header('Content-Disposition', 'attachment; filename="{}"'.format(entity['file_name']))
         #     return static_file(entity['file_name'], root=entity['file_dir'], mimetype=entity['content_type'],
         #                        download=download)
-    except JobAccessDenied as e:
+    except (JobAccessDenied, EntityAccessDenied) as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))

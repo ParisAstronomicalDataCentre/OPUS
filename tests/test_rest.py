@@ -210,6 +210,26 @@ class TestAccess:
         assert requests.get(job_url, auth=OTHER).status_code == 200
         assert jobid not in job_ids(server, auth=OTHER)
 
+    def test_store_owner(self, server, monkeypatch):  # noqa: F811 (server fixture)
+        """A result file (/store) can be downloaded by its owner (name + token)"""
+        job_url = create_job(server, "test_activity_1", text="stored")
+        assert wait(job_url) == "COMPLETED"
+        store_url = requests.get(f"{job_url}/results/output", auth=AUTH).text
+        monkeypatch.setattr(settings, "CHECK_OWNER", True)
+        for auth in [OTHER, (AUTH[0], "another-token")]:
+            assert requests.get(store_url, auth=auth).status_code == 403
+        for auth in [AUTH, ADMIN]:
+            response = requests.get(store_url, auth=auth)
+            assert response.status_code == 200 and response.text == "stored\n"
+        # entity registered by a previous version, without owner token: checked by owner name
+        entity_id = store_url.split("ID=")[-1]
+        job_storage = getattr(storage, settings.STORAGE + "JobStorage")()
+        with job_storage.get_session() as session:
+            session.query(job_storage.Entity).filter_by(entity_id=entity_id).update({"owner_token": None})
+            session.commit()
+        assert requests.get(store_url, auth=(AUTH[0], "another-token")).status_code == 200
+        assert requests.get(store_url, auth=OTHER).status_code == 403
+
     def test_permissions(self, server, monkeypatch):  # noqa: F811 (server fixture)
         monkeypatch.setattr(settings, "CHECK_PERMISSIONS", True)
         name, token = f"perm{time.time_ns()}@example.org", "perm-token"
