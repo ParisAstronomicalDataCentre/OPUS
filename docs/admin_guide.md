@@ -53,9 +53,9 @@ priority over `.env`. To go back to the settings of `.env`, set the default valu
 ### Client Accounts
 
 This page lists the accounts of the client, and allows to create, edit or delete them: email, password, active
-status, token, and roles. The role `admin` gives access to the administration pages. The other roles are given to
-the accounts when they are created, but are not checked by the client: `user`, `oidc` (account created from an
-Identity Provider), `job_definition` and `job_list`. The **Roles** page (Flask-Admin) lists and edits the roles.
+status, token, and roles. The role `admin` gives access to the administration pages, the role `user` is given to
+the other accounts, and `oidc` to the accounts created from an Identity Provider. These roles of the client are
+different from the roles of the users on the server (see **Server Accounts**).
 
 Users can also create their own account on the registration page of the client (**Register**, next to **Local
 login** in the menu), if it is enabled with `OPUS_SECURITY_REGISTERABLE=true` in `.env` (disabled by default). Users can also

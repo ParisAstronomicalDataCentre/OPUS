@@ -5,6 +5,10 @@
 Unit tests for UWS server
 """
 
+import base64
+import os
+import shutil
+
 import pytest
 import webtest
 
@@ -251,6 +255,26 @@ class TestUsers:
         job_storage.remove_role(name, "token1", role="other_job")
         assert not job_storage.has_role(name, "token1", role="other_job")
         assert job_storage.has_role(name, "token1", role="test_")
+
+
+class TestPermissions:
+    """Job definitions listed for a user, with CHECK_PERMISSIONS (roles = job names, or all)"""
+
+    def test_jdl_list_with_roles(self, monkeypatch):
+        # a job definition and its script in the test VAR_PATH (a job is listed if both exist)
+        test_jobs = os.path.join(os.path.dirname(__file__), os.pardir, "test_jobs")
+        shutil.copy(os.path.join(test_jobs, "test_activity_1_vot.xml"), settings.JDL_PATH + "/votable/")
+        with open(settings.SCRIPTS_PATH + "/test_activity_1.sh", "w") as f:
+            f.write("echo $text > $output\n")
+        monkeypatch.setattr(settings, "CHECK_PERMISSIONS", True)
+        job_storage = getattr(uws_server.storage, settings.STORAGE + "JobStorage")()
+        for roles, expected in [("all", ["test_activity_1"]), ("test_activity_1", ["test_activity_1"]), ("", [])]:
+            name = "user_" + settings.new_token()[:8]
+            job_storage.add_user(name, token="token", roles=roles)
+            auth = base64.b64encode(f"{name}:token".encode()).decode()
+            response = test_app.get("/jdl", extra_environ={"HTTP_AUTHORIZATION": "Basic " + auth})
+            print(f"roles={roles!r} --> {response.json['jobnames']}")
+            assert response.json["jobnames"] == expected
 
 
 class TestJobAbort:

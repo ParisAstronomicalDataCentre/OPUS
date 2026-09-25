@@ -629,7 +629,10 @@ def get_jobnames():
             # db = storage.__dict__[STORAGE + 'JobStorage']()
             db = getattr(storage, settings.STORAGE + "JobStorage")()
             roles = db.get_roles(user)
-            jobnames = [j for j in jobnames_all if j in roles]
+            if "all" in roles:
+                jobnames = jobnames_all
+            else:
+                jobnames = [j for j in jobnames_all if j in roles]
         jobnames.sort()
         details = {}
         for j in jobnames:

@@ -299,7 +299,7 @@ def oidc_callback():
         user_datastore.create_user(
             email=oidc_email,
             active=True,
-            roles=["user", "oidc", "job_definition", "job_list"],
+            roles=["user", "oidc"],
         )
         db.session.commit()
         oidc_user = user_datastore.find_user(email=oidc_email)
@@ -359,14 +359,14 @@ def create_db():
             name="admin",
             description="Administrator",
         )
-        user_datastore.find_or_create_role(
-            name="job_definition",
-            description="Access to job definition",
-        )
-        user_datastore.find_or_create_role(
-            name="job_list",
-            description="Access to job list",
-        )
+        # Roles of previous versions, not used: remove them
+        for name in ["job_definition", "job_list"]:
+            role = user_datastore.find_role(name)
+            if role:
+                for user in list(role.users):
+                    user_datastore.remove_role_from_user(user, role)
+                user_datastore.delete(role)
+                logger.info(f"Unused role removed: {name}")
         # Create admin user if not found
         if not user_datastore.find_user(email=settings.ADMIN_NAME):
             user_datastore.create_user(
@@ -374,7 +374,7 @@ def create_db():
                 password=hash_password(settings.ADMIN_DEFAULT_PW.get_secret_value()),
                 token=settings.ADMIN_TOKEN.get_secret_value(),
                 active=True,
-                roles=["admin", "job_definition", "job_list"],
+                roles=["admin"],
             )
             logger.info("Add user to db: " + settings.ADMIN_NAME)
         # Create test user if not found
@@ -383,7 +383,7 @@ def create_db():
                 email=settings.TESTUSER_NAME,
                 password=hash_password(settings.TESTUSER_DEFAULT_PW.get_secret_value()),
                 active=True,
-                roles=["user", "job_definition", "job_list"],
+                roles=["user"],
             )
             logger.info("Add user to db: " + settings.TESTUSER_NAME)
         db.session.commit()
