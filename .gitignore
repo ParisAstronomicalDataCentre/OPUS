@@ -9,6 +9,7 @@ __pycache__
 data
 prov_examples
 ProvenanceDB.py
+prov_rdb.py
 var_data
 apache_opus.conf
 docker-compose.yml
@@ -27,3 +28,6 @@ uws_client/static/libs
 var/
 local_var/
 OPUS-*
+# Coverage of the tests
+.coverage
+htmlcov/

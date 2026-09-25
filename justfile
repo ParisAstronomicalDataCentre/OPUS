@@ -32,6 +32,10 @@ mypy path="src":
 test:
     uv run pytest -q tests
 
+# Coverage of the tests: report in the terminal, or in htmlcov/index.html (just coverage html)
+coverage report="term":
+    uv run pytest -q tests --cov --cov-report={{ report }}
+
 # Lint python files with ruff
 ruff path="src":
     uv run ruff check {{ path }}

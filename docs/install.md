@@ -59,9 +59,10 @@ OPUS stores its logs, job files and database in a dedicated directory, declared 
 (`local_var` in the OPUS directory by default, or e.g. `/var/opt/opus`). This directory has to be writable by the
 user running OPUS. It is created at the first start.
 
-The unit tests may be run to check the main features of the UWS server:
+The unit tests may be run to check the main features of the UWS server and client:
 
     $ just test
+    $ just coverage         # with the coverage of the code (or just coverage html: report in htmlcov/)
 
 ### Run with the development servers
 

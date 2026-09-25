@@ -53,6 +53,7 @@ dev = [
     "black>=24.0.0",
     "mypy>=1.0.0",
     "pytest>=8.0.0",
+    "pytest-cov>=7.1.0",
 ]
 
 # Ruff configuration
@@ -78,3 +79,16 @@ warn_return_any = true
 warn_unused_ignores = true
 disallow_untyped_defs = true
 disable_error_code = ["no-untyped-def"]
+
+# Coverage of the tests (just coverage)
+[tool.coverage.run]
+source = ["opus_config", "uws_client", "uws_server"]
+omit = [
+    "*/app.py",  # entry points
+    "*/wsgi.py",
+    "uws_server/ProvenanceDB.py",  # local file, not in the repository
+    "uws_server/prov_rdb.py",  # local file, not in the repository
+]
+
+[tool.coverage.report]
+skip_empty = true
