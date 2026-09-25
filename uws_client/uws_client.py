@@ -492,8 +492,8 @@ class RoleView(sqla.ModelView):
 admin = Admin(app, url="/admin")  # removed for Py3.13: , template_mode='bootstrap3'
 
 # Add Flask-Admin views_old for Users and Roles
-admin.add_view(UserView(User, db.session))
-admin.add_view(RoleView(Role, db.session))
+admin.add_view(UserView(User, db))
+admin.add_view(RoleView(Role, db))
 
 
 # ----------
