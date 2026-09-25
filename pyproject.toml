@@ -81,6 +81,13 @@ disallow_untyped_defs = true
 disable_error_code = ["no-untyped-def"]
 
 # Coverage of the tests (just coverage)
+[tool.pytest.ini_options]
+filterwarnings = [
+    # prov is pinned below 3 (see dependencies): changes announced for prov 3.0
+    "ignore:.*prov 3\\.0:FutureWarning",
+    "ignore:In prov 3\\.0:DeprecationWarning",
+]
+
 [tool.coverage.run]
 source = ["opus_config", "uws_client", "uws_server"]
 omit = [
