@@ -1010,6 +1010,8 @@ def delete_jdl(jobname):
             logger.warning("No job script found: " + script_src)
             abort_500("No job script found for " + jobname)
             # redirect('/client/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
+    except UserWarning as e:
+        abort_404(e.args[0])
     except Exception:
         abort_500_except()
     # Return code 200
