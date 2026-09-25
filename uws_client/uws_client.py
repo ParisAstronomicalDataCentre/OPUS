@@ -47,7 +47,7 @@ from flask_security import (
     roles_required,
     user_authenticated,
 )
-from flask_security.forms import LoginForm, RegisterForm
+from flask_security.forms import LoginForm, RegisterFormV2, unique_user_email
 from flask_sqlalchemy import SQLAlchemy
 from requests.auth import HTTPBasicAuth
 from wtforms import PasswordField, StringField
@@ -197,6 +197,12 @@ class User(db.Model, UserMixin):
         "Role", secondary=roles_users, backref=db.backref("users", lazy="dynamic")
     )
 
+    def __init__(self, **kwargs):
+        # token set at creation (the column default is only applied when the user is saved): at
+        # registration, the user is logged in, and its account created on the server, before
+        kwargs.setdefault("token", gen_token(None))
+        super().__init__(**kwargs)
+
     def __repr__(self):
         return self.email
 
@@ -219,8 +225,9 @@ class ExtendedLoginForm(LoginForm):
     email = StringField("Username or Email Address", [InputRequired()])
 
 
-class ExtendedRegisterForm(RegisterForm):
-    email = StringField("Username or Email Address", [InputRequired()])
+class ExtendedRegisterForm(RegisterFormV2):
+    # a user name is accepted (not only an email address), not already used
+    email = StringField("Username or Email Address", [InputRequired(), unique_user_email])
 
 
 def get_or_create(db_session, model, **kwargs):

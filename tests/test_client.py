@@ -148,6 +148,39 @@ class TestPages:
             assert sorted(r.name for r in c.Role.query.all()) == ["admin", "oidc", "user"]
 
 
+class TestRegister:
+
+    def register(self, client, email, password="register-Password-42"):
+        data = {"email": email, "password": password, "password_confirm": password}
+        return client.post("/accounts/register", data=data)
+
+    def test_register(self, client, live_server):
+        email = f"register{time.time_ns()}@example.org"
+        response = self.register(client, email)
+        assert response.status_code == 302
+        with c.app.app_context():
+            token = c.User.query.filter_by(email=email).one().token  # token for the UWS server
+        # the user is logged in, and its account is created on the server, with its token
+        assert signed_in(client)
+        job_storage = getattr(__import__("uws_server.storage").storage, server_settings.STORAGE + "JobStorage")()
+        assert [u["token"] for u in job_storage.get_users(name=email)] == [token]
+
+    def test_register_username(self, client):
+        """A user name that is not an email address is accepted"""
+        name = f"register{time.time_ns()}"
+        assert self.register(client, name).status_code == 302
+        with c.app.app_context():
+            assert c.User.query.filter_by(email=name).one()
+
+    def test_register_existing(self, client):
+        email = f"register{time.time_ns()}@example.org"
+        self.register(client, email)
+        client.get("/accounts/logout")
+        response = self.register(client, email)
+        assert response.status_code == 200  # form shown again, with an error
+        assert "is already associated with an account" in response.get_data(as_text=True)
+
+
 class TestPasswordLogin:
 
     def test_login_logout(self, client, local_user):
@@ -335,7 +368,7 @@ class TestAdminPages:
     def test_client_accounts(self, client, local_user):
         client.post("/accounts/login", data={"email": c.settings.ADMIN_NAME,
                                              "password": c.settings.ADMIN_DEFAULT_PW.get_secret_value()})
-        users = client.get("/admin/user/")
+        users = client.get("/admin/user/", query_string={"search": local_user})  # 20 accounts per page
         assert users.status_code == 200 and local_user in users.get_data(as_text=True)
         assert client.get("/admin/role/").status_code == 200
 
