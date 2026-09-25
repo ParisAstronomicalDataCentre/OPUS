@@ -9,6 +9,7 @@ import base64
 import datetime
 import json
 import subprocess
+from urllib.parse import urlencode
 import os
 
 import requests
@@ -44,6 +45,7 @@ from flask_security import (
     hash_password,
     login_required,
     roles_required,
+    user_authenticated,
 )
 from flask_security.forms import LoginForm, RegisterForm
 from flask_sqlalchemy import SQLAlchemy
@@ -202,6 +204,17 @@ class User(db.Model, UserMixin):
         return self.id
 
 
+
+class OIDCToken(db.Model):
+    """OpenID Connect tokens of a user signed in with an Identity Provider (kept on the client,
+    never sent to the browser), used to call the server with UWS_AUTH = "OIDC" """
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), unique=True)
+    idp = db.Column(db.String(255))
+    token = db.Column(db.Text)  # JSON: access_token, refresh_token, expires_at...
+
+
 class ExtendedLoginForm(LoginForm):
     email = StringField("Username or Email Address", [InputRequired()])
 
@@ -263,7 +276,10 @@ def oidc_login(idp):
         flash("This OIDC Identity Provider has not been defined: " + idp, "warning")
         return redirect(url_for("home"), 303)
     redirect_uri = url_for("oidc_callback", _external=True)  # , idp=idp)
-    return oauth._clients[session["oidc_idp"]].authorize_redirect(redirect_uri)
+    # Audience of the access token, required by the server if defined for this Identity Provider
+    audience = settings.OIDC_IDPS[idp_names[idp]].get("audience")
+    kwargs = {"audience": audience} if audience else {}
+    return oauth._clients[session["oidc_idp"]].authorize_redirect(redirect_uri, **kwargs)
 
 
 @app.route("/accounts/oidc/callback")  # , defaults={'idp': 0})
@@ -279,7 +295,7 @@ def oidc_callback():
         )
         return redirect(url_for("home"), 303)
     # Get the token (access, refresh and id tokens are secrets: never log them)
-    oauth._clients[session["oidc_idp"]].authorize_access_token()
+    token = oauth._clients[session["oidc_idp"]].authorize_access_token()
     # Get userinfo
     # user = token.get('userinfo')  # use direct userinfo sent with token (not always present...)
     user = oauth._clients[session["oidc_idp"]].userinfo()
@@ -318,6 +334,8 @@ def oidc_callback():
         logger.info(f"OIDC user {oidc_email} is new and was added")
     else:
         logger.info(f"user {oidc_email} found in local user database")
+    # Keep the tokens before the login (the first request to the server is sent at login)
+    save_oidc_token(oidc_user, session["oidc_idp"], token)
     # Begin user session by logging the user in
     login_user(oidc_user)
     # Send user back to homepage
@@ -326,30 +344,66 @@ def oidc_callback():
 
 @app.route("/accounts/oidc/logout")
 def oidc_logout():
-    if "oidc_idp" not in session:
-        flash("No OIDC Identity Provider has been defined.", "warning")
-        return redirect(url_for("home"), 303)
-    elif session["oidc_idp"] not in idp_names:
-        flash(
-            "This OIDC Identity Provider has not been defined: " + session["oidc_idp"],
-            "warning",
-        )
-        return redirect(url_for("home"), 303)
-    # Revoke token on OIDC IdP
-    server_metadata = oauth._clients[session["oidc_idp"]].load_server_metadata()
-    revoke_url = server_metadata.get("revocation_endpoint", None)
-    if revoke_url:
-        oauth_client = oauth._clients[session["oidc_idp"]]._get_oauth_client()
-        resp = oauth_client.revoke_token(revoke_url)
-        # , token=session['oidc_access_token'], token_type_hint="access_token", body=None, auth=None, headers=None)
-        # example: client.revoke_token(app.config['OASERVER'] + '/oauth2/revoke', token=session['oatoken']['access_token'])
-        logger.info("OIDC token revoked on IdP " + session["oidc_idp"])
-        logger.info(resp)
-    else:
-        logger.info("No revocation_endpoint for OIDC Idp " + session["oidc_idp"])
-    # Logout user locally
+    # Before the local logout (which revokes and removes the tokens, see on_user_logged_out):
+    # URL ending the session of the user on the Identity Provider, if any
+    idp_logout_url = oidc_idp_logout_url()
+    # The user is always logged out, even if the Identity Provider cannot be reached
     logout_user()
-    return redirect(url_for("home"))
+    return redirect(idp_logout_url or url_for("home"))
+
+
+def oidc_idp_logout_url():
+    """URL ending the session of the user on the Identity Provider, or None
+
+    - if the Identity Provider has an end_session_endpoint: RP-initiated logout (standard), the
+      user is then redirected to the home page of the client (post_logout_redirect_uri, to be
+      registered on the Identity Provider)
+    - else, if defined for the Identity Provider in OIDC_IDPS (not by default): "logout_url",
+      e.g. https://<iam>/logout for INDIGO-IAM, where the user stays
+    Ending the session on the Identity Provider logs the user out of all the applications using
+    this Identity Provider (single sign-on).
+    """
+    if not current_user.is_authenticated:
+        return None
+    row = OIDCToken.query.filter_by(user_id=current_user.id).first()
+    idp_name = row.idp if row else session.get("oidc_idp")
+    if idp_name not in idp_names:
+        return None
+    idp = settings.OIDC_IDPS[idp_names[idp_name]]
+    try:
+        end_session = oauth._clients[idp_name].load_server_metadata().get("end_session_endpoint")
+    except Exception as e:
+        logger.warning(f"Cannot get the metadata of OIDC IdP {idp_name}: {type(e).__name__}")
+        end_session = None
+    if end_session:
+        params = {"post_logout_redirect_uri": url_for("home", _external=True), "client_id": idp["client_id"]}
+        id_token = json.loads(row.token).get("id_token") if row else None
+        if id_token:
+            params["id_token_hint"] = id_token
+        return end_session + ("&" if "?" in end_session else "?") + urlencode(params)
+    return idp.get("logout_url") or None
+
+
+def revoke_oidc_tokens(user):
+    """Revoke the tokens of the user on the Identity Provider, if it has a revocation endpoint"""
+    row = OIDCToken.query.filter_by(user_id=user.id).first()
+    if not row or row.idp not in idp_names:
+        return
+    token = json.loads(row.token)
+    try:
+        client = oauth._clients[row.idp]
+        revoke_url = client.load_server_metadata().get("revocation_endpoint")
+        if not revoke_url:
+            logger.info(f"No revocation_endpoint for OIDC IdP {row.idp}")
+            return
+        oauth_client = client._get_oauth_client()
+        # the refresh token first (the access tokens obtained with it are then also revoked)
+        for hint in ("refresh_token", "access_token"):
+            if token.get(hint):
+                oauth_client.revoke_token(revoke_url, token=token[hint], token_type_hint=hint)
+        logger.info(f"OIDC tokens of {user.email} revoked on IdP {row.idp}")
+    except Exception as e:
+        logger.warning(f"Cannot revoke the OIDC tokens of {user.email} on IdP {row.idp}: {type(e).__name__}")
 
 
 # ----------
@@ -446,6 +500,14 @@ admin.add_view(RoleView(Role, db.session))
 # Manage user accounts using flask_security (flask_login)
 
 
+@user_authenticated.connect_via(app)
+def on_user_authenticated(sender, user, authn_via=None, **kwargs):
+    # Login with a password (not OIDC): forget the Identity Provider of a previous OIDC login
+    # attempt, so that the session is not considered as an OIDC session
+    if authn_via and "password" in authn_via:
+        session.pop("oidc_idp", None)
+
+
 @user_logged_in.connect_via(app)
 def on_user_logged_in(sender, user):
     logger.info(user.email + " (" + session.get("oidc_idp", "Local") + ")")
@@ -465,8 +527,12 @@ def on_user_logged_in(sender, user):
 @user_logged_out.connect_via(app)
 def on_user_logged_out(sender, user):
     logger.info(user.email)
-    flash(f'"{user.email}" is now logged out', "info")
+    # OIDC tokens of the user: revoked on the Identity Provider, and removed from the client
+    revoke_oidc_tokens(user)
+    OIDCToken.query.filter_by(user_id=user.id).delete()
+    db.session.commit()
     session.clear()
+    flash(f'"{user.email}" is now logged out', "info")
 
 
 @app.route("/accounts/profile", methods=["GET", "POST"])
@@ -740,20 +806,68 @@ def proxy(uri):
     )
 
 
+def save_oidc_token(user, idp, token):
+    """Keep the OpenID Connect tokens of the user (to call the server with UWS_AUTH = "OIDC")"""
+    row = OIDCToken.query.filter_by(user_id=user.id).first() or OIDCToken(user_id=user.id)
+    row.idp = idp
+    row.token = json.dumps(dict(token))
+    db.session.add(row)
+    db.session.commit()
+
+
+def oidc_access_token(user):
+    """Valid access token of the user (refreshed if needed), or None"""
+    row = OIDCToken.query.filter_by(user_id=user.id).first()
+    if not row or row.idp not in idp_names:
+        return None
+    token = json.loads(row.token)
+    if token.get("expires_at", 0) - 30 < datetime.datetime.now().timestamp():
+        if not token.get("refresh_token"):
+            return None
+        try:
+            new_token = dict(oauth._clients[row.idp].fetch_access_token(
+                grant_type="refresh_token", refresh_token=token["refresh_token"]
+            ))
+        except Exception as e:
+            logger.warning(f"Cannot refresh the OIDC access token of {user.email}: {type(e).__name__}")
+            return None
+        new_token.setdefault("refresh_token", token["refresh_token"])
+        if token.get("id_token"):
+            new_token.setdefault("id_token", token["id_token"])  # kept for the logout (id_token_hint)
+        save_oidc_token(user, row.idp, new_token)
+        logger.debug(f"OIDC access token of {user.email} refreshed")
+        token = new_token
+    return token.get("access_token")
+
+
+def server_auth():
+    """Authentication of the requests to the server: (auth, headers)
+
+    UWS_AUTH = "Basic": name and OPUS token of the user (HTTP Basic).
+    UWS_AUTH = "OIDC": for a user signed in with an Identity Provider, its access token
+    (Bearer) and its OPUS token (X-Opus-Token), else as for Basic.
+    """
+    if app.config["UWS_AUTH"] not in ("Basic", "OIDC"):
+        return None, {}
+    if not current_user.is_authenticated:
+        return HTTPBasicAuth("anonymous", "anonymous"), {}
+    if app.config["UWS_AUTH"] == "OIDC":
+        access_token = oidc_access_token(current_user)
+        if access_token:
+            return None, {"Authorization": f"Bearer {access_token}", "X-Opus-Token": current_user.token}
+    return HTTPBasicAuth(current_user.email, current_user.token), {}
+
+
 def uws_server_request(uri, method="GET", init_request=None):
     server_url = app.config["UWS_SERVER_URL"]
     # Remove server_url from uri if present (uri is expected to be a relative path)
     uri = uri.replace(server_url, "")
-    # Add auth information (Basic, Token...)
-    auth = None
-    if app.config["UWS_AUTH"] == "Basic":
-        if current_user.is_authenticated:
-            auth = HTTPBasicAuth(current_user.email, current_user.token)
-        else:
-            auth = HTTPBasicAuth("anonymous", "anonymous")
+    # Add auth information (Basic, or OIDC access token + OPUS token)
+    auth, headers = server_auth()
+    auth_type = "OIDC" if "Authorization" in headers else ("Basic" if auth else "none")
     # Send request
     if method == "DELETE":
-        response = requests.delete(f"{server_url}{uri}", auth=auth)
+        response = requests.delete(f"{server_url}{uri}", auth=auth, headers=headers)
     elif method == "POST":
         post = {}
         if init_request:
@@ -772,16 +886,16 @@ def uws_server_request(uri, method="GET", init_request=None):
                 fp = init_request.files[fname]
                 files[fname] = (fp.filename, fp.stream, fp.content_type, fp.headers)
         response = requests.post(
-            f"{server_url}{uri}", data=post, files=files, auth=auth
+            f"{server_url}{uri}", data=post, files=files, auth=auth, headers=headers
         )
     else:
         params = {}
         if init_request:
             params = init_request.args
-        logger.debug(f"{method} {server_url}{uri} {params} {auth})")
-        response = requests.get(f"{server_url}{uri}", params=params, auth=auth)
+        logger.debug(f"{method} {server_url}{uri} {params} ({auth_type})")
+        response = requests.get(f"{server_url}{uri}", params=params, auth=auth, headers=headers)
     # Return response
-    logger.debug(f"{method} {server_url}{uri} ({response.status_code})")
+    logger.debug(f"{method} {server_url}{uri} ({response.status_code}, {auth_type})")
     return response
 
 

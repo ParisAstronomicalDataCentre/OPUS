@@ -30,7 +30,7 @@ mypy path="src":
 
 # Run the tests
 test:
-    uv run pytest -q tests/test_server.py
+    uv run pytest -q tests
 
 # Lint python files with ruff
 ruff path="src":

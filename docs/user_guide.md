@@ -136,6 +136,12 @@ pattern. The requests are authenticated with your email and your token (HTTP Bas
     # get the provenance of the job (PROV-JSON)
     $ curl -u <email>:<token> <server>/uws/<jobname>/<jobid>/provjson
 
+If you sign in with an Identity Provider (OpenID Connect) and the server accepts its tokens, you can also send
+your access token (JWT) instead of the HTTP Basic authentication, with your OPUS token in the header `X-Opus-Token`
+(the access token proves your identity, the OPUS token selects your account):
+
+    $ curl -H "Authorization: Bearer <access token>" -H "X-Opus-Token: <token>" <server>/uws/<jobname>
+
 The job descriptions are returned in the XML format of the UWS pattern. The descriptions of the available jobs are
 given by `<server>/jdl` (JSON).
 

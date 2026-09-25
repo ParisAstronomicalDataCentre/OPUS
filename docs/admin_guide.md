@@ -107,6 +107,80 @@ For a private or test installation, the access can be opened in `.env`, e.g. `OP
 `OPUS_CHECK_PERMISSIONS=false`.
 
 
+OpenID Connect
+--------------
+
+Users can sign in to the client with an Identity Provider (OpenID Connect, e.g. INDIGO-IAM), and the server can
+accept the access tokens of these users. The Identity Providers are defined in `.env` (`OPUS_OIDC_IDPS`), and read by
+the client and the server, e.g. for INDIGO-IAM (the JSON value may span several lines between single quotes):
+
+    OPUS_OIDC_IDPS='[
+        {
+            "title": "INDIGO-IAM",
+            "description": "Sign in with INDIGO-IAM",
+            "url_logo": "",
+            "url": "https://<iam-server>/.well-known/openid-configuration",
+            "client_id": "<client id>",
+            "client_secret": "<client secret>",
+            "scope": "openid email profile offline_access",
+            "audience": "<audience>"
+        }
+    ]'
+
+The scope `offline_access` gives a refresh token to the client, to renew the access tokens of the users.
+
+The client and its redirect URL (`<client>/accounts/oidc/callback`) have to be registered on the Identity Provider,
+which gives the `client_id` and `client_secret` (only used by the client).
+
+### Access tokens on the server
+
+The server accepts requests with the access token of a user (`Authorization: Bearer <access token>`) **and** the
+OPUS token of the account (header `X-Opus-Token`): the access token proves the identity of the user, the OPUS token
+selects the account (name + token). The HTTP Basic authentication is still accepted, e.g. for scripts.
+
+The access token must be a JWT signed by one of the Identity Providers of `OPUS_OIDC_IDPS` (as INDIGO-IAM tokens).
+The server checks it with the keys of the Identity Provider (found with its discovery URL): signature, issuer,
+expiration, and **audience** if `audience` is defined for the Identity Provider (recommended: the token is then
+only accepted if it was requested for OPUS). The name of the user is the email given by the userinfo endpoint of the
+Identity Provider (INDIGO-IAM does not include it in the access tokens by default), or the `sub` identifier.
+
+### Client
+
+To send the access tokens of the users to the server, set `OPUS_UWS_AUTH=OIDC` in `.env` (or **UWS_AUTH** in the
+**Client Preferences** page). The client then keeps the tokens of the users signed in with an Identity Provider
+(in its database, never sent to the browser), refreshes them when they expire, and sends them to the server with the
+OPUS token of the user. It removes them when the user signs out. For the other users (local accounts), or if the
+token cannot be refreshed, the client uses the HTTP Basic authentication (`OPUS_UWS_AUTH=Basic`, the default).
+
+### Logs
+
+The access tokens are never written in the logs. The requests with an access token can be followed in:
+
+* `server_debug.log`: `OIDC access token accepted for <name> (iss=<issuer>, sub=<sub>)` for each request with a
+  valid access token,
+* `server.log` and `server_debug.log`: `OIDC access token refused: <reason>` (warning) for an invalid token,
+* `client_debug.log`: the authentication used for each request sent to the server, e.g.
+  `GET http://.../uws/<jobname> (200, OIDC)` or `(200, Basic)`.
+
+### Logout
+
+When a user signed in with an Identity Provider signs out, the client revokes its tokens on the Identity Provider (if
+it has a `revocation_endpoint`, as INDIGO-IAM), and removes them. The user is always signed out of the client, even
+if the Identity Provider cannot be reached.
+
+The session of the user on the Identity Provider is also ended:
+
+* if the Identity Provider supports the standard RP-initiated logout (`end_session_endpoint` in its discovery
+  document): the user is redirected to it, then back to the home page of the client, whose URL has to be registered
+  as a post-logout redirect URI on the Identity Provider (e.g. `http://localhost/opus_client/` for `just start`);
+* else, only if `logout_url` is defined for the Identity Provider in `OPUS_OIDC_IDPS` (not by default): the user is
+  redirected to this URL, and stays on the Identity Provider (e.g. `https://<iam-server>/logout` for INDIGO-IAM,
+  which does not support the RP-initiated logout yet).
+
+Ending the session on the Identity Provider signs the user out of all the applications using it (single sign-on): if
+it is not ended, the next login with the Identity Provider does not ask for the password again.
+
+
 Job definitions
 ---------------
 

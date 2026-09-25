@@ -51,7 +51,8 @@ def env_value(value):
     if isinstance(value, bool):
         return "true" if value else "false"
     if isinstance(value, (dict, list)):
-        value = json.dumps(value)
+        # JSON over several lines (between single quotes) if not empty, for readability
+        value = json.dumps(value, indent=4) if value else json.dumps(value)
         return f"'{value}'" if "'" not in value else json.dumps(value)
     value = str(value)
     if re.search(r"[\s#'\"\\$]", value):

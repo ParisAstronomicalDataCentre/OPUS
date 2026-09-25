@@ -72,10 +72,12 @@
                                     <span class="glyphicon glyphicon-info-sign"></span>
                                     Show profile</a>
                                 </li>
+{% if not session.oidc_idp and current_user.password %}
                                 <li><a href="{{ url_for_security('change_password') }}">
                                     <span class="glyphicon glyphicon-lock"></span>
                                     Change password</a>
                                 </li>
+{% endif %}
                                 <li class="divider"></li>
                                 <li><a href="{{ url_for('oidc_logout') if session.oidc_idp else url_for_security('logout') }}">
                                     <span class="glyphicon glyphicon-log-out"></span>
@@ -84,12 +86,6 @@
                             </ul>
                         </li>
 {% else %}
-                        <li>
-                            <a href="{{ url_for_security('login') }}">
-                                <span class="glyphicon glyphicon-log-in"></span>
-                                Local login
-                            </a>
-                        </li>
   {% if config.SECURITY_REGISTERABLE %}
                         <li>
                             <a href="{{ url_for_security('register') }}">
@@ -98,6 +94,12 @@
                             </a>
                         </li>
   {% endif %}
+                        <li>
+                            <a href="{{ url_for_security('login') }}">
+                                <span class="glyphicon glyphicon-log-in"></span>
+                                Local login
+                            </a>
+                        </li>
   {% for idp in config.OIDC_IDPS %}
                         <li>
                             <a href="{{ url_for('oidc_login') }}{{ idp.title }}" title="{{ idp.description }}">

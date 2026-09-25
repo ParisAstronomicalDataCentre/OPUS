@@ -30,7 +30,7 @@ from bottle import (
     static_file,
 )
 
-from . import managers, migrate_users, storage, uws_jdl
+from . import managers, migrate_users, oidc, storage, uws_jdl
 from .settings import (
     settings,
     ACTIVE_PHASES,
@@ -103,8 +103,26 @@ def set_user(jobname=None):
     user_name = "anonymous"
     user_token = "anonymous"
     user = User(user_name, user_token)
+    # OpenID Connect access token (Bearer), with the OPUS token of the account (X-Opus-Token):
+    # the access token proves the identity (name), the OPUS token selects the account
+    authorization = request.headers.get("Authorization", "")
+    if authorization.startswith("Bearer "):
+        user_token = request.headers.get("X-Opus-Token", "")
+        if not user_token:
+            raise HTTPError(
+                401,
+                "The OPUS token of the user is required with an access token (header X-Opus-Token)",
+                **{"WWW-Authenticate": 'Bearer error="invalid_request"'},
+            )
+        try:
+            user_name = oidc.user_name(authorization[len("Bearer "):].strip())
+        except oidc.OIDCError as e:
+            logger.warning(f"OIDC access token refused: {e}")
+            raise HTTPError(
+                401, str(e), **{"WWW-Authenticate": 'Bearer error="invalid_token"'}
+            ) from None
     # Check if REMOTE_USER is set by web server or use Basic Auth from header
-    if request.auth:
+    elif request.auth:
         user_name, user_token = request.auth
         if not user_token:
             user_token = "remote_user"
