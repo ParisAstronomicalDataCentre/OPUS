@@ -1529,6 +1529,7 @@ def create_job(jobname):
     Returns:
         303 See other: /<jobname>/<jobid> (on success)
         400 Bad Request (on ParameterTooLong)
+        403 Forbidden (on JobAccessDenied)
         500 Internal Server Error (on error)
     """
     # Create new jobid for new job
@@ -1547,6 +1548,8 @@ def create_job(jobname):
                 )
         finally:
             job.close()
+    except JobAccessDenied as e:
+        abort_403(str(e))
     except ParameterTooLong as e:
         abort_400(str(e))
     except UserWarning as e:

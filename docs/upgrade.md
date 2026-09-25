@@ -31,7 +31,7 @@ Main changes
 
 * **Settings are read from a `.env` file** (or environment variables prefixed with `OPUS_`), see
   [Configuration](settings.md). `settings_local.py` is no longer read: **OPUS does not start** if it is present without a `.env` file,
-  to avoid running with the default settings (e.g. `ALLOW_ANONYMOUS=true`, `CHECK_PERMISSIONS=false`).
+  to avoid running with the default settings instead of the local ones.
 * `OPUS_SECRET_KEY` and `OPUS_SECURITY_PASSWORD_SALT` are **required**. The salt used until now was `test`: it has to
   be kept, or all the existing passwords of the client users are invalidated (`generate_env.py --from` does it).
 * **Docker**: the settings are given at runtime with `env_file: .env.docker` in `docker-compose.yml`, they are no
@@ -40,6 +40,10 @@ Main changes
 * On the server, a user is identified by **name + token**: the same name (e.g. an email) can have several accounts,
   one per token (e.g. one per client), each with its own roles and jobs. Changing the token of a user on the profile
   page of the client means using another account on the server.
+* The access rules are **restrictive by default**: `ALLOW_ANONYMOUS=false`, `CHECK_PERMISSIONS=true` and
+  `CHECK_OWNER=true` (previously `true`, `false` and `false`). The values defined in `settings_local.py` are kept by
+  the conversion to `.env` (step 3): check them in `.env`, the new defaults apply to the values that were not
+  defined. See the [Admin guide](admin_guide.md) for the roles of the users.
 * New dependency: `pydantic-settings` (installed by `uv sync`).
 
 

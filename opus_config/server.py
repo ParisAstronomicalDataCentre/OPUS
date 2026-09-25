@@ -31,10 +31,10 @@ class ServerSettings(CommonSettings):
     JOB_EVENT_TOKEN: SecretStr = SecretStr("TBD")  # TOKEN for special user job_event, used internally
     MAINTENANCE_TOKEN: SecretStr = SecretStr("TBD")  # TOKEN for special user maintenance, used internally
 
-    # Access rules
-    ALLOW_ANONYMOUS: bool = True
-    CHECK_PERMISSIONS: bool = False  # check rights to create/edit a job
-    CHECK_OWNER: bool = False  # only owner can access their files
+    # Access rules (secure by default, see the Admin guide)
+    ALLOW_ANONYMOUS: bool = False  # allow requests without authentication (user anonymous)
+    CHECK_PERMISSIONS: bool = True  # check rights to create/edit a job (roles of the user)
+    CHECK_OWNER: bool = True  # only owner can access their jobs and files
     # If a user has an APP_TOKEN, access to jobs will be added automatically
     # {"<token>": {"name": "<name>", "active": true, "jobs": ["<jobname1>", "<jobname2>"]}}
     APP_TOKENS: dict[str, dict] = {}
