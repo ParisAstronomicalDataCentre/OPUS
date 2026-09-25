@@ -394,7 +394,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                         f"No user removed: more than one user found with name {name}."
                     )
                     return ""
-                row = rows[0]
+                row = rows[0] if rows else None
             if row:
                 session.delete(row)
                 session.commit()

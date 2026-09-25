@@ -580,13 +580,17 @@ def patch_user(name):
     token = request.POST.get("user_token", None)
     if token:
         users = job_storage.get_users(name=name, token=token)
-        u = users[0]
-        if u:
-            for k in request.POST:
-                if k in ["token", "roles", "active"]:
-                    u[k] = request.POST[k]
+        if users:
+            u = users[0]
+            # the token is changed last, the account is found with the current token
+            for k in ["roles", "active", "token"]:
+                if k in request.POST:
+                    value = request.POST[k]
+                    if k == "active":
+                        value = value.lower() in ["true", "1", "on", "yes"]
+                    u[k] = value
                     # save modified user
-                    job_storage.update_user(name, k, request.POST[k], token=token)
+                    job_storage.update_user(name, k, value, token=token)
                     logger.info("User patched: " + name)
             return user2scim(u)
         else:
