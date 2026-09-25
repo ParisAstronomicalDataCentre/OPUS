@@ -841,25 +841,6 @@ def validate_job_definition(jobname):
     # redirect('/client/job_definition?jobname={}&msg=validated'.format(jobname), 303)
 
 
-@app.get("/jdl/<jobname:path>/convert")
-@is_client_trusted
-@is_admin
-def convert_jdl(jobname):
-    """
-    Get json description file for jobname
-    :param jobname:
-    :return: json description
-    """
-    try:
-        # logger.info(jobname)
-        uws_jdl.update_vot(jobname)
-    except UserWarning as e:
-        abort_404(e.args[0])
-    except Exception:
-        abort_500_except()
-    return f"JDL converted for {jobname}"
-
-
 # @app.get('/config/cp_script/<jobname>')
 @app.post("/jdl/<jobname:path>/copy_script")
 @is_client_trusted
@@ -1099,77 +1080,6 @@ def download_entity():
         abort_404(str(e))
     except UserWarning as e:
         abort_500(e.args[0])
-    except Exception:
-        abort_500_except()
-
-
-# TODO: function will be deprecated (replaced by /store)
-@app.route("/store_old/<jobid>/<rname>")  # /<rfname>')
-def get_result_file_old(jobid, rname):  # , rfname):
-    """Get result file <rname> for job <jobid>
-
-    Returns:
-        200 OK: file (on success)
-        404 Not Found: Job not found (on NotFoundWarning)
-        404 Not Found: Result not found (on NotFoundWarning)
-        500 Internal Server Error (on error)
-    """
-    user = set_user()
-    try:
-        # Get job properties from DB
-        job = Job("", jobid, user, get_attributes=False, get_results=True)
-        try:
-            # Check if result exists
-            if rname not in job.results:
-                raise storage.NotFoundWarning(
-                    f'Result "{rname}" NOT FOUND for job "{jobid}"'
-                )
-            # Return result
-            result_details = {
-                "stdout": "stdout.log",
-                "stderr": "stderr.log",
-                "provjson": "provenance.json",
-                "provxml": "provenance.xml",
-                "provsvg": "provenance.svg",
-            }
-            if rname in result_details:
-                rfname = result_details[rname]
-            else:
-                rfname = job.get_result_filename(rname)
-            if rname in ["stdout", "stderr"]:
-                return static_file(
-                    rfname, root=f"{settings.JOBDATA_PATH}/{job.jobid}", mimetype="text"
-                )
-            # response.content_type = 'text/plain; charset=UTF-8'
-            # return str(job.results[result]['url'])
-            content_type = job.results[rname]["content_type"]
-            logger.debug(f"{job.jobname} {jobid} {rname} {rfname} {content_type}")
-            response.set_header("Content-type", content_type)
-            if any(
-                x in content_type
-                for x in ["text", "xml", "json", "image/png", "image/jpeg"]
-            ):
-                return static_file(
-                    rfname,
-                    root=f"{settings.RESULTS_PATH}/{job.jobid}",
-                    mimetype=content_type,
-                )
-            else:
-                response.set_header(
-                    "Content-Disposition", f'attachment; filename="{rfname}"'
-                )
-                return static_file(
-                    rfname,
-                    root=f"{settings.RESULTS_PATH}/{job.jobid}",
-                    mimetype=content_type,
-                    download=True,
-                )
-        finally:
-            job.close()
-    except JobAccessDenied as e:
-        abort_403(str(e))
-    except storage.NotFoundWarning as e:
-        abort_404(str(e))
     except Exception:
         abort_500_except()
 
