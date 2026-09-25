@@ -57,8 +57,8 @@ status, token, and roles. The role `admin` gives access to the administration pa
 the accounts when they are created, but are not checked by the client: `user`, `oidc` (account created from an
 Identity Provider), `job_definition` and `job_list`. The **Roles** page (Flask-Admin) lists and edits the roles.
 
-Users can also create their own account on the registration page of the client (`/accounts/register`). This page is
-not linked from the menu, but it is enabled (`SECURITY_REGISTERABLE` in `uws_client/settings.py`). Users can also
+Users can also create their own account on the registration page of the client (**Register**, next to **Local
+login** in the menu), if it is enabled with `OPUS_SECURITY_REGISTERABLE=true` in `.env` (disabled by default). Users can also
 sign in with an external account if Identity Providers are configured (`OPUS_OIDC_IDPS`, OpenID Connect): their
 account in the client is then created at the first login.
 

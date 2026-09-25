@@ -44,6 +44,8 @@ class ClientSettings(CommonSettings):
 
     # Flask-Security
     SECURITY_URL_PREFIX: str = "/accounts"
+    # Users can create their own account on the registration page (<client>/accounts/register)
+    SECURITY_REGISTERABLE: bool = False
 
     # Flask-Mail
     MAIL_USE_SSL: bool = False

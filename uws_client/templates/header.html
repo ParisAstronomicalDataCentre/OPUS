@@ -90,6 +90,14 @@
                                 Local login
                             </a>
                         </li>
+  {% if config.SECURITY_REGISTERABLE %}
+                        <li>
+                            <a href="{{ url_for_security('register') }}">
+                                <span class="glyphicon glyphicon-user"></span>
+                                Register
+                            </a>
+                        </li>
+  {% endif %}
   {% for idp in config.OIDC_IDPS %}
                         <li>
                             <a href="{{ url_for('oidc_login') }}{{ idp.title }}" title="{{ idp.description }}">

@@ -44,6 +44,8 @@ Main changes
   `CHECK_OWNER=true` (previously `true`, `false` and `false`). The values defined in `settings_local.py` are kept by
   the conversion to `.env` (step 3): check them in `.env`, the new defaults apply to the values that were not
   defined. See the [Admin guide](admin_guide.md) for the roles of the users.
+* The registration page of the client (`/accounts/register`), previously always enabled, is **disabled by
+  default**: set `OPUS_SECURITY_REGISTERABLE=true` in `.env` to keep it.
 * New dependency: `pydantic-settings` (installed by `uv sync`).
 
 

@@ -18,7 +18,8 @@ Access and accounts
 
 ### Sign in
 
-Click **Local login** (top right) and sign in with your email and password. If Identity Providers are configured
+Click **Local login** (top right) and sign in with your email and password. If the registration is enabled on the
+client, you can create your account with **Register**. If Identity Providers are configured
 (OpenID Connect), a button is also shown for each of them, to sign in with an external account.
 
 Depending on the server configuration, jobs may also be run without being signed in (anonymous user).
