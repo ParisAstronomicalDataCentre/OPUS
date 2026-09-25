@@ -64,6 +64,9 @@ The unit tests may be run to check the main features of the UWS server and clien
     $ just test
     $ just coverage         # with the coverage of the code (or just coverage html: report in htmlcov/)
 
+The tests use SQLite and run the jobs with the Local manager. If Docker is available, the migration of the database
+is also tested on PostgreSQL, in a temporary `postgres:18` container (else this test is skipped).
+
 ### Run with the development servers
 
 The server and the client can be run directly with uvicorn, in two different shell sessions:
