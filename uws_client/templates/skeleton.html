@@ -18,6 +18,8 @@
     <!-- Variables defined in div elements for JavaScript -->
     <div id="variables">
         <div id="auth" style="display:none" value="{{ session.auth }}"></div>
+        <div id="authenticated" style="display:none" value="{{ 'true' if current_user.is_authenticated else 'false' }}"></div>
+        <div id="login_url" style="display:none" value="{{ url_for_security('login') }}"></div>
         <div id="server_url" style="display:none" value="{{ config.UWS_SERVER_URL_JS }}"></div>
         <div id="server_endpoint" style="display:none" value="{{ config.UWS_SERVER_ENDPOINT }}"></div>
         <div id="client_endpoint" style="display:none" value="{{ config.UWS_CLIENT_ENDPOINT }}"></div>
