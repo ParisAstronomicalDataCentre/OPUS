@@ -21,7 +21,7 @@ dependencies = [
     "Flask-Security-Too",
     "Flask-SQLAlchemy",
     "lxml",
-    "prov==2.5.3",
+    "prov>=2.5.3,<3",  # prov 3 will change unified() (used for the provenance documents)
     "networkx",
     "python-dateutil",
     "psutil",

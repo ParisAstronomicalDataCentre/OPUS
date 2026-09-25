@@ -1640,7 +1640,7 @@ requires-dist = [
     { name = "flask-sqlalchemy" },
     { name = "lxml" },
     { name = "networkx" },
-    { name = "prov", specifier = "==2.5.3" },
+    { name = "prov", specifier = ">=2.5.3,<3" },
     { name = "psutil" },
     { name = "psycopg2-binary" },
     { name = "pydantic-settings", specifier = ">=2.15.0" },
