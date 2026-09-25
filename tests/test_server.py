@@ -268,13 +268,17 @@ class TestPermissions:
             f.write("echo $text > $output\n")
         monkeypatch.setattr(settings, "CHECK_PERMISSIONS", True)
         job_storage = getattr(uws_server.storage, settings.STORAGE + "JobStorage")()
-        for roles, expected in [("all", ["test_activity_1"]), ("test_activity_1", ["test_activity_1"]), ("", [])]:
+        # (other job definitions may exist, e.g. installed by test_jobs.py)
+        for roles, expected in [("all", None), ("test_activity_1", ["test_activity_1"]), ("", [])]:
             name = "user_" + settings.new_token()[:8]
             job_storage.add_user(name, token="token", roles=roles)
             auth = base64.b64encode(f"{name}:token".encode()).decode()
             response = test_app.get("/jdl", extra_environ={"HTTP_AUTHORIZATION": "Basic " + auth})
             print(f"roles={roles!r} --> {response.json['jobnames']}")
-            assert response.json["jobnames"] == expected
+            if expected is None:  # all the jobs
+                assert "test_activity_1" in response.json["jobnames"]
+            else:
+                assert response.json["jobnames"] == expected
 
 
 class TestJobAbort:

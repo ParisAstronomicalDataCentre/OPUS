@@ -44,7 +44,8 @@ os.environ.update(
         "OPUS_VAR_PATH": TEST_VAR_PATH,
         "OPUS_STORAGE_TYPE": "SQLite",
         "OPUS_LOG_FILE_SUFFIX": "_test",
-        "OPUS_MANAGER": "",
+        "OPUS_MANAGER": "",  # no execution of jobs, except in test_jobs.py (Local)
+        "OPUS_LOCAL_WORKDIR_PATH": os.path.join(TEST_VAR_PATH, "workdir"),
         "OPUS_ALLOW_ANONYMOUS": "true",
         "OPUS_CHECK_PERMISSIONS": "false",
         "OPUS_CHECK_OWNER": "false",
