@@ -37,22 +37,24 @@ When signed in as an administrator (role `admin` in the client), the top-right m
 | Client Accounts    | Accounts of the client (email, password, token, roles)                            |
 | Server Accounts    | Accounts of the server (name, token, permissions)                                 |
 | Server Jobs        | Job definitions available on the server                                           |
-| Server log         | Last lines of the log of the server                                               |
-| Client log         | Last lines of the log of the client                                               |
+| Logs               | Last lines of the log files of the server, nginx and the client                   |
 
 
-### Server log and Client log
+### Logs
 
 The log viewer shows the last lines (100 to 5000) of a log file, from `$OPUS_VAR_PATH/logs`:
 
 * server: `server.log` (INFO level), `server_debug.log` (DEBUG level) and `debug.log` (other modules),
+* nginx: `nginx_access.log` and `nginx_error.log` (with `just start` or Docker, see `generate_nginx_config.py`),
 * client: `client.log` (INFO level) and `client_debug.log` (DEBUG level).
 
 The lines can be filtered (text contained in the line, case insensitive), and are colored by level (warnings and
-errors). With **Auto refresh**, the log is reloaded every 10 seconds. The server log is read through the server
-(route `/log`, for the admin only, also usable by scripts with the admin credentials:
-`curl -u $ADMIN_NAME:$ADMIN_TOKEN "<server>/log?FILE=server_debug&LINES=500"`), so it works when the server and the
-client run on different hosts.
+errors, or HTTP status 4xx and 5xx in the nginx access log). With **Auto refresh**, the log is reloaded every
+10 seconds. The selected file is kept in the URL of the page (e.g. `/admin/logs?file=nginx_error`).
+
+The log files of the server and nginx are read through the server (route `/log`, for the admin only, also usable by
+scripts with the admin credentials: `curl -u $ADMIN_NAME:$ADMIN_TOKEN "<server>/log?FILE=server_debug&LINES=500"`),
+so they are available when the server and the client run on different hosts.
 
 
 ### Client Preferences

@@ -11,18 +11,19 @@
 {% block js %}
     <script type="text/javascript" src="/static/js/show_log.js" defer></script>
 {% endblock %}
-{% block variables %}
-        <div id="log_url" style="display:none" value="{{ log_url }}"></div>
-{% endblock %}
 {% block content %}
 	<div class="container bs-docs-container">
         <div id="log_panel" class="panel panel-default">
             <div class="panel-heading clearfix">
-                <span class="panel-title pull-left" style="padding-top: 6px; padding-right: 6px;">{{ title }} viewer</span>
+                <span class="panel-title pull-left" style="padding-top: 6px; padding-right: 6px;">Logs</span>
                 <form id="log_toolbar" class="form-inline pull-right" onsubmit="return false;">
                     <select name="logfile" class="form-control input-sm" title="Log file">
+{% for group, url, files in groups %}
+                        <optgroup label="{{ group }}">
 {% for file in files %}
-                        <option value="{{ file }}">{{ file }}.log</option>
+                            <option value="{{ file }}" data-url="{{ url }}"{{ ' selected' if file == selected }}>{{ file }}.log</option>
+{% endfor %}
+                        </optgroup>
 {% endfor %}
                     </select>
                     <select name="nlines" class="form-control input-sm" title="Number of lines">

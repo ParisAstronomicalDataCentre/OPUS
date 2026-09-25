@@ -15,6 +15,9 @@ def log_files(log_path, prefix, suffix=""):
     files = {prefix: f"{prefix}{suffix}.log", f"{prefix}_debug": f"{prefix}{suffix}_debug.log"}
     if prefix == "server":
         files["debug"] = f"debug{suffix}.log"  # other modules (e.g. libraries)
+        # nginx in front of the server and the client (just start, Docker), see generate_nginx_config.py
+        files["nginx_access"] = "nginx_access.log"
+        files["nginx_error"] = "nginx_error.log"
     return {name: os.path.join(log_path, fname) for name, fname in files.items()}
 
 

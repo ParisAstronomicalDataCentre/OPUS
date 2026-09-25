@@ -6,7 +6,6 @@
 (function($) {
     "use strict";
 
-    var log_url;
     var log_lines = [];
     var loaded_at = '';
     var refresh_timer = null;
@@ -17,9 +16,10 @@
     }
 
     function level_class(line) {
-        if (/\] (ERROR|CRITICAL) /.test(line)) { return 'log-error'; }
-        if (/\] WARNING /.test(line)) { return 'log-warning'; }
-        if (/\] DEBUG /.test(line)) { return 'log-debug'; }
+        // OPUS logs: "] LEVEL ", nginx error log: "[level]", nginx access log: status code after the request
+        if (/\] (ERROR|CRITICAL) |\[(error|crit|alert|emerg)\]|" 5\d\d /.test(line)) { return 'log-error'; }
+        if (/\] WARNING |\[warn\]|" 4\d\d /.test(line)) { return 'log-warning'; }
+        if (/\] DEBUG |\[(debug|info|notice)\]/.test(line)) { return 'log-debug'; }
         return '';
     }
 
@@ -43,9 +43,12 @@
     }
 
     function load_log() {
+        var option = $('select[name=logfile] option:selected');
+        // keep the file in the URL of the page (bookmark, reload)
+        window.history.replaceState(null, '', '?file=' + encodeURIComponent(option.val()));
         $('#loading').show();
         $.ajax({
-            url : log_url,
+            url : option.data('url'),
             cache : false,
             type : 'GET',
             dataType: 'text',
@@ -81,7 +84,6 @@
 
     // LOAD LOG AT STARTUP
     $(document).ready( function() {
-        log_url = $('#log_url').attr('value');
         $('select[name=logfile], select[name=nlines]').on('change', load_log);
         $('input[name=filter]').on('input', show_log);
         $('input[name=autorefresh]').on('change', set_autorefresh);

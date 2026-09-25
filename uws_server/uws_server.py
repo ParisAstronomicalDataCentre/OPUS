@@ -655,7 +655,7 @@ def get_log():
     """Last lines of a log file of the server (admin only)
 
     Parameters:
-        FILE: server (default), server_debug or debug
+        FILE: server (default), server_debug, debug, nginx_access or nginx_error
         LINES: number of lines (default 100, max 10000)
 
     Returns:

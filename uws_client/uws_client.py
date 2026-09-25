@@ -630,22 +630,23 @@ def server_jobs():
     return render_template("server_jobs.html")
 
 
+@app.route("/admin/logs", methods=["GET"])
+@login_required
+@roles_required("admin")
+def show_logs():
+    """Log viewer: log files of the server and nginx (read through the proxy) and of the client"""
+    groups = [
+        ("Server", app.config["UWS_SERVER_URL_JS"] + "/log", list(logs.log_files(settings.LOG_PATH, "server"))),
+        ("Client", url_for("client_log_text"), list(logs.log_files(settings.LOG_PATH, "client"))),
+    ]
+    return render_template("show_log.html", groups=groups, selected=request.args.get("file", "server"))
+
+
 @app.route("/admin/server_log", methods=["GET"])
-@login_required
-@roles_required("admin")
-def server_log():
-    # Log files read from the server (through the proxy)
-    files = ["server", "server_debug", "debug"]
-    log_url = app.config["UWS_SERVER_URL_JS"] + "/log"
-    return render_template("show_log.html", title="Server Log", files=files, log_url=log_url)
-
-
 @app.route("/admin/client_log", methods=["GET"])
-@login_required
-@roles_required("admin")
-def client_log():
-    files = list(logs.log_files(settings.LOG_PATH, "client"))
-    return render_template("show_log.html", title="Client Log", files=files, log_url=url_for("client_log_text"))
+def old_log_pages():
+    # previous log viewer pages
+    return redirect(url_for("show_logs", file=request.path.split("/")[-1].replace("_log", "")))
 
 
 @app.route("/admin/client_log/text", methods=["GET"])

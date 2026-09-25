@@ -58,13 +58,9 @@
                                     <span class="glyphicon glyphicon-edit"></span>
                                     Server Jobs</a>
                                 </li>
-                                <li><a href="{{ url_for('server_log') }}">
-                                    <span class="glyphicon glyphicon-edit"></span>
-                                    Server log</a>
-                                </li>
-                                <li><a href="{{ url_for('client_log') }}">
-                                    <span class="glyphicon glyphicon-edit"></span>
-                                    Client log</a>
+                                <li><a href="{{ url_for('show_logs') }}">
+                                    <span class="glyphicon glyphicon-list-alt"></span>
+                                    Logs</a>
                                 </li>
                                 <li class="divider"></li>
 {% endif %}

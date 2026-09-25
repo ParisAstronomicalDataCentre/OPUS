@@ -405,10 +405,17 @@ class TestAdminPages:
 
     def test_log_viewer(self, client, live_server):
         self.admin_login(client)
-        for page, files in [("server_log", ["server", "server_debug", "debug"]), ("client_log", ["client", "client_debug"])]:
-            html = client.get(f"/admin/{page}").get_data(as_text=True)
-            assert [f for f in files if f'<option value="{f}">' in html] == files
-        assert 'value="http://localhost/proxy/log"' in client.get("/admin/server_log").get_data(as_text=True)
+        # one page for all the log files: server and nginx (through the proxy), client
+        html = client.get("/admin/logs").get_data(as_text=True)
+        options = re.findall(r'<option value="(\w+)" data-url="([^"]+)"', html)
+        server = [f for f, url in options if url == "http://localhost/proxy/log"]
+        assert server == ["server", "server_debug", "debug", "nginx_access", "nginx_error"]
+        assert [f for f, url in options if url == "/admin/client_log/text"] == ["client", "client_debug"]
+        assert '<option value="client_debug" data-url="/admin/client_log/text" selected>' in client.get(
+            "/admin/logs?file=client_debug").get_data(as_text=True)
+        # previous pages
+        assert client.get("/admin/server_log").headers["Location"] == "/admin/logs?file=server"
+        assert client.get("/admin/client_log").headers["Location"] == "/admin/logs?file=client"
         # client log
         response = client.get("/admin/client_log/text", query_string={"FILE": "client_debug", "LINES": 5})
         assert response.status_code == 200 and response.mimetype == "text/plain"
@@ -421,7 +428,7 @@ class TestAdminPages:
 
     def test_log_viewer_refused(self, client, local_user, live_server):
         password_login(client, local_user)  # not an administrator
-        for url in ["/admin/server_log", "/admin/client_log", "/admin/client_log/text"]:
+        for url in ["/admin/logs", "/admin/client_log/text"]:
             assert client.get(url).status_code in (302, 403)
         assert client.get("/proxy/log").status_code == 403  # refused by the server
 
