@@ -147,11 +147,6 @@ class TestWait:
         finally:
             requests.post(f"{job_url}/phase", data={"PHASE": "ABORT"}, auth=AUTH)
 
-    @pytest.mark.xfail(
-        reason="the server handles one request at a time (asgiref WsgiToAsgi runs the WSGI app in a single "
-        "thread): the phase change is only received when the WAIT request ends",
-        strict=True,
-    )
     def test_wait_phase_change(self, server):  # noqa: F811 (server fixture)
         job_url = create_job(server, "test_activity_1", text="slow change")
         assert wait(job_url, phases=("EXECUTING",)) == "EXECUTING"
@@ -162,6 +157,21 @@ class TestWait:
         abort.join()
         assert time.time() - start < 3  # returns as soon as the phase changes
         assert root.find("{*}phase").text == "ABORTED"
+
+    def test_requests_during_wait(self, server):  # noqa: F811 (server fixture)
+        """The requests are handled in parallel (pool of threads)"""
+        job_url = create_job(server, "test_activity_1", text="slow parallel")
+        assert wait(job_url, phases=("EXECUTING",)) == "EXECUTING"
+        waiting = threading.Thread(target=requests.get, args=(job_url,), kwargs={"params": {"WAIT": 3}, "auth": AUTH})
+        waiting.start()
+        try:
+            time.sleep(0.3)
+            start = time.time()
+            assert requests.get(f"{job_url}/phase", auth=AUTH).text == "EXECUTING"
+            assert time.time() - start < 1
+        finally:
+            requests.post(f"{job_url}/phase", data={"PHASE": "ABORT"}, auth=AUTH)
+            waiting.join()
 
     def test_no_wait_for_terminal_phase(self, server):  # noqa: F811 (server fixture)
         job_url = create_job(server, "test_activity_1", text="done")

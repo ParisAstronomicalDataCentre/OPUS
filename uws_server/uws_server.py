@@ -40,8 +40,8 @@ from .settings import (
     PHASES,
     PHASE_CONVERT,
     TERMINAL_PHASES,
-    logger,
     logger_init,
+    set_log_username,
 )
 from .uws_classes import (
     EntityAccessDenied,
@@ -59,6 +59,15 @@ from .uws_classes import (
 # Create a new application
 app = Bottle()
 BaseRequest.MEMFILE_MAX = settings.MEMFILE_MAX
+
+# Logger adding the user name of the current request (set by set_user)
+logger = CustomAdapter(logger_init, {})
+
+
+@app.hook("before_request")
+def reset_log_username():
+    """The thread may have handled a request of another user before"""
+    set_log_username()
 
 # Warn if the users table was created by a previous version (see migrate_users.py)
 migrate_users.check_users_schema()
@@ -97,7 +106,6 @@ def strip_path():
 
 # @app.hook('before_request')
 def set_user(jobname=None):
-    global logger
     """Set user from request header"""
     # Use anonymous as default
     user_name = "anonymous"
@@ -154,7 +162,7 @@ def set_user(jobname=None):
     if user_name:
         user = User(user_name, user_token)
     # Add user name at the end of each log entry
-    logger = CustomAdapter(logger_init, {"username": user.name})
+    set_log_username(user.name)
     if user == User("anonymous", "anonymous") and not settings.ALLOW_ANONYMOUS:
         abort_403("User anomymous not allowed on this server")
     # Add user if not in db
@@ -1216,11 +1224,9 @@ def maintenance(jobname):
         403 Forbidden (if not localhost)
         500 Internal Server Error (on error)
     """
-    global logger
     report = []
     try:
         user = User("maintenance", settings.MAINTENANCE_TOKEN.get_secret_value())
-        logger = logger_init
         if jobname != "__all__":
             jobnames = [jobname]
         else:
@@ -1347,10 +1353,8 @@ def job_event():
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
-    global logger
     try:
         user = User("job_event", settings.JOB_EVENT_TOKEN.get_secret_value())
-        logger = logger_init
         logger.debug(f"with POST={str(request.POST.dict)}")
         if "jobid" in request.POST:
             process_id = request.POST["jobid"]

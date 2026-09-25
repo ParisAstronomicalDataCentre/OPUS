@@ -63,7 +63,13 @@ Main changes
 * Removed files: `run_server.py` and `run_client.py` (use `just server` and `just client`), `Makefile` (use the
   `justfile`, e.g. `just test`), `Dockerfile_apache` and `Dockerfile_apache.dist`. `start.sh` is renamed
   `docker-start.sh` (entry point of the Docker image).
-* New dependency: `pydantic-settings` (installed by `uv sync`).
+* The server and the client handle the requests **in parallel** (pool of `OPUS_WSGI_THREADS` threads, 10 by
+  default), with uvicorn: previously, one request at a time was handled, e.g. a job list waiting for a phase
+  change (`WAIT`) blocked the other requests.
+* The provenance of chained jobs is complete in both directions: a job using a result of another job now records
+  it (`DIRECTION=FORWARD` in `/provsap`, for the jobs created after the upgrade), and the internal provenance
+  written by a job (`internal_provenance.json`) is included.
+* New dependencies: `pydantic-settings` and `a2wsgi` (replaces `asgiref`), installed by `uv sync`.
 
 
 Upgrade procedure

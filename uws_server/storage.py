@@ -32,6 +32,7 @@ from sqlalchemy import (
     Text,
     create_engine,
 )
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import declarative_base, sessionmaker
 import sqlite3
 from contextlib import contextmanager
@@ -378,8 +379,13 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
                 # new account (never update the token of an existing account)
                 u = self.User(**d)
                 session.add(u)
-                session.commit()
-                logger.info(f"User {name} added to db")
+                try:
+                    session.commit()
+                    logger.info(f"User {name} added to db")
+                except IntegrityError:
+                    # added by a parallel request (first requests of a new user)
+                    session.rollback()
+                    logger.debug(f"User {name} already added to db")
             # else:
             #    logger.debug('User {} already exists in db'.format(name))
 

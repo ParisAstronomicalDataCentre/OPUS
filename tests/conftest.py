@@ -70,12 +70,12 @@ print(f"\nPerforming tests in {TEST_VAR_PATH}")
 @pytest.fixture(scope="session")
 def live_server():
     """UWS server running in a thread (real HTTP requests, e.g. from the client proxy)"""
-    import asgiref.wsgi
     import uvicorn
+    from a2wsgi import WSGIMiddleware
 
     from uws_server import uws_server
 
-    app = asgiref.wsgi.WsgiToAsgi(uws_server.app)
+    app = WSGIMiddleware(uws_server.app, workers=uws_server.settings.WSGI_THREADS)
     server = uvicorn.Server(uvicorn.Config(app, host="localhost", port=SERVER_PORT, log_level="warning"))
     thread = threading.Thread(target=server.run, daemon=True)
     thread.start()

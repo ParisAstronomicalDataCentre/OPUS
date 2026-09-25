@@ -15,7 +15,7 @@ import os
 import warnings
 from collections.abc import Callable
 
-from pydantic import ImportString, SecretStr, field_validator, model_validator
+from pydantic import Field, ImportString, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from . import generators
@@ -47,6 +47,10 @@ class CommonSettings(BaseSettings):
     UWS_CLIENT_ENDPOINT: str = "http://localhost:8080"  # For the development server (just client)
     UWS_SERVER_ENDPOINT: str = "/uws"
     SCIM_ENDPOINT: str = "/scim"
+
+    # Number of threads handling the requests in parallel (per uvicorn worker), e.g. a request
+    # waiting for a phase change (WAIT) holds a thread
+    WSGI_THREADS: int = Field(default=10, ge=1)
 
     # Mail server
     MAIL_SERVER: str = "smtp."

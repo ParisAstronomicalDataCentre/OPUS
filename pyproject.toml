@@ -14,7 +14,6 @@ dependencies = [
     "bleach",
     "bottle",
     "Flask",
-    "asgiref",
     "uvicorn",
     "argon2_cffi",
     "Flask-Admin",
@@ -38,6 +37,7 @@ dependencies = [
     "WebTest",
     "WTForms",  # ==3.1.2
     "pydantic-settings>=2.15.0",
+    "a2wsgi>=1.10.10",
 ]
 
 [build-system]

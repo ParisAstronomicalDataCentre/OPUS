@@ -15,6 +15,7 @@ generators and the logger.
 import logging
 import logging.config
 import os
+import threading
 
 from opus_config import APP_PATH, ServerSettings  # noqa: F401 (APP_PATH is imported from here)
 
@@ -247,14 +248,26 @@ LOGGING = {
 
 
 # Add the username to the logs
+# User name of the current request, per thread (requests are handled by a pool of threads)
+_log_context = threading.local()
+
+
+def set_log_username(username=None):
+    """Set the user name appended to the log messages of the current request"""
+    _log_context.username = username
+
+
 class CustomAdapter(logging.LoggerAdapter):
     """
-    This adapter expects the passed in dict-like object to have a
-    'username' key, whose value in brackets is appended to the log message.
+    This adapter appends the user name of the current request (see set_log_username)
+    in brackets to the log message.
     """
 
     def process(self, msg, kwargs):
-        return "{} [{}]".format(msg, self.extra["username"]), kwargs
+        username = getattr(_log_context, "username", None)
+        if username:
+            return f"{msg} [{username}]", kwargs
+        return msg, kwargs
 
 
 # Create dirs if they do not exist yet

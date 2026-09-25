@@ -7,7 +7,8 @@ WSGI/ASGI script for UWS server
 
 import os
 import sys
-import asgiref.wsgi
+
+from a2wsgi import WSGIMiddleware
 
 from uws_server import uws_server
 
@@ -21,5 +22,5 @@ os.chdir(curdir)
 # Do NOT use bottle.run() with mod_wsgi
 application = uws_server.app
 
-# ASGI wrapper for uvicorn
-asgi_app = asgiref.wsgi.WsgiToAsgi(application)
+# ASGI wrapper for uvicorn: the requests are handled by a pool of threads
+asgi_app = WSGIMiddleware(application, workers=uws_server.settings.WSGI_THREADS)
