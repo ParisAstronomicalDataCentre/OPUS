@@ -1106,7 +1106,7 @@ def provsap():
     user = set_user()
     try:
         if "ID" not in request.query:
-            raise UserWarning('"ID" is not specified in request') from None
+            raise BadRequestError('"ID" is not specified in request') from None
         kwargs = {}
         kwargs["depth"] = request.query.get("DEPTH", 1)
         kwargs["model"] = request.query.get("MODEL", "IVOA")
@@ -1191,7 +1191,7 @@ def provsap():
             return b"\n".join(result.readlines())
         else:
             raise BadRequestError(
-                f"Bad value for RESPONSEFORMAT ({format}).\nAvailable values are ('PROV-JSON', 'PROV-XML', 'PROV-SVG')."
+                f"Bad value for RESPONSEFORMAT ({respformat}).\nAvailable values are ('PROV-JSON', 'PROV-XML', 'PROV-SVG', 'PROV-PNG')."
             )
     except BadRequestError as e:
         abort_400(e.args[0])

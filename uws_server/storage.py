@@ -173,6 +173,10 @@ class EntityStorage:
         """Remove entity"""
         pass
 
+    def add_used(self, entity_id, jobid, role=None, owner=None):
+        """Add Used relation: the entity is used by the job"""
+        pass
+
     def get_entity(self, entity_id):
         """Return all entity attributes"""
         pass
@@ -652,6 +656,13 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
 
     # ----------
     # EntityStorage methods
+
+    def add_used(self, entity_id, jobid, role=None, owner=None):
+        """Add Used relation: the entity is used by the job"""
+        with self.get_session() as session:
+            session.merge(self.Used(entity_id=entity_id, jobid=jobid, role=role, owner=owner))
+            session.commit()
+        logger.info(f"Adding Used relation (entity_id={entity_id}, jobid={jobid}, role={role})")
 
     def register_entity(self, **kwargs):
         # jobid, result_name, file_name, file_dir=None, access_url=None, hash=None, content_type=None,

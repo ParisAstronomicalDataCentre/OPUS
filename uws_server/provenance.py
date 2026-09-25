@@ -425,11 +425,14 @@ def job2prov(
                                         "voprov:version", ""
                                     )
                                     used_ent.add_attributes({"prov:label": l})
-                                    pdoc.influence(
-                                        adesc,
-                                        ent_id,
-                                        other_attributes={"prov:type": "hasDependency"},
-                                    )
+                                    if descriptions:
+                                        pdoc.influence(
+                                            adesc,
+                                            ent_id,
+                                            other_attributes={"prov:type": "hasDependency"},
+                                        )
+                                    else:
+                                        act.used(ent_id, attributes=current_job_used[ent_id])
                                 else:
                                     act.used(ent_id, attributes=current_job_used[ent_id])
                     # Add generated relation to act, and entities if relevant
@@ -456,7 +459,7 @@ def job2prov(
                                 pdoc.wasAssociatedWith(
                                     act,
                                     agt_id,
-                                    other_attributes=current_job_generated[ent_id],
+                                    other_attributes=current_job_associated[agt_id],
                                 )
                     # Add ActivityDescription dependencies
                     if "dependency" in current_job:
@@ -466,9 +469,10 @@ def job2prov(
                             pdoc.entity(
                                 ent_id, other_attributes=prov_dict["entity"][ent_id]
                             )
-                            pdoc.influence(
-                                adesc, ent_id, other_attributes={"prov:role": "dependency"}
-                            )
+                            if descriptions:
+                                pdoc.influence(
+                                    adesc, ent_id, other_attributes={"prov:role": "dependency"}
+                                )
                     # Add Activity attributes
                     for k, v in current_job.items():
                         # logger.debug(k, v)
@@ -529,7 +533,7 @@ def job2prov(
                         #        'prov:role': 'owner',
                         #    })
                         # Add derivation link from internal provenance
-                        if entity.get("from_entity", None) and ipbundle:
+                        if entity and entity.get("from_entity", None) and ipbundle:
                             e_from = ipbundle.get_record(entity["from_entity"])[0]
                             e_out[-1].wasDerivedFrom(e_from)
                             # copy_act = pdoc.activity(act_id + '_copy_to_datastore', other_attributes={"prov:label": "copy_to_datastore"})
@@ -697,7 +701,8 @@ def prov2dict(prov_doc):
     """
     prov_dict = {"prefix": {}, "activity": {}, "entity": {}, "agent": {}}
     for rec in prov_doc.records:
-        rec_type = rec.get_type()
+        # record type without namespace (prov:Activity or voprov:Activity)
+        rec_type = rec.get_type().localpart
         # Store prefix/namespaces
         prov_dict["prefix"]["default"] = prov_doc.get_default_namespace().uri
         for ns in prov_doc.get_registered_namespaces():
@@ -705,15 +710,15 @@ def prov2dict(prov_doc):
         # Store activity and its attributes
         rec_id = str(rec.identifier)
         rec_attributes = {str(attr[0]): attr[1] for attr in rec.attributes}
-        if rec_type == voprov.models.model.PROV_ACTIVITY:
+        if rec_type == voprov.models.model.PROV_ACTIVITY.localpart:
             prov_dict["activity"][rec_id] = rec_attributes
         # Store entity and its attributes
-        if rec_type == voprov.models.model.PROV_ENTITY:
+        if rec_type == voprov.models.model.PROV_ENTITY.localpart:
             prov_dict["entity"][rec_id] = rec_attributes
         # Store usage or generation and its attributes
         if (
-            rec_type == voprov.models.model.PROV_USAGE
-            or rec_type == voprov.models.model.PROV_GENERATION
+            rec_type == voprov.models.model.PROV_USAGE.localpart
+            or rec_type == voprov.models.model.PROV_GENERATION.localpart
         ):
             act_id = rec_attributes.pop(
                 "voprov:activity", rec_attributes.pop("prov:activity", None)
@@ -729,7 +734,7 @@ def prov2dict(prov_doc):
             if act_id and ent_id:
                 act_id = str(act_id)
                 ent_id = str(ent_id)
-                if rec_type == voprov.models.model.PROV_USAGE:
+                if rec_type == voprov.models.model.PROV_USAGE.localpart:
                     if "used" not in prov_dict["activity"][act_id]:
                         prov_dict["activity"][act_id]["used"] = {}
                     prov_dict["activity"][act_id]["used"][ent_id] = rec_attributes
@@ -740,10 +745,10 @@ def prov2dict(prov_doc):
                         "role": rec_role
                     }
         # Store agent and its attributes
-        if rec_type == voprov.models.model.PROV_AGENT:
+        if rec_type == voprov.models.model.PROV_AGENT.localpart:
             prov_dict["agent"][rec_id] = rec_attributes
         # Store attribution and its attributes
-        if rec_type == voprov.models.model.PROV_ATTRIBUTION:
+        if rec_type == voprov.models.model.PROV_ATTRIBUTION.localpart:
             ent_id = rec_attributes.pop(
                 "voprov:entity", rec_attributes.pop("prov:entity", None)
             )
@@ -753,19 +758,19 @@ def prov2dict(prov_doc):
             if ent_id and agt_id:
                 ent_id = str(ent_id)
                 agt_id = str(agt_id)
-                if "attributed" not in prov_dict["entity"][act_id]:
+                if "attributed" not in prov_dict["entity"][ent_id]:
                     prov_dict["entity"][ent_id]["attributed"] = {}
                 prov_dict["entity"][ent_id]["attributed"][agt_id] = rec_attributes
         # Store association and its attributes
-        if rec_type == voprov.models.model.PROV_ASSOCIATION:
+        if rec_type == voprov.models.model.PROV_ASSOCIATION.localpart:
             act_id = rec_attributes.pop(
                 "voprov:activity", rec_attributes.pop("prov:activity", None)
             )
             agt_id = rec_attributes.pop(
                 "voprov:agent", rec_attributes.pop("prov:agent", None)
             )
-            if ent_id and agt_id:
-                ent_id = str(ent_id)
+            if act_id and agt_id:
+                act_id = str(act_id)
                 agt_id = str(agt_id)
                 if "associated" not in prov_dict["activity"][act_id]:
                     prov_dict["activity"][act_id]["associated"] = {}

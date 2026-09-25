@@ -446,6 +446,7 @@ class Job:
                 if entity:
                     # convert value to file dir+name in store
                     value = f"file://{entity.get('file_dir')}/{entity.get('file_name')}"
+                    self.storage.add_used(entity_id, self.jobid, role=pname, owner=self.user.name)
                     logger.info(
                         f"Input '{pname}' found in the entity store with ID={entity_id}: {value}"
                     )
