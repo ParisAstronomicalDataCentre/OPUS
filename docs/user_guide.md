@@ -75,7 +75,7 @@ The phase of a job follows the UWS pattern:
 | `COMPLETED` | The job ended successfully, its results are available             |
 | `ERROR`     | The job ended with an error (see the details of the job)          |
 | `ABORTED`   | The job was aborted                                               |
-| `ARCHIVED`  | The destruction date of the job is passed: its results were deleted, only its description is kept |
+| `ARCHIVED`  | The destruction date of the job is passed: its results are deleted, only its description is kept (deletion not implemented yet) |
 
 A job and its results are kept until its destruction date (by default 30 days after its creation, depending on the
 server). Archived jobs are not shown in the job list.

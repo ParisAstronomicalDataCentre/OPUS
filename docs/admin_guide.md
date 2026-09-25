@@ -219,8 +219,10 @@ The last lines of the server and client logs can also be seen in the administrat
 
 ### Maintenance of the jobs
 
-The server provides a maintenance task that updates the phase of the jobs still running, and archives the jobs
-whose destruction date is passed (their results are deleted, their description is kept, see `USE_ARCHIVED_PHASE`).
+The server provides a maintenance task that archives the jobs whose destruction date is passed (phase `ARCHIVED`,
+see `USE_ARCHIVED_PHASE`: their results are deleted, their description is kept, and they are no longer shown in the
+job lists; the deletion of the results is not implemented yet, they are currently kept), and, with the SLURM
+manager, updates the phase of the jobs still running on the work cluster.
 The server only accepts it from its own host. It is not run automatically: it should be run regularly, e.g. once a
 day with `cron`.
 

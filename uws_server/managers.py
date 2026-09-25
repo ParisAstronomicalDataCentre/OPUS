@@ -20,14 +20,14 @@ import re
 import subprocess as sp
 
 import os
+import signal
+import threading
+
+import psutil
+import requests
+
 from .settings import settings, PHASE_CONVERT, SLURM_PARAMETERS, logger
 
-if settings.MANAGER == "Local":
-    import signal
-    import threading
-
-    import psutil
-    import requests
 
 
 # -------------
@@ -105,7 +105,7 @@ class Manager:
                 "    copy_results",
                 '    job_event "ERROR" "$msg"',
                 "    rm -rf $wd",
-                "    trap - SIGHUP SIGINT SIGQUIT SIGTERM ERR",
+                "    trap - SIGHUP SIGINT SIGQUIT SIGTERM ERR EXIT",
                 "    exit 1",
                 "}",
                 "term_handler() {",
@@ -117,13 +117,21 @@ class Manager:
                 "    copy_results",
                 '    job_event "ERROR" "$msg"',
                 "    rm -rf $wd",
-                "    trap - SIGHUP SIGINT SIGQUIT SIGTERM ERR",
+                "    trap - SIGHUP SIGINT SIGQUIT SIGTERM ERR EXIT",
                 "    exit 1",
                 "}",
                 "for sig in SIGHUP SIGINT SIGQUIT SIGTERM; do",
                 '     trap "term_handler $sig" $sig',
                 "done",
+                # the job script may stop the job with exit (it is sourced): report the error
+                "exit_handler() {",
+                "    code=$?",
+                '    if [ "$code" -ne 0 ]; then',
+                '        error_handler "Job script exited with code $code"',
+                "    fi",
+                "}",
                 'trap "error_handler" ERR',
+                'trap "exit_handler" EXIT',
                 #'trap "term_handler" SIGHUP SIGINT SIGQUIT SIGTERM',
             ]
         )
@@ -227,7 +235,7 @@ class Manager:
                 "fi",
                 "### CLEAN",
                 "rm -rf $wd",
-                "trap - SIGHUP SIGINT SIGQUIT SIGTERM ERR",
+                "trap - SIGHUP SIGINT SIGQUIT SIGTERM ERR EXIT",
                 'job_event "COMPLETED"',
                 "exit 0",
             ]
