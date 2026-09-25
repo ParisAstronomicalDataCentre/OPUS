@@ -1,32 +1,50 @@
 {% extends "skeleton.html" %}
+{% block css %}
+    <style>
+        #pre_log { max-height: 70vh; overflow: auto; white-space: pre-wrap; word-break: break-all; font-size: 12px; }
+        #pre_log .log-debug { color: #888; }
+        #pre_log .log-warning { color: #8a6d3b; background-color: #fcf8e3; }
+        #pre_log .log-error { color: #a94442; background-color: #f2dede; }
+        #log_toolbar .form-control, #log_toolbar .btn { margin: 2px 0; }
+    </style>
+{% endblock %}
 {% block js %}
     <script type="text/javascript" src="/static/js/show_log.js" defer></script>
 {% endblock %}
 {% block variables %}
-        <div id="logfile" style="display:none" value="{{ logfile }}"></div>
+        <div id="log_url" style="display:none" value="{{ log_url }}"></div>
 {% endblock %}
 {% block content %}
 	<div class="container bs-docs-container">
-        <div id="job_list_panel" class="panel panel-default">
+        <div id="log_panel" class="panel panel-default">
             <div class="panel-heading clearfix">
-                <div class="btn-group pull-right">
-                    <button id="refresh_list" type="button" class="actions btn btn-default">
-                        <span class="glyphicon glyphicon-refresh"></span>
-                        Refresh log
-                    </button>
-                    <span>
-                        <select name="nlines" class="selectpicker" title="Please Select...">
-                            <option value="100" selected>100 Lines</option>
-                            <option value="500">500 Lines</option>
-                            <option value="1000">1000 Lines</option>
-                        </select>
-                    </span>
-                </div>
                 <span class="panel-title pull-left" style="padding-top: 6px; padding-right: 6px;">{{ title }} viewer</span>
+                <form id="log_toolbar" class="form-inline pull-right" onsubmit="return false;">
+                    <select name="logfile" class="form-control input-sm" title="Log file">
+{% for file in files %}
+                        <option value="{{ file }}">{{ file }}.log</option>
+{% endfor %}
+                    </select>
+                    <select name="nlines" class="form-control input-sm" title="Number of lines">
+                        <option value="100" selected>100 lines</option>
+                        <option value="500">500 lines</option>
+                        <option value="1000">1000 lines</option>
+                        <option value="5000">5000 lines</option>
+                    </select>
+                    <input name="filter" type="text" class="form-control input-sm" placeholder="Filter lines" title="Show the lines containing this text (case insensitive)"/>
+                    <label class="checkbox-inline" title="Refresh every 10 seconds">
+                        <input name="autorefresh" type="checkbox"/> Auto refresh
+                    </label>
+                    <button id="refresh_log" type="button" class="btn btn-default btn-sm">
+                        <span class="glyphicon glyphicon-refresh"></span>
+                        Refresh
+                    </button>
+                </form>
             </div>
-            <pre id="pre_log" class="panel-body">
-log
-            </pre>
+            <div class="panel-body">
+                <p id="log_info" class="text-muted small"></p>
+                <pre id="pre_log"></pre>
+            </div>
         </div> <!-- panel -->
 	</div> <!-- container -->
 {% endblock %}

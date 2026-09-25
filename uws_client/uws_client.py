@@ -52,6 +52,8 @@ from requests.auth import HTTPBasicAuth
 from wtforms import PasswordField, StringField
 from wtforms.validators import InputRequired
 
+from opus_config import logs
+
 from .settings import (
     settings,
     APP_PATH,
@@ -632,16 +634,33 @@ def server_jobs():
 @login_required
 @roles_required("admin")
 def server_log():
-    # Get jobs from server
-    return render_template("show_log.html", title="Server Log", logfile="server.log")
+    # Log files read from the server (through the proxy)
+    files = ["server", "server_debug", "debug"]
+    log_url = app.config["UWS_SERVER_URL_JS"] + "/log"
+    return render_template("show_log.html", title="Server Log", files=files, log_url=log_url)
 
 
 @app.route("/admin/client_log", methods=["GET"])
 @login_required
 @roles_required("admin")
 def client_log():
-    # Get jobs from server
-    return render_template("show_log.html", title="Client Log", logfile="client.log")
+    files = list(logs.log_files(settings.LOG_PATH, "client"))
+    return render_template("show_log.html", title="Client Log", files=files, log_url=url_for("client_log_text"))
+
+
+@app.route("/admin/client_log/text", methods=["GET"])
+@login_required
+@roles_required("admin")
+def client_log_text():
+    """Last lines of a log file of the client (same parameters as /log on the server: FILE, LINES)"""
+    files = logs.log_files(settings.LOG_PATH, "client", settings.LOG_FILE_SUFFIX)
+    name = request.args.get("FILE", "client")
+    if name not in files:
+        abort(400, f"Unknown log file {name}, available: {', '.join(files)}")
+    if not os.path.isfile(files[name]):
+        abort(404, f"Log file {name} not found")
+    lines = logs.tail(files[name], logs.lines_param(request.args.get("LINES")))
+    return Response("\n".join(lines), mimetype="text/plain")
 
 
 # ----------

@@ -30,6 +30,8 @@ from bottle import (
     static_file,
 )
 
+from opus_config import logs
+
 from . import managers, migrate_users, oidc, storage, uws_jdl
 from .settings import (
     settings,
@@ -639,6 +641,36 @@ def delete_user(name):
 # /jdl/<jobname>/activate
 # /jdl/<jobname>/deactivate
 # /jdl/<jobname>/copy_script (to job cluster)
+
+
+# ----------
+# Logs (log viewer of the client)
+# ----------
+
+
+@app.get("/log")
+@is_client_trusted
+@is_admin
+def get_log():
+    """Last lines of a log file of the server (admin only)
+
+    Parameters:
+        FILE: server (default), server_debug or debug
+        LINES: number of lines (default 100, max 10000)
+
+    Returns:
+        200 OK: text/plain
+        400 Bad Request: unknown FILE
+        404 Not Found: log file not found
+    """
+    files = logs.log_files(settings.LOG_PATH, "server", settings.LOG_FILE_SUFFIX)
+    name = request.query.get("FILE", "server")
+    if name not in files:
+        abort_400(f"Unknown log file {name}, available: {', '.join(files)}")
+    if not os.path.isfile(files[name]):
+        abort_404(f"Log file {name} not found")
+    response.content_type = "text/plain; charset=UTF-8"
+    return "\n".join(logs.tail(files[name], logs.lines_param(request.query.get("LINES"))))
 
 
 @app.get("/jdl")

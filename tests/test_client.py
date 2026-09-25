@@ -382,6 +382,32 @@ class TestAdminPages:
         password_login(client, local_user)  # not an administrator
         assert client.get("/admin/user/").status_code in (302, 403)
 
+    def admin_login(self, client):
+        client.post("/accounts/login", data={"email": c.settings.ADMIN_NAME,
+                                             "password": c.settings.ADMIN_DEFAULT_PW.get_secret_value()})
+
+    def test_log_viewer(self, client, live_server):
+        self.admin_login(client)
+        for page, files in [("server_log", ["server", "server_debug", "debug"]), ("client_log", ["client", "client_debug"])]:
+            html = client.get(f"/admin/{page}").get_data(as_text=True)
+            assert [f for f in files if f'<option value="{f}">' in html] == files
+        assert 'value="http://localhost/proxy/log"' in client.get("/admin/server_log").get_data(as_text=True)
+        # client log
+        response = client.get("/admin/client_log/text", query_string={"FILE": "client_debug", "LINES": 5})
+        assert response.status_code == 200 and response.mimetype == "text/plain"
+        assert 0 < len(response.get_data(as_text=True).splitlines()) <= 5
+        assert client.get("/admin/client_log/text", query_string={"FILE": "../x"}).status_code == 400
+        # server log, through the proxy (as the log viewer)
+        response = client.get("/proxy/log", query_string={"FILE": "server", "LINES": 20})
+        assert response.status_code == 200
+        assert len(response.get_data(as_text=True).splitlines()) <= 20
+
+    def test_log_viewer_refused(self, client, local_user, live_server):
+        password_login(client, local_user)  # not an administrator
+        for url in ["/admin/server_log", "/admin/client_log", "/admin/client_log/text"]:
+            assert client.get(url).status_code in (302, 403)
+        assert client.get("/proxy/log").status_code == 403  # refused by the server
+
 
 class TestPreferences:
 

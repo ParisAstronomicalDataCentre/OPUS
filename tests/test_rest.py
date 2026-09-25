@@ -15,6 +15,7 @@ import xml.etree.ElementTree as ET
 import pytest
 import requests
 
+from opus_config import logs
 from test_jobs import (  # noqa: F401 (server fixture)
     AUTH,
     create_job,
@@ -242,6 +243,37 @@ class TestAccess:
         # the role is given to this account only (same name, other token)
         response = requests.post(f"{server}/test_activity_1", data={"text": "x"}, auth=(name, "other"))
         assert response.status_code == 403
+
+
+class TestLog:
+
+    def test_log(self, live_server):
+        url = f"{live_server}/log"
+        requests.get(f"{live_server}/jdl", auth=AUTH)  # at least one line in the log
+        response = requests.get(url, params={"LINES": 3}, auth=ADMIN)
+        assert response.status_code == 200 and response.headers["Content-Type"].startswith("text/plain")
+        assert 0 < len(response.text.splitlines()) <= 3
+        for name in ["server_debug", "debug"]:
+            assert requests.get(url, params={"FILE": name}, auth=ADMIN).status_code == 200
+        assert requests.get(url, params={"FILE": "../../etc/passwd"}, auth=ADMIN).status_code == 400
+        # admin only
+        assert requests.get(url, auth=AUTH).status_code == 403
+
+
+class TestTail:
+
+    def test_tail(self, tmp_path):
+        path = tmp_path / "test.log"
+        path.write_text("".join(f"line {i}\n" for i in range(1, 30001)))  # larger than a block
+        assert logs.tail(path, 3) == ["line 29998", "line 29999", "line 30000"]
+        assert len(logs.tail(path, 10000)) == 10000 and logs.tail(path, 10000)[0] == "line 20001"
+        path.write_text("first\nlast")  # no final newline
+        assert logs.tail(path, 100) == ["first", "last"]
+        path.write_text("")
+        assert logs.tail(path, 5) == []
+
+    def test_lines_param(self):
+        assert [logs.lines_param(v) for v in ["20", None, "x", "0", "-5", "999999"]] == [20, 100, 100, 1, 1, 10000]
 
 
 def create_job_as(server, auth):  # noqa: F811 (server fixture)
