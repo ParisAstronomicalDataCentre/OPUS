@@ -186,6 +186,12 @@ class TestPasswordLogin:
     def test_login_logout(self, client, local_user):
         password_login(client, local_user)
         assert signed_in(client)
+        # the token is not given to the browser (pages and session cookie)
+        with c.app.app_context():
+            token = c.User.query.filter_by(email=local_user).one().token
+        assert token not in client.get("/").get_data(as_text=True)
+        with client.session_transaction() as session:
+            assert "auth" not in session and token not in str(dict(session))
         assert menu(client) == (local_user, "Local", True)
         client.get("/accounts/logout")
         assert not signed_in(client)
