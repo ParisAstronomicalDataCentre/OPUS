@@ -25,6 +25,7 @@ Security issues fixed
 | On the server, a request with an existing user name and any token replaced the token of this user in the `users` table | With `CHECK_PERMISSIONS=true`, anyone could get the job permissions (roles) of any user, who then lost them. Access to existing jobs was not affected (owner token of each job). | A user is identified by name + token: another token is another account, without roles | Migrate the `users` table (step 4) |
 | At the login of a user with OpenID Connect, the tokens given by the Identity Provider were written in the debug log of the client, as well as the token of the user in other log lines | Access and refresh tokens readable in `client_debug.log` | Tokens are no longer written in the logs | Remove the lines containing `token = ` from `$OPUS_VAR_PATH/logs/client_debug.log` (or the whole file), and if possible revoke the tokens at the Identity Provider |
 | A user signing in with OpenID Connect was linked to the local account with the same email, even if the Identity Provider did not verify the email | Access to a local account with an Identity Provider allowing unverified emails | The email has to be verified to use a local account, and the login is refused if the email is not verified | None |
+| At the logout of a user signed in with OpenID Connect, its tokens were not revoked on the Identity Provider | The tokens stayed valid until their expiration | The tokens are revoked at logout (if the Identity Provider has a `revocation_endpoint`) | None |
 | A validation error of the settings could show all the values read, including secrets | Secrets in logs or tracebacks | Values are hidden in validation errors | None |
 
 
@@ -48,6 +49,20 @@ Main changes
   defined. See the [Admin guide](admin_guide.md) for the roles of the users.
 * The registration page of the client (`/accounts/register`), previously always enabled, is **disabled by
   default**: set `OPUS_SECURITY_REGISTERABLE=true` in `.env` to keep it.
+* **OpenID Connect on the server** (optional, disabled by default): the server can accept the access tokens of the
+  users signed in with an Identity Provider, sent by the client with `OPUS_UWS_AUTH=OIDC` or by scripts, with their
+  OPUS token. `OPUS_OIDC_IDPS` is now read by the server too, and the client keeps the tokens in a new table
+  (`oidc_token`, created at start). At logout, the tokens are revoked, and the session on the Identity Provider can
+  be ended (`logout_url`). See the [Admin guide](admin_guide.md).
+* When the server refuses a request of a visitor who is not signed in (e.g. `ALLOW_ANONYMOUS=false`), the client
+  redirects to the login page.
+* The roles `job_definition` and `job_list` of the client accounts, which were not used, are removed at the first
+  start of the client.
+* The maintenance of the jobs (archiving after their destruction date) is not automatic: it should be scheduled
+  (step 7), e.g. with the new `just maintenance` recipe.
+* Removed files: `run_server.py` and `run_client.py` (use `just server` and `just client`), `Makefile` (use the
+  `justfile`, e.g. `just test`), `Dockerfile_apache` and `Dockerfile_apache.dist`. `start.sh` is renamed
+  `docker-start.sh` (entry point of the Docker image).
 * New dependency: `pydantic-settings` (installed by `uv sync`).
 
 
@@ -102,6 +117,10 @@ moved or copied from another place.
 **6. Start OPUS and inform the users**: they have to log in again, and those who use their token outside of the
 web client (scripts, command line) have to get the new one from their profile page.
 
+**7. Schedule the maintenance of the jobs** (recommended), e.g. daily with `cron` (see the [Admin guide](admin_guide.md)):
+
+    0 3 * * * cd /opt/opus && just maintenance >> /var/opt/opus/logs/maintenance.log 2>&1
+
 
 Upgrade procedure with Docker
 -----------------------------
@@ -111,7 +130,8 @@ Upgrade procedure with Docker
     $ docker compose exec -T db pg_dump -U opus opus > opus_backup.sql
 
 **2. Get the new version** (`git fetch --tags && git checkout v0.6`), and update `Dockerfile` and `docker-compose.yml`
-from the templates `Dockerfile.dist` and `docker-compose.dist.yml` (`env_file`, pinned `postgres` image...).
+from the templates `Dockerfile.dist` and `docker-compose.dist.yml` (`env_file`, pinned `postgres` image,
+`docker-start.sh` entry point...).
 
 **3. Create `.env.docker`** from `settings_docker.py`, then check it as in step 3 above:
 
@@ -129,6 +149,10 @@ from the templates `Dockerfile.dist` and `docker-compose.dist.yml` (`env_file`, 
 
 (run them first without `--apply` to check what will be done). Then remove `settings_docker.py`, and inform the
 users (step 6 above).
+
+**6. Schedule the maintenance of the jobs** (recommended), e.g. daily with `cron` on the host:
+
+    0 3 * * * cd /opt/opus && docker compose exec -T opus-app curl -sS http://localhost:8082/handler/maintenance/__all__
 
 
 Rollback
