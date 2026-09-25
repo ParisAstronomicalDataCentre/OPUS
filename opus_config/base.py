@@ -22,7 +22,9 @@ from . import generators
 
 # Where is located the code of the web app
 APP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
-ENV_FILE = os.path.join(APP_PATH, ".env")
+# Settings file, can be changed with the environment variable OPUS_ENV_FILE (empty: no file,
+# e.g. for the tests, so that they do not depend on the local settings)
+ENV_FILE = os.environ.get("OPUS_ENV_FILE", os.path.join(APP_PATH, ".env"))
 
 
 class CommonSettings(BaseSettings):
@@ -30,7 +32,7 @@ class CommonSettings(BaseSettings):
 
     model_config = SettingsConfigDict(
         env_prefix="OPUS_",
-        env_file=ENV_FILE,
+        env_file=ENV_FILE or None,
         env_file_encoding="utf-8",
         extra="ignore",
         hide_input_in_errors=True,  # do not show values (secrets) in validation errors
@@ -86,7 +88,7 @@ class CommonSettings(BaseSettings):
     def check_settings_local(self):
         # settings_local.py was used by previous versions, it is no longer read
         path = os.path.join(APP_PATH, "settings_local.py")
-        if os.path.isfile(path):
+        if ENV_FILE and os.path.isfile(path):
             msg = (
                 f"{path} is no longer read, convert it to {ENV_FILE} with:\n"
                 f"    python generate_env.py --from settings_local.py > .env\n"
