@@ -175,24 +175,25 @@ class TestFormats:
         assert requests.get(url, params={"ID": "unknown"}, auth=AUTH).status_code == 404
 
 
+@pytest.fixture(scope="module")
+def internal_prov_job(server):  # noqa: F811 (server fixture)
+    """Job writing an internal provenance file"""
+    with open(os.path.join(TEST_JOBS, "test_activity_1_vot.xml")) as f:
+        vot = f.read().replace("test_activity_1", "test_internal_prov")
+    with open(f"{settings.JDL_PATH}/votable/test_internal_prov_vot.xml", "w") as f:
+        f.write(vot)
+    script = f"echo $text > $output\ncat > internal_provenance.json << 'EOF'\n{json.dumps(INTERNAL_PROVENANCE)}\nEOF\n"
+    getattr(uws_jdl, settings.JDL)().save_script("test_internal_prov", script)
+    job_url = create_job(server, "test_internal_prov", text="internal")
+    assert wait(job_url) == "COMPLETED"
+    return jobid(job_url)
+
+
 class TestInternalProvenance:
 
-    @pytest.fixture(scope="class")
-    def job(self, server):  # noqa: F811 (server fixture)
-        """Job writing an internal provenance file"""
-        with open(os.path.join(TEST_JOBS, "test_activity_1_vot.xml")) as f:
-            vot = f.read().replace("test_activity_1", "test_internal_prov")
-        with open(f"{settings.JDL_PATH}/votable/test_internal_prov_vot.xml", "w") as f:
-            f.write(vot)
-        script = f"echo $text > $output\ncat > internal_provenance.json << 'EOF'\n{json.dumps(INTERNAL_PROVENANCE)}\nEOF\n"
-        getattr(uws_jdl, settings.JDL)().save_script("test_internal_prov", script)
-        job_url = create_job(server, "test_internal_prov", text="internal")
-        assert wait(job_url) == "COMPLETED"
-        return jobid(job_url)
-
-    def test_internal_provenance(self, server, job):  # noqa: F811 (server fixture)
-        assert os.path.isfile(os.path.join(settings.JOBDATA_PATH, job, "internal_provenance.json"))
-        prov = provsap(server, job, DESCRIPTIONS=1)
+    def test_internal_provenance(self, server, internal_prov_job):  # noqa: F811 (server fixture)
+        assert os.path.isfile(os.path.join(settings.JOBDATA_PATH, internal_prov_job, "internal_provenance.json"))
+        prov = provsap(server, internal_prov_job, DESCRIPTIONS=1)
         assert "ext:calibration" in prov["entity"]
         roles = {u["prov:entity"]: u.get("prov:role") for u in prov["used"].values()}
         assert roles["ext:calibration"] == "calibration"
@@ -204,7 +205,7 @@ class TestInternalProvenance:
         influences = [(i["prov:influencee"], i["prov:influencer"]) for i in prov["wasInfluencedBy"].values()]
         assert (description, "ext:software") in influences
 
-    def test_internal_provenance_without_descriptions(self, server, job):  # noqa: F811 (server fixture)
-        prov = provsap(server, job)
+    def test_internal_provenance_without_descriptions(self, server, internal_prov_job):  # noqa: F811 (server fixture)
+        prov = provsap(server, internal_prov_job)
         # the software is then used by the job
         assert {"ext:calibration", "ext:software"} <= {u["prov:entity"] for u in prov["used"].values()}

@@ -141,28 +141,30 @@ class TestRunJobs:
         assert not os.path.exists(f"{settings.JOBDATA_PATH}/{jobid}")
 
 
+@pytest.fixture(scope="module")
+def provenance_job(server):
+    """Completed job, for the provenance tests"""
+    job_url = create_job(server, "test_activity_1", text="provenance")
+    assert wait(job_url) == "COMPLETED"
+    return job_url
+
+
 class TestProvenance:
 
-    @pytest.fixture(scope="class")
-    def job_url(self, server):
-        job_url = create_job(server, "test_activity_1", text="provenance")
-        assert wait(job_url) == "COMPLETED"
-        return job_url
-
-    def test_json(self, job_url):
-        prov = json.loads(requests.get(f"{job_url}/provjson", auth=AUTH).text)
+    def test_json(self, provenance_job):
+        prov = json.loads(requests.get(f"{provenance_job}/provjson", auth=AUTH).text)
         assert prov["activity"] and prov["entity"] and prov["wasGeneratedBy"]
 
-    def test_xml(self, job_url):
-        response = requests.get(f"{job_url}/provxml", auth=AUTH)
+    def test_xml(self, provenance_job):
+        response = requests.get(f"{provenance_job}/provxml", auth=AUTH)
         assert response.status_code == 200
         assert ET.fromstring(response.text).tag.endswith("document")
 
     @pytest.mark.skipif(shutil.which("dot") is None, reason="graphviz (dot) is not installed")
-    def test_svg(self, job_url, server):
-        response = requests.get(f"{job_url}/provsvg", auth=AUTH)
+    def test_svg(self, provenance_job, server):
+        response = requests.get(f"{provenance_job}/provsvg", auth=AUTH)
         assert response.status_code == 200 and "<svg" in response.text
-        jobid = job_url.split("/")[-1]
+        jobid = provenance_job.split("/")[-1]
         base = server.rsplit(settings.UWS_SERVER_ENDPOINT, 1)[0]
         graph = requests.get(f"{base}/provsap", params={"ID": jobid}, auth=AUTH)
         assert graph.status_code == 200
