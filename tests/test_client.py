@@ -426,6 +426,18 @@ class TestAdminPages:
         assert response.status_code == 200
         assert len(response.get_data(as_text=True).splitlines()) <= 20
 
+    def test_server_accounts_delete(self, client, live_server):
+        """Server Accounts page: an account is deleted with its token (through the proxy)"""
+        from uws_server import storage as server_storage
+        job_storage = getattr(server_storage, server_settings.STORAGE + "JobStorage")()
+        name = unique_email("server")
+        for token in ["token-a", "token-b"]:
+            job_storage.add_user(name, token=token)
+        self.admin_login(client)
+        assert client.delete(f"/proxy/scim/Users/{name}").status_code == 409  # 2 accounts with this name
+        assert client.delete(f"/proxy/scim/Users/{name}", query_string={"token": "token-a"}).status_code == 200
+        assert [u["token"] for u in job_storage.get_users(name=name)] == ["token-b"]
+
     def test_log_viewer_refused(self, client, local_user, live_server):
         password_login(client, local_user)  # not an administrator
         for url in ["/admin/logs", "/admin/client_log/text"]:

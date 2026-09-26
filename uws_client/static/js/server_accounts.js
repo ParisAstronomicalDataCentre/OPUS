@@ -61,7 +61,8 @@
         $('#server_accounts_tbody').empty();
         for (var u in users) {
             var user = users[u]
-            var user_label = user.userName.replace(/\./g, "_").replace(/@/g, "_");
+            // one row per account (name + token): several accounts can have the same name
+            var user_label = 'account_' + u;
             //console.log(user_label);
             var row = '\
             <tr id="' + user_label + '">\
@@ -118,9 +119,9 @@
             } else {
                 $('#roles_' + user_label).selectpicker('val', roles);
             }
-            $('#button_roles_' + user_label).click({name: user.userName, key: 'roles'}, patch_user);
-            $('#button_token_' + user_label).click({name: user.userName, key: 'token'}, patch_user);
-            $('#button_delete_' + user_label).click({name: user.userName}, delete_user);
+            $('#button_roles_' + user_label).click({name: user.userName, label: user_label, key: 'roles'}, patch_user);
+            $('#button_token_' + user_label).click({name: user.userName, label: user_label, key: 'token'}, patch_user);
+            $('#button_delete_' + user_label).click({name: user.userName, token: user.token}, delete_user);
             $('#button_import_' + user_label).click({name: user.userName, token: user.token}, import_user);
         }
         // add form
@@ -156,7 +157,7 @@
         $('#loading').show();
         var name = event.data.name;
         var key = event.data.key;
-        var user_label = name.replace(/\./g, "_").replace(/@/g, "_");
+        var user_label = event.data.label;
         var value = $('#' + key + '_' + user_label).val();
         var token = $('#current_token_' + user_label).val();
         if (key == 'roles') {
@@ -171,7 +172,7 @@
         }
         console.log(name, key, value);
         $.ajax({
-			url : server_url + scim_endpoint + '/Users/' + name,
+			url : server_url + scim_endpoint + '/Users/' + encodeURIComponent(name),
 			type : 'POST',
 			data:{
                 [key]: value,
@@ -224,12 +225,13 @@
     }
 
     function delete_user(event) {
-        $('#loading').show();
         var name = event.data.name;
-        var isOk = window.confirm("Delete user" + name + "\nAre you sure?");
+        var token = event.data.token;
+        var isOk = window.confirm("Delete the account " + name + " (token " + token.substring(0, 8) + "...)\nAre you sure?");
         if (isOk) {
+            $('#loading').show();
             $.ajax({
-                url : server_url + scim_endpoint + '/Users/' + name,
+                url : server_url + scim_endpoint + '/Users/' + encodeURIComponent(name) + '?token=' + encodeURIComponent(token),
                 type : 'DELETE',
                 success : function() {
                     $('#loading').hide();
@@ -239,7 +241,7 @@
                 error : function(xhr, status, exception) {
                     $('#loading').hide();
                     console.log(exception);
-                    global.showMessage('Cannot delete user, check admin token', 'danger');
+                    global.showMessage('Cannot delete user (' + xhr.status + ': ' + (exception || status) + ')', 'danger');
                 }
             });
         };

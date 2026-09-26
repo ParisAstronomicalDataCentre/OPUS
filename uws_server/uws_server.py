@@ -615,16 +615,19 @@ def patch_user(name):
 @is_client_trusted
 @is_admin
 def delete_user(name):
+    """Delete the account name + token (?token=, or user_token in the body), the token is needed if
+    several accounts have this name"""
     job_storage = getattr(storage, settings.STORAGE + "JobStorage")()
-    token = request.POST.get("user_token", None)
-    username = job_storage.remove_user(name, token=token)
-    if username:
-        logger.info("User deleted: " + username)
-        response.content_type = "text/plain; charset=UTF-8"
-        response.status = 200
-        return "Success"
-    else:
-        abort_500(f"No user deleted (name: {name})")
+    token = request.query.get("token") or request.POST.get("user_token") or None
+    users = job_storage.get_users(name=name, token=token)
+    if len(users) > 1:
+        abort(409, f"{len(users)} accounts found with name {name}, give the token")
+    if not users:
+        abort_404(f"No user found with name {name}")
+    job_storage.remove_user(name, token=users[0]["token"])
+    logger.info("User deleted: " + name)
+    response.content_type = "text/plain; charset=UTF-8"
+    return "Success"
 
 
 # ----------

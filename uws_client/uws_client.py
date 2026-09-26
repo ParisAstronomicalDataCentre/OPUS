@@ -889,7 +889,8 @@ def uws_server_request(uri, method="GET", init_request=None):
     auth_type = "OIDC" if "Authorization" in headers else ("Basic" if auth else "none")
     # Send request
     if method == "DELETE":
-        response = requests.delete(f"{server_url}{uri}", auth=auth, headers=headers)
+        params = init_request.args if init_request else {}
+        response = requests.delete(f"{server_url}{uri}", params=params, auth=auth, headers=headers)
     elif method == "POST":
         post = {}
         if init_request:

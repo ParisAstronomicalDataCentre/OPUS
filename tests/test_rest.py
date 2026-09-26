@@ -76,11 +76,16 @@ class TestScim:
         assert response.status_code == 200
         user = requests.get(f"{scim}/Users/{name}", params={"token": "token3"}, auth=ADMIN).json()
         assert (user["roles"], str(user["active"]).lower()) == ("job1,job2", "false")
-        # delete
-        response = requests.delete(f"{scim}/Users/{name}", data={"user_token": "token3"}, auth=ADMIN)
+        # delete: the token is needed when several accounts have the name
+        assert requests.delete(f"{scim}/Users/{name}", auth=ADMIN).status_code == 409
+        response = requests.delete(f"{scim}/Users/{name}", params={"token": "token3"}, auth=ADMIN)
         assert response.status_code == 200
         assert requests.get(f"{scim}/Users/{name}", params={"token": "token3"}, auth=ADMIN).status_code == 404
         assert requests.get(f"{scim}/Users/{name}", auth=ADMIN).json()["token"] == "token2"
+        # a single account: deleted with its name (or with user_token in the body)
+        response = requests.delete(f"{scim}/Users/{name}", data={"user_token": "token2"}, auth=ADMIN)
+        assert response.status_code == 200
+        assert requests.get(f"{scim}/Users/{name}", auth=ADMIN).status_code == 404
 
     def test_errors(self, scim):
         assert requests.post(f"{scim}/Users", data={}, auth=ADMIN).status_code == 500
@@ -88,8 +93,9 @@ class TestScim:
         response = requests.post(f"{scim}/Users/unknown", data={"user_token": "t", "roles": "x"}, auth=ADMIN)
         assert response.status_code == 404
         assert requests.post(f"{scim}/Users/unknown", data={"roles": "x"}, auth=ADMIN).status_code == 404
-        response = requests.delete(f"{scim}/Users/unknown", data={"user_token": "t"}, auth=ADMIN)
-        assert response.status_code == 500
+        response = requests.delete(f"{scim}/Users/unknown", params={"token": "t"}, auth=ADMIN)
+        assert response.status_code == 404
+        assert requests.delete(f"{scim}/Users/unknown", auth=ADMIN).status_code == 404
 
 
 class TestJobAttributes:
