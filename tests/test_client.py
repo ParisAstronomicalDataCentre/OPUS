@@ -438,6 +438,13 @@ class TestAdminPages:
         assert client.delete(f"/proxy/scim/Users/{name}", query_string={"token": "token-a"}).status_code == 200
         assert [u["token"] for u in job_storage.get_users(name=name)] == ["token-b"]
 
+    def test_maintenance(self, client, live_server):
+        self.admin_login(client)
+        assert "Check (dry run)" in client.get("/admin/maintenance").get_data(as_text=True)
+        response = client.get("/proxy/maintenance")  # dry run, through the proxy (as the page)
+        assert response.status_code == 200 and response.json["apply"] is False
+        assert set(response.json["summary"]) >= {"to_archive", "archived", "phase", "dates", "ok"}
+
     def test_log_viewer_refused(self, client, local_user, live_server):
         password_login(client, local_user)  # not an administrator
         for url in ["/admin/logs", "/admin/client_log/text"]:

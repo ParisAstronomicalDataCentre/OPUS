@@ -37,6 +37,7 @@ When signed in as an administrator (role `admin` in the client), the top-right m
 | Client Accounts    | Accounts of the client (email, password, token, roles)                            |
 | Server Accounts    | Accounts of the server (name, token, permissions)                                 |
 | Server Jobs        | Job definitions available on the server                                           |
+| Maintenance        | Check of the jobs (dry run), then changes applied on request (see below)          |
 | Logs               | Last lines of the log files of the server, nginx and the client                   |
 
 
@@ -258,6 +259,21 @@ With Docker, run it in the container:
 With Apache, send the request to the URL of the server from the server host, e.g.:
 
     $ curl -sS http://localhost/opus_server/handler/maintenance/__all__
+
+The **Maintenance** page of the client (admin menu) runs the same checks on demand:
+
+* **Check (dry run)** lists the jobs by category, nothing is changed: jobs to archive (destruction date passed),
+  phase to update from the job manager, jobs to delete (destruction date passed but not in a terminal phase, or
+  `USE_ARCHIVED_PHASE=false`: reported only, the deletion is not implemented yet), inconsistent dates, errors,
+  archived jobs and jobs without issue. By default, the table shows the jobs with an issue or a change; a category
+  can be selected to show only its jobs, and **Show all jobs** also lists the archived jobs and the jobs without
+  issue.
+* **Apply changes** (after a check, with a confirmation) archives the jobs and updates their phase, then shows what
+  was done.
+
+The checks cover all the jobs of the database, including the jobs of job definitions that were deleted. The page uses
+the route `/maintenance` of the server (admin only): `GET` for a dry run, `POST` to apply, with an optional
+`JOBNAME` parameter, and a JSON report.
 
 ### Maintenance commands
 

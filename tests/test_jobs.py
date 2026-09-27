@@ -37,6 +37,7 @@ echo $text >> $output
 """,
 }
 AUTH = ("jobs@example.org", "jobs-token")
+ADMIN = (settings.ADMIN_NAME, settings.ADMIN_TOKEN.get_secret_value())
 UWS = "{{http://www.ivoa.net/xml/UWS/v1.0}}{}"
 TIMEOUT = 30  # in seconds
 
@@ -75,6 +76,15 @@ def wait(job_url, phases=("COMPLETED", "ERROR", "ABORTED")):
             return p
         time.sleep(0.3)
     raise AssertionError(f"Job {job_url} still {p} after {TIMEOUT}s")
+
+
+def wait_saved(job_url):
+    """Wait until a completed job is saved with its provenance files (saved after the phase COMPLETED), before
+    changing it in the database (else the change could be overwritten)"""
+    start = time.time()
+    while "provjson" not in requests.get(f"{job_url}/results", auth=AUTH).text:
+        assert time.time() - start < TIMEOUT, f"Job {job_url} not saved with its provenance"
+        time.sleep(0.1)
 
 
 def result(job_url, name="output"):
@@ -146,6 +156,7 @@ def provenance_job(server):
     """Completed job, for the provenance tests"""
     job_url = create_job(server, "test_activity_1", text="provenance")
     assert wait(job_url) == "COMPLETED"
+    wait_saved(job_url)  # provenance files added after the phase COMPLETED
     return job_url
 
 
@@ -176,6 +187,7 @@ class TestMaintenance:
         """Completed job, archived by the maintenance after its destruction date"""
         job_url = create_job(server, "test_activity_1", text=text)
         assert wait(job_url) == "COMPLETED"
+        wait_saved(job_url)
         jobid = job_url.split("/")[-1]
         job_storage = getattr(storage, settings.STORAGE + "JobStorage")()
         with job_storage.get_session() as session:
@@ -188,6 +200,55 @@ class TestMaintenance:
 
     def test_archive(self, server):
         assert phase(self.archive(server, "archived")) == "ARCHIVED"
+
+    def expired_job(self, server, text, **attributes):
+        """Completed job, with a destruction time passed (and other attributes changed in the database)"""
+        job_url = create_job(server, "test_activity_1", text=text)
+        assert wait(job_url) == "COMPLETED"
+        wait_saved(job_url)
+        jobid = job_url.split("/")[-1]
+        job_storage = getattr(storage, settings.STORAGE + "JobStorage")()
+        with job_storage.get_session() as session:
+            values = dict({"destruction_time": "2020-01-01T00:00:00"}, **attributes)
+            session.query(job_storage.Job).filter_by(jobid=jobid).update(values)
+            session.commit()
+        return job_url, jobid
+
+    def job_report(self, server, jobid, method="GET"):
+        base = server.rsplit(settings.UWS_SERVER_ENDPOINT, 1)[0]
+        response = requests.request(method, f"{base}/maintenance", params={"JOBNAME": "test_activity_1"}, auth=ADMIN)
+        assert response.status_code == 200, response.text
+        report = response.json()
+        [record] = [r for r in report["jobs"] if r["jobid"] == jobid]
+        return report, record
+
+    def test_check_then_apply(self, server):
+        job_url, jobid = self.expired_job(server, "check then apply")
+        # dry run: reported, nothing changed
+        report, record = self.job_report(server, jobid)
+        assert not report["apply"] and report["summary"]["to_archive"] >= 1
+        assert "to_archive" in record["categories"] and record["actions"] == ["to archive (destruction time passed)"]
+        assert "end_time > destruction_time" in record["issues"]  # destruction time set in the past for the test
+        assert phase(job_url) == "COMPLETED"
+        # apply
+        report, record = self.job_report(server, jobid, method="POST")
+        assert report["apply"] and record["actions"] == ["archived (destruction time passed)"]
+        assert phase(job_url) == "ARCHIVED"
+        # already archived
+        report, record = self.job_report(server, jobid)
+        assert "archived" in record["categories"] and "to_archive" not in record["categories"]
+        assert not record["actions"]
+
+    def test_dates(self, server):
+        job_url, jobid = self.expired_job(server, "dates", destruction_time="2099-01-01T00:00:00",
+                                          start_time="2000-01-01T00:00:00")
+        report, record = self.job_report(server, jobid)
+        assert record["categories"] == ["dates"] and record["issues"] == ["creation_time > start_time"], record
+
+    def test_admin_only(self, server):
+        base = server.rsplit(settings.UWS_SERVER_ENDPOINT, 1)[0]
+        assert requests.get(f"{base}/maintenance", auth=AUTH).status_code == 403
+        assert requests.post(f"{base}/maintenance", auth=AUTH).status_code == 403
 
     @pytest.mark.xfail(reason="deletion of the results of the archived jobs not implemented yet", strict=True)
     def test_archive_deletes_results(self, server):

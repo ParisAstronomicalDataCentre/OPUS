@@ -32,7 +32,7 @@ from bottle import (
 
 from opus_config import logs
 
-from . import managers, migrate_users, oidc, storage, uws_jdl
+from . import maintenance, managers, migrate_users, oidc, storage, uws_jdl
 from .settings import (
     settings,
     ACTIVE_PHASES,
@@ -41,7 +41,6 @@ from .settings import (
     DT_FMT,
     PHASES,
     PHASE_CONVERT,
-    TERMINAL_PHASES,
     logger_init,
     set_log_username,
 )
@@ -1248,122 +1247,45 @@ def provsap():
 
 @app.route("/handler/maintenance/<jobname>")
 @is_localhost
-def maintenance(jobname):
-    """Performs server maintenance, e.g. executed regularly by the server itself (localhost)
+def maintenance_handler(jobname):
+    """Performs the maintenance of the jobs, and applies the changes (e.g. run regularly by cron on the server,
+    with just maintenance). jobname: name of the jobs, or __all__ for all the jobs
 
     Returns:
-        200 OK: text/plain (on success)
+        200 OK: text/plain report (on success)
         403 Forbidden (if not localhost)
         500 Internal Server Error (on error)
     """
-    report = []
     try:
-        user = User("maintenance", settings.MAINTENANCE_TOKEN.get_secret_value())
-        if jobname != "__all__":
-            jobnames = [jobname]
-        else:
-            jdl = getattr(uws_jdl, settings.JDL)()
-            jobnames = jdl.get_jobnames()
-        for jobname in jobnames:
-            report.append(f"Maintenance checks for {jobname}...")
-            # Get joblist
-            joblist = JobList(jobname, user, where_owner=False, include_archived=True)
-            try:
-                now = dt.datetime.now()
-                for j in joblist.jobs:
-                    # For each job:
-                    job = Job(
-                        jobname,
-                        j["jobid"],
-                        user,
-                        get_attributes=True,
-                        get_parameters=True,
-                        get_results=True,
-                    )
-                    try:
-                        report.append(
-                            f"[{jobname} {job.jobid} {job.creation_time} {job.phase}]"
-                        )
-                        # Check consistency of dates (destruction_time > end_time > start_time > creation_time)
-                        creation_time = (
-                            None
-                            if not job.creation_time
-                            else dt.datetime.strptime(job.creation_time, DT_FMT)
-                        )
-                        start_time = (
-                            None
-                            if not job.start_time
-                            else dt.datetime.strptime(job.start_time, DT_FMT)
-                        )
-                        end_time = (
-                            None
-                            if not job.end_time
-                            else dt.datetime.strptime(job.end_time, DT_FMT)
-                        )
-                        destruction_time = (
-                            None
-                            if not job.destruction_time
-                            else dt.datetime.strptime(job.destruction_time, DT_FMT)
-                        )
-                        if creation_time and start_time and (creation_time > start_time):
-                            report.append("  creation_time > start_time")
-                        if start_time and end_time and (start_time > end_time):
-                            report.append("  start_time > end_time")
-                        if end_time and destruction_time and (end_time > destruction_time):
-                            report.append("  end_time > destruction_time")
-                        # Check if start_time is set
-                        if not start_time and job.phase not in ["PENDING", "QUEUED"]:
-                            report.append("  Start time not set")
-                        if not end_time and job.phase in TERMINAL_PHASES:
-                            report.append("  End time not set")
-                        # Check status if phase is not terminal (or for all jobs?)
-                        if job.phase not in TERMINAL_PHASES:
-                            report.append("  Job is not in a terminal phase")
-                            phase = job.phase
-                            new_phase = job.get_status()  # will update the phase from manager
-                            if new_phase != phase:
-                                report.append(
-                                    f"  Status has been updated: {phase} --> {new_phase}"
-                                )
-                        # If destruction time is passed, delete or archive job
-                        if destruction_time and (destruction_time < now):
-                            # TODO: effective deletion or archiving of job
-                            if settings.USE_ARCHIVED_PHASE:
-                                if job.phase in ["COMPLETED", "ABORTED", "ERROR"]:
-                                    job.archive()
-                                    report.append(
-                                        f"  Job has been archived (destruction_time={job.destruction_time})"
-                                    )
-                                else:
-                                    # job.delete()
-                                    report.append(
-                                        f"  Job has been deleted (destruction_time={job.destruction_time})"
-                                    )
-                                    pass
-                            else:
-                                # job.delete()
-                                report.append(
-                                    f"  Job has been deleted (destruction_time={job.destruction_time})"
-                                )
-                                pass
-                    finally:
-                        job.close()
-            finally:
-                joblist.close()
-        report.append("Done\n")
-        for line in report:
-            logger.warning(line)
-    except JobAccessDenied as e:
-        for line in report:
-            logger.warning(line)
-        abort_403(str(e))
+        report = maintenance.run(None if jobname == "__all__" else [jobname], apply=True)
     except Exception:
-        for line in report:
-            logger.warning(line)
         abort_500_except()
-    # Response
+    text = maintenance.to_text(report)
+    for line in text.splitlines():
+        logger.warning(line)
     response.content_type = "text/plain; charset=UTF-8"
-    return "Maintenance report:\n" + "\n".join(report)
+    return "Maintenance report:\n" + text + "\n"
+
+
+@app.route("/maintenance", method=["GET", "POST"])
+@is_client_trusted
+@is_admin
+def maintenance_admin():
+    """Maintenance of the jobs for the admin (Maintenance page of the client)
+
+    Parameters:
+        JOBNAME: name of the jobs (default: all the jobs)
+    GET: checks only (dry run), POST: checks and applies the changes
+
+    Returns:
+        200 OK: application/json report (see maintenance.run)
+        403 Forbidden (not admin)
+    """
+    jobname = request.params.get("JOBNAME")
+    try:
+        return maintenance.run([jobname] if jobname else None, apply=request.method == "POST")
+    except Exception:
+        abort_500_except()
 
 
 # ----------

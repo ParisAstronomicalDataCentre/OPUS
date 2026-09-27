@@ -1,0 +1,63 @@
+{% extends "skeleton.html" %}
+{% block css %}
+    <style>
+        #maintenance_summary .btn { margin: 2px; }
+        #maintenance_table td { vertical-align: middle; font-size: 12px; }
+        #maintenance_table .actions { color: #31708f; }
+        #maintenance_table .issues { color: #a94442; }
+        #maintenance_toolbar .btn, #maintenance_toolbar .checkbox-inline { margin: 2px 0; }
+    </style>
+{% endblock %}
+{% block js %}
+    <script type="text/javascript" src="/static/js/maintenance.js" defer></script>
+{% endblock %}
+{% block content %}
+	<div class="container bs-docs-container">
+        <div id="maintenance_panel" class="panel panel-default">
+            <div class="panel-heading clearfix">
+                <span class="panel-title pull-left" style="padding-top: 6px; padding-right: 6px;">Maintenance of the jobs</span>
+                <form id="maintenance_toolbar" class="form-inline pull-right" onsubmit="return false;">
+                    <label class="checkbox-inline" title="Also list the jobs without issue and the archived jobs">
+                        <input name="show_all" type="checkbox"/> Show all jobs
+                    </label>
+                    <button id="button_check" type="button" class="btn btn-default btn-sm" title="Check the jobs, nothing is changed">
+                        <span class="glyphicon glyphicon-search"></span>
+                        Check (dry run)
+                    </button>
+                    <button id="button_apply" type="button" class="btn btn-warning btn-sm" title="Apply the changes listed by the check" disabled>
+                        <span class="glyphicon glyphicon-ok"></span>
+                        Apply changes
+                    </button>
+                </form>
+            </div>
+            <div class="panel-body">
+                <p class="text-muted small">
+                    The check lists the issues of the jobs (dates, phase not updated, destruction time passed) and the
+                    changes to apply: archive the jobs after their destruction time, update the phase of the jobs from
+                    the job manager. Nothing is changed until <b>Apply changes</b>.
+                    The deletion of the jobs that cannot be archived is not implemented yet (reported only).
+                </p>
+                <p id="maintenance_info" class="small"></p>
+                <div id="maintenance_summary"></div>
+            </div>
+            <div class="table-responsive">
+                <table id="maintenance_table" class="table table-bordered table-condensed" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>Job name</th>
+                            <th>Job ID</th>
+                            <th>Owner</th>
+                            <th>Phase</th>
+                            <th>Created</th>
+                            <th>Started</th>
+                            <th>Ended</th>
+                            <th>Destruction</th>
+                            <th>Issues / changes</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div> <!-- panel -->
+	</div> <!-- container -->
+{% endblock %}

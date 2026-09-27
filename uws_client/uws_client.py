@@ -630,6 +630,14 @@ def server_jobs():
     return render_template("server_jobs.html")
 
 
+@app.route("/admin/maintenance", methods=["GET"])
+@login_required
+@roles_required("admin")
+def maintenance():
+    """Maintenance of the jobs on the server: checks (dry run), then changes applied on request"""
+    return render_template("maintenance.html")
+
+
 @app.route("/admin/logs", methods=["GET"])
 @login_required
 @roles_required("admin")
