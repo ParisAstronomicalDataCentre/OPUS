@@ -36,8 +36,9 @@ Main changes
 * **Settings are read from a `.env` file** (or environment variables prefixed with `OPUS_`), see
   [Configuration](settings.md). `settings_local.py` is no longer read: **OPUS does not start** if it is present without a `.env` file,
   to avoid running with the default settings instead of the local ones.
-* `OPUS_SECRET_KEY` and `OPUS_SECURITY_PASSWORD_SALT` are **required**. The salt used until now was `test`: it has to
-  be kept, or all the existing passwords of the client users are invalidated (`generate_env.py --from` does it).
+* `OPUS_SECRET_KEY` and `OPUS_SECURITY_PASSWORD_SALT` are **required**. The salt was before hard-coded in 
+  `uws_client/settings.py`: it has to be kept, or all the existing passwords of the client users are invalidated 
+  (`generate_env.py --from` does it, otherwise, set it in the `.env` file).
 * **Docker**: the settings are given at runtime with `env_file: .env.docker` in `docker-compose.yml`, they are no
   longer copied in the image (`settings_docker.py` is no longer used). `nginx.conf` is generated at the start of
   the container. See the templates `Dockerfile.dist`, `docker-compose.dist.yml` and `.env.docker.dist`.
@@ -57,8 +58,6 @@ Main changes
   be ended (`logout_url`). See the [Admin guide](admin_guide.md).
 * When the server refuses a request of a visitor who is not signed in (e.g. `ALLOW_ANONYMOUS=false`), the client
   redirects to the login page.
-* The roles `job_definition` and `job_list` of the client accounts, which were not used, are removed at the first
-  start of the client.
 * The maintenance of the jobs (archiving after their destruction date) is not automatic: it should be scheduled
   (step 7), e.g. with the new `just maintenance` recipe.
 * Removed files: `run_server.py` and `run_client.py` (use `just server` and `just client`), `Makefile` (use the
@@ -100,8 +99,7 @@ replace `TBD` or empty values by random values, e.g. generated with:
 
     $ python -c "import secrets; print(secrets.token_urlsafe(32))"
 
-Note that `OPUS_ADMIN_TOKEN` must not be changed if scripts use it. Then remove `settings_local.py`
-(it is saved in the backup):
+Then remove `settings_local.py` (it is saved in the backup):
 
     $ rm settings_local.py
 
