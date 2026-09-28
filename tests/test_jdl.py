@@ -25,7 +25,7 @@ from test_jobs import (  # noqa: F401 (server fixture)
     server,
     wait,
 )
-from uws_server import uws_server
+from uws_server import jdl_history, uws_server
 from uws_server.settings import settings
 
 ADMIN = (settings.ADMIN_NAME, settings.ADMIN_TOKEN.get_secret_value())
@@ -284,13 +284,24 @@ class TestHistory:
 
     def test_leftover_identical(self, server):  # noqa: F811 (server fixture)
         """A job definition of tmp/ identical to the validated version (left by a previous version of OPUS, which kept
-        the validated job definitions in tmp/) is not to validate"""
+        the validated job definitions in tmp/) is removed: nothing to validate"""
+        tmp = f"{settings.JDL_PATH}/votable/tmp/def_leftover_vot.xml"
         submit(server, "def_leftover")
         validate(server, "def_leftover")
         submit(server, "def_leftover")  # same content, as the copy left in tmp/
         assert "def_leftover" not in self.pending(server)
-        versions = self.admin_get(server, "def_leftover/history")["versions"]
-        assert [v["kind"] for v in versions] == ["current"]
+        assert not os.path.exists(tmp) and not os.path.exists(f"{settings.JDL_PATH}/scripts/tmp/def_leftover.sh")
+        # also when the history is shown, and at the start of the server
+        submit(server, "def_leftover")
+        assert [v["kind"] for v in self.admin_get(server, "def_leftover/history")["versions"]] == ["current"]
+        assert not os.path.exists(tmp)
+        submit(server, "def_leftover")
+        jdl_history.remove_identical_pending()
+        assert not os.path.exists(tmp)
+        # a changed job definition is kept
+        submit(server, "def_leftover", version="2")
+        jdl_history.remove_identical_pending()
+        assert os.path.exists(tmp) and self.pending(server)["def_leftover"]["status"] == "changed"
 
     def test_request_without_email(self, server):  # noqa: F811 (server fixture)
         """The validation request is recorded even if the email cannot be sent"""

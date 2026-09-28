@@ -225,7 +225,8 @@ To validate it, use the **Job Definitions** page (list of the job definitions to
 with the validated version), or open the Job Definition Editor, load the definition `tmp/<name>`, check it
 (parameters, script...) and click **Validate** (this button is only shown to the administrator). The validation
 request is recorded in the history even if the email cannot be sent. A validated or rejected job definition is
-removed from `tmp/`. The definition and its script are then
+removed from `tmp/`, as well as a job definition of `tmp/` identical to the validated version (e.g. kept in `tmp/`
+by a previous version of OPUS: removed at the start of the server). The definition and its script are then
 moved from `tmp/<name>` to `<name>`, and the job is available to the users. If a previous version of the job
 existed, it is kept in the `saved/` directories:
 

@@ -6,7 +6,7 @@ History of the job definitions (Job Definitions page of the client, admin only)
 
 Versions of a job definition, from the files:
 - pending: submitted in tmp/ (form or import), removed from tmp/ when validated or rejected (a file of tmp/
-  identical to the current version, left by a previous version of OPUS, is ignored)
+  identical to the current version, e.g. left by a previous version of OPUS, is removed: nothing to validate)
 - current: validated job definition
 - saved: previous versions, kept in saved/ when a new version is validated or when the job definition is deleted
   (<jobname>_v<version>_<date>[_DELETED], date of the saved file, i.e. when this version was validated)
@@ -127,13 +127,33 @@ def _read(jobname, vid):
 
 
 def _pending_status(jobname):
-    """Status of the file of tmp/: new, changed, or None (no file, or identical to the current version)"""
+    """Status of the file of tmp/: new, changed, or None (no file, or identical to the current version: removed)"""
     jdl = _jdl()
-    if not os.path.isfile(jdl._get_filename(f"tmp/{jobname}")):
+    jdl_file, script_file = _files(jobname, "pending")
+    if not os.path.isfile(jdl_file):
         return None
     if not os.path.isfile(jdl._get_filename(jobname)):
         return "new"
-    return "changed" if _read(jobname, "pending") != _read(jobname, "current") else None
+    if _read(jobname, "pending") != _read(jobname, "current"):
+        return "changed"
+    # identical to the current version: nothing to validate (e.g. kept in tmp/ by a previous version of OPUS)
+    for path in [jdl_file, script_file]:
+        if os.path.isfile(path):
+            os.remove(path)
+    logger.info(f"Job definition tmp/{jobname} removed: identical to the validated version")
+    return None
+
+
+def remove_identical_pending():
+    """Remove the job definitions of tmp/ identical to the validated version (done at the start of the server)"""
+    jdl = _jdl()
+    for path in glob.glob(f"{jdl.jdl_path}/tmp/*{jdl.extension}"):
+        jobname = os.path.basename(path)[: -len(jdl.extension)]
+        if JOBNAME_RE.match(jobname):
+            try:
+                _pending_status(jobname)
+            except Exception as e:
+                logger.warning(f"Cannot check the job definition tmp/{jobname}: {e}")
 
 
 def versions(jobname):
@@ -166,7 +186,7 @@ def pending():
         try:
             status = _pending_status(jobname)
             if not status:
-                continue  # identical to the current version (validated by a previous version of OPUS)
+                continue  # identical to the current version (removed)
             pending_content = _read(jobname, "pending")
         except Exception as e:
             logger.warning(f"Cannot read pending job definition {jobname}: {e}")

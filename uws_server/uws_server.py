@@ -74,6 +74,8 @@ def reset_log_username():
 # (see migrate_users.py)
 migrate_users.check_users_schema()
 migrate_users.migrate_entities()
+# Remove the job definitions of tmp/ identical to the validated version (kept by previous versions)
+jdl_history.remove_identical_pending()
 
 
 # ----------
