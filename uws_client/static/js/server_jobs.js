@@ -158,6 +158,7 @@
                     $('#loading').hide();
                     global.showMessage('Job definition "' + name + '" has been archived and deleted', 'success');
                     get_jobnames();
+                    get_inactive();
                 },
                 error : function(xhr, status, exception) {
                     $('#loading').hide();
@@ -244,6 +245,7 @@
                 global.showMessage('Job definition ' + jobname + ' validated', 'success');
                 get_pending();
                 get_jobnames();
+                get_inactive();
             },
             error : ajax_error('Cannot validate the job definition ' + jobname)
         });
@@ -260,8 +262,71 @@
                 $('#loading').hide();
                 global.showMessage('Job definition ' + jobname + ' rejected', 'success');
                 get_pending();
+                get_inactive();
             },
             error : ajax_error('Cannot reject the job definition ' + jobname)
+        });
+    }
+
+    function get_inactive() {
+        $.ajax({
+            url : server_url + '/jdl_admin/inactive',
+            cache : false,
+            type : 'GET',
+            dataType : 'json',
+            success : function (json) { show_inactive(json.inactive); },
+            error : ajax_error('Cannot get the deleted job definitions')
+        });
+    }
+
+    function show_inactive(inactive) {
+        var tbody = $('#inactive_tbody');
+        tbody.empty();
+        $('#inactive_table').toggle(inactive.length > 0);
+        $('#inactive_empty').toggle(inactive.length == 0);
+        $.each(inactive, function (i, j) {
+            var status = (j.status == 'deleted') ? '<span class="label label-danger">deleted</span>'
+                : '<span class="label label-default">never validated</span>';
+            var last = j.last_version ? escape_html(j.last_version.version) : '';
+            var restore_title = j.last_version ? 'Validate again the last version (' + escape_html(j.last_version.date) + ')' : 'No version to restore';
+            tbody.append('<tr id="inactive_' + i + '">'
+                + '<td class="text-center"><b>' + escape_html(j.jobname) + '</b></td>'
+                + '<td class="text-center">' + status + '</td>'
+                + '<td class="text-center">' + last + '</td>'
+                + '<td class="text-center">' + escape_html(j.date || '') + '</td>'
+                + '<td class="text-center">' + escape_html(j.user || '') + '</td>'
+                + '<td class="text-center"><div class="input-group-btn">'
+                + '<button type="button" class="btn btn-default btn-sm inactive-history" title="History of the versions, with the differences">'
+                + '<span class="glyphicon glyphicon-time"></span><span class="hidden-xs hidden-sm hidden-md">&nbsp;History</span></button>'
+                + '<button type="button" class="btn btn-default btn-sm inactive-restore" title="' + restore_title + '"' + (j.last_version ? '' : ' disabled') + '>'
+                + '<span class="glyphicon glyphicon-repeat"></span><span class="hidden-xs hidden-sm hidden-md">&nbsp;Restore</span></button>'
+                + '</div></td></tr>');
+            var row = $('#inactive_' + i);
+            row.find('.inactive-history').click({name: j.jobname}, show_history);
+            if (j.last_version) {
+                row.find('.inactive-restore').click(function () { restore_version(j.jobname, j.last_version); });
+            }
+        });
+    }
+
+    function restore_version(jobname, version) {
+        var msg = 'Validate again the version ' + version.version + ' of ' + jobname + ' (' + version.date + ')?\n'
+            + 'The job can then be run again. The current version, if any, is kept in the history.';
+        if (!window.confirm(msg)) { return; }
+        $('#loading').show();
+        $.ajax({
+            url : server_url + '/jdl_admin/' + encodeURIComponent(jobname) + '/restore',
+            type : 'POST',
+            data : {VERSION: version.id},
+            dataType : 'json',
+            success : function () {
+                $('#loading').hide();
+                $('#jdl_modal').modal('hide');
+                global.showMessage('Version ' + version.version + ' of ' + jobname + ' restored', 'success');
+                get_jobnames();
+                get_inactive();
+            },
+            error : ajax_error('Cannot restore the job definition ' + jobname)
         });
     }
 
@@ -330,7 +395,11 @@
                             + '" title="Differences with the previous version (' + escape_html(previous.date) + ')">Diff with previous</button> ';
                     }
                     if (has_current && v.id != 'current' && !(previous && previous.id == 'current')) {
-                        buttons += '<button type="button" class="btn btn-default btn-xs history-diff" data-from="' + v.id + '" data-to="current">Diff with current</button>';
+                        buttons += '<button type="button" class="btn btn-default btn-xs history-diff" data-from="' + v.id + '" data-to="current">Diff with current</button> ';
+                    }
+                    if (v.kind == 'saved' || v.kind == 'deleted') {
+                        buttons += '<button type="button" class="btn btn-warning btn-xs history-restore" data-index="' + i
+                            + '" title="Validate again this version (the current version, if any, is kept)">Restore</button>';
                     }
                     return '<tr><td>' + escape_html(v.date) + '</td><td>' + escape_html(v.version) + '</td><td>'
                         + (KINDS[v.kind] || escape_html(v.kind)) + '</td><td>' + buttons + '</td></tr>';
@@ -341,12 +410,13 @@
                     if (e.via) { details.push('via ' + e.via); }
                     if (e.message) { details.push('"' + e.message + '"'); }
                     if (e.email == 'failed') { details.push('email not sent'); }
+                    if (e.restored) { details.push('from ' + e.restored); }
                     return '<tr><td>' + escape_html(e.date) + '</td><td>' + escape_html(e.event.replace('_', ' ')) + '</td><td>'
                         + escape_html(e.user) + '</td><td>' + escape_html(details.join(', ')) + '</td></tr>';
                 });
                 var html = '<h5>Versions</h5><p class="text-muted small">The date of a previous version is the date of its file, '
                     + 'i.e. when it was validated.</p>'
-                    + '<table class="table table-condensed table-bordered"><thead><tr><th>Date</th><th>Version</th><th>Status</th><th>Compare</th></tr></thead><tbody>'
+                    + '<table class="table table-condensed table-bordered"><thead><tr><th>Date</th><th>Version</th><th>Status</th><th>Actions</th></tr></thead><tbody>'
                     + rows.join('') + '</tbody></table>'
                     + '<div id="history_diff"></div>'
                     + '<h5>Events</h5>'
@@ -355,6 +425,9 @@
                         : '<p class="text-muted">No event recorded (the events are recorded since this version of OPUS).</p>');
                 $('#jdl_modal_title').text('History of the job definition ' + jobname);
                 $('#jdl_modal_body').html(html);
+                $('#jdl_modal_body .history-restore').click(function () {
+                    restore_version(jobname, versions[$(this).data('index')]);
+                });
                 $('#jdl_modal_body .history-diff').click(function () {
                     var from = $(this).data('from'), to = $(this).data('to');
                     $('#history_diff').html('<p><b>' + escape_html(from) + ' → ' + escape_html(to) + '</b></p><div id="history_diff_content"></div>');
@@ -376,10 +449,12 @@
         // Job definitions to validate, and validated job definitions
         get_pending();
         get_jobnames();
+        get_inactive();
 
         // Actions
         $('#refresh_list').click(get_jobnames);
         $('#refresh_pending').click(get_pending);
+        $('#refresh_inactive').click(get_inactive);
 
     });
 

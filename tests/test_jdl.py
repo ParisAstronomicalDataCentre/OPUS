@@ -14,6 +14,7 @@ as used by the Job Definition page of the client:
 import glob
 import os
 import re
+import time
 
 import pytest
 import requests
@@ -302,6 +303,60 @@ class TestHistory:
         submit(server, "def_leftover", version="2")
         jdl_history.remove_identical_pending()
         assert os.path.exists(tmp) and self.pending(server)["def_leftover"]["status"] == "changed"
+
+    def inactive(self, server):  # noqa: F811 (server fixture)
+        return {j["jobname"]: j for j in self.admin_get(server, "inactive")["inactive"]}
+
+    def restore(self, server, jobname, vid):  # noqa: F811 (server fixture)
+        return requests.post(f"{base_url(server)}/jdl_admin/{jobname}/restore", data={"VERSION": vid}, auth=ADMIN)
+
+    def test_deleted_and_restored(self, server):  # noqa: F811 (server fixture)
+        submit(server, "def_restore", script="echo restored $text > $output\n")
+        validate(server, "def_restore")
+        assert "def_restore" not in self.inactive(server)
+        requests.delete(f"{base_url(server)}/jdl/def_restore", auth=ADMIN)
+        # deleted: invisible to the users, listed with its last version
+        assert "def_restore" not in jobnames(server)
+        deleted = self.inactive(server)["def_restore"]
+        assert (deleted["status"], deleted["user"], deleted["last_event"]) == ("deleted", ADMIN[0], "deleted")
+        assert deleted["last_version"]["kind"] == "deleted"
+        # restored: the job can be run again
+        assert requests.post(f"{base_url(server)}/jdl_admin/def_restore/restore", data={"VERSION": "x"},
+                             auth=AUTH).status_code == 403  # admin only
+        response = self.restore(server, "def_restore", deleted["last_version"]["id"])
+        assert response.status_code == 200 and response.json()["version"] == "1"
+        assert "def_restore" in jobnames(server) and "def_restore" not in self.inactive(server)
+        job_url = create_job(server, "def_restore", text="again")
+        assert wait(job_url) == "COMPLETED" and result(job_url) == "restored again\n"
+        event = self.admin_get(server, "def_restore/history")["events"][-1]
+        assert (event["event"], event["restored"], event["saved"]) == ("restored", deleted["last_version"]["id"], None)
+
+    def test_rollback(self, server):  # noqa: F811 (server fixture)
+        """A previous version restored for a validated job definition: the current version is kept in saved/"""
+        submit(server, "def_rollback")
+        validate(server, "def_rollback")
+        time.sleep(1.1)  # saved versions are named with the date of their validation, in seconds
+        submit(server, "def_rollback", version="2", script="echo v2 > $output\n")
+        validate(server, "def_rollback")
+        [previous] = [v for v in self.admin_get(server, "def_rollback/history")["versions"] if v["kind"] == "saved"]
+        time.sleep(1.1)
+        assert self.restore(server, "def_rollback", previous["id"]).status_code == 200
+        versions = self.admin_get(server, "def_rollback/history")["versions"]
+        assert [(v["kind"], v["version"]) for v in versions] == [("current", "1"), ("saved", "2"), ("saved", "1")]
+        assert self.admin_get(server, "def_rollback/history")["events"][-1]["saved"] == versions[1]["id"]
+
+    def test_never_validated(self, server):  # noqa: F811 (server fixture)
+        submit(server, "def_never")
+        requests.delete(f"{base_url(server)}/jdl/tmp/def_never", auth=ADMIN)  # rejected
+        never = self.inactive(server)["def_never"]
+        assert (never["status"], never["last_version"], never["last_event"]) == ("never validated", None, "rejected")
+
+    def test_restore_errors(self, server):  # noqa: F811 (server fixture)
+        submit(server, "def_restore_errors")
+        validate(server, "def_restore_errors")
+        for vid in ["current", "pending", "unknown", "../../x"]:
+            assert self.restore(server, "def_restore_errors", vid).status_code == 404
+        assert self.restore(server, "bad name", "x").status_code == 400
 
     def test_request_without_email(self, server):  # noqa: F811 (server fixture)
         """The validation request is recorded even if the email cannot be sent"""

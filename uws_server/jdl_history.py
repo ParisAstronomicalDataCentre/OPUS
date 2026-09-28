@@ -12,7 +12,7 @@ Versions of a job definition, from the files:
   (<jobname>_v<version>_<date>[_DELETED], date of the saved file, i.e. when this version was validated)
 
 Events (who did what), logged in <JDL_PATH>/history/<jobname>.jsonl: submitted, validation_requested, validated,
-rejected, deleted. The job definitions validated before this log have no events, only their versions.
+rejected, deleted, restored (a saved version validated again). The job definitions validated before this log have no events, only their versions.
 """
 
 import datetime as dt
@@ -21,11 +21,12 @@ import glob
 import json
 import os
 import re
+import shutil
 
 from . import uws_jdl
 from .settings import DT_FMT, logger, settings
 
-EVENTS = ["submitted", "validation_requested", "validated", "rejected", "deleted"]
+EVENTS = ["submitted", "validation_requested", "validated", "rejected", "deleted", "restored"]
 JOBNAME_RE = re.compile(r"^[\w.-]+$")
 
 
@@ -94,7 +95,7 @@ def _files(jobname, vid):
 def _saved_versions(jobname):
     jdl = _jdl()
     pattern = re.compile(
-        re.escape(jobname) + r"_v(?P<version>.*)_(?P<date>\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d)(?P<deleted>_DELETED)?$"
+        re.escape(jobname) + r"_v(?P<version>[^_]*)_(?P<date>\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d)(?P<deleted>_DELETED)?$"
     )
     versions = []
     for path in glob.glob(f"{jdl.jdl_path}/saved/{glob.escape(jobname)}_v*{jdl.extension}"):
@@ -207,6 +208,61 @@ def pending():
             "validation_requested": requested,
         })
     return result
+
+
+def inactive():
+    """Job definitions found in the history (saved versions, events) without validated version: deleted, or never
+    validated (e.g. rejected)"""
+    jdl = _jdl()
+    stem_re = re.compile(r"^(?P<jobname>.+)_v[^_]*_\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(_DELETED)?$")
+    jobnames = set()
+    for path in glob.glob(f"{jdl.jdl_path}/saved/*{jdl.extension}"):
+        m = stem_re.match(os.path.basename(path)[: -len(jdl.extension)])
+        if m:
+            jobnames.add(m["jobname"])
+    jobnames |= {os.path.basename(p)[: -len(".jsonl")] for p in glob.glob(f"{history_dir()}/*.jsonl")}
+    result = []
+    for jobname in sorted(jobnames):
+        if not JOBNAME_RE.match(jobname) or os.path.isfile(jdl._get_filename(jobname)):
+            continue
+        saved = sorted(_saved_versions(jobname), key=lambda v: v["date"], reverse=True)
+        job_events = events(jobname)
+        deleted = next((e for e in reversed(job_events) if e["event"] == "deleted"), None)
+        last = job_events[-1] if job_events else None
+        result.append({
+            "jobname": jobname,
+            "status": "deleted" if saved else "never validated",
+            "last_version": saved[0] if saved else None,  # version to restore
+            "date": (deleted or last or {}).get("date") or (saved[0]["date"] if saved else None),
+            "user": (deleted or last or {}).get("user"),
+            "last_event": last["event"] if last else None,
+        })
+    return result
+
+
+def restore(jobname, vid):
+    """Validate again a saved version: the current version (if any) is kept in saved/, the saved version is copied
+    as the current version (and kept in saved/). Returns (version, name of the saved current version or None)"""
+    check_jobname(jobname)
+    if vid in ("pending", "current"):
+        raise FileNotFoundError(f"Version {vid} cannot be restored, only a saved version")
+    jdl_file, script_file = _files(jobname, vid)  # FileNotFoundError if not a saved version
+    version = _read(jobname, vid)[0].get("version", "")
+    jdl = _jdl()
+    current_jdl, current_script = _files(jobname, "current")
+    saved = None
+    if os.path.isfile(current_jdl):
+        current_version = _read(jobname, "current")[0].get("version", "")
+        saved = saved_stem(jobname, current_version, _mtime(current_jdl))
+        os.rename(current_jdl, f"{jdl.jdl_path}/saved/{saved}{jdl.extension}")
+        if os.path.isfile(current_script):
+            os.rename(current_script, f"{jdl.scripts_path}/saved/{saved}.sh")
+    shutil.copyfile(jdl_file, current_jdl)
+    if os.path.isfile(script_file):
+        shutil.copyfile(script_file, current_script)
+    else:
+        logger.warning(f"No script found for the saved version {vid} of {jobname}")
+    return version, saved
 
 
 # ----------

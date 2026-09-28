@@ -98,7 +98,7 @@ A new account can also be added to the server, with its roles.
 
 ### Job Definitions
 
-This page (previously **Server Jobs**) has two parts:
+This page (previously **Server Jobs**) has three parts:
 
 * **Job definitions to validate**: the job definitions submitted by the users (`tmp/<name>`) that are new, or
   different from the validated version, with the user who submitted them, their date, and whether the validation
@@ -110,9 +110,15 @@ This page (previously **Server Jobs**) has two parts:
     * the versions, most recent first: submitted (if any), current, and the previous versions kept in `saved/`
       (dated when they were validated), each one can be compared with the previous or the current version
       (unified diff of the job definition and of the script);
-    * the events: submitted (form or import), validation requested, validated, rejected, deleted, with the user
-      and the date. The events are recorded in `$OPUS_VAR_PATH/jdl/history/<name>.jsonl` since this version of
-      OPUS: the job definitions validated before have their previous versions, but no events.
+    * the events: submitted (form or import), validation requested, validated, rejected, deleted, restored, with
+      the user and the date. The events are recorded in `$OPUS_VAR_PATH/jdl/history/<name>.jsonl` since this
+      version of OPUS: the job definitions validated before have their previous versions, but no events.
+
+    A previous version can be **restored**: it becomes the validated version again (the version that was validated,
+    if any, is kept in `saved/`, and the restored version stays in the history).
+* **Deleted job definitions**: the job definitions found in the history without validated version, invisible to
+  the users: deleted (with their last version, which can be **restored**, and their history), or never validated
+  (e.g. rejected).
 
 
 Access rules

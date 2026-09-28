@@ -865,6 +865,9 @@ def validate_job_definition(jobname):
         # Move from tmp/ (no longer to validate)
         shutil.move(jdl_src, jdl_dst)
         shutil.move(script_src, script_dst)
+        # date of the files: validation (used to name this version when it is saved)
+        os.utime(jdl_dst)
+        os.utime(script_dst)
         logger.info("Job definition and script validated: " + jobname)
         # Copy script to job manager
         manager = getattr(managers, settings.MANAGER + "Manager")()
@@ -927,6 +930,39 @@ def get_job_definition_history(jobname):
         abort_400(str(e))
     except Exception:
         abort_500_except()
+
+
+@app.get("/jdl_admin/inactive")
+@is_client_trusted
+@is_admin
+def get_inactive_job_definitions():
+    """Job definitions found in the history without validated version (deleted, or never validated)"""
+    try:
+        return {"inactive": jdl_history.inactive()}
+    except Exception:
+        abort_500_except()
+
+
+@app.post("/jdl_admin/<jobname>/restore")
+@is_client_trusted
+@is_admin
+def restore_job_definition(jobname):
+    """Validate again a saved VERSION (id of a saved version, see history): the job can be run again. The current
+    version, if any, is kept in saved/"""
+    user = set_user()
+    vid = request.forms.get("VERSION", "")
+    try:
+        version, saved = jdl_history.restore(jobname, vid)
+        manager = getattr(managers, settings.MANAGER + "Manager")()
+        manager.cp_script(jobname)
+        jdl_history.log_event(jobname, "restored", user.name, version=version, restored=vid, saved=saved)
+    except ValueError as e:
+        abort_400(str(e))
+    except FileNotFoundError as e:
+        abort_404(str(e))
+    except Exception:
+        abort_500_except()
+    return {"jobname": jobname, "version": version}
 
 
 @app.get("/jdl_admin/<jobname>/diff")
