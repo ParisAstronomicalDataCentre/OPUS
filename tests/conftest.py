@@ -46,6 +46,7 @@ os.environ.update(
         "OPUS_LOG_FILE_SUFFIX": "_test",
         "OPUS_MANAGER": "",  # no execution of jobs, except in test_jobs.py (Local)
         "OPUS_LOCAL_WORKDIR_PATH": os.path.join(TEST_VAR_PATH, "workdir"),
+        "OPUS_BATCH_SHELL": "/bin/bash",  # no login shell: the profile of the user is not needed (and slow)
         "OPUS_ALLOW_ANONYMOUS": "true",
         "OPUS_CHECK_PERMISSIONS": "false",
         "OPUS_CHECK_OWNER": "false",

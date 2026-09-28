@@ -423,7 +423,7 @@ class LocalManager(Manager):
             get_input_files.append(f"curl -OJ {furl}")
         # Create batch file
         batch = [
-            "#!/bin/bash -l",
+            f"#!{settings.BATCH_SHELL}",
             "### INIT LocalManager",
             # Redirect stdout and stderr to files
             f"exec >{jd}/stdout.log 2>{jd}/stderr.log",
@@ -513,7 +513,7 @@ class SLURMManager(Manager):
         )
         # Create sbatch
         sbatch = [
-            "#!/bin/bash -l",
+            f"#!{settings.BATCH_SHELL}",
             "### INIT SLURM",
             f"#SBATCH --job-name={job.jobname}",
             f"#SBATCH --error={jd}/stderr.log",

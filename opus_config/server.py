@@ -116,6 +116,9 @@ class ServerSettings(CommonSettings):
     # SLURM: execution through a SLURM control manager (additional config required below)
     MANAGER: str = "Local"
     LOCAL_WORKDIR_PATH: str = "/tmp"
+    # Shell running the batch script of the jobs (first line of the script, Local and SLURM): a login shell (-l)
+    # reads the profile of the user (e.g. PATH, conda, modules), which may take a second at each job start
+    BATCH_SHELL: str = "/bin/bash -l"
 
     ### SLURM Manager settings
 

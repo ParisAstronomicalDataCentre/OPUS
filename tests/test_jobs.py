@@ -75,7 +75,7 @@ def wait(job_url, phases=("COMPLETED", "ERROR", "ABORTED")):
         p = phase(job_url)
         if p in phases:
             return p
-        time.sleep(0.3)
+        time.sleep(0.1)
     raise AssertionError(f"Job {job_url} still {p} after {TIMEOUT}s")
 
 
@@ -128,6 +128,9 @@ class TestRunJobs:
         assert attributes["phase"] == "COMPLETED"
         assert attributes["startTime"] and attributes["endTime"]
         assert requests.get(f"{job_url}/stdout", auth=AUTH).status_code == 200
+        # batch script run with the shell of the settings (OPUS_BATCH_SHELL, no login shell in the tests)
+        with open(f"{settings.JOBDATA_PATH}/{job_url.split('/')[-1]}/batch.sh") as f:
+            assert f.readline().strip() == f"#!{settings.BATCH_SHELL}" == "#!/bin/bash"
 
     def test_chained_jobs(self, server):
         job1 = create_job(server, "test_activity_1", text="first")

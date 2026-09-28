@@ -144,6 +144,7 @@ token (`owner_token` column of the `entities` table, added at the start of the s
 | ---                   | :---                                                                                                             |
 | MANAGER               | Set to `Local` or `SLURM`. Select the Manager class that defines the interface for job execution and management. |
 | LOCAL_WORKDIR_PATH    | Working directory for local execution                                                                            |
+| BATCH_SHELL           | Shell running the batch script of the jobs (default: `/bin/bash -l`). The login shell (`-l`) reads the profile of the user (e.g. PATH, conda, modules used by the job scripts), which may take up to a second at each job start: use `/bin/bash` if the job scripts do not need it. |
 | SLURM_URL             | URL of SLURM Work cluster                                                                                        |
 | SLURM_USER            | Account on SLURM Work cluster                                                                                    |
 | SLURM_MAIL_USER       | Email for account on SLURM Work cluster                                                                          |
