@@ -436,44 +436,42 @@ class LocalManager(Manager):
         # Execute batch using sp
         cmd = [batch_file]
         # logger.debug(' '.join(cmd))
-        popen = sp.Popen(cmd)
+        # in its own process group (session), so that the job and all its child processes can be stopped
+        popen = sp.Popen(cmd, start_new_session=True)
         # poll popen regularly
         self._poll_process(popen, job)
         # Return process_id
         return popen.pid
 
+    def _kill(self, job):
+        """Kill the job and its child processes (SIGKILL => no error sent, just killed)"""
+        if not job.process_id:
+            return
+        try:
+            # process group of the job (see start), with all its child processes
+            os.killpg(job.process_id, signal.SIGKILL)
+            return
+        except ProcessLookupError:
+            # job started by a previous version (not a process group): kill the batch process only
+            pass
+        except PermissionError as e:
+            logger.info(str(e))
+            return
+        try:
+            os.kill(job.process_id, signal.SIGKILL)
+        except ProcessLookupError:
+            logger.info(f"No such process ({job.process_id}) for job {job.jobname} {job.jobid}")
+        except OSError as e:
+            logger.info(str(e))
+
     def abort(self, job):
         """Abort/Cancel job"""
-        try:
-            os.kill(
-                job.process_id, signal.SIGKILL
-            )  # SIGTERM => error sent ; SIGKILL => no error sent, just killed!
-        except OSError as e:
-            if "No such process" in str(e):
-                logger.info(
-                    f"No such process ({job.process_id}) for job {job.jobname} {job.jobid}"
-                )
-            else:
-                logger.info(str(e))
-        except:
-            raise
+        self._kill(job)
 
     def delete(self, job):
         """Delete job"""
         # jobdata is already deleted by the server
-        try:
-            os.kill(
-                job.process_id, signal.SIGKILL
-            )  # SIGTERM => error sent ; SIGKILL => no error sent, just killed!
-        except OSError as e:
-            if "No such process" in str(e):
-                logger.info(
-                    f"No such process ({job.process_id}) for job {job.jobname} {job.jobid}"
-                )
-            else:
-                logger.info(str(e))
-        except:
-            raise
+        self._kill(job)
 
 
 # -------------
