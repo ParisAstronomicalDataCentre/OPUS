@@ -226,3 +226,84 @@ class TestDelete:
         assert len(files) == 2  # job definition and script
         # already deleted
         assert requests.delete(f"{base_url(server)}/jdl/def_delete", auth=ADMIN).status_code == 404
+
+
+class TestHistory:
+    """Job definitions to validate, versions, events and diff (Job Definitions page of the client)"""
+
+    def admin_get(self, server, path, **params):  # noqa: F811 (server fixture)
+        response = requests.get(f"{base_url(server)}/jdl_admin/{path}", params=params, auth=ADMIN)
+        assert response.status_code == 200, response.text
+        return response.json()
+
+    def pending(self, server):  # noqa: F811 (server fixture)
+        return {p["jobname"]: p for p in self.admin_get(server, "pending")["pending"]}
+
+    def test_workflow(self, server, monkeypatch):  # noqa: F811 (server fixture)
+        monkeypatch.setattr(uws_server, "send_mail", lambda *args: None)
+        # new job definition: to validate
+        submit(server, "def_history")
+        pending = self.pending(server)["def_history"]
+        assert (pending["status"], pending["submitted_by"], pending["validation_requested"]) == ("new", AUTH[0], False)
+        requests.post(f"{base_url(server)}/jdl/tmp/def_history/validation_request", auth=AUTH)
+        assert self.pending(server)["def_history"]["validation_requested"] is True
+        assert self.admin_get(server, "def_history/history")["events"][-1]["email"] == "sent"
+        # validated: no longer to validate (the file stays in tmp/, identical)
+        assert validate(server, "def_history").status_code == 200
+        assert "def_history" not in self.pending(server)
+        # new version: changed, with a diff
+        submit(server, "def_history", version="2", script="echo v2 > $output\n")
+        pending = self.pending(server)["def_history"]
+        assert (pending["status"], pending["version"], pending["validation_requested"]) == ("changed", "2", False)
+        diff = self.admin_get(server, "def_history/diff", FROM="current", TO="pending")
+        assert "-echo $text > $output" in diff["script"] and "+echo v2 > $output" in diff["script"]
+        assert '-  "version": "1"' in diff["definition"] and '+  "version": "2"' in diff["definition"]
+        assert validate(server, "def_history").status_code == 200
+        # history: versions (most recent first) and events
+        history = self.admin_get(server, "def_history/history")
+        kinds = [(v["kind"], v["version"]) for v in history["versions"]]
+        assert kinds == [("pending", "2"), ("current", "2"), ("saved", "1")]
+        saved = history["versions"][2]["id"]
+        assert self.admin_get(server, "def_history/diff", FROM=saved, TO="current")["script"]
+        assert self.admin_get(server, "def_history/diff", FROM="pending", TO="current") == {"definition": "", "script": ""}
+        events = [(e["event"], e["user"]) for e in history["events"]]
+        assert events == [
+            ("submitted", AUTH[0]), ("validation_requested", AUTH[0]), ("validated", ADMIN[0]),
+            ("submitted", AUTH[0]), ("validated", ADMIN[0]),
+        ]
+        assert history["events"][-1]["saved"] == saved  # previous version kept in saved/
+        # the saved script has the same name as the saved job definition
+        assert os.path.isfile(f"{settings.JDL_PATH}/scripts/saved/{saved}.sh")
+        # a script without final newline: the removed and added lines stay separate
+        submit(server, "def_history", version="3", script="echo v3 > $output")
+        diff = self.admin_get(server, "def_history/diff", FROM="current", TO="pending")["script"]
+        assert "-echo v2 > $output" in diff.splitlines() and "+echo v3 > $output" in diff.splitlines()
+
+    def test_request_without_email(self, server):  # noqa: F811 (server fixture)
+        """The validation request is recorded even if the email cannot be sent"""
+        submit(server, "def_no_email")
+        response = requests.post(f"{base_url(server)}/jdl/tmp/def_no_email/validation_request", auth=AUTH)
+        assert response.status_code == 424  # no mail server in the tests
+        assert self.pending(server)["def_no_email"]["validation_requested"] is True
+        assert self.admin_get(server, "def_no_email/history")["events"][-1]["email"] == "failed"
+
+    def test_reject(self, server):  # noqa: F811 (server fixture)
+        submit(server, "def_reject")
+        assert "def_reject" in self.pending(server)
+        url = f"{base_url(server)}/jdl/tmp/def_reject"
+        assert requests.delete(url, auth=AUTH).status_code == 403  # admin only
+        assert requests.delete(url, params={"MESSAGE": "not needed"}, auth=ADMIN).status_code == 200
+        assert "def_reject" not in self.pending(server)
+        assert not os.path.exists(f"{settings.JDL_PATH}/votable/tmp/def_reject_vot.xml")
+        event = self.admin_get(server, "def_reject/history")["events"][-1]
+        assert (event["event"], event["user"], event["message"]) == ("rejected", ADMIN[0], "not needed")
+        assert requests.delete(url, auth=ADMIN).status_code == 404
+
+    def test_errors(self, server):  # noqa: F811 (server fixture)
+        admin = f"{base_url(server)}/jdl_admin"
+        assert requests.get(f"{admin}/pending", auth=AUTH).status_code == 403
+        assert requests.get(f"{admin}/def_unknown/diff", params={"FROM": "current", "TO": "pending"}, auth=ADMIN).status_code == 404
+        submit(server, "def_errors")
+        response = requests.get(f"{admin}/def_errors/diff", params={"FROM": "../../x", "TO": "pending"}, auth=ADMIN)
+        assert response.status_code == 404
+        assert requests.get(f"{admin}/bad name/history", auth=ADMIN).status_code == 400  # invalid job name

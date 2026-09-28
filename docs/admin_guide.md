@@ -36,7 +36,7 @@ When signed in as an administrator (role `admin` in the client), the top-right m
 | Client Preferences | Connection of the client to the UWS server                                        |
 | Client Accounts    | Accounts of the client (email, password, token, roles)                            |
 | Server Accounts    | Accounts of the server (name, token, permissions)                                 |
-| Server Jobs        | Job definitions available on the server                                           |
+| Job Definitions    | Job definitions to validate, validated job definitions and their history          |
 | Maintenance        | Check of the jobs (dry run), then changes applied on request (see below)          |
 | Logs               | Last lines of the log files of the server, nginx and the client                   |
 
@@ -96,10 +96,23 @@ client), each with its own jobs and permissions. For each account, the page allo
 
 A new account can also be added to the server, with its roles.
 
-### Server Jobs
+### Job Definitions
 
-This page lists the job definitions validated on the server, with their version, contact, type and subtype. They
-can be exported (JDL file), or deleted.
+This page (previously **Server Jobs**) has two parts:
+
+* **Job definitions to validate**: the job definitions submitted by the users (`tmp/<name>`) that are new, or
+  different from the validated version, with the user who submitted them, their date, and whether the validation
+  was requested. For each one: **Diff** (differences with the validated version), **Open** (in the Job Definition
+  Editor), **Validate**, and **Reject** (the submitted version is removed, with an optional message kept in the
+  history).
+* **Validated job definitions**, with their version, contact, type and subtype. They can be edited, exported (JDL
+  file) or deleted, and their **History** shows:
+    * the versions, most recent first: submitted (if any), current, and the previous versions kept in `saved/`
+      (dated when they were validated), each one can be compared with the previous or the current version
+      (unified diff of the job definition and of the script);
+    * the events: submitted (form or import), validation requested, validated, rejected, deleted, with the user
+      and the date. The events are recorded in `$OPUS_VAR_PATH/jdl/history/<name>.jsonl` since this version of
+      OPUS: the job definitions validated before have their previous versions, but no events.
 
 
 Access rules
@@ -208,8 +221,10 @@ A new job definition, or a modification of an existing one, is prepared in the J
 request its validation: the administrator receives an email (to `OPUS_ADMIN_EMAIL`, through the mail server defined
 by `OPUS_MAIL_SERVER` and `OPUS_MAIL_PORT`), with the link to the definition.
 
-To validate it, open the Job Definition Editor, load the definition `tmp/<name>`, check it (parameters, script...)
-and click **Validate** (this button is only shown to the administrator). The definition and its script are then
+To validate it, use the **Job Definitions** page (list of the job definitions to validate, with the differences
+with the validated version), or open the Job Definition Editor, load the definition `tmp/<name>`, check it
+(parameters, script...) and click **Validate** (this button is only shown to the administrator). The validation
+request is recorded in the history even if the email cannot be sent. The definition and its script are then
 copied from `tmp/<name>` to `<name>`, and the job is available to the users. If a previous version of the job
 existed, it is kept in the `saved/` directories:
 
@@ -223,7 +238,8 @@ Editor (**Import JDL**).
 
 ### Remove a job definition
 
-A job definition can be deleted from the **Server Jobs** page.
+A job definition can be deleted from the **Job Definitions** page (it is kept in the `saved/` directories, with
+`_DELETED` in the name).
 
 
 Maintenance

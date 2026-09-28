@@ -463,6 +463,14 @@ class TestAdminPages:
         assert client.delete(f"/proxy/scim/Users/{name}", query_string={"token": "token-a"}).status_code == 200
         assert [u["token"] for u in job_storage.get_users(name=name)] == ["token-b"]
 
+    def test_job_definitions(self, client, live_server):
+        self.admin_login(client)
+        assert "Job Definitions</a>" in client.get("/").get_data(as_text=True)  # admin menu
+        html = client.get("/admin/server_jobs").get_data(as_text=True)
+        assert "Job definitions to validate" in html and "Validated job definitions" in html
+        response = client.get("/proxy/jdl_admin/pending")  # through the proxy (as the page)
+        assert response.status_code == 200 and "pending" in response.json
+
     def test_maintenance(self, client, live_server):
         self.admin_login(client)
         assert "Check (dry run)" in client.get("/admin/maintenance").get_data(as_text=True)

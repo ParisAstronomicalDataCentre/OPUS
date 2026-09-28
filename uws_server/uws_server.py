@@ -32,7 +32,7 @@ from bottle import (
 
 from opus_config import logs
 
-from . import maintenance, managers, migrate_users, oidc, storage, uws_jdl
+from . import jdl_history, maintenance, managers, migrate_users, oidc, storage, uws_jdl
 from .settings import (
     settings,
     ACTIVE_PHASES,
@@ -730,6 +730,7 @@ def create_new_job_definition():
             jdl.set_from_post(request.forms, user)
             # Save as a new job description
             jdl.save("tmp/" + jobname)
+            jdl_history.log_event(jobname, "submitted", user.name, version=jdl.content.get("version"), via="form")
         else:
             abort_500("No jobname given")
     except Exception:
@@ -785,6 +786,9 @@ def import_job_definition():
                     jdl.content["name"] = jobname
                 # Save JDL
                 jdl.save("tmp/" + jobname)
+                jdl_history.log_event(
+                    jobname, "submitted", user.name, version=jdl.content.get("version"), via="import"
+                )
             else:
                 abort_500("No jobname found for file " + f.filename)
     except Exception:
@@ -808,8 +812,14 @@ def validation_request_job_definition(jobname):
             # mail.
             mail_subject = f"OPUS job validation request: {jobname}"
             mail_text = f"{mail_subject}\n{settings.BASE_URL}/jdl/tmp/{jobname}/json\n(from: {user.name})"
-            send_mail(settings.ADMIN_EMAIL, mail_subject, mail_text)
-            logger.info("Validation request sent to admin: " + jobname)
+            mail_sent = False
+            try:
+                send_mail(settings.ADMIN_EMAIL, mail_subject, mail_text)
+                mail_sent = True
+                logger.info("Validation request sent to admin: " + jobname)
+            finally:
+                # recorded even if the email cannot be sent (see the Job Definitions page of the client)
+                jdl_history.log_event(jobname, "validation_requested", user.name, email="sent" if mail_sent else "failed")
         else:
             logger.info("No JDL  found for validation: " + jdl_src)
             abort_500("No JDL file found for " + jobname)
@@ -826,67 +836,109 @@ def validation_request_job_definition(jobname):
 @is_client_trusted
 @is_admin
 def validate_job_definition(jobname):
-    """Use filled form to create a JDL file for the given job"""
-    # Check if client is trusted (only admin should be allowed to validate a job)
+    """Validate the job definition submitted in tmp/: the current version (if any) is kept in saved/"""
+    user = set_user()
     try:
-        # Copy script and jdl from new
-        # jdl = uws_jdl.__dict__[JDL]()
         jdl = getattr(uws_jdl, settings.JDL)()
         jdl_src = f"{jdl.jdl_path}/tmp/{jobname}{jdl.extension}"
         jdl_dst = f"{jdl.jdl_path}/{jobname}{jdl.extension}"
         script_src = f"{jdl.scripts_path}/tmp/{jobname}.sh"
         script_dst = f"{jdl.scripts_path}/{jobname}.sh"
-        # Save, then copy from tmp/
-        if os.path.isfile(jdl_src):
-            if os.path.isfile(jdl_dst):
-                # Save file with version and time stamp
-                mt = (
-                    dt.datetime.fromtimestamp(os.path.getmtime(jdl_dst))
-                    .isoformat()
-                    .split(".")[0]
-                )
-                jdl.read(jobname)  # need version for saved files
-                jdl_dst_save = "{}/saved/{}_v{}_{}{}".format(
-                    jdl.jdl_path, jobname, jdl.content["version"], mt, jdl.extension
-                )
-                os.rename(jdl_dst, jdl_dst_save)
-                logger.info("Previous job JDL saved: " + jdl_dst_save)
-            shutil.copy(jdl_src, jdl_dst)
-            logger.info("Job JDL file copied: " + jdl_dst)
-        else:
-            logger.info("No JDL  found for validation: " + jdl_src)
+        if not os.path.isfile(jdl_src):
+            logger.info("No JDL found for validation: " + jdl_src)
             abort_500("No JDL file found for " + jobname)
-            # redirect('/client/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
-        if os.path.isfile(script_src):
-            if os.path.isfile(script_dst):
-                # Save file with time stamp
-                mt = (
-                    dt.datetime.fromtimestamp(os.path.getmtime(script_dst))
-                    .isoformat()
-                    .split(".")[0]
-                )
-                jdl.read(jobname)  # need version for saved files
-                script_dst_save = "{}/saved/{}_v{}_{}.sh".format(
-                    settings.SCRIPTS_PATH, jobname, jdl.content["version"], mt
-                )
-                os.rename(script_dst, script_dst_save)
-                logger.info("Previous job script saved: " + script_dst_save)
-            shutil.copy(script_src, script_dst)
-            logger.info("Job script copied: " + script_dst)
-            # Copy script to job manager
-            # manager = managers.__dict__[MANAGER + 'Manager']()
-            manager = getattr(managers, settings.MANAGER + "Manager")()
-            manager.cp_script(jobname)
-            logger.info("Job script copied to work cluster: " + jobname)
-        else:
+        if not os.path.isfile(script_src):
             logger.info("No job script found for validation: " + script_src)
             abort_500("No job script found for " + jobname)
-            # redirect('/client/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
+        # Keep the current version in saved/ (job definition and script with the same name)
+        saved = None
+        if os.path.isfile(jdl_dst):
+            jdl.read(jobname)  # need version for saved files
+            mt = dt.datetime.fromtimestamp(os.path.getmtime(jdl_dst)).strftime(DT_FMT)
+            saved = jdl_history.saved_stem(jobname, jdl.content["version"], mt)
+            os.rename(jdl_dst, f"{jdl.jdl_path}/saved/{saved}{jdl.extension}")
+            if os.path.isfile(script_dst):
+                os.rename(script_dst, f"{jdl.scripts_path}/saved/{saved}.sh")
+            logger.info("Previous job definition saved: " + saved)
+        shutil.copy(jdl_src, jdl_dst)
+        shutil.copy(script_src, script_dst)
+        logger.info("Job definition and script copied: " + jobname)
+        # Copy script to job manager
+        manager = getattr(managers, settings.MANAGER + "Manager")()
+        manager.cp_script(jobname)
+        logger.info("Job script copied to work cluster: " + jobname)
+        jdl = getattr(uws_jdl, settings.JDL)()
+        jdl.read(jobname)
+        jdl_history.log_event(jobname, "validated", user.name, version=jdl.content.get("version"), saved=saved)
     except Exception:
         abort_500_except()
     # Return code 200
     return {"jobname": jobname}
-    # redirect('/client/job_definition?jobname={}&msg=validated'.format(jobname), 303)
+
+
+@app.delete("/jdl/tmp/<jobname>")
+@is_client_trusted
+@is_admin
+def reject_job_definition(jobname):
+    """Reject the job definition submitted in tmp/ (removed), with an optional MESSAGE for the history"""
+    user = set_user()
+    try:
+        jdl = getattr(uws_jdl, settings.JDL)()
+        jdl_src = f"{jdl.jdl_path}/tmp/{jobname}{jdl.extension}"
+        if not os.path.isfile(jdl_src):
+            abort_404(f"No job definition submitted for {jobname}")
+        os.remove(jdl_src)
+        script_src = f"{jdl.scripts_path}/tmp/{jobname}.sh"
+        if os.path.isfile(script_src):
+            os.remove(script_src)
+        jdl_history.log_event(jobname, "rejected", user.name, message=request.query.get("MESSAGE", ""))
+    except Exception:
+        abort_500_except()
+    return {"jobname": jobname}
+
+
+# ----------
+# History of the job definitions (admin)
+# ----------
+
+
+@app.get("/jdl_admin/pending")
+@is_client_trusted
+@is_admin
+def get_pending_job_definitions():
+    """Job definitions submitted in tmp/ and not validated (new, or different from the current version)"""
+    try:
+        return {"pending": jdl_history.pending()}
+    except Exception:
+        abort_500_except()
+
+
+@app.get("/jdl_admin/<jobname>/history")
+@is_client_trusted
+@is_admin
+def get_job_definition_history(jobname):
+    """Versions (pending, current, saved) and events of a job definition"""
+    try:
+        return {"jobname": jobname, "versions": jdl_history.versions(jobname), "events": jdl_history.events(jobname)}
+    except ValueError as e:
+        abort_400(str(e))
+    except Exception:
+        abort_500_except()
+
+
+@app.get("/jdl_admin/<jobname>/diff")
+@is_client_trusted
+@is_admin
+def get_job_definition_diff(jobname):
+    """Unified diff between two versions (FROM, TO: pending, current, or the id of a saved version)"""
+    try:
+        return jdl_history.diff(jobname, request.query.get("FROM", "current"), request.query.get("TO", "pending"))
+    except ValueError as e:
+        abort_400(str(e))
+    except FileNotFoundError as e:
+        abort_404(str(e))
+    except Exception:
+        abort_500_except()
 
 
 # @app.get('/config/cp_script/<jobname>')
@@ -1016,48 +1068,23 @@ def get_jdl(jobname):
 @is_client_trusted
 @is_admin
 def delete_jdl(jobname):
-    """
-    Delete jdl with
-    :param jobname:
-    :return:
-    """
+    """Delete the job definition: the job definition and its script are kept in saved/ (_DELETED)"""
+    user = set_user()
     try:
         jdl = getattr(uws_jdl, settings.JDL)()
         jdl.read(jobname)  # need version for saved files
         jdl_src = f"{jdl.jdl_path}/{jobname}{jdl.extension}"
         script_src = f"{jdl.scripts_path}/{jobname}.sh"
-        if os.path.isfile(jdl_src):
-            # Save file with version and time stamp
-            mt = (
-                dt.datetime.fromtimestamp(os.path.getmtime(jdl_src))
-                .isoformat()
-                .split(".")[0]
-            )
-            jdl_dst_save = "{}/saved/{}_v{}_{}_DELETED{}".format(
-                jdl.jdl_path, jobname, jdl.content["version"], mt, jdl.extension
-            )
-            shutil.move(jdl_src, jdl_dst_save)
-            logger.info("JDL file archived and deleted: " + jdl_dst_save)
-        else:
-            logger.warning("No JDL file found: " + jdl_src)
-            abort_500("No JDL file found for " + jobname)
-            # redirect('/client/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
+        mt = dt.datetime.fromtimestamp(os.path.getmtime(jdl_src)).strftime(DT_FMT)
+        saved = jdl_history.saved_stem(jobname, jdl.content["version"], mt, deleted=True)
+        shutil.move(jdl_src, f"{jdl.jdl_path}/saved/{saved}{jdl.extension}")
+        logger.info("JDL file archived and deleted: " + saved)
         if os.path.isfile(script_src):
-            # Save file with time stamp
-            mt = (
-                dt.datetime.fromtimestamp(os.path.getmtime(script_src))
-                .isoformat()
-                .split(".")[0]
-            )
-            script_dst_save = "{}/saved/{}_v{}_{}_DELETED.sh".format(
-                settings.SCRIPTS_PATH, jobname, jdl.content["version"], mt
-            )
-            shutil.move(script_src, script_dst_save)
-            logger.info("Job script archived and deleted: " + script_dst_save)
+            shutil.move(script_src, f"{jdl.scripts_path}/saved/{saved}.sh")
+            logger.info("Job script archived and deleted: " + saved)
         else:
             logger.warning("No job script found: " + script_src)
-            abort_500("No job script found for " + jobname)
-            # redirect('/client/job_definition?jobname={}&msg=notfound'.format(jobname), 303)
+        jdl_history.log_event(jobname, "deleted", user.name, version=jdl.content.get("version"), saved=saved)
     except UserWarning as e:
         abort_404(e.args[0])
     except Exception:
