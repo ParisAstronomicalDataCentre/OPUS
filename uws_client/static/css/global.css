@@ -98,3 +98,9 @@ body {
     right:2%;
     z-index: 10;
 }
+
+/* An open list (bootstrap-select) above the other elements: in an input group, the lists have a z-index (2), so
+   the list of a table row was shown behind the lists of the next rows */
+.bootstrap-select.open {
+    z-index: 1036;
+}

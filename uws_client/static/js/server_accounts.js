@@ -72,7 +72,7 @@
                 <td class="text-center" style="vertical-align: middle;">\
                     <div class="input-group">\
                         <div class="input-group-btn">\
-                            <select id="roles_' + user_label + '" class="selectpicker" title="None" data_width="auto" multiple>\
+                            <select id="roles_' + user_label + '" class="selectpicker" title="None" data_width="auto" data-container="body" multiple>\
                                 ' + job_options.join() + '\
                             </select>\
                             <button id="button_roles_' + user_label + '" type="button" class="roles btn btn-default">\
@@ -131,7 +131,7 @@
                 <input class="form-control" id="name" name="name" type="text"/>\
             </td>\
             <td class="text-center" style="vertical-align: middle;" width="300">\
-                <select id="roles" class="selectpicker match-content" title="None" multiple>\
+                <select id="roles" class="selectpicker match-content" title="None" data-container="body" multiple>\
                     ' + job_options.join() + '\
                 </select>\
             </td>\
