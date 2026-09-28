@@ -33,9 +33,9 @@
             <div class="panel-body">
                 <p class="text-muted small">
                     The check lists the issues of the jobs (dates, phase not updated, destruction time passed) and the
-                    changes to apply: archive the jobs after their destruction time, update the phase of the jobs from
-                    the job manager. Nothing is changed until <b>Apply changes</b>.
-                    The deletion of the jobs that cannot be archived is not implemented yet (reported only).
+                    changes to apply: archive the jobs after their destruction time, delete those that cannot be
+                    archived (not completed, aborted or in error: stopped if running, files removed), update the phase
+                    of the jobs from the job manager. Nothing is changed until <b>Apply changes</b>.
                 </p>
                 <p id="maintenance_info" class="small"></p>
                 <div id="maintenance_summary"></div>

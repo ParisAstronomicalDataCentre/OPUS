@@ -7,8 +7,8 @@ Maintenance of the jobs: checks, and changes if applied (apply=True)
 For each job (all the jobs of the database, including archived jobs):
 - consistency of the dates (creation, start, end, destruction)
 - phase of the jobs not in a terminal phase, from the job manager (updated if applied)
-- jobs after their destruction time: archived if applied (USE_ARCHIVED_PHASE, terminal phases only),
-  the deletion of the other jobs is not implemented yet (reported only)
+- jobs after their destruction time: archived if applied (USE_ARCHIVED_PHASE, phases COMPLETED, ABORTED and
+  ERROR), else deleted if applied (job stopped by the job manager if needed, files and database entries removed)
 
 Without apply, nothing is changed (dry run): the job manager is only asked for the phase of the jobs.
 """
@@ -23,7 +23,7 @@ from .uws_classes import Job, JobList, User
 OK = "ok"
 ARCHIVED = "archived"  # already archived
 TO_ARCHIVE = "to_archive"  # after its destruction time
-TO_DELETE = "to_delete"  # after its destruction time, cannot be archived (deletion not implemented)
+TO_DELETE = "to_delete"  # after its destruction time, cannot be archived (other phase, or no ARCHIVED phase)
 PHASE = "phase"  # phase to update from the job manager
 DATES = "dates"  # inconsistent dates
 ERROR = "error"  # error while checking or applying
@@ -93,7 +93,10 @@ def check_job(job, now, apply=False):
                 record["phase"] = "ARCHIVED"
         else:
             record["categories"].append(TO_DELETE)
-            record["issues"].append(f"destruction time passed, phase {phase}: to delete (not implemented)")
+            record["actions"].append(f"{'deleted' if apply else 'to delete'} (destruction time passed, phase {phase})")
+            if apply:
+                job.delete()
+                record["phase"] = "DELETED"
     if not record["categories"]:
         record["categories"].append(OK)
     return record

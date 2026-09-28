@@ -17,6 +17,7 @@ import shutil
 import time
 import xml.etree.ElementTree as ET
 
+import psutil
 import pytest
 import requests
 
@@ -87,6 +88,25 @@ def wait_saved(job_url):
         time.sleep(0.1)
 
 
+def process_id(job_url):
+    job_storage = getattr(storage, settings.STORAGE + "JobStorage")()
+    with job_storage.get_session() as session:
+        return int(session.query(job_storage.Job).filter_by(jobid=job_url.split("/")[-1]).one().process_id)
+
+
+def group_processes(pgid):
+    """Processes still running in the process group of a job (the job and its child processes)"""
+    time.sleep(0.2)
+    running = []
+    for p in psutil.process_iter(["pid", "status"]):
+        try:
+            if os.getpgid(p.pid) == pgid and p.info["status"] != psutil.STATUS_ZOMBIE:
+                running.append(p.pid)
+        except (ProcessLookupError, PermissionError):
+            pass
+    return running
+
+
 def result(job_url, name="output"):
     """Content of a result of the job"""
     store_url = requests.get(f"{job_url}/results/{name}", auth=AUTH).text
@@ -131,8 +151,11 @@ class TestRunJobs:
     def test_abort(self, server):
         job_url = create_job(server, "test_activity_1", text="slow")
         assert wait(job_url, phases=("EXECUTING",)) == "EXECUTING"
+        pgid = process_id(job_url)
+        assert group_processes(pgid)  # batch.sh and sleep
         requests.post(f"{job_url}/phase", data={"PHASE": "ABORT"}, auth=AUTH)
         assert wait(job_url) == "ABORTED"
+        assert group_processes(pgid) == []  # the child processes are stopped too
 
     def test_pending_job(self, server):
         job_url = create_job(server, "test_activity_1", run=False, text="before")
@@ -206,6 +229,10 @@ class TestMaintenance:
         job_url = create_job(server, "test_activity_1", text=text)
         assert wait(job_url) == "COMPLETED"
         wait_saved(job_url)
+        return self.expire(job_url, **attributes)
+
+    def expire(self, job_url, **attributes):
+        """Destruction time passed (and other attributes changed in the database)"""
         jobid = job_url.split("/")[-1]
         job_storage = getattr(storage, settings.STORAGE + "JobStorage")()
         with job_storage.get_session() as session:
@@ -238,6 +265,39 @@ class TestMaintenance:
         report, record = self.job_report(server, jobid)
         assert "archived" in record["categories"] and "to_archive" not in record["categories"]
         assert not record["actions"]
+
+    def test_delete_pending(self, server):
+        """An expired job that cannot be archived (not completed, aborted or in error) is deleted"""
+        job_url = create_job(server, "test_activity_1", run=False, text="expired pending")
+        job_url, jobid = self.expire(job_url)
+        report, record = self.job_report(server, jobid)
+        assert "to_delete" in record["categories"]
+        assert record["actions"] == ["to delete (destruction time passed, phase PENDING)"]
+        assert phase(job_url) == "PENDING"  # dry run
+        report, record = self.job_report(server, jobid, method="POST")
+        assert record["actions"] == ["deleted (destruction time passed, phase PENDING)"]
+        assert requests.get(job_url, auth=AUTH).status_code == 404
+
+    def test_delete_executing(self, server):
+        """An expired job still running is stopped and deleted"""
+        job_url = create_job(server, "test_activity_1", text="slow expired")
+        assert wait(job_url, phases=("EXECUTING",)) == "EXECUTING"
+        pgid = process_id(job_url)
+        job_url, jobid = self.expire(job_url)
+        report, record = self.job_report(server, jobid, method="POST")
+        assert record["actions"] == ["deleted (destruction time passed, phase EXECUTING)"]
+        assert group_processes(pgid) == []
+        assert requests.get(job_url, auth=AUTH).status_code == 404
+        assert not os.path.exists(f"{settings.JOBDATA_PATH}/{jobid}")
+
+    def test_delete_without_archived_phase(self, server, monkeypatch):
+        """Without the ARCHIVED phase, the expired jobs are deleted (with their results)"""
+        monkeypatch.setattr(settings, "USE_ARCHIVED_PHASE", False)
+        job_url, jobid = self.expired_job(server, "expired, no archive")
+        report, record = self.job_report(server, jobid, method="POST")
+        assert "to_delete" in record["categories"] and "to_archive" not in record["categories"]
+        assert requests.get(job_url, auth=AUTH).status_code == 404
+        assert not os.path.exists(f"{settings.RESULTS_PATH}/{jobid}")
 
     def test_dates(self, server):
         job_url, jobid = self.expired_job(server, "dates", destruction_time="2099-01-01T00:00:00",

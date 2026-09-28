@@ -14,7 +14,7 @@
     var CATEGORIES = {
         to_archive: {label: 'To archive', style: 'warning', title: 'Destruction time passed, the job will be archived'},
         phase: {label: 'Phase to update', style: 'warning', title: 'The job manager gives another phase'},
-        to_delete: {label: 'To delete', style: 'danger', title: 'Destruction time passed, the job cannot be archived (deletion not implemented)'},
+        to_delete: {label: 'To delete', style: 'danger', title: 'Destruction time passed, the job cannot be archived: it will be deleted (stopped if running)'},
         dates: {label: 'Inconsistent dates', style: 'danger', title: 'Dates not set or in the wrong order'},
         error: {label: 'Errors', style: 'danger', title: 'Error while checking the job'},
         archived: {label: 'Archived', style: 'default', title: 'Jobs already archived'},
@@ -27,7 +27,7 @@
     }
 
     function to_apply(summary) {
-        return summary.to_archive + summary.phase;
+        return summary.to_archive + summary.to_delete + summary.phase;
     }
 
     function show_summary() {
@@ -126,7 +126,10 @@
         $('#button_check').click(function () { run_maintenance(false); });
         $('#button_apply').click(function () {
             var n = report ? to_apply(report.summary) : 0;
-            if (window.confirm('Apply ' + n + ' change(s) (archive jobs, update phases)?\nAre you sure?')) {
+            var n_delete = report ? report.summary.to_delete : 0;
+            var msg = 'Apply ' + n + ' change(s) (archive jobs, update phases'
+                + (n_delete ? ', DELETE ' + n_delete + ' job(s) with their files' : '') + ')?\nAre you sure?';
+            if (window.confirm(msg)) {
                 run_maintenance(true);
             }
         });

@@ -236,10 +236,16 @@ The last lines of the server and client logs can also be seen in the administrat
 
 ### Maintenance of the jobs
 
-The server provides a maintenance task that archives the jobs whose destruction date is passed (phase `ARCHIVED`,
-see `USE_ARCHIVED_PHASE`: their results are deleted, their description is kept, and they are no longer shown in the
-job lists; the deletion of the results is not implemented yet, they are currently kept), and, with the SLURM
-manager, updates the phase of the jobs still running on the work cluster.
+The server provides a maintenance task for the jobs whose destruction date is passed:
+
+* the jobs COMPLETED, ABORTED or in ERROR are archived (phase `ARCHIVED`, see `USE_ARCHIVED_PHASE`: their results
+  are deleted, their description is kept, and they are no longer shown in the job lists; the deletion of the results
+  is not implemented yet, they are currently kept),
+* the other jobs (e.g. PENDING, or still EXECUTING), or all the jobs if `USE_ARCHIVED_PHASE=false`, are deleted: the
+  job is stopped if it is running, its files (uploads, job data, results) and its entries in the database are
+  removed, as when a user deletes a job.
+
+With the SLURM manager, it also updates the phase of the jobs still running on the work cluster.
 The server only accepts it from its own host. It is not run automatically: it should be run regularly, e.g. once a
 day with `cron`.
 
@@ -262,14 +268,12 @@ With Apache, send the request to the URL of the server from the server host, e.g
 
 The **Maintenance** page of the client (admin menu) runs the same checks on demand:
 
-* **Check (dry run)** lists the jobs by category, nothing is changed: jobs to archive (destruction date passed),
-  phase to update from the job manager, jobs to delete (destruction date passed but not in a terminal phase, or
-  `USE_ARCHIVED_PHASE=false`: reported only, the deletion is not implemented yet), inconsistent dates, errors,
-  archived jobs and jobs without issue. By default, the table shows the jobs with an issue or a change; a category
+* **Check (dry run)** lists the jobs by category, nothing is changed: jobs to archive, jobs to delete (see
+  above), phase to update from the job manager, inconsistent dates, errors, archived jobs and jobs without issue. By default, the table shows the jobs with an issue or a change; a category
   can be selected to show only its jobs, and **Show all jobs** also lists the archived jobs and the jobs without
   issue.
-* **Apply changes** (after a check, with a confirmation) archives the jobs and updates their phase, then shows what
-  was done.
+* **Apply changes** (after a check, with a confirmation giving the number of jobs to delete) archives or deletes the
+  jobs and updates their phase, then shows what was done.
 
 The checks cover all the jobs of the database, including the jobs of job definitions that were deleted. The page uses
 the route `/maintenance` of the server (admin only): `GET` for a dry run, `POST` to apply, with an optional
