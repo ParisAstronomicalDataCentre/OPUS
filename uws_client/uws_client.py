@@ -13,6 +13,7 @@ import os
 
 import requests
 import yaml
+from authlib.integrations.base_client import OAuthError
 from authlib.integrations.flask_client import OAuth
 from flask import (
     Flask,
@@ -287,7 +288,24 @@ def oidc_login(idp):
     # Audience of the access token, required by the server if defined for this Identity Provider
     audience = settings.OIDC_IDPS[idp_names[idp]].get("audience")
     kwargs = {"audience": audience} if audience else {}
-    return oauth._clients[session["oidc_idp"]].authorize_redirect(redirect_uri, **kwargs)
+    try:
+        return oauth._clients[session["oidc_idp"]].authorize_redirect(redirect_uri, **kwargs)
+    except Exception as e:  # e.g. Identity Provider unreachable (discovery)
+        return oidc_login_failed(e)
+
+
+def oidc_login_failed(error):
+    """OIDC login refused by the Identity Provider (e.g. invalid scope, access denied) or failed (e.g. Identity
+    Provider unreachable): message to the user, back to the home page"""
+    idp = session.pop("oidc_idp", None)
+    if isinstance(error, OAuthError):
+        reason = error.description or error.error
+        logger.warning(f"OIDC login with {idp} refused by the Identity Provider: {error.error}: {error.description}")
+    else:
+        reason = "the Identity Provider cannot be reached"
+        logger.warning(f"OIDC login with {idp} failed: {type(error).__name__}: {error}")
+    flash(f"Login with {idp} failed: {reason}", "danger")
+    return redirect(url_for("home"), 303)
 
 
 @app.route("/accounts/oidc/callback")  # , defaults={'idp': 0})
@@ -302,11 +320,15 @@ def oidc_callback():
             "warning",
         )
         return redirect(url_for("home"), 303)
-    # Get the token (access, refresh and id tokens are secrets: never log them)
-    token = oauth._clients[session["oidc_idp"]].authorize_access_token()
-    # Get userinfo
-    # user = token.get('userinfo')  # use direct userinfo sent with token (not always present...)
-    user = oauth._clients[session["oidc_idp"]].userinfo()
+    try:
+        # Get the token (access, refresh and id tokens are secrets: never log them), the Identity Provider
+        # may have returned an error instead (e.g. invalid_scope, access_denied)
+        token = oauth._clients[session["oidc_idp"]].authorize_access_token()
+        # Get userinfo
+        # user = token.get('userinfo')  # use direct userinfo sent with token (not always present...)
+        user = oauth._clients[session["oidc_idp"]].userinfo()
+    except Exception as e:
+        return oidc_login_failed(e)
     session["oidc_user"] = user
     logger.debug(f"OIDC userinfo from {session['oidc_idp']} for sub={user.get('sub')}")
     # Get email, or sub if email is not present (sub is always returned)

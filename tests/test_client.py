@@ -12,6 +12,7 @@ import time
 from urllib.parse import parse_qs, urlparse
 
 import pytest
+from authlib.integrations.base_client import OAuthError
 from flask_security import hash_password
 from test_oidc import FakeIdP  # simulated Identity Provider for the server
 
@@ -68,11 +69,17 @@ class ClientIdP:
         self.revoked = []
         self.refreshed = 0
         self.unreachable = False
-        monkeypatch.setattr(self.client, "authorize_access_token", lambda **kw: dict(self.token))
+        self.error = None  # error returned by the Identity Provider to the callback
+        monkeypatch.setattr(self.client, "authorize_access_token", self._authorize_access_token)
         monkeypatch.setattr(self.client, "userinfo", lambda **kw: dict(self.userinfo))
         monkeypatch.setattr(self.client, "load_server_metadata", self._metadata)
         monkeypatch.setattr(self.client, "_get_oauth_client", lambda **kw: FakeOAuthSession(self))
         monkeypatch.setattr(self.client, "fetch_access_token", self._refresh)
+
+    def _authorize_access_token(self, **kwargs):
+        if self.error:
+            raise OAuthError(error=self.error[0], description=self.error[1])
+        return dict(self.token)
 
     def _metadata(self):
         if self.unreachable:
@@ -222,6 +229,24 @@ class TestPasswordLogin:
 
 
 class TestOIDCLogin:
+
+    def test_refused_by_idp(self, client, idp):
+        """Error returned by the Identity Provider (e.g. scope not allowed for the client): message, no error 500"""
+        idp.error = ("invalid_scope", "Scope 'offline_access' not allowed for client 'opus-test'")
+        response = idp.login(client, email=unique_email("refused"))
+        assert response.status_code == 303 and response.headers["Location"] == "/"
+        html = client.get("/").get_data(as_text=True)
+        assert f"Login with {IDP_NAME} failed: Scope &#39;offline_access&#39; not allowed" in html
+        assert not signed_in(client)
+        with client.session_transaction() as s:
+            assert "oidc_idp" not in s
+        assert "refused by the Identity Provider: invalid_scope" in client_log()
+
+    def test_idp_unreachable(self, client, idp):
+        idp.unreachable = True  # discovery fails
+        response = client.get(f"/accounts/oidc/login/{IDP_NAME}")
+        assert response.status_code == 303
+        assert "the Identity Provider cannot be reached" in client.get("/").get_data(as_text=True)
 
     def test_new_account(self, client, idp):
         email = unique_email("oidc")
