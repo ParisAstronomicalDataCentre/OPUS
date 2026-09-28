@@ -332,8 +332,8 @@
                     if (has_current && v.id != 'current' && !(previous && previous.id == 'current')) {
                         buttons += '<button type="button" class="btn btn-default btn-xs history-diff" data-from="' + v.id + '" data-to="current">Diff with current</button>';
                     }
-                    return '<tr><td>' + escape_html(v.date) + '</td><td>' + (KINDS[v.kind] || escape_html(v.kind)) + '</td><td>'
-                        + escape_html(v.version) + '</td><td>' + buttons + '</td></tr>';
+                    return '<tr><td>' + escape_html(v.date) + '</td><td>' + escape_html(v.version) + '</td><td>'
+                        + (KINDS[v.kind] || escape_html(v.kind)) + '</td><td>' + buttons + '</td></tr>';
                 });
                 var events = json.events.slice().reverse().map(function (e) {
                     var details = [];
@@ -346,7 +346,7 @@
                 });
                 var html = '<h5>Versions</h5><p class="text-muted small">The date of a previous version is the date of its file, '
                     + 'i.e. when it was validated.</p>'
-                    + '<table class="table table-condensed table-bordered"><thead><tr><th>Date</th><th>Version</th><th>Number</th><th>Compare</th></tr></thead><tbody>'
+                    + '<table class="table table-condensed table-bordered"><thead><tr><th>Date</th><th>Version</th><th>Status</th><th>Compare</th></tr></thead><tbody>'
                     + rows.join('') + '</tbody></table>'
                     + '<div id="history_diff"></div>'
                     + '<h5>Events</h5>'

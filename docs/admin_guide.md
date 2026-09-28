@@ -224,8 +224,9 @@ by `OPUS_MAIL_SERVER` and `OPUS_MAIL_PORT`), with the link to the definition.
 To validate it, use the **Job Definitions** page (list of the job definitions to validate, with the differences
 with the validated version), or open the Job Definition Editor, load the definition `tmp/<name>`, check it
 (parameters, script...) and click **Validate** (this button is only shown to the administrator). The validation
-request is recorded in the history even if the email cannot be sent. The definition and its script are then
-copied from `tmp/<name>` to `<name>`, and the job is available to the users. If a previous version of the job
+request is recorded in the history even if the email cannot be sent. A validated or rejected job definition is
+removed from `tmp/`. The definition and its script are then
+moved from `tmp/<name>` to `<name>`, and the job is available to the users. If a previous version of the job
 existed, it is kept in the `saved/` directories:
 
 * `$OPUS_VAR_PATH/jdl/votable/saved/<name>_v<version>_<date>_vot.xml` for the definition,

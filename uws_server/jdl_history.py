@@ -5,7 +5,8 @@
 History of the job definitions (Job Definitions page of the client, admin only)
 
 Versions of a job definition, from the files:
-- pending: submitted in tmp/ (form or import), to be validated if new or different from the current version
+- pending: submitted in tmp/ (form or import), removed from tmp/ when validated or rejected (a file of tmp/
+  identical to the current version, left by a previous version of OPUS, is ignored)
 - current: validated job definition
 - saved: previous versions, kept in saved/ when a new version is validated or when the job definition is deleted
   (<jobname>_v<version>_<date>[_DELETED], date of the saved file, i.e. when this version was validated)
@@ -125,12 +126,24 @@ def _read(jobname, vid):
     return content, script
 
 
+def _pending_status(jobname):
+    """Status of the file of tmp/: new, changed, or None (no file, or identical to the current version)"""
+    jdl = _jdl()
+    if not os.path.isfile(jdl._get_filename(f"tmp/{jobname}")):
+        return None
+    if not os.path.isfile(jdl._get_filename(jobname)):
+        return "new"
+    return "changed" if _read(jobname, "pending") != _read(jobname, "current") else None
+
+
 def versions(jobname):
     """Versions of the job definition, most recent first"""
     check_jobname(jobname)
     result = []
     for vid, kind in [("pending", "pending"), ("current", "current")]:
         jdl_file, _ = _files(jobname, vid)
+        if vid == "pending" and not _pending_status(jobname):
+            continue
         if os.path.isfile(jdl_file):
             try:
                 version = _read(jobname, vid)[0].get("version", "")
@@ -151,15 +164,13 @@ def pending():
         if not JOBNAME_RE.match(jobname):
             continue
         try:
+            status = _pending_status(jobname)
+            if not status:
+                continue  # identical to the current version (validated by a previous version of OPUS)
             pending_content = _read(jobname, "pending")
         except Exception as e:
             logger.warning(f"Cannot read pending job definition {jobname}: {e}")
             continue
-        status = "new"
-        if os.path.isfile(jdl._get_filename(jobname)):
-            if _read(jobname, "current") == pending_content:
-                continue  # already validated
-            status = "changed"
         # last submission, and validation request after it
         submitted, requested = {}, False
         for event in events(jobname):

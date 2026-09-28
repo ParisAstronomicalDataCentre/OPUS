@@ -248,9 +248,11 @@ class TestHistory:
         requests.post(f"{base_url(server)}/jdl/tmp/def_history/validation_request", auth=AUTH)
         assert self.pending(server)["def_history"]["validation_requested"] is True
         assert self.admin_get(server, "def_history/history")["events"][-1]["email"] == "sent"
-        # validated: no longer to validate (the file stays in tmp/, identical)
+        # validated: removed from tmp/
         assert validate(server, "def_history").status_code == 200
         assert "def_history" not in self.pending(server)
+        assert not os.path.exists(f"{settings.JDL_PATH}/votable/tmp/def_history_vot.xml")
+        assert not os.path.exists(f"{settings.JDL_PATH}/scripts/tmp/def_history.sh")
         # new version: changed, with a diff
         submit(server, "def_history", version="2", script="echo v2 > $output\n")
         pending = self.pending(server)["def_history"]
@@ -262,10 +264,11 @@ class TestHistory:
         # history: versions (most recent first) and events
         history = self.admin_get(server, "def_history/history")
         kinds = [(v["kind"], v["version"]) for v in history["versions"]]
-        assert kinds == [("pending", "2"), ("current", "2"), ("saved", "1")]
-        saved = history["versions"][2]["id"]
+        assert kinds == [("current", "2"), ("saved", "1")]
+        saved = history["versions"][1]["id"]
         assert self.admin_get(server, "def_history/diff", FROM=saved, TO="current")["script"]
-        assert self.admin_get(server, "def_history/diff", FROM="pending", TO="current") == {"definition": "", "script": ""}
+        response = requests.get(f"{base_url(server)}/jdl_admin/def_history/diff", params={"FROM": "pending"}, auth=ADMIN)
+        assert response.status_code == 404  # no submitted version
         events = [(e["event"], e["user"]) for e in history["events"]]
         assert events == [
             ("submitted", AUTH[0]), ("validation_requested", AUTH[0]), ("validated", ADMIN[0]),
@@ -278,6 +281,16 @@ class TestHistory:
         submit(server, "def_history", version="3", script="echo v3 > $output")
         diff = self.admin_get(server, "def_history/diff", FROM="current", TO="pending")["script"]
         assert "-echo v2 > $output" in diff.splitlines() and "+echo v3 > $output" in diff.splitlines()
+
+    def test_leftover_identical(self, server):  # noqa: F811 (server fixture)
+        """A job definition of tmp/ identical to the validated version (left by a previous version of OPUS, which kept
+        the validated job definitions in tmp/) is not to validate"""
+        submit(server, "def_leftover")
+        validate(server, "def_leftover")
+        submit(server, "def_leftover")  # same content, as the copy left in tmp/
+        assert "def_leftover" not in self.pending(server)
+        versions = self.admin_get(server, "def_leftover/history")["versions"]
+        assert [v["kind"] for v in versions] == ["current"]
 
     def test_request_without_email(self, server):  # noqa: F811 (server fixture)
         """The validation request is recorded even if the email cannot be sent"""

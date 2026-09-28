@@ -860,9 +860,10 @@ def validate_job_definition(jobname):
             if os.path.isfile(script_dst):
                 os.rename(script_dst, f"{jdl.scripts_path}/saved/{saved}.sh")
             logger.info("Previous job definition saved: " + saved)
-        shutil.copy(jdl_src, jdl_dst)
-        shutil.copy(script_src, script_dst)
-        logger.info("Job definition and script copied: " + jobname)
+        # Move from tmp/ (no longer to validate)
+        shutil.move(jdl_src, jdl_dst)
+        shutil.move(script_src, script_dst)
+        logger.info("Job definition and script validated: " + jobname)
         # Copy script to job manager
         manager = getattr(managers, settings.MANAGER + "Manager")()
         manager.cp_script(jobname)
