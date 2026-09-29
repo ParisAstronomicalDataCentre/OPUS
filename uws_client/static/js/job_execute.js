@@ -28,8 +28,6 @@
                 for (var jn in json['jobnames']) {
                     $('.selectpicker').append('<option value="' + json['jobnames'][jn] + '">' + json['jobnames'][jn] + '</option>')
                 };
-                $('.selectpicker').append('<option disabled>─────</option>');
-                $('.selectpicker').append('<option>all</option>');
                 $('.selectpicker').selectpicker('refresh');
                 // Check if jobname is set in DOM
                 var jobname = $('#jobname').attr('value');
