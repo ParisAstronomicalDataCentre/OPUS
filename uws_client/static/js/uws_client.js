@@ -643,13 +643,15 @@ var uws_client = (function($) {
             $('#id_'+pname).wrap('<div class="input-group"></div>');
             $('#id_'+pname).parent().append('\
                 <span class="input-group-btn">\
-                    <button id="button_'+pname+'" class="btn btn-default" type="button" title="Remove item">\
+                    <button id="button_'+pname+'" class="btn btn-default" type="button" title="Give a file, or a URL (or an identifier of the entity store)">\
                         File <span class="glyphicon glyphicon-transfer"></span> URL\
                     </button>\
                 </span>');
             $('#button_'+pname).click( function() {
                 if ($('#id_'+pname).attr('type') == 'file') {
-                    $('#id_'+pname).attr('type', 'url');
+                    // text (not url): a URL, or an identifier of the entity store (checked by the server)
+                    $('#id_'+pname).attr('type', 'text');
+                    $('#id_'+pname).attr('placeholder', 'URL, or identifier of the entity store');
                 } else {
                     $('#id_'+pname).attr('type', 'file');
                 };
@@ -740,9 +742,9 @@ var uws_client = (function($) {
                 };
                 // Update form fields
                 $('#id_' + pname).attr('value', pvalue);
-                // If type=file, and url is given, then switch type to urk
-                if ($('#id_'+pname).attr('type') == 'file' && pvalue.indexOf('http') !== -1) {
-                    $('#id_'+pname).attr('type', 'url');
+                // If type=file, and a value is given (URL, or identifier of the entity store), then switch type to text
+                if ($('#id_'+pname).attr('type') == 'file' && pvalue) {
+                    $('#id_'+pname).attr('type', 'text');
                 };
             };
         };
