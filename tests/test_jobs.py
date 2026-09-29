@@ -200,12 +200,13 @@ class TestInvalidInput:
             ({}, "'input.txt' is not an identifier of the entity store, nor a URL"),  # default value of the input
             ({"input": ""}, "Input 'input' is required"),
             ({"input": "http://localhost:1/nothing"}, "cannot get http://localhost:1/nothing (ConnectionError)"),
-            ({"input": "__store__?ID=unknown"}, "(HTTP 404)"),
+            ({"input": "__base__/store?ID=unknown"}, "Input 'input': result unknown not found in the entity store"),
+            ({"input": "__base__/nothing"}, "/nothing (HTTP 4"),  # HTTP error
         ],
     )
     def test_invalid_input(self, server, params, reason):  # noqa: F811 (server fixture)
         base = server.rsplit(settings.UWS_SERVER_ENDPOINT, 1)[0]
-        params = {k: v.replace("__store__", f"{base}/store") for k, v in params.items()}
+        params = {k: v.replace("__base__", base) for k, v in params.items()}
         before = self.job_ids(server)
         response = requests.post(f"{server}/test_activity_2", data=dict(params, text="x"), auth=AUTH, allow_redirects=False)
         assert response.status_code == 400, response.text

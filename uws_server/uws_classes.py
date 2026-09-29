@@ -447,12 +447,14 @@ class Job:
                 # 4/ Input is an identifier in the entity store
                 store_url = f"{settings.BASE_URL}/store?ID="
                 store_url_proxy = f"{settings.UWS_CLIENT_ENDPOINT}/proxy/store?ID="
+                in_store = True  # value given as the URL of the entity store of this server
                 if store_url in value:
                     entity_id = value.split(store_url)[1]
                 elif store_url_proxy in value:
                     entity_id = value.split(store_url_proxy)[1]
                 else:
                     entity_id = value
+                    in_store = False
                 entity = self.storage.get_entity(entity_id, silent=True)
                 if entity:
                     # convert value to file dir+name in store
@@ -462,6 +464,8 @@ class Job:
                         f"Input '{pname}' found in the entity store with ID={entity_id}: {value}"
                     )
 
+                elif in_store:
+                    raise InvalidInput(f"Input '{pname}': result {entity_id} not found in the entity store")
                 else:
                     # 5/ Input is a URL
                     if not value:
