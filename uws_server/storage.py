@@ -665,6 +665,15 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
     # ----------
     # EntityStorage methods
 
+    def remove_entities_in_dir(self, file_dir):
+        """Remove the entities of the files of a directory (e.g. files uploaded for a job)"""
+        with self.get_session() as session:
+            entity_ids = [e.entity_id for e in session.query(self.Entity).filter_by(file_dir=file_dir)]
+            if entity_ids:
+                session.query(self.Used).filter(self.Used.entity_id.in_(entity_ids)).delete(synchronize_session=False)
+                session.query(self.Entity).filter(self.Entity.entity_id.in_(entity_ids)).delete(synchronize_session=False)
+                session.commit()
+
     def add_used(self, entity_id, jobid, role=None, owner=None):
         """Add Used relation: the entity is used by the job"""
         with self.get_session() as session:

@@ -57,6 +57,12 @@ class ParameterTooLong(Exception):
     pass
 
 
+class InvalidInput(Exception):
+    """Input of a job (used entity) missing, or not found (not in the entity store, URL not reachable)"""
+
+    pass
+
+
 # Maximum length of parameter values, as defined for the storage columns (see storage.py)
 PARAMETER_MAX_LENGTH = {"runId": 64}  # jobs.run_id
 PARAMETER_MAX_LENGTH_DEF = 255  # job_parameters.value
@@ -267,8 +273,12 @@ class Job:
             self.run_id = None
             self.parameters = {}
             self.results = {}
-            # Set parameters from POSTed info
-            self.set_from_post(from_post.POST, from_post.files)
+            # Set parameters from POSTed info (the job is saved at the beginning, removed if the creation fails)
+            try:
+                self.set_from_post(from_post.POST, from_post.files)
+            except Exception:
+                self._remove_failed_creation()
+                raise
 
         elif get_attributes or get_parameters or get_results:
             # Get from storage
@@ -443,7 +453,7 @@ class Job:
                     entity_id = value.split(store_url_proxy)[1]
                 else:
                     entity_id = value
-                entity = self.storage.get_entity(entity_id, silent=False)
+                entity = self.storage.get_entity(entity_id, silent=True)
                 if entity:
                     # convert value to file dir+name in store
                     value = f"file://{entity.get('file_dir')}/{entity.get('file_name')}"
@@ -454,42 +464,46 @@ class Job:
 
                 else:
                     # 5/ Input is a URL
+                    if not value:
+                        raise InvalidInput(
+                            f"Input '{pname}' is required: give a file, an identifier of the entity store, or a URL"
+                        )
                     furl = ""
-                    if any(s in value for s in ["http://", "https://"]):
+                    if any(value.startswith(s) for s in ["http://", "https://"]):
                         furl = value
-                    elif url_jdl:
+                    elif url_jdl and any(url_jdl.startswith(s) for s in ["http://", "https://"]):
                         # take URL given in JDL, and replace $ID
                         furl = url_jdl.replace("$ID", value)
+                    else:
+                        raise InvalidInput(
+                            f"Input '{pname}': '{value}' is not an identifier of the entity store, nor a URL"
+                        )
                     # try to upload file from URL
                     try:
-                        r = requests.get(furl, allow_redirects=True)
-                        if r.status_code == 200:
-                            cd = r.headers.get("content-disposition")
-                            filename = get_filename_from_cd(cd)
-                            if not os.path.isdir(job_upload_dir):
-                                os.makedirs(job_upload_dir)
-                            open(os.path.join(job_upload_dir, filename), "wb").write(r.content)
-                            entity = self.storage.register_entity(
-                                file_name=filename,
-                                file_dir=job_upload_dir,
-                                used_jobid=self.jobid,
-                                used_role=pname,
-                                owner=self.user.name,
-                                owner_token=self.user.token,
-                                content_type=content_type,
-                            )
-                            # Parameter value is converted to the file name on server (uploaded in job_upload_dir)
-                            value = f"file://{job_upload_dir}/{filename}"
-                            logger.info(
-                                f"Input '{pname}' is given as a URL and was uploaded: {furl}"
-                            )
-                    except Exception as e:
-                        logger.warning(
-                            f"Cannot upload URL for input '{pname}': {furl}\n{e}"
-                        )
-                        raise UserWarning(
-                            f"Cannot upload URL for input '{pname}': {furl}"
-                        ) from None
+                        r = requests.get(furl, allow_redirects=True, timeout=60)
+                    except requests.exceptions.RequestException as e:
+                        logger.warning(f"Cannot upload URL for input '{pname}': {furl}\n{e}")
+                        raise InvalidInput(f"Input '{pname}': cannot get {furl} ({type(e).__name__})") from None
+                    if r.status_code != 200:
+                        raise InvalidInput(f"Input '{pname}': cannot get {furl} (HTTP {r.status_code})")
+                    cd = r.headers.get("content-disposition")
+                    filename = get_filename_from_cd(cd)
+                    if not os.path.isdir(job_upload_dir):
+                        os.makedirs(job_upload_dir)
+                    with open(os.path.join(job_upload_dir, filename), "wb") as f:
+                        f.write(r.content)
+                    entity = self.storage.register_entity(
+                        file_name=filename,
+                        file_dir=job_upload_dir,
+                        used_jobid=self.jobid,
+                        used_role=pname,
+                        owner=self.user.name,
+                        owner_token=self.user.token,
+                        content_type=content_type,
+                    )
+                    # Parameter value is converted to the file name on server (uploaded in job_upload_dir)
+                    value = f"file://{job_upload_dir}/{filename}"
+                    logger.info(f"Input '{pname}' is given as a URL and was uploaded: {furl}")
             # Add Input entity to UWS parameters
             self.parameters[pname] = {
                 "value": value,
@@ -953,6 +967,15 @@ class Job:
         Job can be archived at any time.
         """
         self.change_status("ARCHIVED", f"Job archived (phase was {self.phase})")
+
+    def _remove_failed_creation(self):
+        """Remove the job, its files and its uploaded entities, after a failed creation (see __init__)"""
+        try:
+            self.storage.remove_entities_in_dir(os.path.join(settings.UPLOADS_PATH, self.jobid))
+            self.delete()
+            logger.info(f"Job {self.jobname} {self.jobid} removed (creation failed)")
+        except Exception as e:
+            logger.warning(f"Cannot remove the job {self.jobid} after a failed creation: {e}")
 
     def delete(self):
         """Delete job

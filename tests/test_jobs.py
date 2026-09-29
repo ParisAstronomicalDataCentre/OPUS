@@ -11,6 +11,7 @@ The job definitions test_activity_1 and test_activity_2 of test_jobs/ are used, 
 - test_activity_2 writes the input file and the parameter text in the result output
 """
 
+import html
 import json
 import os
 import shutil
@@ -184,6 +185,32 @@ def provenance_job(server):
     assert wait(job_url) == "COMPLETED"
     wait_saved(job_url)  # provenance files added after the phase COMPLETED
     return job_url
+
+
+class TestInvalidInput:
+    """Input of a job missing or not found: error 400 with the reason, and no job left"""
+
+    def job_ids(self, server):  # noqa: F811 (server fixture)
+        root = ET.fromstring(requests.get(f"{server}/test_activity_2", auth=AUTH).text)
+        return {job.get("id") or job.find("{*}jobId").text for job in root}
+
+    @pytest.mark.parametrize(
+        "params, reason",
+        [
+            ({}, "'input.txt' is not an identifier of the entity store, nor a URL"),  # default value of the input
+            ({"input": ""}, "Input 'input' is required"),
+            ({"input": "http://localhost:1/nothing"}, "cannot get http://localhost:1/nothing (ConnectionError)"),
+            ({"input": "__store__?ID=unknown"}, "(HTTP 404)"),
+        ],
+    )
+    def test_invalid_input(self, server, params, reason):  # noqa: F811 (server fixture)
+        base = server.rsplit(settings.UWS_SERVER_ENDPOINT, 1)[0]
+        params = {k: v.replace("__store__", f"{base}/store") for k, v in params.items()}
+        before = self.job_ids(server)
+        response = requests.post(f"{server}/test_activity_2", data=dict(params, text="x"), auth=AUTH, allow_redirects=False)
+        assert response.status_code == 400, response.text
+        assert reason in html.unescape(response.text)
+        assert self.job_ids(server) == before  # the job is not kept
 
 
 class TestProvenance:

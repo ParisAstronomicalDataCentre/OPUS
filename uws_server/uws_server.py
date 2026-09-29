@@ -46,6 +46,7 @@ from .settings import (
 )
 from .uws_classes import (
     EntityAccessDenied,
+    InvalidInput,
     Job,
     JobAccessDenied,
     JobList,
@@ -1489,7 +1490,7 @@ def create_job(jobname):
 
     Returns:
         303 See other: /<jobname>/<jobid> (on success)
-        400 Bad Request (on ParameterTooLong)
+        400 Bad Request (on ParameterTooLong, InvalidInput)
         403 Forbidden (on JobAccessDenied)
         500 Internal Server Error (on error)
     """
@@ -1511,7 +1512,7 @@ def create_job(jobname):
             job.close()
     except JobAccessDenied as e:
         abort_403(str(e))
-    except ParameterTooLong as e:
+    except (ParameterTooLong, InvalidInput) as e:
         abort_400(str(e))
     except UserWarning as e:
         abort_500(e.args[0])
