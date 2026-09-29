@@ -25,6 +25,7 @@
     ];
 
     var jobnames = [];
+    var ALL_JOBS = '_all_';  // value (and URL /jobs/_all_) of the list of all the jobs
 
     function get_jobnames() {
         // Get jobnames from server
@@ -43,10 +44,13 @@
                     $('.selectpicker').append('<option value="' + json['jobnames'][jn] + '">' + json['jobnames'][jn] + '</option>')
                 };
                 $('.selectpicker').append('<option disabled>─────</option>');
-                $('.selectpicker').append('<option>all</option>');
+                $('.selectpicker').append('<option value="' + ALL_JOBS + '">All jobs</option>');
                 $('.selectpicker').selectpicker('refresh');
                 // Check if jobname is set in DOM
                 var jobname = $('#jobname').attr('value');
+                if (jobname == 'all' && jobnames.indexOf('all') == -1) {
+                    jobname = ALL_JOBS;  // previous URL of the list of all the jobs (/jobs/all)
+                };
                 if (jobname) {
                     $('select[name=jobname]').val(jobname);
                     $('.selectpicker').selectpicker('refresh');
@@ -71,9 +75,11 @@
         var jobname = $('select[name=jobname]').val();
         var col_sort = job_list_columns.indexOf('creationTime');
         $('button.actions').removeAttr('disabled');
-        if (jobname == 'all') {
+        if (jobname == ALL_JOBS) {
             $('#loading').hide();
+            // no job definition for the list of all the jobs
             $('#create_new_job').attr("disabled", "disabled");
+            $('#edit_jdl').attr("disabled", "disabled");
             var cols = Array.from(job_list_columns);
             if (cols.indexOf('jobName') == -1) {
                 cols.splice(0, 0, "jobName");
