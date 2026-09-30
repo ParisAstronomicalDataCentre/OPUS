@@ -1180,10 +1180,10 @@ def download_entity():
                 ]
             if archived:
                 raise storage.NotFoundWarning(
-                    f"Result {entity_id} is no longer available: job {archived[0]} is archived (its result files "
-                    f"were deleted)"
+                    f"File {entity_id} is no longer available as the corresponding job {archived[0]} is archived and its result files "
+                    f"were deleted"
                 )
-            raise storage.NotFoundWarning(f"File of the result {entity_id} not found")
+            raise storage.NotFoundWarning(f"File {entity_id} not found")
         download = (
             entity["entity_id"] + "_" + entity["file_name"]
         )  #  + os.path.splitext(entity['file_name'])[1]
