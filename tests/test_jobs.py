@@ -152,14 +152,23 @@ class TestRunJobs:
         assert wait(job_url) == "ERROR"
         assert "false" in requests.get(f"{job_url}/error", auth=AUTH).text
 
-    def test_abort(self, server):
+    def test_abort(self, server, caplog):
         job_url = create_job(server, "test_activity_1", text="slow")
         assert wait(job_url, phases=("EXECUTING",)) == "EXECUTING"
         pgid = process_id(job_url)
         assert group_processes(pgid)  # batch.sh and sleep
+        caplog.set_level("INFO", logger="uws_server")
         requests.post(f"{job_url}/phase", data={"PHASE": "ABORT"}, auth=AUTH)
         assert wait(job_url) == "ABORTED"
         assert group_processes(pgid) == []  # the child processes are stopped too
+        # the manager sees the end of the process (polled): killed on request, no ERROR event sent
+        for _ in range(50):
+            if f"process {pgid} killed on request" in caplog.text:
+                break
+            time.sleep(0.1)
+        assert f"process {pgid} killed on request" in caplog.text
+        assert not [r for r in caplog.records if r.levelname == "ERROR"]
+        assert phase(job_url) == "ABORTED"
 
     def test_pending_job(self, server):
         job_url = create_job(server, "test_activity_1", run=False, text="before")

@@ -1388,6 +1388,7 @@ def job_event():
         200 OK: text/plain (on success)
         403 Forbidden (if not super_user)
         404 Not Found: Job not found (on NotFoundWarning)
+        409 Conflict: text/plain, event ignored (job already in a final phase, e.g. killed after an abort)
         500 Internal Server Error (on error)
     """
     try:
@@ -1406,6 +1407,13 @@ def job_event():
                 from_process_id=True,
             )
             try:
+                # Job already in a final phase (e.g. the process is killed after an abort): event ignored
+                if "phase" in request.POST and job.phase in ["COMPLETED", "ABORTED", "ARCHIVED"]:
+                    msg = f"Event {request.POST['phase']} ignored for job {job.jobname} {job.jobid} ({job.phase})"
+                    logger.info(msg)
+                    response.status = 409
+                    response.content_type = "text/plain; charset=UTF-8"
+                    return msg
                 # Update job
                 if "phase" in request.POST:
                     cur_phase = job.phase

@@ -19,6 +19,7 @@ import datetime as dt
 import re
 import subprocess as sp
 
+import contextlib
 import os
 import signal
 import threading
@@ -297,6 +298,7 @@ class LocalManager(Manager):
     suspended_processes = (
         []
     )  # suspended processes, restart signals will be sent regularly
+    killed_processes = set()  # processes killed on request (abort, delete): no ERROR event sent for them
 
     def __init__(self):
         # PATHs
@@ -312,7 +314,10 @@ class LocalManager(Manager):
         url = f"{settings.BASE_URL}/handler/job_event"
         response = requests.post(url, data)
         logger.info(f"job event sent {response.content}")
-        if response.status_code != 200:
+        if response.status_code == 409:
+            # the job has already its final phase (e.g. aborted): event ignored by the server
+            logger.info(f"job event {phase} ignored: {response.text}")
+        elif response.status_code != 200:
             logger.error(response.content)
         del response
 
@@ -363,6 +368,10 @@ class LocalManager(Manager):
                 threading.Timer(
                     self.poll_interval, self._poll_process, [popen, job]
                 ).start()
+        # Handle processes killed on request (abort, delete): the server already knows
+        elif process_id in self.killed_processes:
+            self.killed_processes.discard(process_id)
+            logger.info(f"process {process_id} killed on request (rcode={rcode})")
         # Handle killed processes
         elif rcode == -9:
             logger.info(f"process {process_id} killed during execution")
@@ -447,6 +456,9 @@ class LocalManager(Manager):
         """Kill the job and its child processes (SIGKILL => no error sent, just killed)"""
         if not job.process_id:
             return
+        # the end of the process is expected: no ERROR event (see _poll_process)
+        with contextlib.suppress(ValueError):
+            self.killed_processes.add(int(job.process_id))
         try:
             # process group of the job (see start), with all its child processes
             os.killpg(job.process_id, signal.SIGKILL)
