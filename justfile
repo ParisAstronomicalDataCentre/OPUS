@@ -43,11 +43,11 @@ ruff path="src":
 
 # Run OPUS server
 server:
-    uv run uvicorn app_server:asgi_app --host localhost --port 8082 --workers 1
+    uv run uvicorn app_server:asgi_app --host localhost --port 8082 --workers 1 --reload
 
 # Run OPUS client
 client:
-    uv run uvicorn app_client:asgi_app --host localhost --port 8080 --workers 1
+    uv run uvicorn app_client:asgi_app --host localhost --port 8080 --workers 1 --reload
 
 # Print a .env file with random secrets (e.g. just env > .env)
 env template=".env.dist":
@@ -59,14 +59,20 @@ nginx_conf:
 
 # Run OPUS server + client behind nginx (as local user, no sudo needed)
 start:
+    # Start server and client uvicorn processes in background and store their PIDs
+    uv run uvicorn app_server:asgi_app --host localhost --port 8082 --workers 1 --root-path /opus_server --reload &
+    echo $! > .uvicorn_server.pid
+    @sleep 1
+    uv run uvicorn app_client:asgi_app --host localhost --port 8080 --workers 1 --root-path /opus_client --reload &
+    echo $! > .uvicorn_client.pid
+    @sleep 1
+    # Once back‑ends are listening, start nginx as a reverse proxy
     nginx -e stderr -c `pwd`/nginx/nginx.conf
-    uv run uvicorn app_server:asgi_app --host localhost --port 8082 --workers 1 --root-path /opus_server &
-    @sleep 1
-    uv run uvicorn app_client:asgi_app --host localhost --port 8080 --workers 1 --root-path /opus_client &
-    @sleep 1
 
 stop:
-    pkill -f uvicorn || true
+    # Gracefully stop the uvicorn processes started by `just start`
+    @sh -c 'if [ -f .uvicorn_server.pid ]; then kill $(cat .uvicorn_server.pid) && rm .uvicorn_server.pid; fi' || true
+    @sh -c 'if [ -f .uvicorn_client.pid ]; then kill $(cat .uvicorn_client.pid) && rm .uvicorn_client.pid; fi' || true
     @sleep 1
     nginx -e stderr -c `pwd`/nginx/nginx.conf -s stop
 
