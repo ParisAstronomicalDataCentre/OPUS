@@ -5,34 +5,49 @@
         {# Flask-Admin pages (Client Accounts): templates of Flask-Admin (Bootstrap 4) in the layout of OPUS (Bootstrap 5) #}
         <link href="{{ admin_static.url(filename='admin/css/bootstrap4/admin.css', v='1.1.1') }}" rel="stylesheet">
         <link href="{{ admin_static.url(filename='bootstrap/bootstrap4/css/font-awesome.min.css', v='4.7.0') }}" rel="stylesheet">
+        <link href="/static/css/admin.css?v={{ asset_version }}" rel="stylesheet">
         {% if admin_view.extra_css %}
           {% for css_url in admin_view.extra_css %}
             <link href="{{ css_url }}" rel="stylesheet">
           {% endfor %}
         {% endif %}
+        {% block head %}{% endblock %}
     {% endblock %}
     {% block content %}
-    <div class="container">
-      <ul class="nav nav-pills mb-3">
-        {% block main_menu %}
-        {{ layout.menu() }}
-        {% endblock %}
-        {% block menu_links %}
-        {{ layout.menu_links() }}
-        {% endblock %}
-        {% block access_control %}
-        {% endblock %}
-      </ul>
+    <div class="container bs-docs-container admin-page">
+        <div class="card mb-3">
+            <div class="card-header d-flex flex-wrap align-items-center gap-2">
+                <span class="card-title">Manage client accounts</span>
+                {# views of Flask-Admin (Users, Roles), without its home page #}
+                <div class="btn-group ms-auto">
+                    {% for item in admin_view.admin.menu() %}
+                    {% if not item.is_category() and item.is_accessible() and item.is_visible() and item.get_url() != url_for('admin.index') %}
+                    <a class="btn btn-outline-secondary{% if item.is_active(admin_view) %} active{% endif %}" href="{{ item.get_url() }}">
+                        {% if item.get_icon_value() %}<span class="bi {{ item.get_icon_value() }}"></span>{% endif %}
+                        {{ item.name }}
+                    </a>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="card-body">
+                {# store the jinja2 context for form_rules rendering logic #}
+                {% set render_ctx = h.resolve_ctx() %}
 
-      {# store the jinja2 context for form_rules rendering logic #}
-      {% set render_ctx = h.resolve_ctx() %}
-
-      {% block body %}{% endblock %}
+                {% block body %}{% endblock %}
+            </div>
+        </div>
     </div>
+    {# scripts of the Flask-Admin pages (forms, actions), after their elements #}
+    {% block tail %}{% endblock %}
     {% endblock %}
 
     {% block js %}
     <script src="{{ admin_static.url(filename='vendor/jquery.min.js', v='3.5.1') }}" type="text/javascript"></script>
+    <script type="text/javascript">
+        // tooltips called by the scripts of Flask-Admin before the page is loaded: replaced by Bootstrap once loaded
+        jQuery.fn.tooltip = jQuery.fn.tooltip || function () { return this; };
+    </script>
     <script src="{{ admin_static.url(filename='vendor/moment.min.js', v='2.9.4') }}" type="text/javascript"></script>
     <script src="{{ admin_static.url(filename='vendor/select2/select2.min.js', v='4.2.1') }}" type="text/javascript"></script>
     {% if admin_view.extra_js %}

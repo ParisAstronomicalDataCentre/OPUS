@@ -12,6 +12,7 @@
 .card-header .card-title {
     margin-bottom: 0;
     font-size: 1.25rem;
+    font-weight: normal;
 }
 /* cards in a card (e.g. results of a job): title in the size of the text */
 .card .card .card-header .card-title {
@@ -119,4 +120,81 @@ body {
 /* pager of a table (see opus_table.js): background of the card headers */
 th.ts-pager {
     --bs-table-bg: var(--bs-card-cap-bg);
+}
+
+/* groups of fields of the job form (see uws_client.js): a line under a group that is not empty */
+.params-group:not(:empty) {
+    border-bottom: var(--bs-border-width) solid var(--bs-border-color);
+    margin-bottom: 1rem;
+}
+
+/* footer at the bottom of the window when the page is shorter (see skeleton.html, footer.html) */
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+.bs-docs-footer {
+    margin-top: auto;
+}
+
+/* labels of the inputs in bold, except the labels of the checkboxes and radio buttons */
+label {
+    font-weight: 700;
+}
+.form-check-label {
+    font-weight: normal;
+}
+
+/* text under an input, aligned with the text in the input (e.g. default values in preferences.html) */
+.input-aligned {
+    padding-left: calc(var(--bs-border-width) + 0.75rem);
+}
+
+/* no space at the bottom of the cards: tables of a card, last paragraph of a card body */
+.card > .table,
+.card > .table-responsive > .table {
+    margin-bottom: 0;
+}
+.card-body > :last-child {
+    margin-bottom: 0;
+}
+
+/* preview of a text result of a job (see uws_client.js), with colors for JSON and XML */
+.text-preview {
+    text-align: left;
+    max-height: 25em;
+    overflow: auto;
+    margin: 0;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+    background-color: var(--bs-tertiary-bg);
+    border: var(--bs-border-width) solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+}
+.text-preview .hl-key { color: #0550ae; }
+.text-preview .hl-string { color: #0a7b36; }
+.text-preview .hl-number { color: #b35900; }
+.text-preview .hl-literal { color: #8250df; }
+.text-preview .hl-tag { color: #0550ae; }
+.text-preview .hl-attr { color: #953800; }
+.text-preview .hl-comment { color: #6e7781; font-style: italic; }
+
+/* table of the job properties (job_edit.html): names in the width of the labels of the parameters (col-md-2) */
+@media (min-width: 768px) {
+    #prop_list td:first-child {
+        width: 16.666667%;
+    }
+}
+
+/* home page (home.html): content aligned with the text of the navbar (padding px-3 and border) */
+.home-content {
+    padding-left: calc(var(--bs-gutter-x) * 0.5 + 1rem + var(--bs-border-width));
+    padding-right: calc(var(--bs-gutter-x) * 0.5 + 1rem + var(--bs-border-width));
+}
+
+/* results and details of a job (job_edit.html): no space under the last card (class mb-3 of the cards) */
+#results_list > .card:last-child,
+#details_list > .card:last-child {
+    margin-bottom: 0 !important;
 }

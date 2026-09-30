@@ -1,5 +1,5 @@
 /*
- * Look of Bootstrap 3 with Bootstrap 5: sizes, page width, navbar, headings, labels, links and warning color.
+ * Look of Bootstrap 3 with Bootstrap 5: sizes, page width, navbar, headings, links and warning color.
  * Optional: without this file, the pages have the look of Bootstrap 5 (see inc_css_common.html).
  */
 
@@ -62,13 +62,11 @@ h5, .h5 { font-size: 0.875rem; }
 h6, .h6 { font-size: 0.75rem; }
 .card-header h4 { margin: 0; }
 
-/* labels in bold (as Bootstrap 3), except the labels of the checkboxes */
+/* margin under the labels (as Bootstrap 3), except the labels of the checkboxes (labels in bold: see global.css) */
 label {
-    font-weight: 700;
     margin-bottom: 5px;
 }
 .form-check-label {
-    font-weight: normal;
     margin-bottom: 0;
 }
 

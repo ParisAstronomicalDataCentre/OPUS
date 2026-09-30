@@ -55,7 +55,7 @@ var uws_client = (function($) {
         ownerId: 'Owner',
         creationTime: 'Creation Time',
         phase: 'Phase',
-        edit: 'Edit Job',
+        edit: 'Open Job',
         details: 'Details',
         results: 'Results',
         control: 'Control',
@@ -168,7 +168,7 @@ var uws_client = (function($) {
     // PREPARE TABLE
 
     var prepareTable = function(pager = true) {
-        $('#job_list').attr('class', 'table table-bordered table-sm');
+        $('#job_list').attr('class', 'table table-bordered table-sm mb-0');
         var tcontent = '\
             <thead>\
                 <tr>';
@@ -207,8 +207,8 @@ var uws_client = (function($) {
                     </div>\
                     <span class="ms-3">Show</span>\
                     <select class="form-select form-select-sm w-auto pagesize" title="Select page size">\
-                      <option value="10">10</option>\
-                      <option selected="selected" value="20">20</option>\
+                      <option selected="selected" value="10">10</option>\
+                      <option value="20">20</option>\
                       <option value="30">30</option>\
                       <option value="all">all</option>\
                     </select>\
@@ -387,7 +387,7 @@ var uws_client = (function($) {
                 </td>',
             edit: '\
                 <td class="text-center" style="vertical-align: middle;">\
-                    <button type="button" class="properties btn btn-outline-secondary btn-sm" title="Edit">\
+                    <button type="button" class="properties btn btn-outline-secondary btn-sm" title="Open Job">\
                         <span class="bi bi-info-circle-fill"></span>\
                         <span class="d-none d-lg-inline">&nbsp;Open Job</span>\
                     </button>\
@@ -606,7 +606,7 @@ var uws_client = (function($) {
     //----------
     // DISPLAY PARAMS (as forms)
 
-    var displayParamFormInput = function(pname, p){
+    var displayParamFormInput = function(pname, p, container = '#job_params'){
         var phide = ''
         var pclass = 'row mb-3'
         if (p.required == 'false') { //.toLowerCase()
@@ -618,16 +618,19 @@ var uws_client = (function($) {
         var pannotation = (p.annotation == null) ? '' : p.annotation;
         var row = '\
             <div class="' + pclass + '"' + phide + '>\
-                <label class="col-md-3 col-form-label">' + pname + '</label>\
-                <div id="div_' + pname + '" class="col-md-5 controls">\
+                <label class="col-md-2 col-form-label">' + pname + '</label>\
+                <div id="div_' + pname + '" class="col-md-6 controls">\
                     <input class="form-control" id="id_' + pname + '" name="' + pname + '" type="text" value="' + pdefault + '"/>\
                 </div>\
                 <div class="col-md-4 form-text">\
                     ' + pannotation + '\
                 </div>\
             </div>';
+        row = row.trim();  // no text around the row: a group without rows is empty (see .params-group)
         if (p.control == 'true') {
-            if ($('#add_control').length) {
+            if ($('#params_control').length) {
+                $('#params_control').append(row);
+            } else if ($('#add_control').length) {
                 $('#add_control').before(row);
             } else {
                 $('#job_params').append(row);
@@ -645,7 +648,7 @@ var uws_client = (function($) {
                 $('#div_'+pname).parent().remove();
             });
         } else {
-            $('#job_params').append(row);
+            $(container).append(row);
         };
     };
     var displayParamFormInputType = function(pname, p){
@@ -686,10 +689,10 @@ var uws_client = (function($) {
         };
         if (p.datatype.indexOf('bool') > -1) {
             // Change to checkbox
-            $('#id_'+pname).removeClass('form-control');
+            // in a box of the size of an input (aligned with the buttons of an input group)
+            $('#id_'+pname).removeClass('form-control').addClass('form-check-input mt-0');
             $('#id_'+pname).attr('type', 'checkbox');
-            $('#id_'+pname).wrap('<div class="checkbox"></div>');
-            $('#id_'+pname).attr('style', 'margin-left: 10px;');
+            $('#id_'+pname).wrap('<div class="checkbox form-control d-flex align-items-center"></div>');
             var val = p.default //.toLowerCase();
             if ((val == 'true') || (val == 'yes')) {
                 $('#id_'+pname).attr('checked', 'checked');
@@ -716,27 +719,29 @@ var uws_client = (function($) {
         $('#loading').hide();
         // Run displayParamForm before to check that jdl is defined
         var jdl = clients[jobName].jdl;
+        // Groups of fields: control parameters, inputs, parameters (a line under a group that is not empty)
+        $('#job_params').append('<div id="params_control" class="params-group"></div>'
+            + '<div id="params_used" class="params-group"></div>'
+            + '<div id="params_parameters" class="params-group"></div>');
         // First field is the runId
         if (jdl.control_parameters_keys.indexOf('runId') > -1) {
             displayParamFormInput('runId', {'default': jobName, 'annotation': 'User specific identifier for the job', 'control': 'true'});
         };
-        $('#job_params').append('<hr>');
         // Create form fields from JDL
         for (var pkey in jdl.used_keys) {
             var pname = jdl.used_keys[pkey];
             // Add form input if pname is not a parameter already
             if ($.inArray(pname, Object.keys(jdl.parameters)) == -1) {
                 var p = jdl.used[pname];
-                displayParamFormInput(pname, p)
+                displayParamFormInput(pname, p, '#params_used')
                 displayParamFormInputType(pname, p)
             };
         };
-        $('#job_params').append('<hr>');
         for (var pkey in jdl.parameters_keys) {
             var pname = jdl.parameters_keys[pkey];
             if ($('#id_' + pname).length == 0) {
                 var p = jdl.parameters[pname];
-                displayParamFormInput(pname, p)
+                displayParamFormInput(pname, p, '#params_parameters')
                 displayParamFormInputType(pname, p)
             };
         };
@@ -760,18 +765,17 @@ var uws_client = (function($) {
             };
         };
         // Add buttons
-        $('#job_params').append('<hr>');
         var elt = '\
             <div id="add_control" class="row mb-3">\n\
-                <label class="col-md-3 col-form-label">Add control parameters</label>\n\
-                <div class="col-md-5 controls">\n\
+                <label class="col-md-2 col-form-label">Add control parameters</label>\n\
+                <div class="col-md-6 controls">\n\
                     <select id="control_parameters" name="control_parameters" class="selectpicker" title="Chose parameter" data-width="100%">\n\
                         <option data-hidden="true"></option>\n\
                     </select>\n\
                 </div>\n\
             </div>\n\
             <div id="form-buttons" class="row mb-3">\n\
-                <div class="offset-md-3 col-md-9">\n\
+                <div class="offset-md-2 col-md-10">\n\
                     <button type="submit" class="btn btn-primary">Submit</button>\n\
                     <button type="reset" class="btn btn-outline-secondary">Reset</button>\n\
                     <button id="showopt" type="button" class="btn btn-outline-secondary">Show optional parameters</button>\n\
@@ -909,7 +913,7 @@ var uws_client = (function($) {
         // Add buttons
         var elt = '\
             <div id="form-buttons" class="row mb-3">\n\
-                <div class="offset-md-2 col-md-5">\n\
+                <div class="offset-md-2 col-md-6">\n\
                     <button id="showopt" type="button" class="btn btn-outline-secondary">Show optional parameters</button>\n\
                 </div>\n\
             </div>\n';
@@ -938,6 +942,51 @@ var uws_client = (function($) {
 
     //----------
     // DISPLAY RESULTS
+
+    // Preview of a text result, with colors for JSON and XML (HTML of a pre element)
+    var escapeHtml = function(txt){
+        return txt.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    };
+    var highlightJson = function(txt){
+        try {
+            txt = JSON.stringify(JSON.parse(txt), undefined, 2);
+        } catch (e) {
+            return escapeHtml(txt);  // not valid JSON: text as it is
+        }
+        return escapeHtml(txt).replace(
+            /("(\\u[a-fA-F0-9]{4}|\\[^u]|[^\\"])*")(\s*:)?|\b(true|false|null)\b|-?\d+(\.\d+)?([eE][+-]?\d+)?/g,
+            function (match, string, _char, colon, literal) {
+                if (string) {
+                    return colon ? '<span class="hl-key">' + string + '</span>' + colon
+                        : '<span class="hl-string">' + string + '</span>';
+                }
+                return '<span class="' + (literal ? 'hl-literal' : 'hl-number') + '">' + match + '</span>';
+            });
+    };
+    var highlightXml = function(txt){
+        return escapeHtml(txt).replace(
+            /(&lt;!--[\s\S]*?--&gt;)|(&lt;\?[\s\S]*?\?&gt;)|(&lt;\/?)([\w:.-]+)([\s\S]*?)(\/?&gt;)/g,
+            function (match, comment, pi, open, name, attrs, close) {
+                if (comment) {
+                    return '<span class="hl-comment">' + comment + '</span>';
+                }
+                if (pi) {
+                    return '<span class="hl-comment">' + pi + '</span>';
+                }
+                attrs = attrs.replace(/([\w:.-]+)(\s*=\s*)("[^"]*"|'[^']*')/g,
+                    '<span class="hl-attr">$1</span>$2<span class="hl-string">$3</span>');
+                return '<span class="hl-tag">' + open + name + '</span>' + attrs + '<span class="hl-tag">' + close + '</span>';
+            });
+    };
+    var previewText = function(txt, type){
+        if (type == 'application/json') {
+            return highlightJson(txt);
+        }
+        if (type == 'text/xml') {
+            return highlightXml(txt);
+        }
+        return escapeHtml(txt);
+    };
 
     var displayResult = function(list, r, r_fname, r_type, r_url, r_url_auth){
         var rsplit = r.replace(/\./g, '_')
@@ -1025,20 +1074,15 @@ var uws_client = (function($) {
                     };
                 });
                 break;
-            // Show text in textarea
+            // Show text (with colors for JSON and XML)
             case 'text/plain':
             case 'text/xml':
             case 'application/json':
-                // show textarea with log
+                // show the text in a pre element
                 $('#'+r_id+' div.card-header div.btn-group a.preview').click(function() {
                     var txt = $(this).html();
                     if (!($('#'+r_id).hasClass('preview_loaded'))) {
-                        $('#'+r_id).append('\
-                            <div class="card-body">\
-                                <textarea class="log form-control" rows="10" style="font-family: monospace;" readonly>\
-                                </textarea>\
-                            </div>\
-                        ');
+                        $('#'+r_id).append('<div class="card-body"><pre class="text-preview"></pre></div>');
                         $('#loading').show();
                         $.ajax({
                             url : r_url_auth,
@@ -1046,12 +1090,7 @@ var uws_client = (function($) {
                             context: r_id,  // Set this=r_id for success function
                             success: function (txt) {
                                 $('#loading').hide();
-                                if (r_type == 'application/json') {
-                                    $('#' + this + ' div.card-body textarea').html(JSON.stringify(JSON.parse(txt),
-                                    undefined, 2));
-                                } else {
-                                    $('#' + this + ' div.card-body textarea').html(txt);
-                                }
+                                $('#' + this + ' div.card-body pre.text-preview').html(previewText(txt, r_type));
                                 $('#'+r_id).addClass('preview_loaded');
                                 console.log('Preview loaded for ' + this);
                             },

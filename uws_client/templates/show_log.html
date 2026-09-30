@@ -1,7 +1,7 @@
 {% extends "skeleton.html" %}
 {% block css %}
     <style>
-        #pre_log { max-height: 70vh; overflow: auto; white-space: pre-wrap; word-break: break-all; font-size: 12px; }
+        #pre_log { max-height: 60vh; overflow: auto; white-space: pre-wrap; word-break: break-all; font-size: 12px; }
         #pre_log .log-debug { color: #888; }
         #pre_log .log-warning { color: #8a6d3b; background-color: #fcf8e3; }
         #pre_log .log-error { color: #a94442; background-color: #f2dede; }
@@ -15,7 +15,7 @@
 	<div class="container bs-docs-container">
         <div id="log_panel" class="card mb-3">
             <div class="card-header clearfix">
-                <span class="card-title float-start" style="padding-top: 6px; padding-right: 6px;">Logs</span>
+                <span class="card-title float-start" style="padding-top: 6px; padding-right: 6px;">Log viewer</span>
                 <form id="log_toolbar" class="d-flex flex-wrap align-items-center gap-1 float-end" onsubmit="return false;">
                     <select name="logfile" class="form-select form-select-sm w-auto" title="Log file">
 {% for group, url, files in groups %}

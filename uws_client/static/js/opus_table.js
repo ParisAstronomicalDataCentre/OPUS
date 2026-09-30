@@ -25,7 +25,7 @@ var opusTable = (function() {
             table.opusTable.observer.disconnect();  // table built again (e.g. other job name)
         }
         var pager = table.querySelector('.ts-pager');
-        var state = {sortColumn: null, sortAsc: true, page: 0, pageSize: 20};
+        var state = {sortColumn: null, sortAsc: true, page: 0, pageSize: 10};
         if (pager && pager.querySelector('.pagesize')) {
             var size = pager.querySelector('.pagesize').value;
             state.pageSize = (size == 'all') ? 0 : parseInt(size, 10);
