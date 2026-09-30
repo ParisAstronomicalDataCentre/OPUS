@@ -448,3 +448,10 @@ class TestJobSequence:
         assert response.status_int == 200
         assert response.text == ""
         self.assert_job_phase(jobid, "COMPLETED")
+        # job_event ERROR for a job in a final phase (e.g. process killed after an abort): ignored, 409
+        post = {"jobid": "0", "phase": "ERROR", "error_msg": "Process killed during execution"}
+        response = test_app.post(url, post, extra_environ={"REMOTE_ADDR": "127.0.0.1"}, status=409)
+        print(url)
+        print(" --> " + response.status)
+        assert "ignored" in response.text
+        self.assert_job_phase(jobid, "COMPLETED")
