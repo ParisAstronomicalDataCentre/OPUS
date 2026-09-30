@@ -9,15 +9,15 @@
     </style>
 {% endblock %}
 {% block js %}
-    <script type="text/javascript" src="/static/js/show_log.js" defer></script>
+    <script type="text/javascript" src="/static/js/show_log.js?v={{ asset_version }}" defer></script>
 {% endblock %}
 {% block content %}
 	<div class="container bs-docs-container">
-        <div id="log_panel" class="panel panel-default">
-            <div class="panel-heading clearfix">
-                <span class="panel-title pull-left" style="padding-top: 6px; padding-right: 6px;">Logs</span>
-                <form id="log_toolbar" class="form-inline pull-right" onsubmit="return false;">
-                    <select name="logfile" class="form-control input-sm" title="Log file">
+        <div id="log_panel" class="card mb-3">
+            <div class="card-header clearfix">
+                <span class="card-title float-start" style="padding-top: 6px; padding-right: 6px;">Logs</span>
+                <form id="log_toolbar" class="d-flex flex-wrap align-items-center gap-1 float-end" onsubmit="return false;">
+                    <select name="logfile" class="form-select form-select-sm w-auto" title="Log file">
 {% for group, url, files in groups %}
                         <optgroup label="{{ group }}">
 {% for file in files %}
@@ -26,23 +26,24 @@
                         </optgroup>
 {% endfor %}
                     </select>
-                    <select name="nlines" class="form-control input-sm" title="Number of lines">
+                    <select name="nlines" class="form-select form-select-sm w-auto" title="Number of lines">
                         <option value="100" selected>100 lines</option>
                         <option value="500">500 lines</option>
                         <option value="1000">1000 lines</option>
                         <option value="5000">5000 lines</option>
                     </select>
-                    <input name="filter" type="text" class="form-control input-sm" placeholder="Filter lines" title="Show the lines containing this text (case insensitive)"/>
-                    <label class="checkbox-inline" title="Refresh every 10 seconds">
-                        <input name="autorefresh" type="checkbox"/> Auto refresh
-                    </label>
-                    <button id="refresh_log" type="button" class="btn btn-default btn-sm">
-                        <span class="glyphicon glyphicon-refresh"></span>
+                    <input name="filter" type="text" class="form-control form-control-sm w-auto" placeholder="Filter lines" title="Show the lines containing this text (case insensitive)"/>
+                    <div class="form-check form-check-inline" title="Refresh every 10 seconds">
+                        <input id="autorefresh" name="autorefresh" type="checkbox" class="form-check-input"/>
+                        <label class="form-check-label" for="autorefresh">Auto refresh</label>
+                    </div>
+                    <button id="refresh_log" type="button" class="btn btn-outline-secondary btn-sm">
+                        <span class="bi bi-arrow-clockwise"></span>
                         Refresh
                     </button>
                 </form>
             </div>
-            <div class="panel-body">
+            <div class="card-body">
                 <p id="log_info" class="text-muted small"></p>
                 <pre id="pre_log"></pre>
             </div>

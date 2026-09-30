@@ -1,108 +1,96 @@
     <div class="bs-docs-header">
         <div class="container">
-            <div class="navbar navbar-default">
-                <div class="navbar-header">
-                    <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse" type="button">
-                        <span class="sr-only">Toggle navigation</span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
-                    <a class="navbar-brand" href="{{ url_for('home') }}">{{ config.CLIENT_TITLE }}</a>
-                </div> <!-- navbar-header -->
-                <div class="navbar-collapse collapse">
-                    <ul class="nav navbar-nav">
-                        <!--<li {{print(" class=\"active\"") if (page_title == "help")}}>-->
-                            <!--<a href="/help"><span class="glyphicon glyphicon-search"></span>-->
-                            <!--Help</a>-->
-                        <!--</li>-->
-                        <!--<li{{' class="active"' if page_title == 'job_list'}}>-->
-                            <!--<a href="/job_list"><span class="glyphicon glyphicon-cog"></span>-->
-                            <!--Available jobs</a>-->
-                        <!--</li>-->
-                        <li{{ ' class=active' if '/job_execute' in url }}>
-                            <a href="{{ url_for('job_execute') }}"><span class="glyphicon glyphicon-play-circle"></span>
+            <nav class="navbar navbar-expand-md navbar-light bg-light border rounded mb-3 px-3">
+                <a class="navbar-brand" href="{{ url_for('home') }}">{{ config.CLIENT_TITLE }}</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar_main"
+                        aria-controls="navbar_main" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div id="navbar_main" class="collapse navbar-collapse">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link{{ ' active' if '/job_execute' in url }}" href="{{ url_for('job_execute') }}"><span class="bi bi-play-circle"></span>
                                 Execute Job</a>
                         </li>
-                        <li{{ ' class=active' if '/jobs' in url }}>
-                            <a href="{{ url_for('job_list') }}"><span class="glyphicon glyphicon-list"></span>
+                        <li class="nav-item">
+                            <a class="nav-link{{ ' active' if '/jobs' in url }}" href="{{ url_for('job_list') }}"><span class="bi bi-list-ul"></span>
                                 Job List</a>
                         </li>
-                        <li{{ ' class=active' if '/job_definition' in url }}>
-                            <a href="{{ url_for('job_definition') }}"><span class="glyphicon glyphicon-edit"></span>
+                        <li class="nav-item">
+                            <a class="nav-link{{ ' active' if '/job_definition' in url }}" href="{{ url_for('job_definition') }}"><span class="bi bi-pencil-square"></span>
                                 Job Definition</a>
                         </li>
                     </ul>
-                    <ul class="nav navbar-nav navbar-right">
+                    <ul class="navbar-nav">
 {% if current_user.is_authenticated %}
-                        <li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-                                  <span class="glyphicon glyphicon-user"></span>
-                                  Signed in as <strong>{{ current_user.email }}</strong> ({{ session.oidc_idp if session.oidc_idp else 'Local' }})<span class="caret"></span>
+                        <li class="nav-item dropdown">
+                            <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false">
+                                  <span class="bi bi-person-fill"></span>
+                                  Signed in as <strong>{{ current_user.email }}</strong> ({{ session.oidc_idp if session.oidc_idp else 'Local' }})
                             </a>
-                            <ul class="dropdown-menu">
+                            <ul class="dropdown-menu dropdown-menu-end">
 {% if current_user.has_role('admin') %}
-                                <li><a href="{{ url_for('preferences') }}">
-                                    <span class="glyphicon glyphicon-cog"></span>
+                                <li><a class="dropdown-item" href="{{ url_for('preferences') }}">
+                                    <span class="bi bi-gear"></span>
                                     Client Preferences</a>
                                 </li>
-                                <li><a href="{{ url_for('user.index_view') }}">
-                                    <span class="glyphicon glyphicon-user"></span>
+                                <li><a class="dropdown-item" href="{{ url_for('user.index_view') }}">
+                                    <span class="bi bi-person-fill"></span>
                                     Client Accounts</a>
                                 </li>
-                                <li><a href="{{ url_for('server_accounts') }}">
-                                    <span class="glyphicon glyphicon-user"></span>
+                                <li><a class="dropdown-item" href="{{ url_for('server_accounts') }}">
+                                    <span class="bi bi-person-fill"></span>
                                     Server Accounts</a>
                                 </li>
-                                <li><a href="{{ url_for('server_jobs') }}">
-                                    <span class="glyphicon glyphicon-edit"></span>
+                                <li><a class="dropdown-item" href="{{ url_for('server_jobs') }}">
+                                    <span class="bi bi-pencil-square"></span>
                                     Job Definitions</a>
                                 </li>
-                                <li><a href="{{ url_for('maintenance') }}">
-                                    <span class="glyphicon glyphicon-wrench"></span>
+                                <li><a class="dropdown-item" href="{{ url_for('maintenance') }}">
+                                    <span class="bi bi-wrench"></span>
                                     Maintenance</a>
                                 </li>
-                                <li><a href="{{ url_for('show_logs') }}">
-                                    <span class="glyphicon glyphicon-list-alt"></span>
+                                <li><a class="dropdown-item" href="{{ url_for('show_logs') }}">
+                                    <span class="bi bi-card-list"></span>
                                     Logs</a>
                                 </li>
-                                <li class="divider"></li>
+                                <li><hr class="dropdown-divider"></li>
 {% endif %}
-                                <li><a href="{{ url_for('profile') }}">
-                                    <span class="glyphicon glyphicon-info-sign"></span>
+                                <li><a class="dropdown-item" href="{{ url_for('profile') }}">
+                                    <span class="bi bi-info-circle-fill"></span>
                                     Show profile</a>
                                 </li>
 {% if not session.oidc_idp and current_user.password %}
-                                <li><a href="{{ url_for_security('change_password') }}">
-                                    <span class="glyphicon glyphicon-lock"></span>
+                                <li><a class="dropdown-item" href="{{ url_for_security('change_password') }}">
+                                    <span class="bi bi-lock-fill"></span>
                                     Change password</a>
                                 </li>
 {% endif %}
-                                <li class="divider"></li>
-                                <li><a href="{{ url_for('oidc_logout') if session.oidc_idp else url_for_security('logout') }}">
-                                    <span class="glyphicon glyphicon-log-out"></span>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ url_for('oidc_logout') if session.oidc_idp else url_for_security('logout') }}">
+                                    <span class="bi bi-box-arrow-right"></span>
                                     Sign out</a>
                                 </li>
                             </ul>
                         </li>
 {% else %}
   {% if config.SECURITY_REGISTERABLE %}
-                        <li>
-                            <a href="{{ url_for_security('register') }}">
-                                <span class="glyphicon glyphicon-user"></span>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for_security('register') }}">
+                                <span class="bi bi-person-fill"></span>
                                 Register
                             </a>
                         </li>
   {% endif %}
-                        <li>
-                            <a href="{{ url_for_security('login') }}">
-                                <span class="glyphicon glyphicon-log-in"></span>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for_security('login') }}">
+                                <span class="bi bi-box-arrow-in-right"></span>
                                 Local login
                             </a>
                         </li>
   {% for idp in config.OIDC_IDPS %}
-                        <li>
-                            <a href="{{ url_for('oidc_login') }}{{ idp.title }}" title="{{ idp.description }}">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('oidc_login') }}{{ idp.title }}" title="{{ idp.description }}">
                                 <img src="{{ idp.url_logo }}" height="23" width="20" style="padding-bottom: 3px;"/>
                                 {{ idp.title }}
                             </a>
@@ -111,6 +99,6 @@
 {% endif %}
                     </ul>
                 </div> <!-- navbar-collapse -->
-            </div> <!-- navbar -->
+            </nav> <!-- navbar -->
         </div> <!-- container -->
     </div> <!-- header -->

@@ -75,9 +75,9 @@
                             <select id="roles_' + user_label + '" class="selectpicker" title="None" data_width="auto" data-container="body" multiple>\
                                 ' + job_options.join() + '\
                             </select>\
-                            <button id="button_roles_' + user_label + '" type="button" class="roles btn btn-default">\
-                                <span class="glyphicon glyphicon-send"></span>\
-                                <span class="hidden-xs hidden-sm hidden-md"></span>\
+                            <button id="button_roles_' + user_label + '" type="button" class="roles btn btn-outline-secondary">\
+                                <span class="bi bi-send-fill"></span>\
+                                <span class="d-none d-lg-inline"></span>\
                             </button>\
                         </div>\
                     </div>\
@@ -87,9 +87,9 @@
                     <input class="form-control" id="token_' + user_label + '" name="token_' + user_label + '" type="text" value="' + user.token + '"/>\
                     <input class="form-control" id="current_token_' + user_label + '" name="token_' + user_label + '" type="text" value="' + user.token + '" style="display:none"/>\
                         <div class="input-group-btn">\
-                            <button id="button_token_' + user_label + '" type="button" class="token btn btn-default">\
-                                <span class="glyphicon glyphicon-send"></span>\
-                                <span class="hidden-xs hidden-sm hidden-md"></span>\
+                            <button id="button_token_' + user_label + '" type="button" class="token btn btn-outline-secondary">\
+                                <span class="bi bi-send-fill"></span>\
+                                <span class="d-none d-lg-inline"></span>\
                             </button>\
                         </div>\
                     </div>\
@@ -99,13 +99,13 @@
                 </td>\
                 <td class="text-center" style="vertical-align: middle;">\
                     <div class="input-group-btn">\
-                        <button id="button_delete_' + user_label + '" type="button" class="delete btn btn-default">\
-                            <span class="glyphicon glyphicon-trash"></span>\
-                            <span class="hidden-xs hidden-sm hidden-md">Delete</span>\
+                        <button id="button_delete_' + user_label + '" type="button" class="delete btn btn-outline-secondary">\
+                            <span class="bi bi-trash"></span>\
+                            <span class="d-none d-lg-inline">Delete</span>\
                         </button>\
-                        <button id="button_import_' + user_label + '" type="button" class="import btn btn-default">\
-                            <span class="glyphicon glyphicon-import"></span>\
-                            <span class="hidden-xs hidden-sm hidden-md">Import to client</span>\
+                        <button id="button_import_' + user_label + '" type="button" class="import btn btn-outline-secondary">\
+                            <span class="bi bi-box-arrow-in-down"></span>\
+                            <span class="d-none d-lg-inline">Import to client</span>\
                         </button>\
                     </div>\
                 </td>\
@@ -142,9 +142,9 @@
                 <input id="active" name="active" type="checkbox" checked="true" disabled="true"/>\
             </td>\
             <td class="text-center" style="vertical-align: middle;">\
-                <button id="button_add_user" type="submit" class="submit btn btn-default">\
-                    <span class="glyphicon glyphicon-plus"></span>\
-                    <span class="hidden-xs hidden-sm hidden-md">&nbsp;Add new account</span>\
+                <button id="button_add_user" type="submit" class="submit btn btn-outline-secondary">\
+                    <span class="bi bi-plus-lg"></span>\
+                    <span class="d-none d-lg-inline">&nbsp;Add new account</span>\
                 </button>\
             </td>\
         </tr>';

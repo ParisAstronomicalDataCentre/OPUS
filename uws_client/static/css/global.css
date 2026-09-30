@@ -1,66 +1,120 @@
 
-.btn-group {
-  display: inline-flex;
+/* same font sizes as Bootstrap 3 (14px, 12px for the small elements), for a similar layout */
+:root {
+    --bs-body-font-size: 0.875rem;
+}
+.form-control, .form-select, .input-group-text, .btn, .dropdown-menu, .ts-wrapper, .ts-control, .ts-control input,
+.ts-dropdown, .popover, .modal-body {
+    font-size: 0.875rem;
+}
+.form-control-sm, .form-select-sm, .btn-sm, .btn-group-sm > .btn, .input-group-sm > .form-control,
+.input-group-sm > .input-group-text, .input-group-sm > .btn, .badge {
+    font-size: 0.75rem;
 }
 
-.input-group .form-control {
-    border-radius: 4px;
+/* heading sizes of Bootstrap 3 */
+h1, .h1 { font-size: 2.25rem; }
+h2, .h2 { font-size: 1.875rem; }
+h3, .h3 { font-size: 1.5rem; }
+h4, .h4 { font-size: 1.125rem; }
+h5, .h5 { font-size: 0.875rem; }
+h6, .h6 { font-size: 0.75rem; }
+.card-header h4 { margin: 0; }
+
+/* labels in bold (as Bootstrap 3), except the labels of the checkboxes */
+label {
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+.form-check-label {
+    font-weight: normal;
+    margin-bottom: 0;
 }
 
-/* animate a refresh glyphicon */
-.glyphicon-refresh-animate {
+/* links underlined on hover only (as Bootstrap 3) */
+a {
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+.btn:hover, .nav-link:hover, .navbar-brand:hover, .dropdown-item:hover, .page-link:hover {
+    text-decoration: none;
+}
+
+/* animate a refresh icon */
+.spin {
+    display: inline-block;
     animation: spin 1s infinite linear;
-    -webkit-animation: spin2 1s infinite linear;
 }
 @keyframes spin {
-    from { transform: scale(1) rotate(0deg);}
-    to { transform: scale(1) rotate(360deg);}
-}
-@-webkit-keyframes spin2 {
-    from { -webkit-transform: rotate(0deg);}
-    to { -webkit-transform: rotate(360deg);}
+    from { transform: rotate(0deg);}
+    to { transform: rotate(360deg);}
 }
 
-/* arrow for accordion panels */
-.panel-heading a.accordion-toggle:hover {
-    color: black;
-	text-decoration: none;
-	cursor: pointer; cursor: hand;
+/* titles in the card headers (previously panel titles) */
+.card-header .card-title {
+    margin-bottom: 0;
 }
-.panel-heading a.accordion-toggle h4:before {
-    /* symbol for "opening" panels */
-    font-family: 'Glyphicons Halflings';
-    content: "\e114";
+
+/* arrow for accordion cards (Bootstrap Icons: chevron-down / chevron-right) */
+.card-header a.accordion-toggle:hover {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+.card-header a.accordion-toggle h4:before {
+    /* symbol for "opening" cards */
+    font-family: 'bootstrap-icons';
+    content: "\F282";
+    font-size: 0.8em;
+    margin-right: 0.3em;
     color: grey;
 }
-.panel-heading a.accordion-toggle.collapsed h4:before {
-    /* symbol for "collapsed" panels */
-    content: "\e080";
+.card-header a.accordion-toggle.collapsed h4:before {
+    /* symbol for "collapsed" cards */
+    content: "\F285";
 }
 
-.bootstrap-select > button.disabled {
-    background-color: #eee;
-    border-color: #ccc;
+/* input groups on one line (as Bootstrap 3) */
+.input-group {
+    flex-wrap: nowrap;
 }
 
-/* simulate .input-group-btn:first-child > .btn in bootstrap.js */
-select.select-small:first-child + .bootstrap-select > .btn {
-    margin-right: -1px;
-    height: 30px;
-    font-size: 12px;
-    line-height: 1.5;
+/* buttons attached to an input (Bootstrap 3 .input-group-btn, removed in Bootstrap 5), or grouped on one line */
+.input-group-btn {
+    white-space: nowrap;
+}
+.input-group > .input-group-btn {
+    display: flex;
+}
+.input-group > .input-group-btn > .btn,
+.input-group > .input-group-btn > .btn-group > .btn {
+    border-radius: 0;
+}
+.input-group > .input-group-btn:last-child > .btn:last-child,
+.input-group > .input-group-btn:last-child > .btn-group:last-child > .btn:last-child {
+    border-top-right-radius: var(--bs-border-radius);
+    border-bottom-right-radius: var(--bs-border-radius);
+}
+.input-group > .input-group-btn:first-child > .btn:first-child {
+    border-top-left-radius: var(--bs-border-radius);
+    border-bottom-left-radius: var(--bs-border-radius);
+}
+.input-group > .input-group-btn:not(:first-child) > .btn:first-child {
+    margin-left: -1px;
 }
 
-/* simulate .input-group .input-group-btn:first-child > .btn in bootstrap.js
-.input-group select:first-child + .bootstrap-select > .btn {
-    border-bottom-right-radius: 0;
-    border-top-right-radius:0;
-} */
-
-.input-group > .bootstrap-select {
-    /* Fix the problem that the dropdown will not resize to fit the dropdown content in IE */
-    /* Actually, it overwrites .bootstrap-select { width: 220px; } */
+/* lists (Tom Select) in an input group, and small lists */
+.input-group > .ts-wrapper {
+    flex: 1 1 auto;
     width: 1%;
+}
+.select-small + .ts-wrapper .ts-control {
+    font-size: 0.875rem;
+    min-height: 31px;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
 }
 
 .checkbox {
@@ -77,6 +131,7 @@ body {
 .nopadding {
    padding: 0 !important;
    margin: 0 !important;
+}
 
 .nomargin {
    margin: 0 !important;
@@ -97,10 +152,4 @@ body {
     bottom:2%;
     right:2%;
     z-index: 10;
-}
-
-/* An open list (bootstrap-select) above the other elements: in an input group, the lists have a z-index (2), so
-   the list of a table row was shown behind the lists of the next rows */
-.bootstrap-select.open {
-    z-index: 1036;
 }

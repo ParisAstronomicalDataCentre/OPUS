@@ -10,6 +10,7 @@ import json
 import subprocess
 from urllib.parse import urlencode
 import os
+import time
 
 import requests
 import yaml
@@ -698,9 +699,14 @@ def client_log_text():
 # Web Pages
 
 
+# Version of the static files (CSS, JS): start time of the client
+ASSET_VERSION = str(int(time.time()))
+
+
 @app.context_processor
 def add_url_to_context():
-    return {"url": request.url}
+    # asset_version: added to the URLs of the static files, so that the browsers load them again after an upgrade
+    return {"url": request.url, "asset_version": ASSET_VERSION}
 
 
 @app.route("/favicon.ico")

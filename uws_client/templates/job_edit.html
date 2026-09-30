@@ -1,10 +1,10 @@
 {% extends "skeleton.html" %}
 {% block js %}
-    <script type="text/javascript" src="/static/js/samp.js" defer></script>
-    <script type="text/javascript" src="/static/js/samp_client.js" defer></script>
-    <script type="text/javascript" src="/static/js/uwsLib.js" defer></script>
-    <script type="text/javascript" src="/static/js/uws_client.js" defer></script>
-    <script type="text/javascript" src="/static/js/job_edit.js" defer></script>
+    <script type="text/javascript" src="/static/js/samp.js?v={{ asset_version }}" defer></script>
+    <script type="text/javascript" src="/static/js/samp_client.js?v={{ asset_version }}" defer></script>
+    <script type="text/javascript" src="/static/js/uwsLib.js?v={{ asset_version }}" defer></script>
+    <script type="text/javascript" src="/static/js/uws_client.js?v={{ asset_version }}" defer></script>
+    <script type="text/javascript" src="/static/js/job_edit.js?v={{ asset_version }}" defer></script>
 {% endblock %}
 {% block variables %}
     <div id="jobname" style="display:none" value="{{ jobname }}"></div>
@@ -16,96 +16,96 @@
         <div id="div_info"></div>
         <div id="div_job" style="display:none">
 
-            <div id="description" class="panel panel-default">
-                <div class="panel-heading clearfix">
-                    <span class="pull-left" style="padding-top: 4px;">
-                        <span class="panel-title">Job Summary</span>
+            <div id="description" class="card mb-3">
+                <div class="card-header clearfix">
+                    <span class="float-start" style="padding-top: 4px;">
+                        <span class="card-title">Job Summary</span>
                     </span>
-                    <div class="btn-group pull-right">
-                        <a id="to_job_list" class="btn btn-default" href="{{ url_for('job_list', jobname=jobname) }}">
-                            <span class="glyphicon glyphicon-arrow-left"></span>
+                    <div class="btn-group float-end">
+                        <a id="to_job_list" class="btn btn-outline-secondary" href="{{ url_for('job_list', jobname=jobname) }}">
+                            <span class="bi bi-arrow-left"></span>
                             Back to job list
                         </a>
-                        <a id="edit_jdl" class="btn btn-default" href="{{ url_for('job_definition', jobname=jobname) }}">
-                            <span class="glyphicon glyphicon-edit"></span>
+                        <a id="edit_jdl" class="btn btn-outline-secondary" href="{{ url_for('job_definition', jobname=jobname) }}">
+                            <span class="bi bi-pencil-square"></span>
                             Edit job definition
                         </a>
-                        <button id="provsap" class="btn btn-default">
-                            <span class="glyphicon glyphicon-tree-deciduous"></span>
+                        <button id="provsap" class="btn btn-outline-secondary">
+                            <span class="bi bi-diagram-3"></span>
                             Provenance graph
                         </button>
-                        <button id="rerun_job" class="btn btn-default">
-                            <span class="glyphicon glyphicon-repeat"></span>
+                        <button id="rerun_job" class="btn btn-outline-secondary">
+                            <span class="bi bi-arrow-repeat"></span>
                             Rerun job
                         </button>
                     </div>
                 </div>
                 <div id="div_table" class="table-responsive">
-                    <table id="job_list" class="table table-bordered table-condensed">
+                    <table id="job_list" class="table table-bordered table-sm">
                     </table>
                 </div>
             </div> <!-- panel -->
 
-            <div class="panel-group" id="accordion">
+            <div class="" id="accordion">
 
-                <div id='properties' class="panel panel-default">
-                    <div class="panel-heading">
-                        <a id='properties_btn' class="accordion-toggle panel-title collapsed" data-toggle="collapse" data-target="#properties_panel">
-                            <h4 class="panel-title">
+                <div id='properties' class="card mb-3">
+                    <div class="card-header">
+                        <a id='properties_btn' class="accordion-toggle card-title collapsed" data-bs-toggle="collapse" data-bs-target="#properties_panel">
+                            <h4 class="card-title">
                                 Job Properties
                             </h4>
                         </a>
-                    </div> <!-- panel-heading -->
-                    <div id="properties_panel" class="panel-body panel-collapse collapse">
-                        <table id='prop_list' class="table table-bordered table-condensed">
+                    </div> <!-- card-header -->
+                    <div id="properties_panel" class="card-body collapse">
+                        <table id='prop_list' class="table table-bordered table-sm">
                         </table>
-                    </div> <!-- panel-body -->
+                    </div> <!-- card-body -->
                 </div> <!-- panel -->
 
-                <div id='parameters' class="panel panel-default">
-                    <div class="panel-heading">
-                        <a id='parameters_btn' class="accordion-toggle panel-title collapsed" data-toggle="collapse" data-target="#parameters_panel">
-                            <h4 class="panel-title">
+                <div id='parameters' class="card mb-3">
+                    <div class="card-header">
+                        <a id='parameters_btn' class="accordion-toggle card-title collapsed" data-bs-toggle="collapse" data-bs-target="#parameters_panel">
+                            <h4 class="card-title">
                                 Job Parameters
                             </h4>
                         </a>
-                      </div> <!-- panel-heading -->
-                    <div id="parameters_panel" class="panel-body panel-collapse collapse">
+                      </div> <!-- card-header -->
+                    <div id="parameters_panel" class="card-body collapse">
                         <p></p>
                         <!-- show form -->
-                        <form id="job_params" class="form-horizontal" role="form" action="" method="get">
+                        <form id="job_params" class="" role="form" action="" method="get">
                         </form>
-                    </div> <!-- panel-body -->
+                    </div> <!-- card-body -->
                 </div> <!-- panel -->
 
-                <div id='results' class="panel panel-default">
-                    <div class="panel-heading">
-                        <a id='results_btn' class="accordion-toggle panel-title" data-toggle="collapse" data-target="#results_panel">
-                            <h4 class="panel-title">
+                <div id='results' class="card mb-3">
+                    <div class="card-header">
+                        <a id='results_btn' class="accordion-toggle card-title" data-bs-toggle="collapse" data-bs-target="#results_panel">
+                            <h4 class="card-title">
                                 Job Results
                             </h4>
                         </a>
-                    </div> <!-- panel-heading -->
-                    <div id="results_panel" class="panel-body panel-collapse collapse in">
+                    </div> <!-- card-header -->
+                    <div id="results_panel" class="card-body collapse show">
                         <p></p>
                         <div id='results_list' class='text-center'>
                         </div>
-                    </div> <!-- panel-body -->
+                    </div> <!-- card-body -->
                 </div> <!-- panel -->
 
-                <div id='details' class="panel panel-default">
-                    <div class="panel-heading">
-                        <a id='details_btn' class="accordion-toggle panel-title collapsed" data-toggle="collapse" data-target="#details_panel">
-                            <h4 class="panel-title">
+                <div id='details' class="card mb-3">
+                    <div class="card-header">
+                        <a id='details_btn' class="accordion-toggle card-title collapsed" data-bs-toggle="collapse" data-bs-target="#details_panel">
+                            <h4 class="card-title">
                                 Job Details
                             </h4>
                         </a>
-                    </div> <!-- panel-heading -->
-                    <div id="details_panel" class="panel-body panel-collapse collapse">
+                    </div> <!-- card-header -->
+                    <div id="details_panel" class="card-body collapse">
                         <p></p>
                         <div id='details_list' class='text-center'>
                         </div>
-                    </div> <!-- panel-body -->
+                    </div> <!-- card-body -->
                 </div> <!-- panel -->
 
             </div> <!-- panel group -->

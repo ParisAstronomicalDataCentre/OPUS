@@ -87,11 +87,11 @@
 										$('.selectpicker').append('<option value="' + json['jobnames'][jn] + '">' + json['jobnames'][jn] + '</option>')
                 };
 								$('select[name="jobname"]').selectpicker('refresh');
-								// Fill input[name=name] typeahead
-								$('input[name=name]').typeahead({
-                    source: json['jobnames'],
-                    autoSelect: false,
-                });
+								// Suggestions for input[name=name] (datalist)
+								$('#jobnames_list').empty();
+								for (var jn in json['jobnames']) {
+										$('#jobnames_list').append($('<option>').attr('value', json['jobnames'][jn]));
+								};
 								var jobname = $('#jobname').attr('value');
 								if (jobname) {
 				            $('input[name=name]').val(jobname);
@@ -129,9 +129,9 @@
                         <td>\
                             <div class="input-group input-group-sm col-md-12">\
                                 <input class="param_name form-control" style="font-weight: bold;" name="param_name_' + ii + '" type="text" placeholder="Name" />\
-                                <span class="input-group-addon">=</span>\
+                                <span class="input-group-text">=</span>\
                                 <input class="param_default form-control" name="param_default_' + ii + '" type="text" placeholder="Default value" />\
-                                <span class="input-group-addon">\
+                                <span class="input-group-text">\
                                     Req.? <input class="param_required" name="param_required_' + ii + '" type="checkbox" title="Required parameter?" checked/>\
                                 </span>\
                                 <span class="input-group-btn">\
@@ -140,30 +140,30 @@
                                     </select>\
                                 </span>\
                                 <span class="input-group-btn">\
-                                    <button id="moveup_param_' + ii + '" class="moveup_param btn btn-default" type="button" >\
-                                        <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>\
+                                    <button id="moveup_param_' + ii + '" class="moveup_param btn btn-outline-secondary" type="button" >\
+                                        <span class="bi bi-arrow-up" aria-hidden="true"></span>\
                                     </button>\
-                                    <button id="movedown_param_' + ii + '" class="movedown_param btn btn-default" type="button" >\
-                                        <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span>\
+                                    <button id="movedown_param_' + ii + '" class="movedown_param btn btn-outline-secondary" type="button" >\
+                                        <span class="bi bi-arrow-down" aria-hidden="true"></span>\
                                     </button>\
-                                    <button id="remove_param_' + ii + '" class="remove_param btn btn-default" type="button" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" >\
-                                        <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>\
+                                    <button id="remove_param_' + ii + '" class="remove_param btn btn-outline-secondary" type="button" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" >\
+                                        <span class="bi bi-x-lg" aria-hidden="true"></span>\
                                     </button>\
                                 </span>\
                             </div>\
                             <div style="height: 1px;"></div>\
                             <div class="input-group input-group-sm col-md-12" style="width:100%">\
-                                <span class="input-group-addon" style="width:70px" title="Description">Desc.</span>\
+                                <span class="input-group-text" style="width:70px" title="Description">Desc.</span>\
                                 <input class="param_annotation form-control" name="param_annotation_' + ii + '" type="text" placeholder="Description" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" />\
                             </div>\
                             <div style="height: 1px;"></div>\
                             <div class="input-group input-group-sm col-md-12" style="width:100%">\
-                                <span class="input-group-addon" style="width:70px" title="Options">Options</span>\
+                                <span class="input-group-text" style="width:70px" title="Options">Options</span>\
                                 <input class="param_options form-control" name="param_options_' + ii + '" type="text" placeholder="List of possible choices (comma-separated values)" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" />\
                             </div>\
                             <div style="height: 1px;"></div>\
                             <div class="input-group input-group-sm col-md-12" style="width:100%">\
-                                <span class="input-group-addon" style="width:70px" title="Attributes">Attr.</span>\
+                                <span class="input-group-text" style="width:70px" title="Attributes">Attr.</span>\
                                 <input class="param_attributes form-control" name="param_attributes_' + ii + '" type="text" placeholder="unit=... ucd=... utype=... min=... max=..." style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" />\
                             </div>\
                             <div style="height: 10px;"></div>\
@@ -179,33 +179,33 @@
                         <td>\
                             <div class="input-group input-group-sm col-md-12">\
                                     <input class="used_name form-control" style="font-weight: bold;" name="used_name_' + ii + '" type="text" placeholder="Name" />\
-                                    <div class="input-group-addon">=</div>\
+                                    <div class="input-group-text">=</div>\
                                     <input class="used_default form-control" name="used_default_' + ii + '" type="text" placeholder="Default value" />\
-                                    <div class="input-group-addon">Mult. </div>\
+                                    <div class="input-group-text">Mult. </div>\
                                     <input class="used_multiplicity form-control" name="used_multiplicity_' + ii + '" type="text" title="Multiplicity" maxlength="2" style="width: 30px;"/>\
                                     <div class="input-group-btn">\
                                         <select name="used_contenttype_' + ii + '" class="used_contenttype select-small selectpicker" multiple>\
                                             ' + options + '\
                                         </select>\
-                                        <button id="moveup_used_' + ii + '" class="moveup_used btn btn-default" type="button" >\
-                                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>\
+                                        <button id="moveup_used_' + ii + '" class="moveup_used btn btn-outline-secondary" type="button" >\
+                                            <span class="bi bi-arrow-up" aria-hidden="true"></span>\
                                         </button>\
-                                        <button id="movedown_used_' + ii + '" class="movedown_used btn btn-default" type="button" >\
-                                            <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span>\
+                                        <button id="movedown_used_' + ii + '" class="movedown_used btn btn-outline-secondary" type="button" >\
+                                            <span class="bi bi-arrow-down" aria-hidden="true"></span>\
                                         </button>\
-                                        <button id="remove_used_' + ii + '" class="remove_used btn btn-default" type="button" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" >\
-                                            <span class="glyphicon glyphicon-remove"></span>\
+                                        <button id="remove_used_' + ii + '" class="remove_used btn btn-outline-secondary" type="button" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" >\
+                                            <span class="bi bi-x-lg"></span>\
                                         </button>\
                                     </div>\
                             </div>\
                             <div style="height: 1px;"></div>\
                             <div class="input-group input-group-sm col-md-12" style="width:100%">\
-                                <span class="input-group-addon" style="width:70px" title="Description">Desc.</span>\
+                                <span class="input-group-text" style="width:70px" title="Description">Desc.</span>\
                                 <input class="used_annotation form-control" name="used_annotation_' + ii + '" type="text" placeholder="Description" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" />\
                             </div>\
                             <div style="height: 1px;"></div>\
                             <div class="input-group input-group-sm col-md-12" style="width:100%">\
-                                <span class="input-group-addon" style="width:70px" title="The input is a File or an ID, possibly with a URL to resolve the ID and download the file (use $ID in the URL template).">\
+                                <span class="input-group-text" style="width:70px" title="The input is a File or an ID, possibly with a URL to resolve the ID and download the file (use $ID in the URL template).">\
                                     File <input class="used_isfile" name="used_isfile_' + ii + '" type="radio" value="File" checked/>\
                                     or value  <input class="used_isfile" name="used_isfile_' + ii + '" type="radio" value="value"/>\
                                     or ID  <input class="used_isfile" name="used_isfile_' + ii + '" type="radio" value="ID"/>\
@@ -226,7 +226,7 @@
                         <td>\
                             <div class="input-group input-group-sm col-md-12">\
                                 <input class="generated_name form-control" style="font-weight: bold;" name="generated_name_' + ii + '" type="text" placeholder="Name" />\
-                                <span class="input-group-addon">=</span>\
+                                <span class="input-group-text">=</span>\
                                 <input class="generated_default form-control" name="generated_default_' + ii + '" type="text" placeholder="Default value" />\
                                 <span class="input-group-btn">\
                                     <select name="generated_contenttype_' + ii + '" class="generated_contenttype select-small selectpicker">\
@@ -234,20 +234,20 @@
                                     </select>\
                                 </span>\
                                 <span class="input-group-btn">\
-                                    <button id="moveup_generated_' + ii + '" class="moveup_generated btn btn-default" type="button" >\
-                                        <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>\
+                                    <button id="moveup_generated_' + ii + '" class="moveup_generated btn btn-outline-secondary" type="button" >\
+                                        <span class="bi bi-arrow-up" aria-hidden="true"></span>\
                                     </button>\
-                                    <button id="movedown_generated_' + ii + '" class="movedown_generated btn btn-default" type="button" >\
-                                        <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span>\
+                                    <button id="movedown_generated_' + ii + '" class="movedown_generated btn btn-outline-secondary" type="button" >\
+                                        <span class="bi bi-arrow-down" aria-hidden="true"></span>\
                                     </button>\
-                                    <button id="remove_generated_' + ii + '" class="remove_generated btn btn-default" type="button" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" >\
-                                        <span class="glyphicon glyphicon-remove"></span>\
+                                    <button id="remove_generated_' + ii + '" class="remove_generated btn btn-outline-secondary" type="button" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" >\
+                                        <span class="bi bi-x-lg"></span>\
                                     </button>\
                                 </span>\
                             </div>\
                             <div style="height: 1px;"></div>\
                             <div class="input-group input-group-sm col-md-12" style="width:100%">\
-                                <span class="input-group-addon" style="width:70px" title="Description">Desc.</span>\
+                                <span class="input-group-text" style="width:70px" title="Description">Desc.</span>\
                                 <input class="generated_annotation form-control" name="generated_annotation_' + ii + '" type="text" placeholder="Description" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" />\
                             </div>\
                             <div style="height: 10px;"></div>\
@@ -729,7 +729,7 @@
         get_jobnames();
 	      // Script editor with CodeMirror
 	      editor = CodeMirror.fromTextArea( $('textarea[name=script]')[0], {mode: "text/x-sh", lineNumbers: true } );
-        $('div.CodeMirror').addClass('panel panel-default');
+        $('div.CodeMirror').addClass('card');
         // Prepare empty form
         // add_item('param');
         // add_item('generated');

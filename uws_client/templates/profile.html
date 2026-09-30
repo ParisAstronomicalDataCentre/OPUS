@@ -1,20 +1,20 @@
 {% extends "skeleton.html" %}
 {% block content %}
     <div class="container bs-docs-container">
-	    <div class="col-md-offset-2 col-md-8">
-            <form class="form-horizontal" action="{{ url_for('profile') }}" method="POST" name="profile_form">
+	    <div class="offset-md-2 col-md-8">
+            <form class="" action="{{ url_for('profile') }}" method="POST" name="profile_form">
                 {% for key in order %}
-                <div class="form-group">
-                    <label class="col-md-4 control-label">{{ profile[key]['label'] }}</label>
+                <div class="mb-3">
+                    <label class="col-md-4 col-form-label">{{ profile[key]['label'] }}</label>
                     <div id="div_' + pname + '" class="col-md-8 controls">
                         <input class="form-control" name="{{ key }}" type="text" title="{{ profile[key]['description'] }}" value="{{ profile[key]['value'] }}"{{ ' disabled' if 'disabled' in profile[key] }}/>
                     </div>
                 </div>
                 {% endfor %}
-                <div id="form-buttons" class="form-group">
-                    <div class="col-md-offset-4 col-md-8">
+                <div id="form-buttons" class="mb-3">
+                    <div class="offset-md-4 col-md-8">
                         <button type="submit" class="btn btn-primary">Save</button>
-                        <button type="reset" class="btn btn-default">Reset</button>
+                        <button type="reset" class="btn btn-outline-secondary">Reset</button>
                     </div>
                 </div>
             </form>

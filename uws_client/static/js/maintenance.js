@@ -17,7 +17,7 @@
         to_delete: {label: 'To delete', style: 'danger', title: 'Destruction time passed, the job cannot be archived: it will be deleted (stopped if running)'},
         dates: {label: 'Inconsistent dates', style: 'danger', title: 'Dates not set or in the wrong order'},
         error: {label: 'Errors', style: 'danger', title: 'Error while checking the job'},
-        archived: {label: 'Archived', style: 'default', title: 'Jobs already archived'},
+        archived: {label: 'Archived', style: 'outline-secondary', title: 'Jobs already archived'},
         ok: {label: 'No issue', style: 'success', title: 'Jobs without issue'}
     };
     var HIDDEN_BY_DEFAULT = ['ok', 'archived'];
@@ -35,11 +35,11 @@
         $.each(CATEGORIES, function (category, c) {
             var n = report.summary[category] || 0;
             var active = (category_filter == category) ? ' active' : '';
-            html += '<button type="button" class="btn btn-' + c.style + ' btn-xs' + active + '" data-category="' + category
+            html += '<button type="button" class="btn btn-' + c.style + ' btn-sm' + active + '" data-category="' + category
                 + '" title="' + c.title + '"' + (n ? '' : ' disabled') + '>' + c.label + ' <span class="badge">' + n + '</span></button>';
         });
         if (category_filter) {
-            html += '<button type="button" class="btn btn-link btn-xs" data-category="">Show all categories</button>';
+            html += '<button type="button" class="btn btn-link btn-sm" data-category="">Show all categories</button>';
         }
         $('#maintenance_summary').html(html);
         $('#maintenance_summary button').click(function () {

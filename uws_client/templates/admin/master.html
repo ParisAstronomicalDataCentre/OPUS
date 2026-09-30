@@ -2,47 +2,27 @@
 {% import 'admin/static.html' as admin_static with context %}
 {% extends "skeleton.html" %}
     {% block css %}
-        <link href="{{ admin_static.url(filename='admin/css/bootstrap3/admin.css', v='1.1.1') }}" rel="stylesheet">
+        {# Flask-Admin pages (Client Accounts): templates of Flask-Admin (Bootstrap 4) in the layout of OPUS (Bootstrap 5) #}
+        <link href="{{ admin_static.url(filename='admin/css/bootstrap4/admin.css', v='1.1.1') }}" rel="stylesheet">
+        <link href="{{ admin_static.url(filename='bootstrap/bootstrap4/css/font-awesome.min.css', v='4.7.0') }}" rel="stylesheet">
         {% if admin_view.extra_css %}
           {% for css_url in admin_view.extra_css %}
             <link href="{{ css_url }}" rel="stylesheet">
           {% endfor %}
         {% endif %}
-        <style>
-        body {
-            padding-top: 4px;
-        }
-        </style>
     {% endblock %}
     {% block content %}
     <div class="container">
-      <nav class="navbar navbar-default" role="navigation">
-        <!-- Brand and toggle get grouped for better mobile display -->
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#admin-navbar-collapse">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-        </div>
-        <!-- navbar content -->
-        <div class="collapse navbar-collapse" id="admin-navbar-collapse">
-          {% block main_menu %}
-          <ul class="nav navbar-nav">
-            {{ layout.menu() }}
-          </ul>
-          {% endblock %}
-
-          {% block menu_links %}
-          <ul class="nav navbar-nav navbar-right">
-            {{ layout.menu_links() }}
-          </ul>
-          {% endblock %}
-          {% block access_control %}
-          {% endblock %}
-        </div>
-      </nav>
+      <ul class="nav nav-pills mb-3">
+        {% block main_menu %}
+        {{ layout.menu() }}
+        {% endblock %}
+        {% block menu_links %}
+        {{ layout.menu_links() }}
+        {% endblock %}
+        {% block access_control %}
+        {% endblock %}
+      </ul>
 
       {# store the jinja2 context for form_rules rendering logic #}
       {% set render_ctx = h.resolve_ctx() %}
@@ -52,12 +32,22 @@
     {% endblock %}
 
     {% block js %}
-    <script src="{{ admin_static.url(filename='vendor/jquery.min.js', v='2.1.4') }}" type="text/javascript"></script>
-    <script src="{{ admin_static.url(filename='vendor/moment.min.js', v='2.9.0') }}" type="text/javascript"></script>
-    <script src="{{ admin_static.url(filename='vendor/select2/select2.min.js', v='3.5.2') }}" type="text/javascript"></script>
+    <script src="{{ admin_static.url(filename='vendor/jquery.min.js', v='3.5.1') }}" type="text/javascript"></script>
+    <script src="{{ admin_static.url(filename='vendor/moment.min.js', v='2.9.4') }}" type="text/javascript"></script>
+    <script src="{{ admin_static.url(filename='vendor/select2/select2.min.js', v='4.2.1') }}" type="text/javascript"></script>
     {% if admin_view.extra_js %}
       {% for js_url in admin_view.extra_js %}
         <script src="{{ js_url }}" type="text/javascript"></script>
       {% endfor %}
     {% endif %}
+    <script type="text/javascript">
+        // Flask-Admin markup (Bootstrap 4): data-toggle, data-target, data-dismiss -> data-bs-* (Bootstrap 5)
+        document.addEventListener('DOMContentLoaded', function () {
+            ['toggle', 'target', 'dismiss'].forEach(function (name) {
+                document.querySelectorAll('[data-' + name + ']').forEach(function (element) {
+                    element.setAttribute('data-bs-' + name, element.getAttribute('data-' + name));
+                });
+            });
+        });
+    </script>
     {% endblock %}
