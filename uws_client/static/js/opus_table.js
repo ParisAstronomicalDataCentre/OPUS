@@ -6,8 +6,8 @@
 /*
  * Sort and pages of a table (job list), without library:
  * - click on a header cell to sort the rows (except the cells with the class sorter-false), click again to reverse
- * - pager in the footer (class ts-pager): buttons first, prev, next, last, text pagedisplay, selects pagesize and
- *   pagenum
+ * - pager in the footer (class ts-pager): buttons first, prev, next, last, texts pagedisplay ("1–20 of 42") and
+ *   pagecount ("of 3"), selects pagesize and pagenum
  * The rows added or removed later are taken into account (the table is observed).
  *
  *   opusTable.init(document.getElementById('job_list'));
@@ -77,7 +77,11 @@ var opusTable = (function() {
             var display = pager.querySelector('.pagedisplay');
             if (display) {
                 var end = Math.min(start + size, total);
-                display.textContent = (total ? start + 1 : 0) + ' - ' + end + ' / ' + total + ' (' + total + ')';
+                display.textContent = (total ? start + 1 : 0) + '\u2013' + end + ' of ' + total;
+            }
+            var pagecount = pager.querySelector('.pagecount');
+            if (pagecount) {
+                pagecount.textContent = 'of ' + pages;
             }
             var pagenum = pager.querySelector('.pagenum');
             if (pagenum) {

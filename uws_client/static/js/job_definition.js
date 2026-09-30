@@ -132,7 +132,7 @@
                                 <span class="input-group-text">=</span>\
                                 <input class="param_default form-control" name="param_default_' + ii + '" type="text" placeholder="Default value" />\
                                 <span class="input-group-text">\
-                                    Req.? <input class="param_required" name="param_required_' + ii + '" type="checkbox" title="Required parameter?" checked/>\
+                                    Req.? <input class="param_required ms-1" name="param_required_' + ii + '" type="checkbox" title="Required parameter?" checked/>\
                                 </span>\
                                 <span class="input-group-btn">\
                                     <select class="param_datatype select-small selectpicker" name="param_datatype_' + ii + '">\
@@ -184,7 +184,7 @@
                                     <div class="input-group-text">Mult. </div>\
                                     <input class="used_multiplicity form-control" name="used_multiplicity_' + ii + '" type="text" title="Multiplicity" maxlength="2" style="width: 30px;"/>\
                                     <div class="input-group-btn">\
-                                        <select name="used_contenttype_' + ii + '" class="used_contenttype select-small selectpicker" multiple>\
+                                        <select name="used_contenttype_' + ii + '" class="used_contenttype select-small selectpicker">\
                                             ' + options + '\
                                         </select>\
                                         <button id="moveup_used_' + ii + '" class="moveup_used btn btn-outline-secondary" type="button" >\
@@ -205,10 +205,10 @@
                             </div>\
                             <div style="height: 1px;"></div>\
                             <div class="input-group input-group-sm col-md-12" style="width:100%">\
-                                <span class="input-group-text" style="width:70px" title="The input is a File or an ID, possibly with a URL to resolve the ID and download the file (use $ID in the URL template).">\
-                                    File <input class="used_isfile" name="used_isfile_' + ii + '" type="radio" value="File" checked/>\
-                                    or value  <input class="used_isfile" name="used_isfile_' + ii + '" type="radio" value="value"/>\
-                                    or ID  <input class="used_isfile" name="used_isfile_' + ii + '" type="radio" value="ID"/>\
+                                <span class="input-group-text" title="The input is a File or an ID, possibly with a URL to resolve the ID and download the file (use $ID in the URL template).">\
+                                    File <input class="used_isfile ms-1 me-2" name="used_isfile_' + ii + '" type="radio" value="File" checked/>\
+                                    or value  <input class="used_isfile ms-1 me-2" name="used_isfile_' + ii + '" type="radio" value="value"/>\
+                                    or ID  <input class="used_isfile ms-1 me-2" name="used_isfile_' + ii + '" type="radio" value="ID"/>\
                                     + access URL\
                                 </span>\
                                 <input class="used_url form-control" name="used_url_' + ii + '" type="text" placeholder="http://url_to_the_input_file?id=$ID" style="border-bottom-right-radius: 4px; border-top-right-radius: 4px;" />\
@@ -423,7 +423,6 @@
                         for (var attr in attr_mapping) {
                             $('[name=used_' + attr + '_' + i + ']').val(attr_mapping[attr]);
                         }
-                        // TODO: used_type_ is an array of values (comma separated)
     //				    $('input[name=used_name_' + i + ']').val(used);
     //				    $('select[name=used_type_' + i + ']').val(jdl.used[used]['content_type']);
     //				    $('input[name=used_default_' + i + ']').val(jdl.used[used]['default']);

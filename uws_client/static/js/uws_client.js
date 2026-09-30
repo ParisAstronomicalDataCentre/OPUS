@@ -167,7 +167,7 @@ var uws_client = (function($) {
     //----------
     // PREPARE TABLE
 
-    var prepareTable = function() {
+    var prepareTable = function(pager = true) {
         $('#job_list').attr('class', 'table table-bordered table-sm');
         var tcontent = '\
             <thead>\
@@ -190,7 +190,8 @@ var uws_client = (function($) {
             </thead>\
             <tbody>\
             </tbody>';
-        tcontent = tcontent + '\
+        if (pager) {  // line to change pages (not for a single job)
+            tcontent = tcontent + '\
             <tfoot>\
                 <tr>\
                   <th colspan="' + job_list_columns.length + '" class="ts-pager">\
@@ -199,22 +200,27 @@ var uws_client = (function($) {
                       <button type="button" class="btn btn-outline-secondary first"><span class="bi bi-skip-start-fill"></span></button>\
                       <button type="button" class="btn btn-outline-secondary prev"><span class="bi bi-rewind-fill"></span></button>\
                     </div>\
-                    <span class="pagedisplay"></span>\
+                    <span class="mx-1">Jobs <span class="pagedisplay"></span></span>\
                     <div class="btn-group btn-group-sm" role="group">\
                       <button type="button" class="btn btn-outline-secondary next"><span class="bi bi-fast-forward-fill"></span></button>\
                       <button type="button" class="btn btn-outline-secondary last"><span class="bi bi-skip-end-fill"></span></button>\
                     </div>\
+                    <span class="ms-3">Show</span>\
                     <select class="form-select form-select-sm w-auto pagesize" title="Select page size">\
                       <option value="10">10</option>\
                       <option selected="selected" value="20">20</option>\
                       <option value="30">30</option>\
-                      <option value="all">All Rows</option>\
+                      <option value="all">all</option>\
                     </select>\
+                    <span>per page</span>\
+                    <span class="ms-3">Page</span>\
                     <select class="form-select form-select-sm w-auto pagenum" title="Select page number"></select>\
+                    <span class="pagecount"></span>\
                    </div>\
                   </th>\
                 </tr>\
             </tfoot>';
+        };
         $('#job_list').html(tcontent);
     };
 
@@ -290,7 +296,7 @@ var uws_client = (function($) {
         $('#'+jobId+' td button.phase').removeClass( function (index, css) {
             return (css.match(/(^|\s)btn-\S+/g) || []).join(' ');
         });
-        $('#'+jobId+' td button.phase').addClass(phase_class);
+        $('#'+jobId+' td button.phase').addClass(phase_class + ' btn-sm');
         // Refresh phase if change is expected
         switch (phase) {
             case 'QUEUED':
@@ -377,7 +383,7 @@ var uws_client = (function($) {
             creationTime: '<td class="text-center" style="vertical-align: middle;" title="' + times + '">' + creation_time + '</td>',
             phase: '\
                 <td class="text-center" style="vertical-align: middle;">\
-                    <button type="button" class="phase btn btn-outline-secondary">PHASE...</button>\
+                    <button type="button" class="phase btn btn-outline-secondary btn-sm">PHASE...</button>\
                 </td>',
             edit: '\
                 <td class="text-center" style="vertical-align: middle;">\
@@ -779,8 +785,12 @@ var uws_client = (function($) {
         };
         $('.selectpicker').selectpicker('refresh');
         // Event to add control parameter
-        $('#control_parameters').on('changed.bs.select', function(){
+        $('#control_parameters').on('change', function(){
             var pname = $('#control_parameters').val();
+            if (!pname) {
+                return;
+            }
+            $('#control_parameters').selectpicker('val', '');  // the same parameter can be chosen again
             if ($('#id_' + pname).length == 0) {
                 var pdesc = jdl.control_parameters[pname];
                 displayParamFormInput(pname, {'default': '', 'annotation': pdesc, 'control': 'true'})
@@ -1163,7 +1173,7 @@ var uws_client = (function($) {
 
     var displaySingleJobOk = function(jobName, jobId){
         $('#loading').show();
-        prepareTable();
+        prepareTable(false);
         clients[jobName].getJobInfos(jobId, displaySingleJobSuccess, displaySingleJobError);
     };
     var displaySingleJob = function(jobName, jobId){

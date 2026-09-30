@@ -11,6 +11,11 @@
 /* titles in the card headers (previously panel titles) */
 .card-header .card-title {
     margin-bottom: 0;
+    font-size: 1.25rem;
+}
+/* cards in a card (e.g. results of a job): title in the size of the text */
+.card .card .card-header .card-title {
+    font-size: inherit;
 }
 
 /* arrow for accordion cards (Bootstrap Icons: chevron-down / chevron-right) */
@@ -61,6 +66,14 @@
     border-top-left-radius: var(--bs-border-radius);
     border-bottom-left-radius: var(--bs-border-radius);
 }
+/* buttons attached to inputs: border of the inputs */
+.input-group .btn-outline-secondary {
+    --bs-btn-border-color: var(--bs-border-color);
+}
+.input-group > .input-group-btn > .ts-wrapper,
+.input-group > .input-group-btn > .ts-wrapper .ts-control {
+    border-radius: 0;
+}
 .input-group > .input-group-btn:not(:first-child) > .btn:first-child {
     margin-left: -1px;
 }
@@ -77,20 +90,8 @@
     padding-bottom: 0.25rem;
 }
 
-.checkbox {
-    line-height: 1.42857143;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    padding-bottom: 25px;
-}
-
 body {
-    padding-top: 4px;
-}
-
-.nopadding {
-   padding: 0 !important;
-   margin: 0 !important;
+    padding-top: 5px;
 }
 
 .nomargin {
@@ -113,4 +114,9 @@ body {
 }
 #messages_div .alert {
     pointer-events: auto;
+}
+
+/* pager of a table (see opus_table.js): background of the card headers */
+th.ts-pager {
+    --bs-table-bg: var(--bs-card-cap-bg);
 }
