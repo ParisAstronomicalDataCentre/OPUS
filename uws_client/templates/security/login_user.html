@@ -3,7 +3,7 @@
 {% extends "skeleton.html" %}
 {% block content %}
 	<div class="container bs-docs-container">
-	    <div class="col-md-4 offset-md-4">
+	    <div class="row"><div class="col-md-4 offset-md-4">
             <h3>Local Login</h3>
             <form class="" action="{{ url_for_security('login') }}" method="POST" name="login_user_form">
                 {{ login_user_form.hidden_tag() }}
@@ -12,6 +12,6 @@
                 {{ render_field(login_user_form.next) }}
                 {{ render_field(login_user_form.submit, class="btn btn-primary") }}
             </form>
-	    </div> <!-- col -->
+	    </div></div> <!-- col -->
 	</div> <!-- container -->
 {% endblock %}

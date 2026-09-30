@@ -1,12 +1,12 @@
 {% extends "skeleton.html" %}
 {% block content %}
 	<div class="container bs-docs-container">
-	    <div class="offset-md-2 col-md-8">
+	    <div class="row"><div class="offset-md-2 col-md-8">
             <h3>Client Preferences</h3>
             <p>
                 <form class="" action="{{ url_for('preferences') }}" method="POST" name="preferences_form">
                     {% for key in config.EDITABLE_CONFIG %}
-                    <div class="mb-3">
+                    <div class="row mb-3">
                         <label class="col-md-4 col-form-label">{{ key }}</label>
                         <div id="div_{{ key }}" class="col-md-8 controls">
                             <input class="form-control" name="{{ key }}" type="text" value="{{ config[key] }}"/>
@@ -14,7 +14,7 @@
                         </div>
                     </div>
                     {% endfor %}
-                    <div id="form-buttons" class="mb-3">
+                    <div id="form-buttons" class="row mb-3">
                         <div class="offset-md-4 col-md-8">
                             <button type="submit" class="btn btn-primary">Submit</button>
                             <button type="reset" class="btn btn-outline-secondary">Reset</button>
@@ -22,6 +22,6 @@
                     </div>
                 </form>
             </p>
-	    </div> <!-- col -->
+	    </div></div> <!-- col -->
 	</div> <!-- container -->
 {% endblock %}

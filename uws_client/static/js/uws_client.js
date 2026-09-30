@@ -602,10 +602,10 @@ var uws_client = (function($) {
 
     var displayParamFormInput = function(pname, p){
         var phide = ''
-        var pclass = 'mb-3'
+        var pclass = 'row mb-3'
         if (p.required == 'false') { //.toLowerCase()
             phide = ' style="display:none; color:grey"';
-            pclass = 'mb-3 optional';
+            pclass = 'row mb-3 optional';
         };
         // default value and description may not be given in the job definition (null)
         var pdefault = (p.default == null) ? '' : p.default;
@@ -756,7 +756,7 @@ var uws_client = (function($) {
         // Add buttons
         $('#job_params').append('<hr>');
         var elt = '\
-            <div id="add_control" class="mb-3">\n\
+            <div id="add_control" class="row mb-3">\n\
                 <label class="col-md-3 col-form-label">Add control parameters</label>\n\
                 <div class="col-md-5 controls">\n\
                     <select id="control_parameters" name="control_parameters" class="selectpicker" title="Chose parameter" data-width="100%">\n\
@@ -764,7 +764,7 @@ var uws_client = (function($) {
                     </select>\n\
                 </div>\n\
             </div>\n\
-            <div id="form-buttons" class="mb-3">\n\
+            <div id="form-buttons" class="row mb-3">\n\
                 <div class="offset-md-3 col-md-9">\n\
                     <button type="submit" class="btn btn-primary">Submit</button>\n\
                     <button type="reset" class="btn btn-outline-secondary">Reset</button>\n\
@@ -898,7 +898,7 @@ var uws_client = (function($) {
         $('#all_params').attr('value', JSON.stringify(qs));
         // Add buttons
         var elt = '\
-            <div id="form-buttons" class="mb-3">\n\
+            <div id="form-buttons" class="row mb-3">\n\
                 <div class="offset-md-2 col-md-5">\n\
                     <button id="showopt" type="button" class="btn btn-outline-secondary">Show optional parameters</button>\n\
                 </div>\n\
