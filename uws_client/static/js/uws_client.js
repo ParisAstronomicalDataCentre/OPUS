@@ -605,14 +605,17 @@ var uws_client = (function($) {
             phide = ' style="display:none; color:grey"';
             pclass = 'form-group optional';
         };
+        // default value and description may not be given in the job definition (null)
+        var pdefault = (p.default == null) ? '' : p.default;
+        var pannotation = (p.annotation == null) ? '' : p.annotation;
         var row = '\
             <div class="' + pclass + '"' + phide + '>\
                 <label class="col-md-3 control-label">' + pname + '</label>\
                 <div id="div_' + pname + '" class="col-md-5 controls">\
-                    <input class="form-control" id="id_' + pname + '" name="' + pname + '" type="text" value="' + p.default + '"/>\
+                    <input class="form-control" id="id_' + pname + '" name="' + pname + '" type="text" value="' + pdefault + '"/>\
                 </div>\
                 <div class="col-md-4 help-block">\
-                    ' + p.annotation + '\
+                    ' + pannotation + '\
                 </div>\
             </div>';
         if (p.control == 'true') {
