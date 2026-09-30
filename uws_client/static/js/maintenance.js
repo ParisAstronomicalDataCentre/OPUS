@@ -36,7 +36,7 @@
             var n = report.summary[category] || 0;
             var active = (category_filter == category) ? ' active' : '';
             html += '<button type="button" class="btn btn-' + c.style + ' btn-sm' + active + '" data-category="' + category
-                + '" title="' + c.title + '"' + (n ? '' : ' disabled') + '>' + c.label + ' <span class="badge">' + n + '</span></button>';
+                + '" title="' + c.title + '"' + (n ? '' : ' disabled') + '>' + c.label + ' <span class="badge text-bg-light">' + n + '</span></button>';
         });
         if (category_filter) {
             html += '<button type="button" class="btn btn-link btn-sm" data-category="">Show all categories</button>';

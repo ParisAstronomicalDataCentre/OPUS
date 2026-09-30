@@ -79,6 +79,26 @@ a:hover {
     text-decoration: none;
 }
 
+/* warning color of Bootstrap 3: orange with white text (Bootstrap 5: yellow with dark text) */
+.btn-warning {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: #f0ad4e;
+    --bs-btn-border-color: #eea236;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #ec971f;
+    --bs-btn-hover-border-color: #d58512;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #ec971f;
+    --bs-btn-active-border-color: #d58512;
+    --bs-btn-disabled-color: #fff;
+    --bs-btn-disabled-bg: #f0ad4e;
+    --bs-btn-disabled-border-color: #eea236;
+}
+.text-bg-warning {
+    color: #fff !important;
+    background-color: #f0ad4e !important;
+}
+
 /* animate a refresh icon */
 .spin {
     display: inline-block;
