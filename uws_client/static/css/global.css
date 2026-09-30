@@ -2,10 +2,47 @@
 /* same font sizes as Bootstrap 3 (14px, 12px for the small elements), for a similar layout */
 :root {
     --bs-body-font-size: 0.875rem;
+    --bs-body-line-height: 1.42857143;
+}
+
+/* page width of Bootstrap 3 (Bootstrap 5 is wider: up to 1320px) */
+.container {
+    --bs-gutter-x: 30px;
+}
+@media (min-width: 768px) {
+    .container { max-width: 750px; }
+}
+@media (min-width: 992px) {
+    .container { max-width: 970px; }
+}
+@media (min-width: 1200px) {
+    .container { max-width: 1170px; }
+}
+
+/* navbar of Bootstrap 3 (50px high) */
+.navbar {
+    padding-top: 0;
+    padding-bottom: 0;
+    min-height: 50px;
+}
+.navbar-brand {
+    font-size: 18px;
+    line-height: 20px;
+    padding-top: 15px;
+    padding-bottom: 15px;
+}
+@media (min-width: 768px) {
+    .navbar-expand-md .navbar-nav .nav-link {
+        padding-top: 15px;
+        padding-bottom: 15px;
+    }
 }
 .form-control, .form-select, .input-group-text, .btn, .dropdown-menu, .ts-wrapper, .ts-control, .ts-control input,
 .ts-dropdown, .popover, .modal-body {
     font-size: 0.875rem;
+}
+.form-control, .form-select, .input-group-text, .btn {
+    line-height: 1.42857143;
 }
 .form-control-sm, .form-select-sm, .btn-sm, .btn-group-sm > .btn, .input-group-sm > .form-control,
 .input-group-sm > .input-group-text, .input-group-sm > .btn, .badge {
