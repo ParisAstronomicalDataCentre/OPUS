@@ -966,11 +966,16 @@ class Job:
         self.change_status("ABORTED", "Job aborted by user " + self.user.name)
 
     def archive(self):
-        """Archive job
+        """Archive job: the files of its results are deleted, its description is kept
 
-        Job can be archived at any time.
+        The result files and the uploaded files of the job are removed. The results of the job and their entities are
+        kept, as its logs and provenance files (job data directory): they are needed for the provenance.
         """
         self.change_status("ARCHIVED", f"Job archived (phase was {self.phase})")
+        for path in [f"{settings.RESULTS_PATH}/{self.jobid}", f"{settings.UPLOADS_PATH}/{self.jobid}"]:
+            if os.path.isdir(path):
+                shutil.rmtree(path)
+        logger.info(f"Result files of job {self.jobid} deleted (archived)")
 
     def _remove_failed_creation(self):
         """Remove the job, its files and its uploaded entities, after a failed creation (see __init__)"""

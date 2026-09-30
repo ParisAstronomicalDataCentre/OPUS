@@ -341,7 +341,24 @@ class TestMaintenance:
         assert requests.get(f"{base}/maintenance", auth=AUTH).status_code == 403
         assert requests.post(f"{base}/maintenance", auth=AUTH).status_code == 403
 
-    @pytest.mark.xfail(reason="deletion of the results of the archived jobs not implemented yet", strict=True)
     def test_archive_deletes_results(self, server):
+        """The result files of an archived job are deleted, its description, results (provenance), logs and provenance
+        files are kept"""
         job_url = self.archive(server, "results deleted")
-        assert requests.get(f"{job_url}/results/output", auth=AUTH).status_code == 404
+        jobid = job_url.split("/")[-1]
+        assert not os.path.exists(f"{settings.RESULTS_PATH}/{jobid}")
+        # the result is kept (provenance), its file is no longer available
+        response = requests.get(f"{job_url}/results/output", auth=AUTH)
+        assert response.status_code == 200
+        assert requests.get(response.text, auth=AUTH).status_code == 404
+        # kept: description, parameters, logs and provenance
+        assert job_attributes(job_url)["phase"] == "ARCHIVED"
+        assert requests.get(f"{job_url}/parameters/text", auth=AUTH).text == "results deleted"
+        assert requests.get(f"{job_url}/stdout", auth=AUTH).status_code == 200
+        assert requests.get(f"{job_url}/provjson", auth=AUTH).status_code == 200
+        # the entity of the result is kept, its file is no longer available
+        job_storage = getattr(storage, settings.STORAGE + "JobStorage")()
+        with job_storage.get_session() as session:
+            [entity_id] = [e.entity_id for e in session.query(job_storage.Entity).filter_by(jobid=jobid)]
+        base = server.rsplit(settings.UWS_SERVER_ENDPOINT, 1)[0]
+        assert requests.get(f"{base}/store", params={"ID": entity_id}, auth=AUTH).status_code == 404

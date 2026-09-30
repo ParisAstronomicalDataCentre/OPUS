@@ -262,9 +262,10 @@ The last lines of the server and client logs can also be seen in the administrat
 
 The server provides a maintenance task for the jobs whose destruction date is passed:
 
-* the jobs COMPLETED, ABORTED or in ERROR are archived (phase `ARCHIVED`, see `USE_ARCHIVED_PHASE`: their results
-  are deleted, their description is kept, and they are no longer shown in the job lists; the deletion of the results
-  is not implemented yet, they are currently kept),
+* the jobs COMPLETED, ABORTED or in ERROR are archived (phase `ARCHIVED`, see `USE_ARCHIVED_PHASE`): their results
+  files are deleted (result files and uploaded files), their description is kept (attributes, parameters, results,
+  logs and provenance: a result is still listed, its file is no longer available), and they are no longer shown in
+  the job lists,
 * the other jobs (e.g. PENDING, or still EXECUTING), or all the jobs if `USE_ARCHIVED_PHASE=false`, are deleted: the
   job is stopped if it is running, its files (uploads, job data, results) and its entries in the database are
   removed, as when a user deletes a job.
