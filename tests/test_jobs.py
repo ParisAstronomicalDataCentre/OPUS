@@ -352,7 +352,7 @@ class TestMaintenance:
         assert response.status_code == 200
         download = requests.get(response.text, auth=AUTH)
         assert download.status_code == 404
-        assert f"job {jobid} is archived (its result files were deleted)" in download.text
+        assert f"job {jobid} is archived and its result files were deleted" in download.text
         # kept: description, parameters, logs and provenance
         assert job_attributes(job_url)["phase"] == "ARCHIVED"
         assert requests.get(f"{job_url}/parameters/text", auth=AUTH).text == "results deleted"
