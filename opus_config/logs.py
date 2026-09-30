@@ -14,7 +14,6 @@ def log_files(log_path, prefix, suffix=""):
     (file names as in the logging configuration, see LOGGING in uws_server/settings.py and uws_client/settings.py)"""
     files = {prefix: f"{prefix}{suffix}.log", f"{prefix}_debug": f"{prefix}{suffix}_debug.log"}
     if prefix == "server":
-        files["debug"] = f"debug{suffix}.log"  # other modules (e.g. libraries)
         # nginx in front of the server and the client (just start, Docker), see generate_nginx_config.py
         files["nginx_access"] = "nginx_access.log"
         files["nginx_error"] = "nginx_error.log"

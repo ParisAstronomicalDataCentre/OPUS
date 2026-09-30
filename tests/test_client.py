@@ -434,7 +434,7 @@ class TestAdminPages:
         html = client.get("/admin/logs").get_data(as_text=True)
         options = re.findall(r'<option value="(\w+)" data-url="([^"]+)"', html)
         server = [f for f, url in options if url == "http://localhost/proxy/log"]
-        assert server == ["server", "server_debug", "debug", "nginx_access", "nginx_error"]
+        assert server == ["server", "server_debug", "nginx_access", "nginx_error"]
         assert [f for f, url in options if url == "/admin/client_log/text"] == ["client", "client_debug"]
         assert '<option value="client_debug" data-url="/admin/client_log/text" selected>' in client.get(
             "/admin/logs?file=client_debug").get_data(as_text=True)

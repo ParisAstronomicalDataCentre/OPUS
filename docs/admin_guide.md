@@ -45,7 +45,7 @@ When signed in as an administrator (role `admin` in the client), the top-right m
 
 The log viewer shows the last lines (100 to 5000) of a log file, from `$OPUS_VAR_PATH/logs`:
 
-* server: `server.log` (INFO level), `server_debug.log` (DEBUG level) and `debug.log` (other modules),
+* server: `server.log` (INFO level) and `server_debug.log` (DEBUG level, with the messages of the `prov` library),
 * nginx: `nginx_access.log` and `nginx_error.log` (with `just start` or Docker, see `generate_nginx_config.py`),
 * client: `client.log` (INFO level) and `client_debug.log` (DEBUG level).
 

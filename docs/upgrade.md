@@ -70,6 +70,8 @@ Main changes
   it (`DIRECTION=FORWARD` in `/provsap`, for the jobs created after the upgrade), and the internal provenance
   written by a job (`internal_provenance.json`) is included.
 * New dependencies: `pydantic-settings` and `a2wsgi` (replaces `asgiref`), installed by `uv sync`.
+* The log file `debug.log` of the server (other modules) is no longer written: it stayed empty (the messages of the
+  `prov` library are now in `server_debug.log`). It can be removed from `$OPUS_VAR_PATH/logs`.
 
 
 Upgrade procedure

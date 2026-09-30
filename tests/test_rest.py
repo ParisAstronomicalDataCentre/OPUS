@@ -259,8 +259,8 @@ class TestLog:
         response = requests.get(url, params={"LINES": 3}, auth=ADMIN)
         assert response.status_code == 200 and response.headers["Content-Type"].startswith("text/plain")
         assert 0 < len(response.text.splitlines()) <= 3
-        for name in ["server_debug", "debug"]:
-            assert requests.get(url, params={"FILE": name}, auth=ADMIN).status_code == 200
+        assert requests.get(url, params={"FILE": "server_debug"}, auth=ADMIN).status_code == 200
+        assert requests.get(url, params={"FILE": "debug"}, auth=ADMIN).status_code == 400  # no longer written
         # nginx logs (in the same directory, no nginx in the tests)
         assert requests.get(url, params={"FILE": "nginx_access"}, auth=ADMIN).status_code == 404
         assert requests.get(url, params={"FILE": "../../etc/passwd"}, auth=ADMIN).status_code == 400

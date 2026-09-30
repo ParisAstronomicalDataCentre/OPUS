@@ -202,9 +202,6 @@ LOGGING = {
         "with_user": {
             "format": "[%(asctime)s] %(levelname)s %(funcName)s: %(message)s [%(user)s]"
         },
-        "module": {
-            "format": "[%(asctime)s] %(levelname)s %(module)s.%(funcName)s: %(message)s"
-        },
     },
     "handlers": {
         "file_server": {
@@ -219,29 +216,16 @@ LOGGING = {
             "filename": settings.LOG_PATH + "/server" + settings.LOG_FILE_SUFFIX + "_debug.log",
             "formatter": "default",
         },
-        "file_debug": {
-            "level": "DEBUG",
-            "class": "logging.FileHandler",
-            "filename": settings.LOG_PATH + "/debug" + settings.LOG_FILE_SUFFIX + ".log",
-            "formatter": "module",
-        },
     },
     "loggers": {
         "uws_server": {
             "level": "DEBUG",
             "handlers": ["file_server", "file_server_debug"],
         },
-        "beaker": {
-            "level": "DEBUG",
-            "handlers": ["file_debug"],
-        },
-        "cork": {
-            "level": "DEBUG",
-            "handlers": ["file_debug"],
-        },
+        # messages of the prov library (provenance), in the debug log of the server
         "prov": {
             "level": "DEBUG",
-            "handlers": ["file_debug"],
+            "handlers": ["file_server_debug"],
         },
     },
 }
