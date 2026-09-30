@@ -31,3 +31,5 @@ OPUS-*
 # Coverage of the tests
 .coverage
 htmlcov/
+# PIDs of the uvicorn processes (just start)
+.uvicorn_*.pid
