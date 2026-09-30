@@ -60,9 +60,9 @@ nginx_conf:
 # Run OPUS server + client behind nginx (as local user, no sudo needed)
 start:
     # Start server and client uvicorn processes in background and store their PIDs
-    uv run uvicorn app_server:asgi_app --host localhost --port 8082 --workers 1 --root-path /opus_server --reload & echo $! > .uvicorn_server.pid
+    uv run uvicorn app_server:asgi_app --host localhost --port 8082 --workers 1 --root-path /opus_server & echo $! > .uvicorn_server.pid
     @sleep 1
-    uv run uvicorn app_client:asgi_app --host localhost --port 8080 --workers 1 --root-path /opus_client --reload & echo $! > .uvicorn_client.pid
+    uv run uvicorn app_client:asgi_app --host localhost --port 8080 --workers 1 --root-path /opus_client & echo $! > .uvicorn_client.pid
     @sleep 1
     # Once back‑ends are listening, start nginx as a reverse proxy
     nginx -e stderr -c `pwd`/nginx/nginx.conf
