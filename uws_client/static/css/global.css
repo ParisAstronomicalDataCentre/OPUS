@@ -1,104 +1,3 @@
-
-/* same font sizes as Bootstrap 3 (14px, 12px for the small elements), for a similar layout */
-:root {
-    --bs-body-font-size: 0.875rem;
-    --bs-body-line-height: 1.42857143;
-}
-
-/* page width of Bootstrap 3 (Bootstrap 5 is wider: up to 1320px) */
-.container {
-    --bs-gutter-x: 30px;
-}
-@media (min-width: 768px) {
-    .container { max-width: 750px; }
-}
-@media (min-width: 992px) {
-    .container { max-width: 970px; }
-}
-@media (min-width: 1200px) {
-    .container { max-width: 1170px; }
-}
-
-/* navbar of Bootstrap 3 (50px high) */
-.navbar {
-    padding-top: 0;
-    padding-bottom: 0;
-    min-height: 50px;
-}
-.navbar-brand {
-    font-size: 18px;
-    line-height: 20px;
-    padding-top: 15px;
-    padding-bottom: 15px;
-}
-@media (min-width: 768px) {
-    .navbar-expand-md .navbar-nav .nav-link {
-        padding-top: 15px;
-        padding-bottom: 15px;
-    }
-}
-.form-control, .form-select, .input-group-text, .btn, .dropdown-menu, .ts-wrapper, .ts-control, .ts-control input,
-.ts-dropdown, .popover, .modal-body {
-    font-size: 0.875rem;
-}
-.form-control, .form-select, .input-group-text, .btn {
-    line-height: 1.42857143;
-}
-.form-control-sm, .form-select-sm, .btn-sm, .btn-group-sm > .btn, .input-group-sm > .form-control,
-.input-group-sm > .input-group-text, .input-group-sm > .btn, .badge {
-    font-size: 0.75rem;
-}
-
-/* heading sizes of Bootstrap 3 */
-h1, .h1 { font-size: 2.25rem; }
-h2, .h2 { font-size: 1.875rem; }
-h3, .h3 { font-size: 1.5rem; }
-h4, .h4 { font-size: 1.125rem; }
-h5, .h5 { font-size: 0.875rem; }
-h6, .h6 { font-size: 0.75rem; }
-.card-header h4 { margin: 0; }
-
-/* labels in bold (as Bootstrap 3), except the labels of the checkboxes */
-label {
-    font-weight: 700;
-    margin-bottom: 5px;
-}
-.form-check-label {
-    font-weight: normal;
-    margin-bottom: 0;
-}
-
-/* links underlined on hover only (as Bootstrap 3) */
-a {
-    text-decoration: none;
-}
-a:hover {
-    text-decoration: underline;
-}
-.btn:hover, .nav-link:hover, .navbar-brand:hover, .dropdown-item:hover, .page-link:hover {
-    text-decoration: none;
-}
-
-/* warning color of Bootstrap 3: orange with white text (Bootstrap 5: yellow with dark text) */
-.btn-warning {
-    --bs-btn-color: #fff;
-    --bs-btn-bg: #f0ad4e;
-    --bs-btn-border-color: #eea236;
-    --bs-btn-hover-color: #fff;
-    --bs-btn-hover-bg: #ec971f;
-    --bs-btn-hover-border-color: #d58512;
-    --bs-btn-active-color: #fff;
-    --bs-btn-active-bg: #ec971f;
-    --bs-btn-active-border-color: #d58512;
-    --bs-btn-disabled-color: #fff;
-    --bs-btn-disabled-bg: #f0ad4e;
-    --bs-btn-disabled-border-color: #eea236;
-}
-.text-bg-warning {
-    color: #fff !important;
-    background-color: #f0ad4e !important;
-}
-
 /* animate a refresh icon */
 .spin {
     display: inline-block;
@@ -115,6 +14,10 @@ a:hover {
 }
 
 /* arrow for accordion cards (Bootstrap Icons: chevron-down / chevron-right) */
+.card-header a.accordion-toggle {
+    color: inherit;
+    text-decoration: none;
+}
 .card-header a.accordion-toggle:hover {
     color: black;
     text-decoration: none;
