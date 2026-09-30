@@ -71,15 +71,12 @@
                 </td>\
                 <td class="text-center" style="vertical-align: middle;">\
                     <div class="input-group">\
-                        <div class="input-group-btn">\
-                            <select id="roles_' + user_label + '" class="selectpicker" title="None" data_width="auto" data-container="body" multiple>\
-                                ' + job_options.join() + '\
-                            </select>\
-                            <button id="button_roles_' + user_label + '" type="button" class="roles btn btn-outline-secondary">\
-                                <span class="bi bi-send-fill"></span>\
-                                <span class="d-none d-lg-inline"></span>\
-                            </button>\
-                        </div>\
+                        <select id="roles_' + user_label + '" class="selectpicker" title="None" data-container="body" multiple>\
+                            ' + job_options.join() + '\
+                        </select>\
+                        <button id="button_roles_' + user_label + '" type="button" class="roles btn btn-outline-secondary" title="Save the roles">\
+                            <span class="bi bi-send-fill"></span>\
+                        </button>\
                     </div>\
                 </td>\
                 <td class="text-center" style="vertical-align: middle;">\
@@ -130,7 +127,7 @@
             <td class="text-center" style="vertical-align: middle;" width="150">\
                 <input class="form-control" id="name" name="name" type="text"/>\
             </td>\
-            <td class="text-center" style="vertical-align: middle;" width="300">\
+            <td class="text-center" style="vertical-align: middle;">\
                 <select id="roles" class="selectpicker match-content" title="None" data-container="body" multiple>\
                     ' + job_options.join() + '\
                 </select>\
