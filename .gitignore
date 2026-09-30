@@ -33,3 +33,5 @@ OPUS-*
 htmlcov/
 # PIDs of the uvicorn processes (just start)
 .uvicorn_*.pid
+# nginx configuration, generated from the settings (just nginx_conf, docker-start.sh)
+nginx/nginx.conf
