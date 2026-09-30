@@ -5,10 +5,11 @@
 {% endblock %}
 {% block content %}
 <div class="container bs-docs-container">
-    <div class="col-md-12">
+    {# content aligned with the text of the navbar (padding px-3 and border of the navbar, see header.html) #}
+    <div class="row"><div class="col-md-12 home-content">
 {% if config.HOME_CONTENT is defined %}
         {{ config.HOME_CONTENT|safe }}
 {% endif %}
-    </div>
+    </div></div>
 </div>
 {% endblock %}

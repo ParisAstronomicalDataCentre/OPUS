@@ -5,32 +5,33 @@
         #maintenance_table td { vertical-align: middle; font-size: 12px; }
         #maintenance_table .actions { color: #31708f; }
         #maintenance_table .issues { color: #a94442; }
-        #maintenance_toolbar .btn, #maintenance_toolbar .checkbox-inline { margin: 2px 0; }
+        #maintenance_toolbar .btn, #maintenance_toolbar .form-check-inline { margin: 2px 0; }
     </style>
 {% endblock %}
 {% block js %}
-    <script type="text/javascript" src="/static/js/maintenance.js" defer></script>
+    <script type="text/javascript" src="/static/js/maintenance.js?v={{ asset_version }}" defer></script>
 {% endblock %}
 {% block content %}
 	<div class="container bs-docs-container">
-        <div id="maintenance_panel" class="panel panel-default">
-            <div class="panel-heading clearfix">
-                <span class="panel-title pull-left" style="padding-top: 6px; padding-right: 6px;">Maintenance of the jobs</span>
-                <form id="maintenance_toolbar" class="form-inline pull-right" onsubmit="return false;">
-                    <label class="checkbox-inline" title="Also list the jobs without issue and the archived jobs">
-                        <input name="show_all" type="checkbox"/> Show all jobs
-                    </label>
-                    <button id="button_check" type="button" class="btn btn-default btn-sm" title="Check the jobs, nothing is changed">
-                        <span class="glyphicon glyphicon-search"></span>
+        <div id="maintenance_panel" class="card mb-3">
+            <div class="card-header clearfix">
+                <span class="card-title float-start" style="padding-top: 6px; padding-right: 6px;">Maintenance of the jobs</span>
+                <form id="maintenance_toolbar" class="d-flex flex-wrap align-items-center gap-1 float-end" onsubmit="return false;">
+                    <div class="form-check form-check-inline" title="Also list the jobs without issue and the archived jobs">
+                        <input id="show_all" name="show_all" type="checkbox" class="form-check-input"/>
+                        <label class="form-check-label" for="show_all">Show all jobs</label>
+                    </div>
+                    <button id="button_check" type="button" class="btn btn-outline-secondary btn-sm" title="Check the jobs, nothing is changed">
+                        <span class="bi bi-search"></span>
                         Check (dry run)
                     </button>
                     <button id="button_apply" type="button" class="btn btn-warning btn-sm" title="Apply the changes listed by the check" disabled>
-                        <span class="glyphicon glyphicon-ok"></span>
+                        <span class="bi bi-check-lg"></span>
                         Apply changes
                     </button>
                 </form>
             </div>
-            <div class="panel-body">
+            <div class="card-body">
                 <p class="text-muted small">
                     The check lists the issues of the jobs (dates, phase not updated, destruction time passed) and the
                     changes to apply: archive the jobs after their destruction time, delete those that cannot be
@@ -41,7 +42,7 @@
                 <div id="maintenance_summary"></div>
             </div>
             <div class="table-responsive">
-                <table id="maintenance_table" class="table table-bordered table-condensed" style="display:none;">
+                <table id="maintenance_table" class="table table-bordered table-sm" style="display:none;">
                     <thead>
                         <tr>
                             <th>Job name</th>

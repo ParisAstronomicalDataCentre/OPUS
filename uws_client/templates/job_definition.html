@@ -1,196 +1,195 @@
 {% extends "skeleton.html" %}
 {% block css %}
-    <link rel="stylesheet" type="text/css" href="/static/css/codemirror.css" />
+    <link rel="stylesheet" type="text/css" href="/static/css/codemirror.css?v={{ asset_version }}" />
 {% endblock %}
 {% block js %}
-    <script type="text/javascript" src="/static/js/codemirror.js" defer></script>
-    <script type="text/javascript" src="/static/js/codemirror_shell.js" defer></script>
-    <script type="text/javascript" src="/static/js/uwsLib.js" defer></script>
-    <script type="text/javascript" src="/static/js/uws_client.js" defer></script>
-    <script type="text/javascript" src="/static/js/job_definition.js" defer></script>
+    <script type="text/javascript" src="/static/js/codemirror.js?v={{ asset_version }}" defer></script>
+    <script type="text/javascript" src="/static/js/codemirror_shell.js?v={{ asset_version }}" defer></script>
+    <script type="text/javascript" src="/static/js/uwsLib.js?v={{ asset_version }}" defer></script>
+    <script type="text/javascript" src="/static/js/uws_client.js?v={{ asset_version }}" defer></script>
+    <script type="text/javascript" src="/static/js/job_definition.js?v={{ asset_version }}" defer></script>
 {% endblock %}
 {% block variables %}
     <div id="jobname" style="display:none" value="{{ jobname }}"></div>
 {% endblock %}
 {% block content %}
     <div class="container bs-docs-container">
-        <div id="new_job_form" class="panel panel-default">
-            <div class="panel-heading clearfix">
-                <div class="btn-group pull-right">
+        <div id="new_job_form" class="card mb-3">
+            <div class="card-header clearfix">
+                <div class="btn-group float-end">
                     <button id="submit_jdl" type="button" class="actions btn btn-primary"
                             title="Submission will create a JDL file based on the form inputs. This JDL file is temporary and needs to be tested and validated by an administrator to set up a new job.">
-                        <span class="glyphicon glyphicon-send"></span>
+                        <span class="bi bi-send-fill"></span>
                         &nbsp;Submit JDL form
                     </button>
 {% if is_admin  %}
                     <button id="validate_jdl" type="button" class="actions btn btn-success"
                             title="Validates tmp/<jobname> and creates <jobname>" disabled>
-                        <span class="glyphicon glyphicon-ok"></span>
+                        <span class="bi bi-check-lg"></span>
                         &nbsp;Validate Job Definition
                     </button>
-                    <a href="{{ url_for('server_jobs') }}" type="button" class="actions btn btn-default">
-                        <span class="glyphicon glyphicon-edit"></span>
+                    <a href="{{ url_for('server_jobs') }}" type="button" class="actions btn btn-outline-secondary">
+                        <span class="bi bi-pencil-square"></span>
                         &nbsp;Job Definitions
                     </a>
 <!--
-                    <button id="cp_script" type="button" class="actions btn btn-default">
-                        <span class="glyphicon glyphicon-file"></span>
+                    <button id="cp_script" type="button" class="actions btn btn-outline-secondary">
+                        <span class="bi bi-file-earmark"></span>
                         &nbsp;Copy script to server
                     </button>
 -->
 {% else %}
                     <button id="validation_request_jdl" type="button" class="actions btn btn-success"
                             title="Request validation of tmp/<jobname>" disabled>
-                        <span class="glyphicon glyphicon-ok"></span>
+                        <span class="bi bi-check-lg"></span>
                         &nbsp;Request Validation
                     </button>
 {% endif %}
                 </div>
-                <span class="panel-title pull-left" style="padding-top: 6px; padding-right: 6px;">Job Definition Editor</span>
+                <span class="card-title float-start" style="padding-top: 6px; padding-right: 6px;">Job Definition Editor</span>
             </div>
-            <div class="panel-body">
-                <form id="import_jdl" class="form-horizontal"
+            <div class="card-body">
+                <form id="import_jdl" class=""
                       enctype="multipart/form-data">
-                    <div class="row">
-                        <div class="col-md-12 form-group">
-                            <label class="col-md-2 control-label">Load JDL from list</label>
+                    <div>
+                        <div class="row mb-3">
+                            <label class="col-md-2 col-form-label">Load JDL from list</label>
                             <div class="col-md-6 controls">
                                 <div class="input-group">
-                                    <span>
-                                        <select id="jobname_select" name="jobname" class="selectpicker" data-width="100%" title="Please Select...">
-                                            <option data-hidden="true"></option>
-                                            <!-- will be added by js function -->
-                                        </select>
-                                    </span>
+                                    <select id="jobname_select" name="jobname" class="selectpicker" data-width="100%" title="Please Select...">
+                                        <option data-hidden="true"></option>
+                                        <!-- will be added by js function -->
+                                    </select>
                                     <span class="input-group-btn">
-                                        <button id="load_jdl_select" class="btn btn-default" type="button">
-                                            <span class="glyphicon glyphicon-play-circle"></span>
+                                        <button id="load_jdl_select" class="btn btn-outline-secondary" type="button">
+                                            <span class="bi bi-play-circle"></span>
                                             &nbsp;Load JDL
                                         </button>
                                     </span>
                                 </div>
                             </div>
-                            <div class="col-md-4 help-block">Load job definition.</div>
+                            <div class="col-md-4 form-text">Load job definition.</div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-12 form-group">
-                            <label class="col-md-2 control-label">Import JDL from a file</label>
+                    <div>
+                        <div class="row mb-3">
+                            <label class="col-md-2 col-form-label">Import JDL from a file</label>
                             <div class="col-md-6 controls">
                                 <div class="input-group">
                                     <input id="jdl_file" class="form-control" name="jdl_file" type="file"/>
                                     <span class="input-group-btn">
-                                        <button id="import_jdl_submit" class="btn btn-default" type="submit">
-                                            <span class="glyphicon glyphicon-import"></span>
+                                        <button id="import_jdl_submit" class="btn btn-outline-secondary" type="submit">
+                                            <span class="bi bi-box-arrow-in-down"></span>
                                             &nbsp;Import JDL</button>
                                     </span>
                                 </div>
                             </div>
-                            <div class="col-md-4 help-block">Import job definition.</div>
+                            <div class="col-md-4 form-text">Import job definition.</div>
                         </div>
                     </div>
                 </form>
                 <hr>
-                <form id='jdl_form' class="form-horizontal">
-                    <div class="row">
-                        <div class="col-md-12 form-group">
-                            <label class="col-md-2 control-label">Job name</label>
+                <form id='jdl_form' class="">
+                    <div>
+                        <div class="row mb-3">
+                            <label class="col-md-2 col-form-label">Job name</label>
                             <div class="col-md-6 controls">
                                 <div class="input-group">
-                                    <input class="form-control name_typeahead" name="name" type="text" placeholder="Enter job name" value="" autocomplete="off"/>
+                                    <input class="form-control name_typeahead" name="name" type="text" placeholder="Enter job name" value="" autocomplete="off" list="jobnames_list"/>
+                                    <datalist id="jobnames_list"></datalist>
                                     <span class="input-group-btn">
-                                        <button id="load_jdl" class="btn btn-default" type="button">
-                                            <span class="glyphicon glyphicon-play-circle"></span>
+                                        <button id="load_jdl" class="btn btn-outline-secondary" type="button">
+                                            <span class="bi bi-play-circle"></span>
                                             &nbsp;Load JDL
                                         </button>
-                                        <button id="export_jdl" class="btn btn-default" type="button">
-                                            <span class="glyphicon glyphicon-export"></span>
+                                        <button id="export_jdl" class="btn btn-outline-secondary" type="button">
+                                            <span class="bi bi-box-arrow-up"></span>
                                             &nbsp;Export JDL
                                         </button>
                                     </span>
                                 </div>
                             </div>
-                            <div class="col-md-4 help-block">Job name.</div>
+                            <div class="col-md-4 form-text">Job name.</div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-12 form-group">
-                            <label class="col-md-2 control-label">Description</label>
+                    <div>
+                        <div class="row mb-3">
+                            <label class="col-md-2 col-form-label">Description</label>
                             <div class="col-md-6 controls">
                                 <textarea class="form-control" name="annotation" rows="6"></textarea>
                             </div>
-                            <div class="col-md-4 help-block">Job description.</div>
+                            <div class="col-md-4 form-text">Job description.</div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-12 form-group">
-                            <label class="col-md-2 control-label">Web page</label>
+                    <div>
+                        <div class="row mb-3">
+                            <label class="col-md-2 col-form-label">Web page</label>
                             <div class="col-md-6 controls">
                                 <input class="form-control" name="doculink" type="url" value="" />
                             </div>
-                            <div class="col-md-4 help-block">
+                            <div class="col-md-4 form-text">
                                 URL to a more complete description of the job.
                             </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-12 form-group">
-                            <label class="col-md-2 control-label">Type</label>
+                    <div>
+                        <div class="row mb-3">
+                            <label class="col-md-2 col-form-label">Type</label>
                             <div class="col-md-6 controls">
                                 <input class="form-control" name="type" type="text" value="" />
                             </div>
-                            <div class="col-md-4 help-block">
+                            <div class="col-md-4 form-text">
                                 Type of job (calibration, reduction, analysis...)
                             </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-12 form-group">
-                            <label class="col-md-2 control-label">Subtype</label>
+                    <div>
+                        <div class="row mb-3">
+                            <label class="col-md-2 col-form-label">Subtype</label>
                             <div class="col-md-6 controls">
                                 <input class="form-control" name="subtype" type="text" value="" />
                             </div>
-                            <div class="col-md-4 help-block">
+                            <div class="col-md-4 form-text">
                                 Subtype of job (bias subtraction, fit...)
                             </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-12 form-group">
-                            <label class="col-md-2 control-label">Version</label>
+                    <div>
+                        <div class="row mb-3">
+                            <label class="col-md-2 col-form-label">Version</label>
                             <div class="col-md-6 controls">
                                 <input class="form-control" name="version" type="text" value="" />
                             </div>
-                            <div class="col-md-4 help-block">
+                            <div class="col-md-4 form-text">
                                 Version of the job
                             </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-12 form-group">
-                            <label class="col-md-2 control-label">Contact name</label>
+                    <div>
+                        <div class="row mb-3">
+                            <label class="col-md-2 col-form-label">Contact name</label>
                             <div class="col-md-6 controls">
                                 <input class="form-control" name="contact_name" type="text" value="" />
                             </div>
-                            <div class="col-md-4 help-block">
+                            <div class="col-md-4 form-text">
                                 Person/organization responsible for this job.
                             </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-12 form-group">
-                            <label class="col-md-2 control-label">Contact email</label>
+                    <div>
+                        <div class="row mb-3">
+                            <label class="col-md-2 col-form-label">Contact email</label>
                             <div class="col-md-6 controls">
                                 <input class="form-control" name="contact_email" type="text" value="" />
                             </div>
-                            <div class="col-md-4 help-block">
+                            <div class="col-md-4 form-text">
                                 Email of the contact person/organization.
                             </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-12 form-group">
-                            <label class="col-md-2 control-label">Parameters</label>
+                    <div>
+                        <div class="row mb-3">
+                            <label class="col-md-2 col-form-label">Parameters</label>
                             <div class="col-md-6 controls">
                                 <div style="height: 2px;"></div>
                                 <table id="param_list" width="100%">
@@ -201,14 +200,14 @@
                                     <tbody>
                                         <tr>
                                             <td colspan="100%">
-                                                <button id="add_parameter" type="button" class="btn btn-sm btn-default">Add parameter</button>
-                                                <button id="remove_all_parameters" type="button" class="btn btn-sm btn-default">Remove all parameters</button>
+                                                <button id="add_parameter" type="button" class="btn btn-sm btn-outline-secondary">Add parameter</button>
+                                                <button id="remove_all_parameters" type="button" class="btn btn-sm btn-outline-secondary">Remove all parameters</button>
                                             </td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
-                            <div class="col-md-4 help-block">
+                            <div class="col-md-4 form-text">
                                 List of parameters, with name, default value, type and description.<br>
                                 Specify if the parameter is required by checking the box.<br>
                                 A restricted list of options can be specified (comma-separated values).<br>
@@ -216,9 +215,9 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-12 form-group">
-                            <label class="col-md-2 control-label">Input data</label>
+                    <div>
+                        <div class="row mb-3">
+                            <label class="col-md-2 col-form-label">Input data</label>
                             <div class="col-md-6 controls">
                                 <div style="height: 2px;"></div>
                                 <table id="used_list" width="100%">
@@ -229,23 +228,23 @@
                                     <tbody>
                                         <tr>
                                             <td colspan="100%">
-                                                <button id="add_used" type="button" class="btn btn-sm btn-default">Add input</button>
-                                                <button id="remove_all_used" type="button" class="btn btn-sm btn-default">Remove all input</button>
+                                                <button id="add_used" type="button" class="btn btn-sm btn-outline-secondary">Add input</button>
+                                                <button id="remove_all_used" type="button" class="btn btn-sm btn-outline-secondary">Remove all input</button>
                                             </td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
-                            <div class="col-md-4 help-block">
+                            <div class="col-md-4 form-text">
                                 List of input entities (e.g. files) with their name and content type.<br>
                                 The input is a File or an ID, possibly with a URL to resolve the ID and download the file (use $ID in the URL template).
                                 If no URL is specified, the script itself should be able to resolve the ID and get the file.<br>
                             </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-12 form-group">
-                            <label class="col-md-2 control-label">Results</label>
+                    <div>
+                        <div class="row mb-3">
+                            <label class="col-md-2 col-form-label">Results</label>
                             <div class="col-md-6 controls">
                                 <div style="height: 2px;"></div>
                                 <table id="generated_list" width="100%">
@@ -256,55 +255,55 @@
                                     <tbody>
                                         <tr>
                                             <td colspan="100%">
-                                                <button id="add_generated" type="button" class="btn btn-sm btn-default">Add result</button>
-                                                <button id="remove_all_generated" type="button" class="btn btn-sm btn-default">Remove all results</button>
+                                                <button id="add_generated" type="button" class="btn btn-sm btn-outline-secondary">Add result</button>
+                                                <button id="remove_all_generated" type="button" class="btn btn-sm btn-outline-secondary">Remove all results</button>
                                             </td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
-                            <div class="col-md-4 help-block">
+                            <div class="col-md-4 form-text">
                                 List of possible results with their name and content type.<br>
                             </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-12 form-group">
-                            <label class="col-md-2 control-label">Execution duration</label>
+                    <div>
+                        <div class="row mb-3">
+                            <label class="col-md-2 col-form-label">Execution duration</label>
                             <div class="col-md-6 controls">
                                 <input class="form-control" name="executionDuration" type="number" value="60" step="1" min="0" />
                             </div>
-                            <div class="col-md-4 help-block">
+                            <div class="col-md-4 form-text">
                                 Duration in seconds that will be allocated to the job.
                             </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-12 form-group">
-                            <label class="col-md-2 control-label">Default quote</label>
+                    <div>
+                        <div class="row mb-3">
+                            <label class="col-md-2 col-form-label">Default quote</label>
                             <div class="col-md-6 controls">
                                 <input class="form-control" name="quote" type="number" value="10" step="1" min="0" />
                             </div>
-                            <div class="col-md-4 help-block">
+                            <div class="col-md-4 form-text">
                                 Default quote in seconds corresponding to the expected duration of the job.
                             </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-12 form-group">
-                            <label class="col-md-2 control-label">Bash script</label>
+                    <div>
+                        <div class="row mb-3">
+                            <label class="col-md-2 col-form-label">Bash script</label>
                             <div class="col-md-6 controls">
                                 <textarea class="form-control" name="script" rows="10" style="font-family: monospace"></textarea>
                             </div>
-                            <div class="col-md-4 help-block">
+                            <div class="col-md-4 form-text">
                                 Job as a bash script. Parameters are available as bash variables, e.g. ${parameter_name}.
                                 Input entities and results also have a bash variable pointing to the file or containing the corresponding ID/value.
                             </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-12 form-group">
-                            <label class="col-md-2 control-label">&nbsp;</label>
+                    <div>
+                        <div class="row mb-3">
+                            <label class="col-md-2 col-form-label">&nbsp;</label>
                             <div class="col-md-6 controls">
                                 <input id="jdl_form_submit" value="Submit JDL form" type="submit"
                                        class="btn btn-primary" />

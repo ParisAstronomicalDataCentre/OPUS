@@ -1,0 +1,104 @@
+/*
+ * Flask-Admin pages (Client Accounts, see templates/admin/master.html): templates of Flask-Admin written for
+ * Bootstrap 4, displayed with Bootstrap 5 and the look of the other pages of OPUS.
+ */
+
+/* classes of Bootstrap 4 used by Flask-Admin, removed in Bootstrap 5 */
+.admin-page .ml-2 { margin-left: 0.5rem !important; }
+.admin-page .ml-3 { margin-left: 1rem !important; }
+.admin-page .mr-auto { margin-right: auto !important; }
+.admin-page .form-group { margin-bottom: 1rem; }
+.admin-page .form-inline {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+}
+.admin-page .form-inline .form-control {
+    width: auto;
+}
+.admin-page .input-group-append,
+.admin-page .input-group-prepend {
+    display: flex;
+}
+.admin-page .close {
+    background: none;
+    border: 0;
+    font-size: 1.5rem;
+    line-height: 1;
+    opacity: 0.5;
+}
+
+/* menu of a list (List, Create, With selected, search): on one line, the search at the right */
+.admin-page .card-body > .nav-tabs {
+    align-items: center;
+}
+/* the table of a list under the tabs, a form below them */
+.admin-page .admin-form {
+    margin-top: 1rem;
+}
+.admin-page .card-body > .nav-tabs > .nav-item:last-child:has(form) {
+    margin-left: auto !important;
+    margin-bottom: 0.25rem;
+}
+
+/* table of a list: as the other tables of OPUS (bordered, small, centered in the cells) */
+.admin-page .model-list {
+    margin-bottom: 0;
+    --bs-table-striped-bg: transparent;  /* no grey rows (table-striped of Flask-Admin) */
+}
+.admin-page .model-list > :not(caption) > * > * {
+    padding: 0.25rem 0.5rem;
+    vertical-align: middle;
+}
+.admin-page .model-list th a {
+    color: inherit;
+    text-decoration: none;
+}
+.admin-page .model-list th a:hover {
+    text-decoration: underline;
+}
+
+/* buttons of the forms: secondary buttons with an outline, as the other pages */
+.admin-page .btn-secondary {
+    --bs-btn-color: var(--bs-secondary);
+    --bs-btn-bg: transparent;
+    --bs-btn-border-color: var(--bs-secondary);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--bs-secondary);
+}
+.admin-page .btn-danger {
+    --bs-btn-color: var(--bs-danger);
+    --bs-btn-bg: transparent;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--bs-danger);
+}
+
+/* forms: labels beside the inputs on large screens, as the other forms of OPUS */
+@media (min-width: 768px) {
+    .admin-page .admin-form .form-group {
+        display: flex;
+        flex-wrap: wrap;
+    }
+    .admin-page .admin-form .form-group > .col-form-label {
+        flex: 0 0 25%;
+        max-width: 25%;
+        padding-right: 1rem;
+    }
+    .admin-page .admin-form .form-group > :not(.col-form-label) {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+    .admin-page .admin-form .form-group > .form-text,
+    .admin-page .admin-form .form-group > .invalid-feedback {
+        flex: 0 0 75%;
+        margin-left: 25%;
+    }
+    .admin-page .admin-form .submit-row {
+        margin-left: 25%;
+        padding: 0;
+    }
+}
+.admin-page .admin-form .form-group > input[type="checkbox"] {
+    align-self: center;
+    flex: 0 0 auto;
+}

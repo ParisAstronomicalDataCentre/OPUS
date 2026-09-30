@@ -2,62 +2,67 @@
 {% import 'admin/static.html' as admin_static with context %}
 {% extends "skeleton.html" %}
     {% block css %}
-        <link href="{{ admin_static.url(filename='admin/css/bootstrap3/admin.css', v='1.1.1') }}" rel="stylesheet">
+        {# Flask-Admin pages (Client Accounts): templates of Flask-Admin (Bootstrap 4) in the layout of OPUS (Bootstrap 5) #}
+        <link href="{{ admin_static.url(filename='admin/css/bootstrap4/admin.css', v='1.1.1') }}" rel="stylesheet">
+        <link href="{{ admin_static.url(filename='bootstrap/bootstrap4/css/font-awesome.min.css', v='4.7.0') }}" rel="stylesheet">
+        <link href="/static/css/admin.css?v={{ asset_version }}" rel="stylesheet">
         {% if admin_view.extra_css %}
           {% for css_url in admin_view.extra_css %}
             <link href="{{ css_url }}" rel="stylesheet">
           {% endfor %}
         {% endif %}
-        <style>
-        body {
-            padding-top: 4px;
-        }
-        </style>
+        {% block head %}{% endblock %}
     {% endblock %}
     {% block content %}
-    <div class="container">
-      <nav class="navbar navbar-default" role="navigation">
-        <!-- Brand and toggle get grouped for better mobile display -->
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#admin-navbar-collapse">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
+    <div class="container bs-docs-container admin-page">
+        <div class="card mb-3">
+            <div class="card-header d-flex flex-wrap align-items-center gap-2">
+                <span class="card-title">Manage client accounts</span>
+                {# views of Flask-Admin (Users, Roles), without its home page #}
+                <div class="btn-group ms-auto">
+                    {% for item in admin_view.admin.menu() %}
+                    {% if not item.is_category() and item.is_accessible() and item.is_visible() and item.get_url() != url_for('admin.index') %}
+                    <a class="btn btn-outline-secondary{% if item.is_active(admin_view) %} active{% endif %}" href="{{ item.get_url() }}">
+                        {% if item.get_icon_value() %}<span class="bi {{ item.get_icon_value() }}"></span>{% endif %}
+                        {{ item.name }}
+                    </a>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="card-body">
+                {# store the jinja2 context for form_rules rendering logic #}
+                {% set render_ctx = h.resolve_ctx() %}
+
+                {% block body %}{% endblock %}
+            </div>
         </div>
-        <!-- navbar content -->
-        <div class="collapse navbar-collapse" id="admin-navbar-collapse">
-          {% block main_menu %}
-          <ul class="nav navbar-nav">
-            {{ layout.menu() }}
-          </ul>
-          {% endblock %}
-
-          {% block menu_links %}
-          <ul class="nav navbar-nav navbar-right">
-            {{ layout.menu_links() }}
-          </ul>
-          {% endblock %}
-          {% block access_control %}
-          {% endblock %}
-        </div>
-      </nav>
-
-      {# store the jinja2 context for form_rules rendering logic #}
-      {% set render_ctx = h.resolve_ctx() %}
-
-      {% block body %}{% endblock %}
     </div>
+    {# scripts of the Flask-Admin pages (forms, actions), after their elements #}
+    {% block tail %}{% endblock %}
     {% endblock %}
 
     {% block js %}
-    <script src="{{ admin_static.url(filename='vendor/jquery.min.js', v='2.1.4') }}" type="text/javascript"></script>
-    <script src="{{ admin_static.url(filename='vendor/moment.min.js', v='2.9.0') }}" type="text/javascript"></script>
-    <script src="{{ admin_static.url(filename='vendor/select2/select2.min.js', v='3.5.2') }}" type="text/javascript"></script>
+    <script src="{{ admin_static.url(filename='vendor/jquery.min.js', v='3.5.1') }}" type="text/javascript"></script>
+    <script type="text/javascript">
+        // tooltips called by the scripts of Flask-Admin before the page is loaded: replaced by Bootstrap once loaded
+        jQuery.fn.tooltip = jQuery.fn.tooltip || function () { return this; };
+    </script>
+    <script src="{{ admin_static.url(filename='vendor/moment.min.js', v='2.9.4') }}" type="text/javascript"></script>
+    <script src="{{ admin_static.url(filename='vendor/select2/select2.min.js', v='4.2.1') }}" type="text/javascript"></script>
     {% if admin_view.extra_js %}
       {% for js_url in admin_view.extra_js %}
         <script src="{{ js_url }}" type="text/javascript"></script>
       {% endfor %}
     {% endif %}
+    <script type="text/javascript">
+        // Flask-Admin markup (Bootstrap 4): data-toggle, data-target, data-dismiss -> data-bs-* (Bootstrap 5)
+        document.addEventListener('DOMContentLoaded', function () {
+            ['toggle', 'target', 'dismiss'].forEach(function (name) {
+                document.querySelectorAll('[data-' + name + ']').forEach(function (element) {
+                    element.setAttribute('data-bs-' + name, element.getAttribute('data-' + name));
+                });
+            });
+        });
+    </script>
     {% endblock %}

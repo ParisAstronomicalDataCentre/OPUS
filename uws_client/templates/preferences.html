@@ -1,27 +1,27 @@
 {% extends "skeleton.html" %}
 {% block content %}
 	<div class="container bs-docs-container">
-	    <div class="col-md-offset-2 col-md-8">
+	    <div class="row"><div class="offset-md-2 col-md-8">
             <h3>Client Preferences</h3>
             <p>
-                <form class="form-horizontal" action="{{ url_for('preferences') }}" method="POST" name="preferences_form">
+                <form class="" action="{{ url_for('preferences') }}" method="POST" name="preferences_form">
                     {% for key in config.EDITABLE_CONFIG %}
-                    <div class="form-group">
-                        <label class="col-md-4 control-label">{{ key }}</label>
+                    <div class="row mb-3">
+                        <label class="col-md-4 col-form-label">{{ key }}</label>
                         <div id="div_{{ key }}" class="col-md-8 controls">
                             <input class="form-control" name="{{ key }}" type="text" value="{{ config[key] }}"/>
-                            <span class="text-muted">Default: {{ defaults[key] }}</span>
+                            <div class="form-text input-aligned">Default: {{ defaults[key] }}</div>
                         </div>
                     </div>
                     {% endfor %}
-                    <div id="form-buttons" class="form-group">
-                        <div class="col-md-offset-4 col-md-8">
+                    <div id="form-buttons" class="row mb-3">
+                        <div class="offset-md-4 col-md-8">
                             <button type="submit" class="btn btn-primary">Submit</button>
-                            <button type="reset" class="btn btn-default">Reset</button>
+                            <button type="reset" class="btn btn-outline-secondary">Reset</button>
                         </div>
                     </div>
                 </form>
             </p>
-	    </div> <!-- col -->
+	    </div></div> <!-- col -->
 	</div> <!-- container -->
 {% endblock %}

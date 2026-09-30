@@ -10,6 +10,7 @@ import json
 import subprocess
 from urllib.parse import urlencode
 import os
+import time
 
 import requests
 import yaml
@@ -522,8 +523,9 @@ class RoleView(sqla.ModelView):
 admin = Admin(app, url="/admin")  # removed for Py3.13: , template_mode='bootstrap3'
 
 # Add Flask-Admin views_old for Users and Roles
-admin.add_view(UserView(User, db))
-admin.add_view(RoleView(Role, db))
+# (names and icons of the buttons in admin/master.html)
+admin.add_view(UserView(User, db, name="Users", menu_icon_type="bi", menu_icon_value="bi-person-fill"))
+admin.add_view(RoleView(Role, db, name="Roles", menu_icon_type="bi", menu_icon_value="bi-tags-fill"))
 
 
 # ----------
@@ -698,9 +700,14 @@ def client_log_text():
 # Web Pages
 
 
+# Version of the static files (CSS, JS): start time of the client
+ASSET_VERSION = str(int(time.time()))
+
+
 @app.context_processor
 def add_url_to_context():
-    return {"url": request.url}
+    # asset_version: added to the URLs of the static files, so that the browsers load them again after an upgrade
+    return {"url": request.url, "asset_version": ASSET_VERSION}
 
 
 @app.route("/favicon.ico")

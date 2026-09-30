@@ -5,12 +5,12 @@
  */
 
 // The client fills a Job List table with id=job_list
-// <table id="job_list" class="table table-bordered table-striped table-condensed"></table>
+// <table id="job_list" class="table table-bordered table-striped table-sm"></table>
 
 // It can also show the job parameters located in form inputs with id=id_*
 
 // The properties are listed in a table with id=prop_list
-// <table id='prop_list' class="table table-bordered table-striped table-condensed"></table>
+// <table id='prop_list' class="table table-bordered table-striped table-sm"></table>
 
 // The results are shown as bootstrap panels in a div block with id=results_list
 // <div id='results_list' class='text-center'></div>
@@ -55,7 +55,7 @@ var uws_client = (function($) {
         ownerId: 'Owner',
         creationTime: 'Creation Time',
         phase: 'Phase',
-        edit: 'Edit Job',
+        edit: 'Open Job',
         details: 'Details',
         results: 'Results',
         control: 'Control',
@@ -167,8 +167,8 @@ var uws_client = (function($) {
     //----------
     // PREPARE TABLE
 
-    var prepareTable = function() {
-        $('#job_list').attr('class', 'table table-bordered table-condensed');
+    var prepareTable = function(pager = true) {
+        $('#job_list').attr('class', 'table table-bordered table-sm mb-0');
         var tcontent = '\
             <thead>\
                 <tr>';
@@ -190,29 +190,37 @@ var uws_client = (function($) {
             </thead>\
             <tbody>\
             </tbody>';
-        tcontent = tcontent + '\
+        if (pager) {  // line to change pages (not for a single job)
+            tcontent = tcontent + '\
             <tfoot>\
                 <tr>\
-                  <th colspan="' + job_list_columns.length + '" class="ts-pager form-inline">\
+                  <th colspan="' + job_list_columns.length + '" class="ts-pager">\
+                   <div class="d-flex flex-wrap align-items-center gap-1">\
                     <div class="btn-group btn-group-sm" role="group">\
-                      <button type="button" class="btn btn-default first"><span class="glyphicon glyphicon-step-backward"></span></button>\
-                      <button type="button" class="btn btn-default prev"><span class="glyphicon glyphicon-backward"></span></button>\
+                      <button type="button" class="btn btn-outline-secondary first"><span class="bi bi-skip-start-fill"></span></button>\
+                      <button type="button" class="btn btn-outline-secondary prev"><span class="bi bi-rewind-fill"></span></button>\
                     </div>\
-                    <span class="pagedisplay"></span>\
+                    <span class="mx-1">Jobs <span class="pagedisplay"></span></span>\
                     <div class="btn-group btn-group-sm" role="group">\
-                      <button type="button" class="btn btn-default next"><span class="glyphicon glyphicon-forward"></span></button>\
-                      <button type="button" class="btn btn-default last"><span class="glyphicon glyphicon-step-forward"></span></button>\
+                      <button type="button" class="btn btn-outline-secondary next"><span class="bi bi-fast-forward-fill"></span></button>\
+                      <button type="button" class="btn btn-outline-secondary last"><span class="bi bi-skip-end-fill"></span></button>\
                     </div>\
-                    <select class="form-control input-sm pagesize" title="Select page size">\
-                      <option value="10">10</option>\
-                      <option selected="selected" value="20">20</option>\
+                    <span class="ms-3">Show</span>\
+                    <select class="form-select form-select-sm w-auto pagesize" title="Select page size">\
+                      <option selected="selected" value="10">10</option>\
+                      <option value="20">20</option>\
                       <option value="30">30</option>\
-                      <option value="all">All Rows</option>\
+                      <option value="all">all</option>\
                     </select>\
-                    <select class="form-control input-sm pagenum" title="Select page number"></select>\
+                    <span>per page</span>\
+                    <span class="ms-3">Page</span>\
+                    <select class="form-select form-select-sm w-auto pagenum" title="Select page number"></select>\
+                    <span class="pagecount"></span>\
+                   </div>\
                   </th>\
                 </tr>\
             </tfoot>';
+        };
         $('#job_list').html(tcontent);
     };
 
@@ -221,8 +229,8 @@ var uws_client = (function($) {
     // SELECT JOB
 
     var selectJob = function(jobId) {
-        $('#job_list tbody').find('tr.bg-info').removeClass('bg-info');
-        $('#'+jobId).addClass("bg-info");
+        $('#job_list tbody').find('tr.table-info').removeClass('table-info');
+        $('#'+jobId).addClass("table-info");
     }
 
 
@@ -236,7 +244,7 @@ var uws_client = (function($) {
     // DISPLAY PHASE
 
     var displayPhase = function(jobId, phase) {
-        var phase_class = 'btn-default';
+        var phase_class = 'btn-outline-secondary';
         var phase_icon = '';
         $('#'+jobId+' td button.results').attr("disabled", "disabled");
         $('#'+jobId+' td button.start').attr("disabled", "disabled");
@@ -249,12 +257,12 @@ var uws_client = (function($) {
             case 'QUEUED':
                 phase_class = 'btn-info';
                 $('#'+jobId+' td button.abort').removeAttr("disabled");
-                phase_icon = '<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span>&nbsp;';
+                phase_icon = '<span class="bi bi-arrow-clockwise spin"></span>&nbsp;';
                 break;
             case 'EXECUTING':
                 phase_class = 'btn-primary';
                 $('#'+jobId+' td button.abort').removeAttr("disabled");
-                phase_icon = '<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span>&nbsp;';
+                phase_icon = '<span class="bi bi-arrow-clockwise spin"></span>&nbsp;';
                 break;
             case 'COMPLETED':
                 phase_class = 'btn-success';
@@ -271,24 +279,24 @@ var uws_client = (function($) {
             case 'UNKNOWN':
                 phase_class = 'btn-danger';
                 $('#'+jobId+' td button.abort').removeAttr("disabled");
-                phase_icon = '<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span>&nbsp;';
+                phase_icon = '<span class="bi bi-arrow-clockwise spin"></span>&nbsp;';
                 break;
             case 'HELD':
-                phase_class = 'btn-default';
+                phase_class = 'btn-outline-secondary';
                 $('#'+jobId+' td button.abort').removeAttr("disabled");
                 $('#'+jobId+' td button.start').removeAttr("disabled");
                 break;
             case 'SUSPENDED':
-                phase_class = 'btn-default';
+                phase_class = 'btn-outline-secondary';
                 $('#'+jobId+' td button.abort').removeAttr("disabled");
-                phase_icon = '<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span>&nbsp;';
+                phase_icon = '<span class="bi bi-arrow-clockwise spin"></span>&nbsp;';
                 break;
         };
         $('#'+jobId+' td button.phase').html(phase_icon + phase);
         $('#'+jobId+' td button.phase').removeClass( function (index, css) {
             return (css.match(/(^|\s)btn-\S+/g) || []).join(' ');
         });
-        $('#'+jobId+' td button.phase').addClass(phase_class);
+        $('#'+jobId+' td button.phase').addClass(phase_class + ' btn-sm');
         // Refresh phase if change is expected
         switch (phase) {
             case 'QUEUED':
@@ -375,65 +383,65 @@ var uws_client = (function($) {
             creationTime: '<td class="text-center" style="vertical-align: middle;" title="' + times + '">' + creation_time + '</td>',
             phase: '\
                 <td class="text-center" style="vertical-align: middle;">\
-                    <button type="button" class="phase btn btn-default">PHASE...</button>\
+                    <button type="button" class="phase btn btn-outline-secondary btn-sm">PHASE...</button>\
                 </td>',
             edit: '\
                 <td class="text-center" style="vertical-align: middle;">\
-                    <button type="button" class="properties btn btn-default btn-sm" title="Edit">\
-                        <span class="glyphicon glyphicon-info-sign"></span>\
-                        <span class="hidden-xs hidden-sm hidden-md">&nbsp;Open Job</span>\
+                    <button type="button" class="properties btn btn-outline-secondary btn-sm" title="Open Job">\
+                        <span class="bi bi-info-circle-fill"></span>\
+                        <span class="d-none d-lg-inline">&nbsp;Open Job</span>\
                     </button>\
                 </td>',
             details: '\
                 <td class="text-center" style="vertical-align: middle;">\
                     <div class="btn-group">\
-                        <button type="button" class="properties btn btn-default btn-sm" title="Properties">\
-                            <span class="glyphicon glyphicon-info-sign"></span>\
-                            <span class="hidden-xs hidden-sm hidden-md hidden-lg">&nbsp;Properties</span>\
+                        <button type="button" class="properties btn btn-outline-secondary btn-sm" title="Properties">\
+                            <span class="bi bi-info-circle-fill"></span>\
+                            <span class="d-none">&nbsp;Properties</span>\
                         </button>\
-                        <button type="button" class="parameters btn btn-default btn-sm" title="Parameters">\
-                            <span class="glyphicon glyphicon-edit"></span>\
-                            <span class="hidden-xs hidden-sm hidden-md hidden-lg">&nbsp;&nbsp;Parameters</span>\
+                        <button type="button" class="parameters btn btn-outline-secondary btn-sm" title="Parameters">\
+                            <span class="bi bi-pencil-square"></span>\
+                            <span class="d-none">&nbsp;&nbsp;Parameters</span>\
                         </button>\
-                        <button type="button" class="results btn btn-default btn-sm" title="Results">\
-                            <span class="glyphicon glyphicon-save"></span>\
-                            <span class="hidden-xs hidden-sm hidden-md hidden-lg">&nbsp;Results</span>\
+                        <button type="button" class="results btn btn-outline-secondary btn-sm" title="Results">\
+                            <span class="bi bi-download"></span>\
+                            <span class="d-none">&nbsp;Results</span>\
                         </button>\
                     </div>\
                 </td>',
             results: '\
                 <td class="text-center" style="vertical-align: middle;">\
-                    <button type="button" class="results btn btn-default btn-sm" title="Results">\
-                        <span class="glyphicon glyphicon-save"></span>\
-                        <span class="hidden-xs hidden-sm hidden-md">&nbsp;Results</span>\
+                    <button type="button" class="results btn btn-outline-secondary btn-sm" title="Results">\
+                        <span class="bi bi-download"></span>\
+                        <span class="d-none d-lg-inline">&nbsp;Results</span>\
                     </button>\
                 </td>',
             control: '\
                 <td class="text-center" style="vertical-align: middle;">\
                     <div class="btn-group">\
-                        <button type="button" class="start btn btn-default btn-sm" title="Start">\
-                            <span class="glyphicon glyphicon-play"></span>\
-                            <span class="hidden-xs hidden-sm hidden-md hidden-lg">&nbsp;Start</span>\
+                        <button type="button" class="start btn btn-outline-secondary btn-sm" title="Start">\
+                            <span class="bi bi-play-fill"></span>\
+                            <span class="d-none">&nbsp;Start</span>\
                         </button>\
-                        <button type="button" class="log btn btn-default btn-sm" title="Get current log">\
-                            <span class="glyphicon glyphicon-question-sign"></span>\
-                            <span class="hidden-xs hidden-sm hidden-md hidden-lg">&nbsp;Start</span>\
+                        <button type="button" class="log btn btn-outline-secondary btn-sm" title="Get current log">\
+                            <span class="bi bi-question-circle-fill"></span>\
+                            <span class="d-none">&nbsp;Start</span>\
                         </button>\
-                        <button type="button" class="abort btn btn-default btn-sm" title="Abort">\
-                            <span class="glyphicon glyphicon-off"></span>\
-                            <span class="hidden-xs hidden-sm hidden-md hidden-lg">&nbsp;Abort</span>\
+                        <button type="button" class="abort btn btn-outline-secondary btn-sm" title="Abort">\
+                            <span class="bi bi-power"></span>\
+                            <span class="d-none">&nbsp;Abort</span>\
                         </button>\
-                        <button type="button" class="delete btn btn-default btn-sm" title="Delete">\
-                            <span class="glyphicon glyphicon-trash"></span>\
-                            <span class="hidden-xs hidden-sm hidden-md hidden-lg">&nbsp;Delete</span>\
+                        <button type="button" class="delete btn btn-outline-secondary btn-sm" title="Delete">\
+                            <span class="bi bi-trash"></span>\
+                            <span class="d-none">&nbsp;Delete</span>\
                         </button>\
                     </div>\
                 </td>',
             delete: '\
                 <td class="text-center" style="vertical-align: middle;">\
-                    <button type="button" class="delete btn btn-default btn-sm" title="Delete">\
-                        <span class="glyphicon glyphicon-trash"></span>\
-                        <span class="hidden-xs hidden-sm hidden-md">&nbsp;Delete</span>\
+                    <button type="button" class="delete btn btn-outline-secondary btn-sm" title="Delete">\
+                        <span class="bi bi-trash"></span>\
+                        <span class="d-none d-lg-inline">&nbsp;Delete</span>\
                     </button>\
                 </td>',
         };
@@ -469,37 +477,37 @@ var uws_client = (function($) {
 //                <td class="text-center" style="vertical-align: middle;">' + job.runId + '</td>\
 //                <td class="text-center" style="vertical-align: middle;" title="' + times + '">' + creation_time + '</td>\
 //                <td class="text-center" style="vertical-align: middle;">\
-//                    <button type="button" class="phase btn btn-default">PHASE...</button>\
+//                    <button type="button" class="phase btn btn-outline-secondary">PHASE...</button>\
 //                </td>\
 //                <td class="text-center" style="vertical-align: middle;">\
 //                    <div class="btn-group">\
-//                        <button type="button" class="properties btn btn-default btn-sm">\
-//                            <span class="glyphicon glyphicon-info-sign"></span>\
-//                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;Properties</span>\
+//                        <button type="button" class="properties btn btn-outline-secondary btn-sm">\
+//                            <span class="bi bi-info-circle-fill"></span>\
+//                            <span class="d-none d-lg-inline">&nbsp;Properties</span>\
 //                        </button>\
-//                        <button type="button" class="parameters btn btn-default btn-sm">\
-//                            <span class="glyphicon glyphicon-edit"></span>\
-//                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;&nbsp;Parameters</span>\
+//                        <button type="button" class="parameters btn btn-outline-secondary btn-sm">\
+//                            <span class="bi bi-pencil-square"></span>\
+//                            <span class="d-none d-lg-inline">&nbsp;&nbsp;Parameters</span>\
 //                        </button>\
-//                        <button type="button" class="results btn btn-default btn-sm">\
-//                            <span class="glyphicon glyphicon-save"></span>\
-//                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;Results</span>\
+//                        <button type="button" class="results btn btn-outline-secondary btn-sm">\
+//                            <span class="bi bi-download"></span>\
+//                            <span class="d-none d-lg-inline">&nbsp;Results</span>\
 //                        </button>\
 //                    </div>\
 //                </td>\
 //                <td class="text-center" style="vertical-align: middle;">\
 //                    <div class="btn-group">\
-//                        <button type="button" class="start btn btn-default btn-sm">\
-//                            <span class="glyphicon glyphicon-play"></span>\
-//                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;Start</span>\
+//                        <button type="button" class="start btn btn-outline-secondary btn-sm">\
+//                            <span class="bi bi-play-fill"></span>\
+//                            <span class="d-none d-lg-inline">&nbsp;Start</span>\
 //                        </button>\
-//                        <button type="button" class="abort btn btn-default btn-sm">\
-//                            <span class="glyphicon glyphicon-off"></span>\
-//                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;Abort</span>\
+//                        <button type="button" class="abort btn btn-outline-secondary btn-sm">\
+//                            <span class="bi bi-power"></span>\
+//                            <span class="d-none d-lg-inline">&nbsp;Abort</span>\
 //                        </button>\
-//                        <button type="button" class="delete btn btn-default btn-sm">\
-//                            <span class="glyphicon glyphicon-trash"></span>\
-//                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;Delete</span>\
+//                        <button type="button" class="delete btn btn-outline-secondary btn-sm">\
+//                            <span class="bi bi-trash"></span>\
+//                            <span class="d-none d-lg-inline">&nbsp;Delete</span>\
 //                        </button>\
 //                    </div>\
 //                </td>\
@@ -598,28 +606,31 @@ var uws_client = (function($) {
     //----------
     // DISPLAY PARAMS (as forms)
 
-    var displayParamFormInput = function(pname, p){
+    var displayParamFormInput = function(pname, p, container = '#job_params'){
         var phide = ''
-        var pclass = 'form-group'
+        var pclass = 'row mb-3'
         if (p.required == 'false') { //.toLowerCase()
             phide = ' style="display:none; color:grey"';
-            pclass = 'form-group optional';
+            pclass = 'row mb-3 optional';
         };
         // default value and description may not be given in the job definition (null)
         var pdefault = (p.default == null) ? '' : p.default;
         var pannotation = (p.annotation == null) ? '' : p.annotation;
         var row = '\
             <div class="' + pclass + '"' + phide + '>\
-                <label class="col-md-3 control-label">' + pname + '</label>\
-                <div id="div_' + pname + '" class="col-md-5 controls">\
+                <label class="col-md-2 col-form-label">' + pname + '</label>\
+                <div id="div_' + pname + '" class="col-md-6 controls">\
                     <input class="form-control" id="id_' + pname + '" name="' + pname + '" type="text" value="' + pdefault + '"/>\
                 </div>\
-                <div class="col-md-4 help-block">\
+                <div class="col-md-4 form-text">\
                     ' + pannotation + '\
                 </div>\
             </div>';
+        row = row.trim();  // no text around the row: a group without rows is empty (see .params-group)
         if (p.control == 'true') {
-            if ($('#add_control').length) {
+            if ($('#params_control').length) {
+                $('#params_control').append(row);
+            } else if ($('#add_control').length) {
                 $('#add_control').before(row);
             } else {
                 $('#job_params').append(row);
@@ -628,8 +639,8 @@ var uws_client = (function($) {
             // Add remove button
             $('#id_'+pname).parent().append('\
                 <span class="input-group-btn">\
-                    <button id="button_'+pname+'" class="btn btn-default" type="button" title="Remove item">\
-                        <span class="glyphicon glyphicon-remove"></span>\
+                    <button id="button_'+pname+'" class="btn btn-outline-secondary" type="button" title="Remove item">\
+                        <span class="bi bi-x-lg"></span>\
                     </button>\
                 </span>');
             // Add event
@@ -637,7 +648,7 @@ var uws_client = (function($) {
                 $('#div_'+pname).parent().remove();
             });
         } else {
-            $('#job_params').append(row);
+            $(container).append(row);
         };
     };
     var displayParamFormInputType = function(pname, p){
@@ -646,8 +657,8 @@ var uws_client = (function($) {
             $('#id_'+pname).wrap('<div class="input-group"></div>');
             $('#id_'+pname).parent().append('\
                 <span class="input-group-btn">\
-                    <button id="button_'+pname+'" class="btn btn-default" type="button" title="Give a file, or a URL (or an identifier of the entity store)">\
-                        File <span class="glyphicon glyphicon-transfer"></span> URL\
+                    <button id="button_'+pname+'" class="btn btn-outline-secondary" type="button" title="Give a file, or a URL (or an identifier of the entity store)">\
+                        File <span class="bi bi-arrow-left-right"></span> URL\
                     </button>\
                 </span>');
             $('#button_'+pname).click( function() {
@@ -678,10 +689,10 @@ var uws_client = (function($) {
         };
         if (p.datatype.indexOf('bool') > -1) {
             // Change to checkbox
-            $('#id_'+pname).removeClass('form-control');
+            // in a box of the size of an input (aligned with the buttons of an input group)
+            $('#id_'+pname).removeClass('form-control').addClass('form-check-input mt-0');
             $('#id_'+pname).attr('type', 'checkbox');
-            $('#id_'+pname).wrap('<div class="checkbox"></div>');
-            $('#id_'+pname).attr('style', 'margin-left: 10px;');
+            $('#id_'+pname).wrap('<div class="checkbox form-control d-flex align-items-center"></div>');
             var val = p.default //.toLowerCase();
             if ((val == 'true') || (val == 'yes')) {
                 $('#id_'+pname).attr('checked', 'checked');
@@ -708,27 +719,29 @@ var uws_client = (function($) {
         $('#loading').hide();
         // Run displayParamForm before to check that jdl is defined
         var jdl = clients[jobName].jdl;
+        // Groups of fields: control parameters, inputs, parameters (a line under a group that is not empty)
+        $('#job_params').append('<div id="params_control" class="params-group"></div>'
+            + '<div id="params_used" class="params-group"></div>'
+            + '<div id="params_parameters" class="params-group"></div>');
         // First field is the runId
         if (jdl.control_parameters_keys.indexOf('runId') > -1) {
             displayParamFormInput('runId', {'default': jobName, 'annotation': 'User specific identifier for the job', 'control': 'true'});
         };
-        $('#job_params').append('<hr>');
         // Create form fields from JDL
         for (var pkey in jdl.used_keys) {
             var pname = jdl.used_keys[pkey];
             // Add form input if pname is not a parameter already
             if ($.inArray(pname, Object.keys(jdl.parameters)) == -1) {
                 var p = jdl.used[pname];
-                displayParamFormInput(pname, p)
+                displayParamFormInput(pname, p, '#params_used')
                 displayParamFormInputType(pname, p)
             };
         };
-        $('#job_params').append('<hr>');
         for (var pkey in jdl.parameters_keys) {
             var pname = jdl.parameters_keys[pkey];
             if ($('#id_' + pname).length == 0) {
                 var p = jdl.parameters[pname];
-                displayParamFormInput(pname, p)
+                displayParamFormInput(pname, p, '#params_parameters')
                 displayParamFormInputType(pname, p)
             };
         };
@@ -752,21 +765,20 @@ var uws_client = (function($) {
             };
         };
         // Add buttons
-        $('#job_params').append('<hr>');
         var elt = '\
-            <div id="add_control" class=" form-group">\n\
-                <label class="col-md-3 control-label">Add control parameters</label>\n\
-                <div class="col-md-5 controls">\n\
+            <div id="add_control" class="row mb-3">\n\
+                <label class="col-md-2 col-form-label">Add control parameters</label>\n\
+                <div class="col-md-6 controls">\n\
                     <select id="control_parameters" name="control_parameters" class="selectpicker" title="Chose parameter" data-width="100%">\n\
                         <option data-hidden="true"></option>\n\
                     </select>\n\
                 </div>\n\
             </div>\n\
-            <div id="form-buttons" class="form-group">\n\
-                <div class="col-md-offset-3 col-md-9">\n\
+            <div id="form-buttons" class="row mb-3">\n\
+                <div class="offset-md-2 col-md-10">\n\
                     <button type="submit" class="btn btn-primary">Submit</button>\n\
-                    <button type="reset" class="btn btn-default">Reset</button>\n\
-                    <button id="showopt" type="button" class="btn btn-default">Show optional parameters</button>\n\
+                    <button type="reset" class="btn btn-outline-secondary">Reset</button>\n\
+                    <button id="showopt" type="button" class="btn btn-outline-secondary">Show optional parameters</button>\n\
                 </div>\n\
             </div>\n';
         $('#job_params').append(elt);
@@ -777,8 +789,12 @@ var uws_client = (function($) {
         };
         $('.selectpicker').selectpicker('refresh');
         // Event to add control parameter
-        $('#control_parameters').on('changed.bs.select', function(){
+        $('#control_parameters').on('change', function(){
             var pname = $('#control_parameters').val();
+            if (!pname) {
+                return;
+            }
+            $('#control_parameters').selectpicker('val', '');  // the same parameter can be chosen again
             if ($('#id_' + pname).length == 0) {
                 var pdesc = jdl.control_parameters[pname];
                 displayParamFormInput(pname, {'default': '', 'annotation': pdesc, 'control': 'true'})
@@ -811,7 +827,7 @@ var uws_client = (function($) {
                 if (p.url != 'file://$ID') {
                     $('#id_'+pname).wrap('<div class="input-group"></div>');
                     // Add Update buttons (possible to update params when pĥase is PENDING in UWS 1.0 - but not yet implemented)
-                    $('#id_'+pname).parent().append('<span class="input-group-btn"><button id="button_'+pname+'" class="btn btn-default" type="button">Update</button></span>');
+                    $('#id_'+pname).parent().append('<span class="input-group-btn"><button id="button_'+pname+'" class="btn btn-outline-secondary" type="button">Update</button></span>');
                     // Change input type
                     displayParamFormInputType(pname, p);
                 } else {
@@ -819,7 +835,7 @@ var uws_client = (function($) {
                     $('#id_'+pname).attr('disabled','disabled');
                     if (!(pname in job.parameters)) {
                         $('#id_'+pname).wrap('<div class="input-group"></div>');
-                        $('#id_'+pname).parent().append('<span class="input-group-addon" style="line-height: 1.4;"><small>default used</small></span>');
+                        $('#id_'+pname).parent().append('<span class="input-group-text" style="line-height: 1.4;"><small>default used</small></span>');
                     };
                 };
                 // Change right corners for checkbox and select inside input-group
@@ -839,7 +855,7 @@ var uws_client = (function($) {
             if (p.datatype != 'file') {
                 $('#id_'+pname).wrap('<div class="input-group"></div>');
                 // Add Update buttons (possible to update params when pĥase is PENDING in UWS 1.0 - but not yet implemented)
-                $('#id_'+pname).parent().append('<span class="input-group-btn"><button id="button_'+pname+'" class="btn btn-default" type="button">Update</button></span>');
+                $('#id_'+pname).parent().append('<span class="input-group-btn"><button id="button_'+pname+'" class="btn btn-outline-secondary" type="button">Update</button></span>');
                 // Change input type
                 displayParamFormInputType(pname, p);
             } else {
@@ -847,7 +863,7 @@ var uws_client = (function($) {
                 $('#id_'+pname).attr('disabled','disabled');
                 if (!(pname in job.parameters)) {
                     $('#id_'+pname).wrap('<div class="input-group"></div>');
-                    $('#id_'+pname).parent().append('<span class="input-group-addon" style="line-height: 1.4;"><small>default used</small></span>');
+                    $('#id_'+pname).parent().append('<span class="input-group-text" style="line-height: 1.4;"><small>default used</small></span>');
                 };
             };
             // Change right corners for checkbox and select inside input-group
@@ -896,9 +912,9 @@ var uws_client = (function($) {
         $('#all_params').attr('value', JSON.stringify(qs));
         // Add buttons
         var elt = '\
-            <div id="form-buttons" class="form-group">\n\
-                <div class="col-md-offset-2 col-md-5">\n\
-                    <button id="showopt" type="button" class="btn btn-default">Show optional parameters</button>\n\
+            <div id="form-buttons" class="row mb-3">\n\
+                <div class="offset-md-2 col-md-6">\n\
+                    <button id="showopt" type="button" class="btn btn-outline-secondary">Show optional parameters</button>\n\
                 </div>\n\
             </div>\n';
         $('#job_params').append(elt);
@@ -927,6 +943,51 @@ var uws_client = (function($) {
     //----------
     // DISPLAY RESULTS
 
+    // Preview of a text result, with colors for JSON and XML (HTML of a pre element)
+    var escapeHtml = function(txt){
+        return txt.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    };
+    var highlightJson = function(txt){
+        try {
+            txt = JSON.stringify(JSON.parse(txt), undefined, 2);
+        } catch (e) {
+            return escapeHtml(txt);  // not valid JSON: text as it is
+        }
+        return escapeHtml(txt).replace(
+            /("(\\u[a-fA-F0-9]{4}|\\[^u]|[^\\"])*")(\s*:)?|\b(true|false|null)\b|-?\d+(\.\d+)?([eE][+-]?\d+)?/g,
+            function (match, string, _char, colon, literal) {
+                if (string) {
+                    return colon ? '<span class="hl-key">' + string + '</span>' + colon
+                        : '<span class="hl-string">' + string + '</span>';
+                }
+                return '<span class="' + (literal ? 'hl-literal' : 'hl-number') + '">' + match + '</span>';
+            });
+    };
+    var highlightXml = function(txt){
+        return escapeHtml(txt).replace(
+            /(&lt;!--[\s\S]*?--&gt;)|(&lt;\?[\s\S]*?\?&gt;)|(&lt;\/?)([\w:.-]+)([\s\S]*?)(\/?&gt;)/g,
+            function (match, comment, pi, open, name, attrs, close) {
+                if (comment) {
+                    return '<span class="hl-comment">' + comment + '</span>';
+                }
+                if (pi) {
+                    return '<span class="hl-comment">' + pi + '</span>';
+                }
+                attrs = attrs.replace(/([\w:.-]+)(\s*=\s*)("[^"]*"|'[^']*')/g,
+                    '<span class="hl-attr">$1</span>$2<span class="hl-string">$3</span>');
+                return '<span class="hl-tag">' + open + name + '</span>' + attrs + '<span class="hl-tag">' + close + '</span>';
+            });
+    };
+    var previewText = function(txt, type){
+        if (type == 'application/json') {
+            return highlightJson(txt);
+        }
+        if (type == 'text/xml') {
+            return highlightXml(txt);
+        }
+        return escapeHtml(txt);
+    };
+
     var displayResult = function(list, r, r_fname, r_type, r_url, r_url_auth){
         var rsplit = r.replace(/\./g, '_')
         var r_id = 'result_'+rsplit
@@ -938,32 +999,32 @@ var uws_client = (function($) {
             r_fname_display = ": " + r_fname;
         }
         var r_panel = '\
-            <div id="'+r_id+'" class="panel panel-default" value="'+r_url+'">\
-                <div class="panel-heading clearfix">\
-                    <span class="pull-left" style="padding-top: 4px;">\
-                        <span class="panel-title"><strong>'+r+'</strong>'+r_fname_display+'</span> ['+r_type+']\
+            <div id="'+r_id+'" class="card mb-3" value="'+r_url+'">\
+                <div class="card-header clearfix">\
+                    <span class="float-start" style="padding-top: 4px;">\
+                        <span class="card-title"><strong>'+r+'</strong>'+r_fname_display+'</span> ['+r_type+']\
                     </span>\
-                    <div class="btn-group pull-right">\
+                    <div class="btn-group float-end">\
                     </div>\
                 </div>\
             </div>';
         // Add to list
         $('#'+list).append(r_panel);
         // Some results are shown in the details box if present
-        // $('#'+r_id+' div.panel-heading span a').html('Download ['+r_type+']');
+        // $('#'+r_id+' div.card-header span a').html('Download ['+r_type+']');
         // Add download button through proxy (with auth)
-        $('#'+r_id+' div.panel-heading div.btn-group').append('\
-            <a class="preview btn btn-default btn-sm">\
-                <span class="glyphicon glyphicon-eye-open"></span>\
+        $('#'+r_id+' div.card-header div.btn-group').append('\
+            <a class="preview btn btn-outline-secondary btn-sm">\
+                <span class="bi bi-eye"></span>\
                 Show preview\
             </a>\
-            <a class="download btn btn-default btn-sm" href="' + r_url_auth + '">\
-                <span class="glyphicon glyphicon-save"></span>\
+            <a class="download btn btn-outline-secondary btn-sm" href="' + r_url_auth + '">\
+                <span class="bi bi-download"></span>\
                 Download\
             </a>'
         );
-//            <a class="adownload btn btn-default btn-sm" href="' + r_url + '">\
-//                <span class="glyphicon glyphicon-save"></span>\
+//            <a class="adownload btn btn-outline-secondary btn-sm" href="' + r_url + '">\
+//                <span class="bi bi-download"></span>\
 //                Anonymous Download\
 //            </a>'
         // Show preview according to result type (file extension)
@@ -971,16 +1032,16 @@ var uws_client = (function($) {
             // FITS files can be SAMPed
             case 'image/fits':
                 // Show image preview
-                $('#'+r_id+' div.panel-heading div.btn-group a.preview').hide();
-                //$('#'+r_id+' div.panel-body').html('\
+                $('#'+r_id+' div.card-header div.btn-group a.preview').hide();
+                //$('#'+r_id+' div.card-body').html('\
                 //    <img class="img-thumbnail" src="/static/images/crab_cta.png" />\
                 //');
                 // Add SAMP button
-                $('#'+r_id+' div.panel-heading div.btn-group').append('\
-                    <button type="button" class="samp btn btn-default btn-sm"><span class="glyphicon glyphicon-send"></span> SAMP</button>'
+                $('#'+r_id+' div.card-header div.btn-group').append('\
+                    <button type="button" class="samp btn btn-outline-secondary btn-sm"><span class="bi bi-send-fill"></span> SAMP</button>'
                 );
                 // Add event on SAMP button click
-                $('#'+r_id+' div.panel-heading div.btn-group button.samp').click(function() {
+                $('#'+r_id+' div.card-header div.btn-group button.samp').click(function() {
                     // var url = $(this).parents(".panel").attr('value');
                     //var name = url.split('/').pop();
                     var url_result = r_url_base + "/" + r_eid + "/" + r + ".fits";
@@ -993,11 +1054,11 @@ var uws_client = (function($) {
             case 'image/png':
             case 'image/gif':
                 // Show image preview
-                $('#'+r_id+' div.panel-heading div.btn-group a.preview').click(function() {
+                $('#'+r_id+' div.card-header div.btn-group a.preview').click(function() {
                     var txt = $(this).html();
                     if (!($('#'+r_id).hasClass('preview_loaded'))) {
                         $('#'+r_id).append('\
-                            <div class="panel-body">\
+                            <div class="card-body">\
                                 <img class="img-thumbnail" src="' + r_url_auth + '" />\
                             </div>\
                         ');
@@ -1005,28 +1066,23 @@ var uws_client = (function($) {
                         console.log('Preview loaded for ' + r_id);
                     };
                     if (txt.indexOf('Show') !== -1) {
-                        $('#'+r_id+' div.panel-body').show();
+                        $('#'+r_id+' div.card-body').show();
                         $(this).html(txt.replace('Show', 'Hide').replace('open', 'close'));
                     } else {
-                        $('#'+r_id+' div.panel-body').hide();
+                        $('#'+r_id+' div.card-body').hide();
                         $(this).html(txt.replace('Hide', 'Show').replace('close', 'open'));
                     };
                 });
                 break;
-            // Show text in textarea
+            // Show text (with colors for JSON and XML)
             case 'text/plain':
             case 'text/xml':
             case 'application/json':
-                // show textarea with log
-                $('#'+r_id+' div.panel-heading div.btn-group a.preview').click(function() {
+                // show the text in a pre element
+                $('#'+r_id+' div.card-header div.btn-group a.preview').click(function() {
                     var txt = $(this).html();
                     if (!($('#'+r_id).hasClass('preview_loaded'))) {
-                        $('#'+r_id).append('\
-                            <div class="panel-body">\
-                                <textarea class="log form-control" rows="10" style="font-family: monospace;" readonly>\
-                                </textarea>\
-                            </div>\
-                        ');
+                        $('#'+r_id).append('<div class="card-body"><pre class="text-preview"></pre></div>');
                         $('#loading').show();
                         $.ajax({
                             url : r_url_auth,
@@ -1034,12 +1090,7 @@ var uws_client = (function($) {
                             context: r_id,  // Set this=r_id for success function
                             success: function (txt) {
                                 $('#loading').hide();
-                                if (r_type == 'application/json') {
-                                    $('#' + this + ' div.panel-body textarea').html(JSON.stringify(JSON.parse(txt),
-                                    undefined, 2));
-                                } else {
-                                    $('#' + this + ' div.panel-body textarea').html(txt);
-                                }
+                                $('#' + this + ' div.card-body pre.text-preview').html(previewText(txt, r_type));
                                 $('#'+r_id).addClass('preview_loaded');
                                 console.log('Preview loaded for ' + this);
                             },
@@ -1050,42 +1101,42 @@ var uws_client = (function($) {
                         });
                     };
                     if (txt.indexOf('Show') !== -1) {
-                        $('#'+r_id+' div.panel-body').show();
+                        $('#'+r_id+' div.card-body').show();
                         $(this).html(txt.replace('Show', 'Hide').replace('open', 'close'));
                     } else {
-                        $('#'+r_id+' div.panel-body').hide();
+                        $('#'+r_id+' div.card-body').hide();
                         $(this).html(txt.replace('Hide', 'Show').replace('close', 'open'));
                     };
                 });
                 break;
             // Show SVG
             case 'image/svg+xml':
-                $('#'+r_id+' div.panel-heading div.btn-group a.preview').click(function() {
+                $('#'+r_id+' div.card-header div.btn-group a.preview').click(function() {
                     var txt = $(this).html();
                     if (!($('#'+r_id).hasClass('preview_loaded'))) {
                         $('#'+r_id).append('\
-                            <div class="panel-body">\
+                            <div class="card-body">\
                             </div>\
                         ');
                         var r_id_svg = r_id
-                        $('#'+r_id+' div.panel-body').load(r_url_auth, function() {
-                            $('#' + r_id_svg + ' > div.panel-body > svg').attr('width', '100%');
+                        $('#'+r_id+' div.card-body').load(r_url_auth, function() {
+                            $('#' + r_id_svg + ' > div.card-body > svg').attr('width', '100%');
                         });
                         $('#'+r_id).addClass('preview_loaded');
                         console.log('Preview loaded for ' + r_id);
                     };
                     if (txt.indexOf('Show') !== -1) {
-                        $('#'+r_id+' div.panel-body').show();
+                        $('#'+r_id+' div.card-body').show();
                         $(this).html(txt.replace('Show', 'Hide').replace('open', 'close'));
                     } else {
-                        $('#'+r_id+' div.panel-body').hide();
+                        $('#'+r_id+' div.card-body').hide();
                         $(this).html(txt.replace('Hide', 'Show').replace('close', 'open'));
                     };
                 });
                 break;
             // Unknown content_type
             default:
-                $('#'+r_id+' div.panel-heading div.btn-group a.preview').hide();
+                $('#'+r_id+' div.card-header div.btn-group a.preview').hide();
         };
     };
     var displayResultsOk = function(job){
@@ -1161,7 +1212,7 @@ var uws_client = (function($) {
 
     var displaySingleJobOk = function(jobName, jobId){
         $('#loading').show();
-        prepareTable();
+        prepareTable(false);
         clients[jobName].getJobInfos(jobId, displaySingleJobSuccess, displaySingleJobError);
     };
     var displaySingleJob = function(jobName, jobId){
@@ -1309,31 +1360,8 @@ var uws_client = (function($) {
                 };
             };
         };
-        // Use tablesorter
-        //var col_sort = job_list_columns.indexOf('creationTime');
-        var col_sort = $("th").index($("#creationTime"));
-        console.log(col_sort);
-        $("#job_list").tablesorter({
-            theme : "bootstrap",
-            headerTemplate : '{content} {icon}',
-            sortReset: true,
-            sortRestart : true,
-            widgets : [ "uitheme", "zebra" ],
-        })
-        .tablesorterPager({
-            // target the pager markup - see the HTML block below
-            container: $(".ts-pager"),
-            // target the pager page select dropdown - choose a page
-            cssGoto  : ".pagenum",
-            // remove rows from the table to speed up the sort of large tables.
-            // setting this to false, only hides the non-visible rows; needed if you plan to add/remove rows with the pager enabled.
-            removeRows: false,
-            // output string - default is '{page}/{totalPages}';
-            // possible variables: {page}, {totalPages}, {filteredPages}, {startRow}, {endRow}, {filteredRows} and {totalRows}
-            output: '{startRow} - {endRow} / {filteredRows} ({totalRows})'
-        });
-
-        $("#job_list").trigger("updateAll", true);
+        // Sort and pages of the table (opus_table.js)
+        opusTable.init(document.getElementById('job_list'));
         logger('INFO', 'Job list loaded ');
         $('#div_table').show();
     };

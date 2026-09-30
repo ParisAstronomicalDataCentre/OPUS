@@ -1,8 +1,8 @@
 {% extends "skeleton.html" %}
 {% block js %}
-    <script type="text/javascript" src="/static/js/uwsLib.js" defer></script>
-    <script type="text/javascript" src="/static/js/uws_client.js" defer></script>
-    <script type="text/javascript" src="/static/js/job_form.js" defer></script>
+    <script type="text/javascript" src="/static/js/uwsLib.js?v={{ asset_version }}" defer></script>
+    <script type="text/javascript" src="/static/js/uws_client.js?v={{ asset_version }}" defer></script>
+    <script type="text/javascript" src="/static/js/job_form.js?v={{ asset_version }}" defer></script>
 {% endblock %}
 {% block variables %}
 	<div id="jobname" style="display:none" value="{{ jobname }}"></div>
@@ -11,22 +11,22 @@
 {% endblock %}
 {% block content %}
 	<div class="container bs-docs-container">
-        <div id="new_job_panel" class="panel panel-default">
-            <div class="panel-heading clearfix">
-                <span class="pull-left" style="padding-top: 4px;">
-                    <span class="panel-title">Create new {{ jobname }} job</span>
+        <div id="new_job_panel" class="card mb-3">
+            <div class="card-header clearfix">
+                <span class="float-start" style="padding-top: 4px;">
+                    <span class="card-title">Create new {{ jobname }} job</span>
                 </span>
-                <a id="to_job_list" type="button" class="btn btn-default pull-right" href="{{ url_for('job_list', jobname=jobname) }}">
-                    <span class="glyphicon glyphicon-list"></span>
+                <a id="to_job_list" type="button" class="btn btn-outline-secondary float-end" href="{{ url_for('job_list', jobname=jobname) }}">
+                    <span class="bi bi-list-ul"></span>
                     Job list
                 </a>
             </div>
-            <div id="parameters_panel" class="panel-body">
+            <div id="parameters_panel" class="card-body">
                 <p></p>
                 <!-- show form -->
-                <form id="job_params" class="form-horizontal" role="form" action="" method="get" enctype="multipart/form-data">
+                <form id="job_params" class="" role="form" action="" method="get" enctype="multipart/form-data">
                 </form>
-            </div> <!-- panel-body -->
+            </div> <!-- card-body -->
         </div> <!-- panel -->
 	</div> <!-- container -->
 {% endblock %}

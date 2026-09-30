@@ -62,25 +62,25 @@
                 <td class="text-center" style="vertical-align: middle;">\
                     <div class="input-group-btn">\
                         <a href="' + client_endpoint + '/job_definition/' + jobname + '" \
-                        id="button_edit_' + jobname_label + '" type="button" class="btn btn-default btn-sm" \
+                        id="button_edit_' + jobname_label + '" type="button" class="btn btn-outline-secondary btn-sm" \
                         title="Edit">\
-                            <span class="glyphicon glyphicon-edit"></span>\
-                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;Edit</span>\
+                            <span class="bi bi-pencil-square"></span>\
+                            <span class="d-none d-lg-inline">&nbsp;Edit</span>\
                         </a>\
-                        <button id="button_history_' + jobname_label + '" type="button" class="btn btn-default btn-sm" \
+                        <button id="button_history_' + jobname_label + '" type="button" class="btn btn-outline-secondary btn-sm" \
                         title="History of the versions, with the differences">\
-                            <span class="glyphicon glyphicon-time"></span>\
-                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;History</span>\
+                            <span class="bi bi-clock"></span>\
+                            <span class="d-none d-lg-inline">&nbsp;History</span>\
                         </button>\
-                        <button id="button_export_' + jobname_label + '" type="button" class="btn btn-default btn-sm" \
+                        <button id="button_export_' + jobname_label + '" type="button" class="btn btn-outline-secondary btn-sm" \
                         title="Export">\
-                            <span class="glyphicon glyphicon-export"></span>\
-                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;Export</span>\
+                            <span class="bi bi-box-arrow-up"></span>\
+                            <span class="d-none d-lg-inline">&nbsp;Export</span>\
                         </button>\
-                        <button id="button_delete_' + jobname_label + '" type="button" class="btn btn-default btn-sm" \
+                        <button id="button_delete_' + jobname_label + '" type="button" class="btn btn-outline-secondary btn-sm" \
                         title="Delete">\
-                            <span class="glyphicon glyphicon-trash"></span>\
-                            <span class="hidden-xs hidden-sm hidden-md">&nbsp;Delete</span>\
+                            <span class="bi bi-trash"></span>\
+                            <span class="d-none d-lg-inline">&nbsp;Delete</span>\
                         </button>\
                     </div>\
                 </td>\
@@ -204,8 +204,8 @@
         $('#pending_table').toggle(pending.length > 0);
         $('#pending_empty').toggle(pending.length == 0);
         $.each(pending, function (i, p) {
-            var status = (p.status == 'new') ? '<span class="label label-info">new</span>' : '<span class="label label-warning">changed</span>';
-            var requested = p.validation_requested ? '<span class="glyphicon glyphicon-ok text-success"></span>' : '';
+            var status = (p.status == 'new') ? '<span class="badge text-bg-info">new</span>' : '<span class="badge text-bg-warning">changed</span>';
+            var requested = p.validation_requested ? '<span class="bi bi-check-lg text-success"></span>' : '';
             var diff_title = (p.status == 'new') ? 'No validated version to compare with' : 'Differences with the validated version';
             tbody.append('<tr id="pending_' + i + '">'
                 + '<td class="text-center"><b>' + escape_html(p.jobname) + '</b></td>'
@@ -215,14 +215,14 @@
                 + '<td class="text-center">' + escape_html(p.date) + '</td>'
                 + '<td class="text-center">' + requested + '</td>'
                 + '<td class="text-center"><div class="input-group-btn">'
-                + '<button type="button" class="btn btn-default btn-sm pending-diff" title="' + diff_title + '"' + (p.status == 'new' ? ' disabled' : '') + '>'
-                + '<span class="glyphicon glyphicon-transfer"></span><span class="hidden-xs hidden-sm hidden-md">&nbsp;Diff</span></button>'
-                + '<a href="' + client_endpoint + '/job_definition/tmp/' + encodeURIComponent(p.jobname) + '" class="btn btn-default btn-sm" title="Open in the Job Definition editor">'
-                + '<span class="glyphicon glyphicon-edit"></span><span class="hidden-xs hidden-sm hidden-md">&nbsp;Open</span></a>'
+                + '<button type="button" class="btn btn-outline-secondary btn-sm pending-diff" title="' + diff_title + '"' + (p.status == 'new' ? ' disabled' : '') + '>'
+                + '<span class="bi bi-arrow-left-right"></span><span class="d-none d-lg-inline">&nbsp;Diff</span></button>'
+                + '<a href="' + client_endpoint + '/job_definition/tmp/' + encodeURIComponent(p.jobname) + '" class="btn btn-outline-secondary btn-sm" title="Open in the Job Definition editor">'
+                + '<span class="bi bi-pencil-square"></span><span class="d-none d-lg-inline">&nbsp;Open</span></a>'
                 + '<button type="button" class="btn btn-success btn-sm pending-validate" title="Validate: the job can then be run">'
-                + '<span class="glyphicon glyphicon-ok"></span><span class="hidden-xs hidden-sm hidden-md">&nbsp;Validate</span></button>'
+                + '<span class="bi bi-check-lg"></span><span class="d-none d-lg-inline">&nbsp;Validate</span></button>'
                 + '<button type="button" class="btn btn-danger btn-sm pending-reject" title="Reject: the submitted job definition is removed">'
-                + '<span class="glyphicon glyphicon-remove"></span><span class="hidden-xs hidden-sm hidden-md">&nbsp;Reject</span></button>'
+                + '<span class="bi bi-x-lg"></span><span class="d-none d-lg-inline">&nbsp;Reject</span></button>'
                 + '</div></td></tr>');
             var row = $('#pending_' + i);
             row.find('.pending-diff').click(function () {
@@ -285,8 +285,8 @@
         $('#inactive_table').toggle(inactive.length > 0);
         $('#inactive_empty').toggle(inactive.length == 0);
         $.each(inactive, function (i, j) {
-            var status = (j.status == 'deleted') ? '<span class="label label-danger">deleted</span>'
-                : '<span class="label label-default">never validated</span>';
+            var status = (j.status == 'deleted') ? '<span class="badge text-bg-danger">deleted</span>'
+                : '<span class="badge text-bg-secondary">never validated</span>';
             var last = j.last_version ? escape_html(j.last_version.version) : '';
             var restore_title = j.last_version ? 'Validate again the last version (' + escape_html(j.last_version.date) + ')' : 'No version to restore';
             tbody.append('<tr id="inactive_' + i + '">'
@@ -296,10 +296,10 @@
                 + '<td class="text-center">' + escape_html(j.date || '') + '</td>'
                 + '<td class="text-center">' + escape_html(j.user || '') + '</td>'
                 + '<td class="text-center"><div class="input-group-btn">'
-                + '<button type="button" class="btn btn-default btn-sm inactive-history" title="History of the versions, with the differences">'
-                + '<span class="glyphicon glyphicon-time"></span><span class="hidden-xs hidden-sm hidden-md">&nbsp;History</span></button>'
-                + '<button type="button" class="btn btn-default btn-sm inactive-restore" title="' + restore_title + '"' + (j.last_version ? '' : ' disabled') + '>'
-                + '<span class="glyphicon glyphicon-repeat"></span><span class="hidden-xs hidden-sm hidden-md">&nbsp;Restore</span></button>'
+                + '<button type="button" class="btn btn-outline-secondary btn-sm inactive-history" title="History of the versions, with the differences">'
+                + '<span class="bi bi-clock"></span><span class="d-none d-lg-inline">&nbsp;History</span></button>'
+                + '<button type="button" class="btn btn-outline-secondary btn-sm inactive-restore" title="' + restore_title + '"' + (j.last_version ? '' : ' disabled') + '>'
+                + '<span class="bi bi-arrow-repeat"></span><span class="d-none d-lg-inline">&nbsp;Restore</span></button>'
                 + '</div></td></tr>');
             var row = $('#inactive_' + i);
             row.find('.inactive-history').click({name: j.jobname}, show_history);
@@ -368,10 +368,10 @@
     }
 
     var KINDS = {
-        pending: '<span class="label label-warning">submitted</span>',
-        current: '<span class="label label-success">current</span>',
-        saved: '<span class="label label-default">previous</span>',
-        deleted: '<span class="label label-danger">deleted</span>'
+        pending: '<span class="badge text-bg-warning">submitted</span>',
+        current: '<span class="badge text-bg-success">current</span>',
+        saved: '<span class="badge text-bg-secondary">previous</span>',
+        deleted: '<span class="badge text-bg-danger">deleted</span>'
     };
 
     function show_history(event) {
@@ -391,14 +391,14 @@
                     var previous = (i + 1 < versions.length) ? versions[i + 1] : null;
                     var buttons = '';
                     if (previous) {
-                        buttons += '<button type="button" class="btn btn-default btn-xs history-diff" data-from="' + previous.id + '" data-to="' + v.id
+                        buttons += '<button type="button" class="btn btn-outline-secondary btn-sm history-diff" data-from="' + previous.id + '" data-to="' + v.id
                             + '" title="Differences with the previous version (' + escape_html(previous.date) + ')">Diff with previous</button> ';
                     }
                     if (has_current && v.id != 'current' && !(previous && previous.id == 'current')) {
-                        buttons += '<button type="button" class="btn btn-default btn-xs history-diff" data-from="' + v.id + '" data-to="current">Diff with current</button> ';
+                        buttons += '<button type="button" class="btn btn-outline-secondary btn-sm history-diff" data-from="' + v.id + '" data-to="current">Diff with current</button> ';
                     }
                     if (v.kind == 'saved' || v.kind == 'deleted') {
-                        buttons += '<button type="button" class="btn btn-warning btn-xs history-restore" data-index="' + i
+                        buttons += '<button type="button" class="btn btn-warning btn-sm history-restore" data-index="' + i
                             + '" title="Validate again this version (the current version, if any, is kept)">Restore</button>';
                     }
                     return '<tr><td>' + escape_html(v.date) + '</td><td>' + escape_html(v.version) + '</td><td>'
@@ -416,11 +416,11 @@
                 });
                 var html = '<h5>Versions</h5><p class="text-muted small">The date of a previous version is the date of its file, '
                     + 'i.e. when it was validated.</p>'
-                    + '<table class="table table-condensed table-bordered"><thead><tr><th>Date</th><th>Version</th><th>Status</th><th>Actions</th></tr></thead><tbody>'
+                    + '<table class="table table-sm table-bordered"><thead><tr><th>Date</th><th>Version</th><th>Status</th><th>Actions</th></tr></thead><tbody>'
                     + rows.join('') + '</tbody></table>'
                     + '<div id="history_diff"></div>'
                     + '<h5>Events</h5>'
-                    + (events.length ? '<table class="table table-condensed table-bordered"><thead><tr><th>Date</th><th>Event</th><th>User</th><th>Details</th></tr></thead><tbody>'
+                    + (events.length ? '<table class="table table-sm table-bordered"><thead><tr><th>Date</th><th>Event</th><th>User</th><th>Details</th></tr></thead><tbody>'
                         + events.join('') + '</tbody></table>'
                         : '<p class="text-muted">No event recorded (the events are recorded since this version of OPUS).</p>');
                 $('#jdl_modal_title').text('History of the job definition ' + jobname);
