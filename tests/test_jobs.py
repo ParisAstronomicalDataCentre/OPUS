@@ -350,7 +350,9 @@ class TestMaintenance:
         # the result is kept (provenance), its file is no longer available
         response = requests.get(f"{job_url}/results/output", auth=AUTH)
         assert response.status_code == 200
-        assert requests.get(response.text, auth=AUTH).status_code == 404
+        download = requests.get(response.text, auth=AUTH)
+        assert download.status_code == 404
+        assert f"job {jobid} is archived (its result files were deleted)" in download.text
         # kept: description, parameters, logs and provenance
         assert job_attributes(job_url)["phase"] == "ARCHIVED"
         assert requests.get(f"{job_url}/parameters/text", auth=AUTH).text == "results deleted"

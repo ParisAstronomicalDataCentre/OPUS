@@ -1168,6 +1168,22 @@ def download_entity():
             if entity["owner"] != user.name or (owner_token is not None and owner_token != user.token):
                 raise EntityAccessDenied(f"User {user.name} is not the owner of the entity")
 
+        if not os.path.isfile(os.path.join(entity["file_dir"] or "", entity["file_name"] or "")):
+            # file deleted: job archived (job that generated the entity, or used it for an uploaded file)
+            with job_storage.get_session() as session:
+                jobids = [entity["jobid"]] if entity.get("jobid") else [
+                    u.jobid for u in session.query(job_storage.Used).filter_by(entity_id=entity_id)
+                ]
+                archived = [
+                    j.jobid for j in session.query(job_storage.Job).filter(job_storage.Job.jobid.in_(jobids))
+                    if j.phase == "ARCHIVED"
+                ]
+            if archived:
+                raise storage.NotFoundWarning(
+                    f"Result {entity_id} is no longer available: job {archived[0]} is archived (its result files "
+                    f"were deleted)"
+                )
+            raise storage.NotFoundWarning(f"File of the result {entity_id} not found")
         download = (
             entity["entity_id"] + "_" + entity["file_name"]
         )  #  + os.path.splitext(entity['file_name'])[1]
