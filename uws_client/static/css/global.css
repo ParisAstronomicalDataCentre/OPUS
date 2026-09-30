@@ -147,9 +147,10 @@ body {
     width: 100% !important;
 }
 
-#messages_div {
-    position: absolute;
-    bottom:2%;
-    right:2%;
-    z-index: 10;
+/* message area (see skeleton.html): the clicks go through it, except on the messages */
+#messages_div, #loading_div {
+    pointer-events: none;
+}
+#messages_div .alert {
+    pointer-events: auto;
 }
