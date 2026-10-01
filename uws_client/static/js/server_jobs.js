@@ -56,6 +56,7 @@
             <tr id="' + jobname_label + '">\
                 <td class="text-center" style="vertical-align: middle;"><b>' + jobname + '</b></td>\
                 <td class="text-center" style="vertical-align: middle;">' + jdetails.version + '</td>\
+                <td class="text-center" style="vertical-align: middle;">' + (dates[jobname] || '').replace('T'') + '</td>\
                 <td class="text-center" style="vertical-align: middle;">' + jdetails.contact_name + '</td>\
                 <td class="text-center" style="vertical-align: middle;">' + jdetails.type + '</td>\
                 <td class="text-center" style="vertical-align: middle;">' + jdetails.subtype + '</td>\
