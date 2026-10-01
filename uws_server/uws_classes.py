@@ -63,6 +63,20 @@ class InvalidInput(Exception):
     pass
 
 
+def execution_duration(value):
+    """Execution duration of a job in seconds (0 for unlimited), capped at EXECUTION_DURATION_MAX (if not 0)
+
+    Raises ValueError if the value is not an integer, or is negative
+    """
+    duration = int(value)
+    if duration < 0:
+        raise ValueError(f"negative execution duration: {duration}")
+    duration_max = settings.EXECUTION_DURATION_MAX
+    if duration_max and (duration == 0 or duration > duration_max):
+        return duration_max
+    return duration
+
+
 # Maximum length of parameter values, as defined for the storage columns (see storage.py)
 PARAMETER_MAX_LENGTH = {"runId": 64}  # jobs.run_id
 PARAMETER_MAX_LENGTH_DEF = 255  # job_parameters.value
@@ -258,8 +272,8 @@ class Job:
                 settings.DESTRUCTION_INTERVAL
             )  # default interval for UWS server
             duration = dt.timedelta(
-                0, settings.EXECUTION_DURATION_DEF
-            )  # default duration of 60s, from jdl ?
+                0, execution_duration(settings.EXECUTION_DURATION_DEF)
+            )  # default duration, then the one of the job definition (see set_from_post)
             self.phase = "PENDING"
             self.quote = duration.total_seconds()
             self.execution_duration = duration.total_seconds()
@@ -358,9 +372,13 @@ class Job:
             check_parameter_length(pname, value)
         # Read JDL
         self.jdl.read(self.jobname)
-        self.execution_duration = self.jdl.content.get(
-            "executionDuration", settings.EXECUTION_DURATION_DEF
-        )
+        try:
+            self.execution_duration = execution_duration(
+                self.jdl.content.get("executionDuration", settings.EXECUTION_DURATION_DEF)
+            )
+        except (TypeError, ValueError):
+            logger.warning(f"Invalid executionDuration in the job definition of {self.jobname}, default used")
+            self.execution_duration = execution_duration(settings.EXECUTION_DURATION_DEF)
         # OPUS internal attributes
         for pname in ["control_parameters", "csrf_token"]:
             if pname in post:

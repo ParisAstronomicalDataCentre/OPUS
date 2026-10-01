@@ -116,17 +116,17 @@ class TestJobUpdate:
         # jobid = '00000000-dbf3-6b04-b1e7-28d47ad32794'
         url = UWS_EP + "/" + jobname + "/" + jobid + "/executionduration"
         post = {"BAD_KEY": "120"}
-        response = test_app.post(url, post, status=500)
+        response = test_app.post(url, post, status=400)
         print(url + " " + str(post))
         print(" --> " + response.status)
         print(" --> " + response.html.pre.string)
-        assert response.status_int == 500
+        assert response.status_int == 400
         post = {"EXECUTIONDURATION": "BAD_VALUE"}
-        response = test_app.post(url, post, status=500)
+        response = test_app.post(url, post, status=400)
         print(url + " " + str(post))
         print(" --> " + response.status)
         print(" --> " + response.html.pre.string)
-        assert response.status_int == 500
+        assert response.status_int == 400
         post = {"EXECUTIONDURATION": "120"}
         response = test_app.post(url, post)
         print(url + " " + str(post))
@@ -503,3 +503,17 @@ class TestTrustedIPs:
         response = test_app.post("/handler/job_event", {"jobid": "0", "phase": "EXECUTING"},
                                  extra_environ={"REMOTE_ADDR": "2001:db8::1"}, status=403)
         assert "is not a job server" in response.text
+
+
+class TestExecutionDuration:
+
+    def test_execution_duration(self, monkeypatch):
+        from uws_server.uws_classes import execution_duration
+
+        monkeypatch.setattr(settings, "EXECUTION_DURATION_MAX", 0)  # no limit
+        assert [execution_duration(v) for v in ["120", 0, 99999]] == [120, 0, 99999]
+        monkeypatch.setattr(settings, "EXECUTION_DURATION_MAX", 3600)
+        assert [execution_duration(v) for v in ["120", 3600, 3601, 0]] == [120, 3600, 3600, 3600]
+        for value in ["-1", "1.5", "long", ""]:
+            with pytest.raises(ValueError):
+                execution_duration(value)

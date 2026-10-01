@@ -84,6 +84,8 @@ class ServerSettings(CommonSettings):
     # Default destruction interval
     DESTRUCTION_INTERVAL: int = 30  # in days
     # Maximum and default execution duration, 0 implies unlimited execution duration
+    # (the duration of the job definition, or requested by a user, is capped at EXECUTION_DURATION_MAX if not 0;
+    # time limit of the jobs with SLURM, the Local manager does not stop the jobs)
     EXECUTION_DURATION_DEF: int = 120  # in seconds
     EXECUTION_DURATION_MAX: int = 0  # in seconds
     # Maximum wait time (UWS1.1)

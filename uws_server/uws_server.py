@@ -54,6 +54,7 @@ from .uws_classes import (
     ParameterTooLong,
     TooManyJobs,
     User,
+    execution_duration,
     special_users,
 )
 
@@ -1865,10 +1866,12 @@ def get_executionduration(jobname, jobid):
 
 @app.post(settings.UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>/executionduration")
 def post_executionduration(jobname, jobid):
-    """Change the maximum execution duration of job <jobid>
+    """Change the maximum execution duration of job <jobid> (in seconds, 0 for unlimited), capped at
+    EXECUTION_DURATION_MAX (if not 0): the value kept is given by GET
 
     Returns:
         303 See other: /<jobname>/<jobid> (on success)
+        400 Bad Request: EXECUTIONDURATION missing, not an integer, or negative
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
@@ -1877,15 +1880,13 @@ def post_executionduration(jobname, jobid):
         logger.info(f"{jobname} {jobid}")
         # Get value from POST
         if "EXECUTIONDURATION" not in request.forms:
-            raise UserWarning("EXECUTIONDURATION keyword required") from None
+            raise InvalidInput("EXECUTIONDURATION keyword required") from None
         new_value = request.forms.get("EXECUTIONDURATION")
-        # Check new value
+        # Check new value (capped at EXECUTION_DURATION_MAX)
         try:
-            new_value = int(new_value)
+            new_value = execution_duration(new_value)
         except ValueError:
-            raise UserWarning(
-                "Execution duration must be an integer or a float"
-            ) from None
+            raise InvalidInput("Execution duration must be a positive integer (seconds, 0 for unlimited)") from None
         # Get job properties from DB
         job = Job(jobname, jobid, user)
         try:
@@ -1899,6 +1900,8 @@ def post_executionduration(jobname, jobid):
                 ) from None
         finally:
             job.close()
+    except InvalidInput as e:
+        abort_400(str(e))
     except JobAccessDenied as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:

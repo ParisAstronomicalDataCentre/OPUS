@@ -107,13 +107,22 @@ class TestJobAttributes:
         assert response.status_code == 303
         assert requests.get(f"{job_url}/executionduration", auth=AUTH).text == "120"
         assert job_attributes(job_url)["executionDuration"] == "120"
-        for data in [{"EXECUTIONDURATION": "long"}, {}]:
-            assert requests.post(f"{job_url}/executionduration", data=data, auth=AUTH).status_code == 500
+        for data in [{"EXECUTIONDURATION": "long"}, {"EXECUTIONDURATION": "-5"}, {}]:
+            assert requests.post(f"{job_url}/executionduration", data=data, auth=AUTH).status_code == 400
         # only for a pending job
         requests.post(f"{job_url}/phase", data={"PHASE": "RUN"}, auth=AUTH)
         assert wait(job_url) == "COMPLETED"
         response = requests.post(f"{job_url}/executionduration", data={"EXECUTIONDURATION": "60"}, auth=AUTH)
         assert response.status_code == 500 and "PENDING" in response.text
+
+    def test_execution_duration_max(self, server, monkeypatch):  # noqa: F811 (server fixture)
+        # capped at EXECUTION_DURATION_MAX (0 for unlimited is capped too), at creation and when changed
+        monkeypatch.setattr(settings, "EXECUTION_DURATION_MAX", 10)
+        job_url = create_job(server, "test_activity_1", run=False, text="max")
+        assert requests.get(f"{job_url}/executionduration", auth=AUTH).text == "10"  # 20 in the job definition
+        for value, kept in [("5", "5"), ("3600", "10"), ("0", "10")]:
+            requests.post(f"{job_url}/executionduration", data={"EXECUTIONDURATION": value}, auth=AUTH)
+            assert requests.get(f"{job_url}/executionduration", auth=AUTH).text == kept
 
     def test_destruction(self, server):  # noqa: F811 (server fixture)
         job_url = create_job(server, "test_activity_1", run=False, text="destruction")

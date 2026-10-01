@@ -94,8 +94,8 @@ the logs.
 | ---                    | :---                                                                        |
 | NJOBS_MAX              | Maximum number of active jobs per user                                      |
 | DESTRUCTION_INTERVAL   | Default destruction interval                                                |
-| EXECUTION_DURATION_DEF | Default execution duration                                                  |
-| EXECUTION_DURATION_MAX | Maximum execution duration                                                  |
+| EXECUTION_DURATION_DEF | Default execution duration, if not given in the job definition (seconds)   |
+| EXECUTION_DURATION_MAX | Maximum execution duration (seconds, 0 for no limit): the duration of the job definition, or requested by a user, is capped at this value (the time limit of the jobs with the SLURM manager, the Local manager does not stop the jobs) |
 | WAIT_TIME_MAX          | Maximum wait time for user request (UWS1.1)                                 |
 | USE_ARCHIVED_PHASE     | Use ARCHIVED phase (UWS1.1)                                                 |
 | GENERATE_PROV          | Add the provenance files to the results of the jobs                         |
