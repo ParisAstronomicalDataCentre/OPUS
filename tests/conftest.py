@@ -94,4 +94,4 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
     terminalreporter.write_line(f"Test files (database, logs, jobs) kept in: {TEST_VAR_PATH}")
     terminalreporter.write_line(f"They can be removed with: rm -rf {TEST_VAR_PATH}")
     parent = os.path.dirname(TEST_VAR_PATH)
-    terminalreporter.write_line(f"(or all test directories: rm -rf {parent}/opus_test_*)")
+    terminalreporter.write_line(f"(or all test directories: rm -rf {parent}/opus_test_*, or just test_clean)")

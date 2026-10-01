@@ -32,6 +32,14 @@ mypy path="src":
 test:
     uv run pytest -q tests
 
+# Remove the files of the previous test runs
+test_clean:
+    #!/usr/bin/env bash
+    tmp=$(python3 -c 'import tempfile; print(tempfile.gettempdir())')
+    n=$(find "$tmp" -maxdepth 1 -name 'opus_test_*' -type d | wc -l | tr -d ' ')
+    find "$tmp" -maxdepth 1 -name 'opus_test_*' -type d -exec rm -rf {} +
+    echo "test files cleaned: $n directories removed from $tmp ✅"
+
 # Coverage of the tests: report in the terminal, or in htmlcov/index.html (just coverage html)
 coverage report="term":
     uv run pytest -q tests --cov --cov-report={{ report }}
@@ -57,7 +65,7 @@ env template=".env.dist":
 nginx_conf:
     uv run python generate_nginx_config.py
 
-# Run OPUS server + client behind nginx (as local user, no sudo needed)
+# Run OPUS server, client and nginx locally
 start:
     # Start server and client uvicorn processes in background and store their PIDs
     uv run uvicorn app_server:asgi_app --host localhost --port 8082 --workers 1 --root-path /opus_server & echo $! > .uvicorn_server.pid
@@ -67,12 +75,18 @@ start:
     # Once back‑ends are listening, start nginx as a reverse proxy
     nginx -e stderr -c `pwd`/nginx/nginx.conf
 
+# Stop local OPUS server, client and nginx
 stop:
     # Gracefully stop the uvicorn processes started by `just start`
     @sh -c 'if [ -f .uvicorn_server.pid ]; then kill $(cat .uvicorn_server.pid) && rm .uvicorn_server.pid; fi' || true
     @sh -c 'if [ -f .uvicorn_client.pid ]; then kill $(cat .uvicorn_client.pid) && rm .uvicorn_client.pid; fi' || true
     @sleep 1
     nginx -e stderr -c `pwd`/nginx/nginx.conf -s stop
+
+# Restart OPUS server, client and nginx locally
+restart:
+    just stop
+    just start
 
 # Maintenance of the jobs: update phases, archive expired jobs (from the server host, e.g. daily)
 maintenance jobname="__all__" url="http://localhost:8082":
