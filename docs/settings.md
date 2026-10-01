@@ -80,8 +80,12 @@ token (`owner_token` column of the `entities` table, added at the start of the s
 | ALLOW_ANONYMOUS   | Anonymous user allowed on server (True/False)                   |
 | CHECK_PERMISSIONS | Check permission to create/edit a job  (True/False)             |
 | CHECK_OWNER       | Check ownership on data or job information access  (True/False) |
-| JOB_SERVERS       | IPs of servers that are allowed to send job events              |
-| TRUSTED_CLIENTS   | IPs of client that can access critical admin features           |
+| JOB_SERVERS       | IPs of servers that are allowed to send job events (1)          |
+| TRUSTED_CLIENTS   | IPs of client that can access critical admin features (1)       |
+
+(1) `{"<IP>": "<name>"}`: an IP, or the start of an IP followed by `*` for a set of IPs, cut after a `.` or a `:`
+(e.g. `"192.168.1.*"`, `"2001:db8::*"`). Default: localhost (`::1`, `127.0.0.1`) and `BASE_IP`. The name is shown in
+the logs.
 
 
 ### Internal settings

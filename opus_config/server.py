@@ -5,12 +5,42 @@
 Settings for the UWS server (see base.py for how values are read)
 """
 
+import ipaddress
+import warnings
 from collections.abc import Callable
 
 from pydantic import ImportString, SecretStr, computed_field, model_validator
 
 from . import generators
 from .base import CommonSettings
+
+
+def ip_pattern(key, setting):
+    """Checked IP pattern (key of JOB_SERVERS or TRUSTED_CLIENTS): an IP, or the start of an IP followed by *
+    (cut after a "." or a ":", e.g. "192.168.1.*" or "2001:db8::*"), or * for any IP"""
+    key = key.strip()
+    if key and key[-1] in ".:":
+        # previous format: IP truncated after a "." (e.g. "127.0.0.")
+        warnings.warn(f'OPUS_{setting}: write "{key}*" instead of "{key}" for a set of IPs', stacklevel=2)
+        key += "*"
+    if key.endswith("*"):
+        prefix = key[:-1]
+        if "*" not in prefix and (not prefix or prefix[-1] in ".:"):
+            return key
+    else:
+        try:
+            ipaddress.ip_address(key)
+            return key
+        except ValueError:
+            pass
+    raise ValueError(
+        f'OPUS_{setting}: "{key}" is not an IP, or the start of an IP followed by * (e.g. "192.168.1.*")'
+    )
+
+
+def ip_patterns(ips, setting):
+    """Dict of IP patterns {pattern: name}, checked (see ip_pattern)"""
+    return {ip_pattern(key, setting): name for key, name in ips.items()}
 
 
 class ServerSettings(CommonSettings):
@@ -40,11 +70,11 @@ class ServerSettings(CommonSettings):
     APP_TOKENS: dict[str, dict] = {}
 
     # Those servers can have access to /job_event/<jobid_manager> to change the phase or report an error
-    # The IP can be truncated to allow to refer to a set of IPs
+    # {"<IP>": "<name>"}: an IP, or the start of an IP followed by * for a set of IPs (e.g. "192.168.1.*")
     # Default: localhost and BASE_IP
     JOB_SERVERS: dict[str, str] | None = None
     # The server will allow db and jdl access only from trusted clients (while waiting for an auth system)
-    # e.g. /db/init, /jdl/validate... Default: localhost and BASE_IP
+    # e.g. /db/init, /jdl/validate... Same format as JOB_SERVERS. Default: localhost and BASE_IP
     TRUSTED_CLIENTS: dict[str, str] | None = None
 
     ### Internal settings
@@ -55,7 +85,7 @@ class ServerSettings(CommonSettings):
     DESTRUCTION_INTERVAL: int = 30  # in days
     # Maximum and default execution duration, 0 implies unlimited execution duration
     EXECUTION_DURATION_DEF: int = 120  # in seconds
-    EXECUTION_DURATION_MAX: int = 3600  # in seconds
+    EXECUTION_DURATION_MAX: int = 0  # in seconds
     # Maximum wait time (UWS1.1)
     WAIT_TIME_MAX: int = 600  # in seconds
     # Maximum size of a urlencoded request body, or of the non-file fields of a multipart
@@ -139,11 +169,13 @@ class ServerSettings(CommonSettings):
 
     @model_validator(mode="after")
     def set_defaults_from_other_settings(self):
-        local_ips = {"::1": "localhost", "127.0.0.1": "localhost", self.BASE_IP: "base_ip"}
+        local_ips = {"::1": "localhost", self.BASE_IP: "base_ip", "127.0.0.1": "localhost"}
         if self.JOB_SERVERS is None:
             self.JOB_SERVERS = dict(local_ips)
         if self.TRUSTED_CLIENTS is None:
             self.TRUSTED_CLIENTS = dict(local_ips)
+        self.JOB_SERVERS = ip_patterns(self.JOB_SERVERS, "JOB_SERVERS")
+        self.TRUSTED_CLIENTS = ip_patterns(self.TRUSTED_CLIENTS, "TRUSTED_CLIENTS")
         if self.SLURM_MAIL_USER is None:
             self.SLURM_MAIL_USER = self.ADMIN_EMAIL
         return self

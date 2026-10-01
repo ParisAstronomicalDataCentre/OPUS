@@ -455,3 +455,51 @@ class TestJobSequence:
         print(" --> " + response.status)
         assert "ignored" in response.text
         self.assert_job_phase(jobid, "COMPLETED")
+
+
+class TestTrustedIPs:
+    """IPs of JOB_SERVERS and TRUSTED_CLIENTS: an IP (exact), or the start of an IP followed by *"""
+
+    IPS = {"::1": "localhost", "127.0.0.1": "localhost", "192.168.1.*": "lan", "2001:db8:1::*": "lan6"}
+
+    @pytest.mark.parametrize("ip, name", [
+        ("127.0.0.1", "localhost"),
+        ("::1", "localhost"),
+        ("::ffff:127.0.0.1", "localhost"),  # IPv4 mapped in IPv6
+        ("192.168.1.42", "lan"),
+        ("2001:db8:1::5", "lan6"),
+        ("10.0.0.1, 127.0.0.1", "localhost"),  # X-Forwarded-For: last IP, given by the nearest proxy
+        # previously accepted (IP of the list contained in the IP)
+        ("127.0.0.10", None),
+        ("2001:db8::1", None),
+        ("192.168.10.1", None),
+        ("127.0.0.1, 10.0.0.1", None),
+        ("", None),
+        ("not-an-ip", None),
+    ])
+    def test_match_ip(self, ip, name):
+        assert uws_server.match_ip(ip, self.IPS) == name
+
+    def test_settings(self):
+        from pydantic import ValidationError
+
+        from opus_config import ServerSettings
+
+        # set of IPs: * after a "." or a ":", the previous format (truncated IP) is converted
+        s = ServerSettings(_env_file=None, JOB_SERVERS={"10.0.*": "a", "fd00::*": "b", "*": "all"})
+        assert list(s.JOB_SERVERS) == ["10.0.*", "fd00::*", "*"]
+        with pytest.warns(UserWarning, match=r'"127\.0\.0\.\*" instead of "127\.0\.0\."'):
+            s = ServerSettings(_env_file=None, TRUSTED_CLIENTS={"127.0.0.": "local"})
+        assert s.TRUSTED_CLIENTS == {"127.0.0.*": "local"}
+        # default: localhost and BASE_IP
+        s = ServerSettings(_env_file=None, BASE_IP="10.1.2.3")
+        assert s.JOB_SERVERS == {"::1": "localhost", "127.0.0.1": "localhost", "10.1.2.3": "base_ip"}
+        for key in ["127.*.0.1", "192.168.1", "10.0*", "localhost"]:
+            with pytest.raises(ValidationError, match="not an IP"):
+                ServerSettings(_env_file=None, JOB_SERVERS={key: "x"})
+
+    def test_job_event_refused(self):
+        # an IPv6 address containing ::1 is not localhost
+        response = test_app.post("/handler/job_event", {"jobid": "0", "phase": "EXECUTING"},
+                                 extra_environ={"REMOTE_ADDR": "2001:db8::1"}, status=403)
+        assert "is not a job server" in response.text

@@ -6,6 +6,7 @@
 import copy
 import datetime as dt
 import io
+import ipaddress
 import os
 import re
 import shutil
@@ -204,18 +205,38 @@ def get_real_ip():
     return ip
 
 
+def match_ip(ip, ips):
+    """Name of the first pattern of ips ({pattern: name}, see JOB_SERVERS) matching the IP, None if none matches:
+    an IP matches the same IP, or a pattern ending with * (start of the IP, e.g. "192.168.1.*")"""
+    if not ip:
+        return None
+    # several IPs (X-Forwarded-For): the last one is given by the nearest proxy
+    ip = ip.split(",")[-1].strip()
+    try:
+        address = ipaddress.ip_address(ip)
+        if address.version == 6 and address.ipv4_mapped:
+            address = address.ipv4_mapped  # e.g. ::ffff:127.0.0.1
+        ip = str(address)
+    except ValueError:
+        return None
+    for pattern, name in ips.items():
+        if pattern.endswith("*"):
+            if ip.startswith(pattern[:-1]):
+                return name
+        elif ipaddress.ip_address(pattern) == address:
+            return name
+    return None
+
+
 def is_job_server(func):
     """Test if request comes from a job server"""
 
     def is_job_server_wrapper(*args, **kwargs):
-        # IP or part of an IP has to be in the JOB_SERVERS list
+        # the IP has to match an IP of JOB_SERVERS (or a set of IPs, e.g. "192.168.1.*")
         ip = get_real_ip()
-        matching = [x for x in settings.JOB_SERVERS if x in ip]
-        if matching:
-            logger.info(
-                f"Access authorized to {request.urlparts.path} for {ip} ({settings.JOB_SERVERS[matching[0]]})"
-            )
-            pass
+        name = match_ip(ip, settings.JOB_SERVERS)
+        if name is not None:
+            logger.info(f"Access authorized to {request.urlparts.path} for {ip} ({name})")
         else:
             abort_403(f"{ip} is not a job server")
         return func(*args, **kwargs)
@@ -227,14 +248,11 @@ def is_client_trusted(func):
     """Test if request comes from a trusted client"""
 
     def is_client_trusted_wrapper(*args, **kwargs):
-        # IP or part of an IP has to be in the TRUSTED_CLIENTS list
+        # the IP has to match an IP of TRUSTED_CLIENTS (or a set of IPs, e.g. "192.168.1.*")
         ip = get_real_ip()
-        matching = [x for x in settings.TRUSTED_CLIENTS if x in ip]
-        if matching:
-            logger.info(
-                f"Access authorized to {request.urlparts.path} for {ip} ({settings.TRUSTED_CLIENTS[matching[0]]})"
-            )
-            pass
+        name = match_ip(ip, settings.TRUSTED_CLIENTS)
+        if name is not None:
+            logger.info(f"Access authorized to {request.urlparts.path} for {ip} ({name})")
         else:
             abort_403(f"{ip} is not a trusted client")
         return func(*args, **kwargs)
