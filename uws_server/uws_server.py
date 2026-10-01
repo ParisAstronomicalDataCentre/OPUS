@@ -723,12 +723,15 @@ def get_jobnames():
                 jobnames = [j for j in jobnames_all if j in roles]
         jobnames.sort()
         details = {}
+        dates = {}
         for j in jobnames:
             # Get JDL
             jdl.read(j)
             # map some information
             details[j] = copy.copy(jdl.content)
-        jobnames_json = {"jobnames": jobnames, "details": details}
+            # date of the current version (when it was validated)
+            dates[j] = jdl_history.current_date(j)
+        jobnames_json = {"jobnames": jobnames, "details": details, "dates": dates}
         return jobnames_json
     except UserWarning as e:
         abort_404(e.args[0])

@@ -35,12 +35,14 @@
         // Display user list with update button
         var jobnames = json['jobnames']
         var details = json['details']
+        var dates = json['dates'] || {}  // date of the current version (when it was validated)
         $('#server_jobs_thead').empty();
         $('#server_jobs_tbody').empty();
         var row = '\
             <tr>\
                 <th class="text-center">Job name</th>\
                 <th class="text-center">Version</th>\
+                <th class="text-center" title="Date of the validation of the current version">Date</th>\
                 <th class="text-center">Contact</th>\
                 <th class="text-center">Type</th>\
                 <th class="text-center">Subtype</th>\
@@ -56,6 +58,7 @@
             <tr id="' + jobname_label + '">\
                 <td class="text-center" style="vertical-align: middle;"><b>' + jobname + '</b></td>\
                 <td class="text-center" style="vertical-align: middle;">' + jdetails.version + '</td>\
+                <td class="text-center" style="vertical-align: middle;">' + (dates[jobname] || '') + '</td>\
                 <td class="text-center" style="vertical-align: middle;">' + jdetails.contact_name + '</td>\
                 <td class="text-center" style="vertical-align: middle;">' + jdetails.type + '</td>\
                 <td class="text-center" style="vertical-align: middle;">' + jdetails.subtype + '</td>\
@@ -440,7 +443,7 @@
     }
 
     $(document).ready( function() {
-    
+
         // Get jobname/jobid
         server_url = $('#server_url').attr('value');
         server_endpoint = $('#server_endpoint').attr('value');

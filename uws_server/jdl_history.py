@@ -157,6 +157,12 @@ def remove_identical_pending():
                 logger.warning(f"Cannot check the job definition tmp/{jobname}: {e}")
 
 
+def current_date(jobname):
+    """Date of the current version (date of its file, i.e. when it was validated), None if no current version"""
+    jdl_file, _ = _files(jobname, "current")
+    return _mtime(jdl_file) if os.path.isfile(jdl_file) else None
+
+
 def versions(jobname):
     """Versions of the job definition, most recent first"""
     check_jobname(jobname)

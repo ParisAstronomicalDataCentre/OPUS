@@ -187,6 +187,10 @@ class TestValidation:
         assert validate(server, "def_run").status_code == 200
         assert "def_run" in jobnames(server)
         assert jdl_json(server, "def_run").json()["version"] == "1"
+        # date of the validation of the current version, given with the list
+        dates = requests.get(f"{base_url(server)}/jdl", auth=AUTH).json()["dates"]
+        assert re.fullmatch(r"\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d", dates["def_run"])
+        assert dates["def_run"] == jdl_history.versions("def_run")[0]["date"]
         job_url = create_job(server, "def_run", text="version 1")
         assert wait(job_url) == "COMPLETED"
         assert result(job_url) == "version 1\n"
