@@ -3,15 +3,21 @@ services:
   db:
     image: postgres:18  # pin the major version: a data volume cannot be read by another major version
     restart: always
+    # database, user and password of OPUS (OPUS_PGSQL_* in .env.docker), given to the postgres image as POSTGRES_*
+    # (used only when the db_data volume is created: to change the password later, see docs/install.md)
+    env_file: .env.docker
+    entrypoint:
+      - sh
+      - -c
+      - |
+        export POSTGRES_DB="$${OPUS_PGSQL_DATABASE:-opus}" POSTGRES_USER="$${OPUS_PGSQL_USER:-opus}"
+        export POSTGRES_PASSWORD="$$OPUS_PGSQL_PASSWORD"
+        exec docker-entrypoint.sh postgres
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U opus -d opus"]
+      test: ["CMD-SHELL", "pg_isready -U \"$${OPUS_PGSQL_USER:-opus}\" -d \"$${OPUS_PGSQL_DATABASE:-opus}\""]
       interval: 5s
       timeout: 5s
       retries: 10
-    environment:
-      - POSTGRES_DB=opus
-      - POSTGRES_USER=opus
-      - POSTGRES_PASSWORD=opus
     ports:
       - "5432:5432"
     volumes:

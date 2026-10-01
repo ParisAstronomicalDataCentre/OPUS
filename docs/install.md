@@ -121,9 +121,16 @@ as jobs use it to report their phase to the server. Then build and start the ser
 The OPUS client is then available at http://localhost/opus_client/. The data (logs, jobs, results) is stored in the
 `opus_data` volume, and the database in the `db_data` volume.
 
-The ports of PostgreSQL (5432) and Adminer (8081) are exposed for development, and the database password is `opus`:
-for a deployment on a server, remove those ports and change the password in `docker-compose.yml`
-(`POSTGRES_PASSWORD`) and in `.env.docker` (`OPUS_PGSQL_PASSWORD`).
+The database (`db` service) is created with the user, database name and password of `.env.docker`
+(`OPUS_PGSQL_USER`, `OPUS_PGSQL_DATABASE` and `OPUS_PGSQL_PASSWORD`, a random value generated with the other
+secrets), when the `db_data` volume is created. To change the password later, change it in the database, then in
+`.env.docker`, and restart the services:
+
+    $ docker compose exec db psql -U opus -d opus -c "ALTER USER opus PASSWORD '<new password>'"
+    $ docker compose up -d
+
+The ports of PostgreSQL (5432) and Adminer (8081) are exposed for development: for a deployment on a server, remove
+those ports from `docker-compose.yml`.
 
 
 ## Installation with Apache and mod_wsgi

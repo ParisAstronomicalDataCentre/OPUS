@@ -26,7 +26,7 @@ import sys
 from opus_config import APP_PATH, ClientSettings, ServerSettings
 
 TEMPLATE = os.path.join(APP_PATH, ".env.dist")
-# Secrets generated when empty in the template, or missing in settings_local.py
+# Secrets generated when empty in the template (OPUS_<name>= line)
 RANDOM_SECRETS = [
     "ADMIN_TOKEN",
     "JOB_EVENT_TOKEN",
@@ -35,6 +35,7 @@ RANDOM_SECRETS = [
     "SECURITY_PASSWORD_SALT",
     "ADMIN_DEFAULT_PW",
     "TESTUSER_DEFAULT_PW",
+    "PGSQL_PASSWORD",  # set in .env.docker.dist (database of the db service), commented in .env.dist
 ]
 # Before .env, the client used this salt: it is kept when converting, or the existing
 # passwords of the client users would be invalidated
