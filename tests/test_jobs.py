@@ -281,13 +281,88 @@ class TestMaintenance:
             session.commit()
         return job_url, jobid
 
-    def job_report(self, server, jobid, method="GET"):
+    def job_report(self, server, jobid, method="GET", **params):
         base = server.rsplit(settings.UWS_SERVER_ENDPOINT, 1)[0]
-        response = requests.request(method, f"{base}/maintenance", params={"JOBNAME": "test_activity_1"}, auth=ADMIN)
+        params = dict({"JOBNAME": "test_activity_1"}, **params)
+        response = requests.request(method, f"{base}/maintenance", params=params, auth=ADMIN)
         assert response.status_code == 200, response.text
         report = response.json()
         [record] = [r for r in report["jobs"] if r["jobid"] == jobid]
         return report, record
+
+    def test_apply_selected(self, server):
+        """Only the selected changes are applied (APPLY), the others are still reported"""
+        job_url, jobid = self.expired_job(server, "apply selected")
+        report, record = self.job_report(server, jobid, "POST", APPLY="phase")
+        assert report["apply"] and report["applied"] == ["phase"]
+        assert record["actions"] == ["to archive (destruction time passed)"]
+        assert phase(job_url) == "COMPLETED"
+        report, record = self.job_report(server, jobid, "POST", APPLY="none")
+        assert report["applied"] == [] and phase(job_url) == "COMPLETED"
+        report, record = self.job_report(server, jobid, "POST", APPLY=["phase", "to_archive"])
+        assert report["applied"] == ["phase", "to_archive"]
+        assert record["actions"] == ["archived (destruction time passed)"]
+        assert phase(job_url) == "ARCHIVED"
+
+    def test_delete_instead_of_archive(self, server):
+        """The jobs to archive can be deleted instead (ARCHIVE_ACTION=delete)"""
+        job_url, jobid = self.expired_job(server, "delete instead of archive")
+        report, record = self.job_report(server, jobid, ARCHIVE_ACTION="delete")  # dry run
+        assert report["archive_action"] == "delete" and "to_archive" in record["categories"]
+        assert record["actions"] == ["to delete instead of archived (destruction time passed)"]
+        assert phase(job_url) == "COMPLETED"
+        report, record = self.job_report(server, jobid, "POST", APPLY="to_archive", ARCHIVE_ACTION="delete")
+        assert record["actions"] == ["deleted instead of archived (destruction time passed)"]
+        assert record["phase"] == "DELETED"
+        assert requests.get(job_url, auth=AUTH).status_code == 404
+        assert not os.path.exists(f"{settings.JOBDATA_PATH}/{jobid}")
+
+    def test_archived_with_result_files(self, server):
+        """An archived job that still has result files (e.g. archived by a previous version, which kept them) is
+        reported, and its files are removed if applied (its description, logs and provenance are kept)"""
+        job_url = self.archive(server, "re-archive")
+        jobid = job_url.split("/")[-1]
+        results_dir = f"{settings.RESULTS_PATH}/{jobid}"
+        report, record = self.job_report(server, jobid)
+        assert "archived" in record["categories"] and "archived_files" not in record["categories"]
+        assert record["actions"] == []
+        # files as kept by a previous version
+        os.makedirs(results_dir)
+        with open(f"{results_dir}/output.txt", "w") as f:
+            f.write("kept")
+        report, record = self.job_report(server, jobid)  # dry run
+        assert "archived_files" in record["categories"] and "archived" not in record["categories"]
+        assert report["summary"]["archived_files"] >= 1
+        assert record["actions"] == ["result files to remove (already archived)"]
+        assert os.path.isdir(results_dir)
+        # not selected: kept
+        report, record = self.job_report(server, jobid, "POST", APPLY="phase")
+        assert os.path.isdir(results_dir)
+        # applied: files removed, the job is still archived, with its logs and provenance
+        report, record = self.job_report(server, jobid, "POST", APPLY="archived_files")
+        assert record["actions"] == ["result files removed (already archived)"]
+        assert not os.path.exists(results_dir)
+        assert phase(job_url) == "ARCHIVED"
+        assert requests.get(f"{job_url}/stdout", auth=AUTH).status_code == 200
+        report, record = self.job_report(server, jobid)
+        assert "archived" in record["categories"] and "archived_files" not in record["categories"]
+
+    def test_archived_files_removed_by_cron(self, server):
+        """The maintenance task (cron, just maintenance) also removes the result files of the archived jobs"""
+        job_url = self.archive(server, "re-archive by cron")
+        jobid = job_url.split("/")[-1]
+        results_dir = f"{settings.RESULTS_PATH}/{jobid}"
+        os.makedirs(results_dir)
+        base = server.rsplit(settings.UWS_SERVER_ENDPOINT, 1)[0]
+        text = requests.get(f"{base}/handler/maintenance/test_activity_1").text
+        assert jobid in text and "result files removed (already archived)" in text
+        assert not os.path.exists(results_dir)
+
+    def test_unknown_selection(self, server):
+        base = server.rsplit(settings.UWS_SERVER_ENDPOINT, 1)[0]
+        for params in [{"APPLY": "everything"}, {"ARCHIVE_ACTION": "hide"}]:
+            response = requests.post(f"{base}/maintenance", params=params, auth=ADMIN)
+            assert response.status_code == 400 and "Unknown" in response.text
 
     def test_check_then_apply(self, server):
         job_url, jobid = self.expired_job(server, "check then apply")

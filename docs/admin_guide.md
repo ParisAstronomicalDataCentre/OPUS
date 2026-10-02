@@ -311,6 +311,9 @@ The server provides a maintenance task for the jobs whose destruction date is pa
   job is stopped if it is running, its files (uploads, job data, results) and its entries in the database are
   removed, as when a user deletes a job.
 
+It also removes the result files of the jobs already archived that still have them (e.g. archived by a previous
+version of OPUS, which kept the files).
+
 With the SLURM manager, it also updates the phase of the jobs still running on the work cluster.
 The server only accepts it from its own host. It is not run automatically: it should be run regularly, e.g. once a
 day with `cron`.
@@ -334,16 +337,22 @@ With Apache, send the request to the URL of the server from the server host, e.g
 
 The **Maintenance** page of the client (admin menu) runs the same checks on demand:
 
-* **Check (dry run)** lists the jobs by category, nothing is changed: jobs to archive, jobs to delete (see
-  above), phase to update from the job manager, inconsistent dates, errors, archived jobs and jobs without issue. By default, the table shows the jobs with an issue or a change; a category
-  can be selected to show only its jobs, and **Show all jobs** also lists the archived jobs and the jobs without
-  issue.
-* **Apply changes** (after a check, with a confirmation giving the number of jobs to delete) archives or deletes the
-  jobs and updates their phase, then shows what was done.
+* **Check (dry run)** lists the categories in a table (number of jobs, description), nothing is changed: jobs to
+  archive, jobs to delete (see above), phase to update from the job manager, inconsistent dates, errors, archived
+  jobs and jobs without issue. No job is listed at first: **Show** on a category lists its jobs in a second
+  table below (several categories can be shown), and **Show all** lists the jobs of all the categories.
+* The column **Apply** selects the changes to apply: jobs to archive, phases to update, jobs to delete, result
+  files to remove for the jobs already archived (all selected by default). For the jobs to archive, the action can be **Archive** (default) or **Delete**: the jobs are then
+  deleted with their files instead of being archived (the check is run again to list the change of each job).
+* **Apply changes** (after a check, with a confirmation listing the selected changes and the number of jobs)
+  applies them, then runs a new check: the page gives what was applied (number of jobs by change) and the
+  current state.
 
 The checks cover all the jobs of the database, including the jobs of job definitions that were deleted. The page uses
-the route `/maintenance` of the server (admin only): `GET` for a dry run, `POST` to apply, with an optional
-`JOBNAME` parameter, and a JSON report.
+the route `/maintenance` of the server (admin only): `GET` for a dry run, `POST` to apply, with the optional
+parameters `JOBNAME`, `APPLY` (changes to apply, may be repeated: `to_archive`, `to_delete`, `phase`,
+`archived_files`, all by default, or `none`) and `ARCHIVE_ACTION` (`archive` by default, or `delete`), and a JSON report. The maintenance
+task run by `cron` (`just maintenance`) applies all the changes, and archives the jobs.
 
 ### Maintenance commands
 

@@ -1380,15 +1380,30 @@ def maintenance_admin():
 
     Parameters:
         JOBNAME: name of the jobs (default: all the jobs)
+        APPLY: changes to apply (POST), may be repeated: to_archive, to_delete, phase, archived_files
+            (default: all), or none
+        ARCHIVE_ACTION: archive (default), or delete to delete the jobs to archive (also shown by the dry run)
     GET: checks only (dry run), POST: checks and applies the changes
 
     Returns:
         200 OK: application/json report (see maintenance.run)
+        400 Bad Request (unknown APPLY or ARCHIVE_ACTION value)
         403 Forbidden (not admin)
     """
     jobname = request.params.get("JOBNAME")
+    select = [c for c in request.params.getall("APPLY") if c != "none"] if "APPLY" in request.params else None
+    archive_action = request.params.get("ARCHIVE_ACTION", "archive")
     try:
-        return maintenance.run([jobname] if jobname else None, apply=request.method == "POST")
+        return maintenance.run(
+            [jobname] if jobname else None,
+            apply=request.method == "POST",
+            select=select,
+            archive_action=archive_action,
+        )
+    except ValueError as e:
+        abort_400(str(e))
+    except HTTPError:
+        raise
     except Exception:
         abort_500_except()
 

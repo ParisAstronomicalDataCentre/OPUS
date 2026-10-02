@@ -531,6 +531,17 @@ class TestAdminPages:
         assert response.status_code == 200 and response.json["apply"] is False
         assert set(response.json["summary"]) >= {"to_archive", "archived", "phase", "dates", "ok"}
 
+    def test_maintenance_selection(self, client, live_server):
+        """Maintenance page: the changes selected and the action for the jobs to archive reach the server (through
+        the proxy)"""
+        self.admin_login(client)
+        report = client.get("/proxy/maintenance", query_string={"ARCHIVE_ACTION": "delete"}).get_json()
+        assert not report["apply"] and report["archive_action"] == "delete"
+        data = {"APPLY": ["phase", "to_delete"], "ARCHIVE_ACTION": "archive"}
+        report = client.post("/proxy/maintenance", data=data).get_json()
+        assert report["apply"] and report["applied"] == ["phase", "to_delete"]
+        assert client.post("/proxy/maintenance", data={"APPLY": "none"}).get_json()["applied"] == []
+
     def test_log_viewer_refused(self, client, local_user, live_server):
         password_login(client, local_user)  # not an administrator
         for url in ["/admin/logs", "/admin/client_log/text"]:

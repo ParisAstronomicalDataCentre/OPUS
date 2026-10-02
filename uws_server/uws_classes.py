@@ -990,9 +990,18 @@ class Job:
         kept, as its logs and provenance files (job data directory): they are needed for the provenance.
         """
         self.change_status("ARCHIVED", f"Job archived (phase was {self.phase})")
-        for path in [f"{settings.RESULTS_PATH}/{self.jobid}", f"{settings.UPLOADS_PATH}/{self.jobid}"]:
-            if os.path.isdir(path):
-                shutil.rmtree(path)
+        self.remove_result_files()
+
+    def result_files_dirs(self):
+        """Existing directories of the result files and uploaded files of the job (removed when it is archived)"""
+        paths = [f"{settings.RESULTS_PATH}/{self.jobid}", f"{settings.UPLOADS_PATH}/{self.jobid}"]
+        return [path for path in paths if os.path.isdir(path)]
+
+    def remove_result_files(self):
+        """Remove the result files and the uploaded files of the job (archived job: its description, logs and
+        provenance are kept), e.g. for a job archived by a previous version, which kept the files"""
+        for path in self.result_files_dirs():
+            shutil.rmtree(path)
         logger.info(f"Result files of job {self.jobid} deleted (archived)")
 
     def _remove_failed_creation(self):

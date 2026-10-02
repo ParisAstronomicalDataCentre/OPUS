@@ -1,8 +1,11 @@
 {% extends "skeleton.html" %}
 {% block css %}
     <style>
-        #maintenance_summary .btn { margin: 2px; }
-        #maintenance_table td { vertical-align: middle; font-size: 12px; }
+        /* same look for the summary and the table of the jobs */
+        #maintenance_summary td, #maintenance_summary th,
+        #maintenance_table td, #maintenance_table th { vertical-align: middle; font-size: 0.875rem; }
+        #maintenance_summary .table { margin-bottom: 0; }
+        #maintenance_summary .badge { font-size: 0.8125rem; }
         #maintenance_table .actions { color: #31708f; }
         #maintenance_table .issues { color: #a94442; }
         #maintenance_toolbar .btn, #maintenance_toolbar .form-check-inline { margin: 2px 0; }
@@ -17,10 +20,6 @@
             <div class="card-header clearfix">
                 <span class="card-title float-start" style="padding-top: 6px; padding-right: 6px;">Maintenance of the jobs</span>
                 <form id="maintenance_toolbar" class="d-flex flex-wrap align-items-center gap-1 float-end" onsubmit="return false;">
-                    <div class="form-check form-check-inline" title="Also list the jobs without issue and the archived jobs">
-                        <input id="show_all" name="show_all" type="checkbox" class="form-check-input"/>
-                        <label class="form-check-label" for="show_all">Show all jobs</label>
-                    </div>
                     <button id="button_check" type="button" class="btn btn-outline-secondary btn-sm" title="Check the jobs, nothing is changed">
                         <span class="bi bi-search"></span>
                         Check (dry run)
@@ -38,11 +37,16 @@
                     archived (not completed, aborted or in error: stopped if running, files removed), update the phase
                     of the jobs from the job manager. Nothing is changed until <b>Apply changes</b>.
                 </p>
-                <p id="maintenance_info" class="small"></p>
-                <div id="maintenance_summary"></div>
+                <p id="maintenance_info" class="small mb-0"></p>
+            </div>
+            {# summary of the check (categories, changes to apply), then the jobs of the categories shown #}
+            <div id="maintenance_summary" class="table-responsive"></div>
+            <div id="maintenance_jobs" style="display:none;">
+            <div class="card-body py-2">
+                <span id="maintenance_jobs_title" class="small"></span>
             </div>
             <div class="table-responsive">
-                <table id="maintenance_table" class="table table-bordered table-sm" style="display:none;">
+                <table id="maintenance_table" class="table table-bordered table-sm">
                     <thead>
                         <tr>
                             <th>Job name</th>
@@ -58,6 +62,7 @@
                     </thead>
                     <tbody></tbody>
                 </table>
+            </div>
             </div>
         </div> <!-- panel -->
 	</div> <!-- container -->
