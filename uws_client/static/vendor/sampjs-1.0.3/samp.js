@@ -7,6 +7,23 @@
 // suggested to use it conjunction with the provided examples,
 // currently visible at http://astrojs.github.com/sampjs/
 // (gh-pages branch of github sources).
+//
+// Author: Mark Taylor
+// Source: https://github.com/astrojs/sampjs (sampjs 1.0.3, https://www.npmjs.com/package/sampjs)
+// Copy for OPUS: content of samp.js at version 1.0.3, without its last line (module.exports = { samp }),
+// as this file is loaded as a plain script in the web pages (not as a module).
+
+// LICENCE
+// =======
+// samp.js - A Javascript module for connection to VO SAMP hubs
+// Written in 2013 by Mark Taylor
+//
+// This file is distributed under the CC0 Public Domain Dedication,
+// <http://creativecommons.org/publicdomain/zero/1.0/>.
+// To the extent possible under law, the author(s) have dedicated all
+// copyright and related and neighboring rights to this software to the
+// public domain worldwide. This software is distributed without any
+// warranty.
 
 var samp = (function() {
 
@@ -17,9 +34,9 @@ var samp = (function() {
     var WEBSAMP_CLIENT_PREFIX = "";
 
     // Tokens representing permissible types in a SAMP object (e.g. a message)
-    TYPE_STRING = "string";
-    TYPE_LIST = "list";
-    TYPE_MAP = "map";
+    var TYPE_STRING = "string";
+    var TYPE_LIST = "list";
+    var TYPE_MAP = "map";
 
     var heir = function(proto) {
         function F() {};

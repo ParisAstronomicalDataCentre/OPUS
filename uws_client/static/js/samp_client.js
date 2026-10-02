@@ -3,6 +3,13 @@
  * Licensed under MIT
  */
 
+/*
+ * Send files to desktop applications (e.g. TOPCAT, Aladin, DS9) with SAMP (Web Profile, see vendor/sampjs):
+ *   samp_client.samp_fits(url, name)      FITS image
+ *   samp_client.samp_votable(url, name)   VOTable
+ * The SAMP hub runs on the computer of the user (started by TOPCAT or Aladin): if there is no hub, or no application
+ * accepting the type of message, a message is shown (the applications are not started from the page).
+ */
 var samp_client = ( function($) {
 	"use strict";
 
@@ -25,14 +32,6 @@ var samp_client = ( function($) {
 	MTYPE_SREGION = 'script.aladin.send',
 	MTYPE_DAS2 = "table.load.das2",
 
-
-	URL_TOPCAT = 'http://www.star.bris.ac.uk/~mbt/topcat/topcat-full.jnlp',
-	URL_ALADIN = 'http://aladin.u-strasbg.fr/java/nph-aladin.pl?frame=get&id=aladin.jnlp',
-	URL_CASSIS = "http://cassis.irap.omp.eu/online/cassis.jnlp",
-	URL_MIZAR = 'http://voparis-srv-paris.obspm.fr/mizar/',
-	URL_APERICUBES = "http://voparis-apericubes.obspm.fr/apericubes/js9/demo.php?samp_register=on",
-	URL_AUTOPLOT = "http://autoplot.org/autoplot.jnlp",
-
 	clientTracker = new samp.ClientTracker(),
 	callableClient = {
 			receiveNotification: function(senderId, message) {
@@ -42,245 +41,84 @@ var samp_client = ( function($) {
 	subs = {"samp.hub.event.subscriptions": {}},
 	connector = new samp.Connector(metadata["samp.name"], metadata, callableClient, subs);
 
-
-		function unregister() {
+	function unregister() {
 		if (connector.connection) {
 			connector.unregister();
 		}
 	}
 
 	function regErrorHandler(e) {
-		alert("SAMP error");
+		global.showMessage('SAMP: the connection to the hub failed or was refused', 'danger');
 	}
 
-	function sendMessage(conn, msgs) {
-		var i;
-		for (i = 0; i < msgs.length; i = i + 1) {
-			conn.notifyAll([ msgs[i] ]);
-		}
-	}
-
-	function waitForSampApplication(type, mtype, data, connHandler) {
-		if (type == "subs" && (mtype in data)) {
-			connector.runWithConnection(connHandler, regErrorHandler);
-			return true;
-		}
-		return false;
-	}
-
-	function connect(connection, mtype, openDefaultApplication, connHandler) {
-		connection.getSubscribedClients([ mtype ], function(idlist) {
-			if (Object.keys(idlist).length == 0) {
-				openDefaultApplication();
-			} else {
-				connector.runWithConnection(connHandler, regErrorHandler);
+	// Send the messages (of type mtype) to the applications connected to the SAMP hub
+	function send(msgs, mtype) {
+		samp.ping(function(hub_found) {
+			if (!hub_found) {
+				global.showMessage('SAMP: no hub found, start an application with a SAMP hub first (e.g. TOPCAT or Aladin)', 'warning');
+				return;
 			}
-		});
-	}
-
-	function startHub(onConnect, url_samphub) {
-		$('<iframe>', {
-			frameborder : 0,
-			src : url_samphub,
-			style : 'width:0; height:0;'
-		}).appendTo('body');
-		var waitingForHub = connector.onHubAvailability(function(res) {
-			if (res) {
-				clearInterval(waitingForHub);
-				connector.runWithConnection(onConnect);
-			}
-		}, 3000);
-	}
-
-	var Sender = function(msgs, mtype, url_samphub, launchDefaultApplication) {
-		this.msgs = msgs;
-		this.mtype = mtype;
-		this.url_samphub = url_samphub;
-		this.launchDefaultApplication = launchDefaultApplication;
-		this.sent = false;
-		var self = this;
-		this.connHandler = function(conn) {
-			sendMessage(conn, self.msgs);
-		};
-		this.openDefaultApplication = function() {
-			clientTracker.onchange = function(id, type, data) {
-				if (!self.sent) {
-					if (waitForSampApplication(type, self.mtype, data,
-							self.connHandler)) {
-						self.sent = true;
+			connector.runWithConnection(function(connection) {
+				connection.getSubscribedClients([ mtype ], function(idlist) {
+					if (Object.keys(idlist).length == 0) {
+						global.showMessage('SAMP: no application accepts this type of file (' + mtype + ')', 'warning');
+						return;
 					}
-				}
-			};
-			self.launchDefaultApplication();
-		};
-
-		this.onConnect = function(connection) {
-			connect(connection, self.mtype, self.openDefaultApplication,
-					self.connHandler);
-		};
-		this.send = function() {
-			samp.ping(function(res) {
-				if (res) {
-					connector.runWithConnection(self.onConnect);
-				} else {
-					startHub(self.onConnect, self.url_samphub);
-				}
-			});
-		};
+					for (var i = 0; i < msgs.length; i = i + 1) {
+						connection.notifyAll([ msgs[i] ]);
+					}
+					global.showMessage('SAMP: sent to ' + Object.keys(idlist).length + ' application(s)', 'success');
+				});
+			}, regErrorHandler);
+		});
 	}
 
 	function samp_votable(votable_url, votable_name) {
-		var MSG = new samp.Message(MTYPE_VOTABLE, {
-			"url" : votable_url,
-			"name" : votable_name
-		});
-		var msgs = [ MSG ];
-		var url_samphub = URL_TOPCAT;
-
-		function launchDefaultApplication() {
-			$('<iframe>', {
-				frameborder : 0,
-				src : URL_TOPCAT,
-				style : 'width:0; height:0;'
-			}).appendTo('body');
-		}
-
-		var sender = new Sender(msgs, MTYPE_VOTABLE, url_samphub,
-				launchDefaultApplication);
-		sender.send();
+		send([ new samp.Message(MTYPE_VOTABLE, {"url" : votable_url, "name" : votable_name}) ], MTYPE_VOTABLE);
 	}
 
 	function samp_fits(fits_url, fits_name) {
-		var MSG = new samp.Message(MTYPE_FITS, {
-			"url" : fits_url,
-			"name" : fits_name
-		});
-		var msgs = [ MSG ];
-		var url_samphub = URL_TOPCAT;
-
-		function launchDefaultApplication() {
-			$('<iframe>', {
-				frameborder : 0,
-				src : URL_TOPCAT,
-				style : 'width:0; height:0;'
-			}).appendTo('body');
-		}
-
-		var sender = new Sender(msgs, MTYPE_VOTABLE, url_samphub,
-				launchDefaultApplication);
-		sender.send();
+		send([ new samp.Message(MTYPE_FITS, {"url" : fits_url, "name" : fits_name}) ], MTYPE_FITS);
 	}
 
 	function samp_geojson(target_name, catalog_name, url) {
-
-		var MSG = new samp.Message(MTYPE_GEOJSON, {
+		send([ new samp.Message(MTYPE_GEOJSON, {
 			"target_name" : target_name,
 			"catalog_name" : catalog_name,
 			"url" : url
-		});
-		var msgs = [ MSG ];
-
-		var url_samphub = URL_TOPCAT;
-
-		var launchDefaultApplication = function() {
-			window.open(URL_MIZAR);
-		}
-
-		var sender = new Sender(msgs, MTYPE_GEOJSON, url_samphub,
-				launchDefaultApplication);
-		sender.send();
+		}) ], MTYPE_GEOJSON);
 	}
 
+	// data: list of {type: image | spectrum | votable | cdf | pds_virtis_demo | das2, access_url: ...}
+	// (the type of the messages is the one of the last item)
 	function samp_data(data) {
-		var i, msg, mType, url_samphub, url_default_application, launchDefaultApplication, msgs = [];
+		var mtypes = {
+			'image': MTYPE_FITS,
+			'spectrum': MTYPE_SPECTRUM,
+			'votable': MTYPE_VOTABLE,
+			'cdf': MTYPE_CDF,
+			'pds_virtis_demo': MTYPE_VIRTIS,
+			'das2': MTYPE_DAS2
+		};
+		var i, mType = null, msgs = [];
 		for (i = 0; i < data.length; i = i + 1) {
-			var mType = null;
-			switch (data[i].type) {
-			case 'image':
-				mType = MTYPE_FITS;
-				url_samphub = URL_ALADIN;
-				url_default_application = URL_ALADIN;
-				break;
-			case 'spectrum':
-				mType = MTYPE_SPECTRUM;
-				url_samphub = URL_CASSIS;
-				url_default_application = URL_CASSIS;
-				break;
-			case 'votable':
-				mType = MTYPE_VOTABLE;
-				url_samphub = URL_TOPCAT;
-				url_default_application = URL_TOPCAT;
-				break;
-			case 'cdf':
-				mType = MTYPE_CDF;
-				url_samphub = URL_TOPCAT;
-				url_default_application = URL_TOPCAT;
-				break;
-			case 'pds_virtis_demo':
-				mType = MTYPE_VIRTIS;
-				url_samphub = URL_TOPCAT;
-				url_default_application = URL_APERICUBES;
-				break;
-			case 'das2':
-				mType = MTYPE_DAS2;
-				url_samphub = URL_TOPCAT;
-				url_default_application = URL_AUTOPLOT;
-				break;
-			}
-			msg = new samp.Message(mType, {
-				"url" : data[i].access_url
-			});
-			msgs.push(msg);
+			mType = mtypes[data[i].type] || null;
+			msgs.push(new samp.Message(mType, {"url" : data[i].access_url}));
 		}
-
-		if (url_default_application != URL_APERICUBES) {
-			launchDefaultApplication = function() {
-				$('<iframe>', {
-					frameborder : 0,
-					src : url_default_application,
-					style : 'width:0; height:0;'
-				}).appendTo('body');
-			}
-		} else {
-			launchDefaultApplication = function() {
-				window.open(url_default_application);
-			}
-		}
-		var sender = new Sender(msgs, mType, url_samphub,
-				launchDefaultApplication);
-		sender.send();
-
+		send(msgs, mType);
 	}
 
 	function samp_sregion(sregion_list) {
-		var i, msg, msgs = [];
-		var mType = MTYPE_SREGION;
-		var url_samphub = URL_ALADIN;
-		var url_default_application = URL_ALADIN;
+		var i, msgs = [];
 		for (i = 0; i < sregion_list.length; i = i + 1) {
-			msg = new samp.Message(mType, {
-				"script" : sregion_list[i]
-			});
-			msgs.push(msg);
+			msgs.push(new samp.Message(MTYPE_SREGION, {"script" : sregion_list[i]}));
 		}
-
-
-		function launchDefaultApplication() {
-			$('<iframe>', {
-				frameborder : 0,
-				src : URL_ALADIN,
-				style : 'width:0; height:0;'
-			}).appendTo('body');
-		}
-
-		var sender = new Sender(msgs, mType, url_samphub,
-				launchDefaultApplication);
-		sender.send();
+		send(msgs, MTYPE_SREGION);
 	}
 
 	$(window).on('beforeunload', function() {
-    unregister();
-  });
+		unregister();
+	});
 
 	/* Exports. */
 	jss.samp_votable = samp_votable;
