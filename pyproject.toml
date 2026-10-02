@@ -31,6 +31,7 @@ dependencies = [
     "pytest",
     "PyYAML",
     "requests",
+    "urllib3>=2.8.0",
     "SQLAlchemy",
     "voprov",
     "rdflib",
