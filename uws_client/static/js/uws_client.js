@@ -992,6 +992,47 @@ var uws_client = (function($) {
         return escapeHtml(txt);
     };
 
+    // Message of an error of the server for a result (e.g. 404: file deleted as the job is archived)
+    var resultError = function(r, xhr){
+        var msg = (xhr.responseText || '').match(/<pre>[\s\S]*<\/pre>/g);
+        if (msg && msg.length != 0) {
+            msg = msg[0].replace(/<\/?pre>/g, '');
+        } else {
+            msg = (xhr.status == 404) ? 'file not found on the server' : 'error ' + xhr.status + ' ' + xhr.statusText;
+        }
+        logger('WARNING', 'result ' + r, msg);
+        global.showMessage('Result ' + r + ': ' + msg, 'warning');
+    };
+    // Preview of a result not loaded: its box is removed, the button is back to "Show preview"
+    var previewFailed = function(r_id){
+        $('#' + r_id + ' div.card-body').remove();
+        $('#' + r_id).removeClass('preview_loaded');
+        var button = $('#' + r_id + ' div.card-header div.btn-group a.preview');
+        button.html(button.html().replace('Hide', 'Show').replace('close', 'open'));
+    };
+    // Run available() if the file of a result can be downloaded, else show the error of the server
+    // (HEAD request: the file is not transferred, then GET to read the error message)
+    var withResult = function(r, url, available){
+        $('#loading').show();
+        $.ajax({
+            url : url,
+            type : 'HEAD',
+            success : function() {
+                $('#loading').hide();
+                available();
+            },
+            error : function() {
+                $.ajax({
+                    url : url,
+                    dataType : 'text',
+                    complete : function(xhr) {
+                        $('#loading').hide();
+                        resultError(r, xhr);
+                    }
+                });
+            }
+        });
+    };
     var displayResult = function(list, r, r_fname, r_type, r_url, r_url_auth){
         var rsplit = r.replace(/\./g, '_')
         var r_id = 'result_'+rsplit
@@ -1027,6 +1068,13 @@ var uws_client = (function($) {
                 Download\
             </a>'
         );
+        // Download: check that the file is available first (e.g. deleted if the job is archived)
+        $('#'+r_id+' div.card-header div.btn-group a.download').click(function(event) {
+            event.preventDefault();
+            withResult(r, r_url_auth, function() {
+                window.location.href = r_url_auth;
+            });
+        });
 //            <a class="adownload btn btn-outline-secondary btn-sm" href="' + r_url + '">\
 //                <span class="bi bi-download"></span>\
 //                Anonymous Download\
@@ -1068,6 +1116,11 @@ var uws_client = (function($) {
                         ');
                         $('#'+r_id).addClass('preview_loaded');
                         console.log('Preview loaded for ' + r_id);
+                        // image not loaded (e.g. file deleted as the job is archived): error of the server shown
+                        $('#'+r_id+' div.card-body img').on('error', function() {
+                            previewFailed(r_id);
+                            withResult(r, r_url_auth, function() {});
+                        });
                     };
                     if (txt.indexOf('Show') !== -1) {
                         $('#'+r_id+' div.card-body').show();
@@ -1101,6 +1154,8 @@ var uws_client = (function($) {
                             error: function(xhr, status, exception) {
                                 $('#loading').hide();
                                 console.log(exception);
+                                previewFailed(this);
+                                resultError(r, xhr);
                             }
                         });
                     };
@@ -1123,7 +1178,12 @@ var uws_client = (function($) {
                             </div>\
                         ');
                         var r_id_svg = r_id
-                        $('#'+r_id+' div.card-body').load(r_url_auth, function() {
+                        $('#'+r_id+' div.card-body').load(r_url_auth, function(response, status, xhr) {
+                            if (status == 'error') {
+                                previewFailed(r_id_svg);
+                                resultError(r, xhr);
+                                return;
+                            }
                             $('#' + r_id_svg + ' > div.card-body > svg').attr('width', '100%');
                         });
                         $('#'+r_id).addClass('preview_loaded');
@@ -1148,7 +1208,7 @@ var uws_client = (function($) {
         var jdl = clients[job.jobName].jdl;
         var serviceUrl = clients[job.jobName].serviceUrl;
         var details_keys =['jdl', 'stdout','stderr','provjson','provxml','provsvg'];
-        var final_phase = ['COMPLETED', 'ABORTED', 'ERROR']
+        var final_phase = ['COMPLETED', 'ABORTED', 'ERROR', 'ARCHIVED']  // logs and provenance are kept when a job is archived
         $('#results_list').html('');
         //var generated_keys = jdl.generated_keys.concat(['stdout','stderr','provjson','provxml','provsvg']);
         for (var rkey in jdl.generated_keys) {

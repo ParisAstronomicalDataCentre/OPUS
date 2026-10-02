@@ -393,6 +393,15 @@ class TestProxy:
         listed = client.get("/proxy/uws/test_", query_string="PHASE=COMPLETED&PHASE=ARCHIVED").get_data(as_text=True)
         assert "repeated-phase" not in listed
 
+    def test_head(self, client, local_user, live_server):
+        """HEAD: status of a GET without its content (used to check a result file before its download)"""
+        password_login(client, local_user)
+        response = client.head("/proxy/jdl")
+        assert response.status_code == 200 and response.get_data() == b""
+        response = client.head("/proxy/store", query_string={"ID": "unknown-entity"})
+        assert response.status_code == 404
+        assert "<pre>" in client.get("/proxy/store", query_string={"ID": "unknown-entity"}).get_data(as_text=True)
+
     def test_anonymous_refused(self, client, live_server, monkeypatch):
         monkeypatch.setattr(server_settings, "ALLOW_ANONYMOUS", False)
         assert client.get("/proxy/jdl").status_code == 403

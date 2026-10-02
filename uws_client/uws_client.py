@@ -955,7 +955,13 @@ def uws_server_request(uri, method="GET", init_request=None):
             # all the values of a repeated parameter are sent (e.g. PHASE=COMPLETED&PHASE=ARCHIVED)
             params = init_request.args.to_dict(flat=False)
         logger.debug(f"{method} {server_url}{uri} {params} ({auth_type})")
-        response = requests.get(f"{server_url}{uri}", params=params, auth=auth, headers=headers)
+        if method == "HEAD":
+            # status of a GET without its content (e.g. is a result file available, before its download)
+            response = requests.head(
+                f"{server_url}{uri}", params=params, auth=auth, headers=headers, allow_redirects=True
+            )
+        else:
+            response = requests.get(f"{server_url}{uri}", params=params, auth=auth, headers=headers)
     # Return response
     logger.debug(f"{method} {server_url}{uri} ({response.status_code}, {auth_type})")
     return response
