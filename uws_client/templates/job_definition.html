@@ -1,10 +1,10 @@
 {% extends "skeleton.html" %}
 {% block css %}
-    <link rel="stylesheet" type="text/css" href="/static/css/codemirror.css?v={{ asset_version }}" />
+    <link rel="stylesheet" type="text/css" href="/static/vendor/codemirror-5.65.21/css/codemirror.min.css?v={{ asset_version }}" />
 {% endblock %}
 {% block js %}
-    <script type="text/javascript" src="/static/js/codemirror.js?v={{ asset_version }}" defer></script>
-    <script type="text/javascript" src="/static/js/codemirror_shell.js?v={{ asset_version }}" defer></script>
+    <script type="text/javascript" src="/static/vendor/codemirror-5.65.21/js/codemirror.min.js?v={{ asset_version }}" defer></script>
+    <script type="text/javascript" src="/static/vendor/codemirror-5.65.21/js/shell.min.js?v={{ asset_version }}" defer></script>
     <script type="text/javascript" src="/static/js/uwsLib.js?v={{ asset_version }}" defer></script>
     <script type="text/javascript" src="/static/js/uws_client.js?v={{ asset_version }}" defer></script>
     <script type="text/javascript" src="/static/js/job_definition.js?v={{ asset_version }}" defer></script>

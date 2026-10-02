@@ -529,9 +529,7 @@
                         var ctype = xhr.getResponseHeader('Content-Type');
                         var blob = new Blob([response], { type: ctype });
                         $('#loading').hide();
-                        //var blob = new Blob([jdl], {type: "text/xml;charset=utf-8"});
-                        //var filename = jobname + ".xml";
-                        //saveAs(blob, jobname + ".jdl");
+                        // download the file (link with a download name)
                         var link = document.createElement('a');
                         link.href = window.URL.createObjectURL(blob);
                         link.download = filename;
