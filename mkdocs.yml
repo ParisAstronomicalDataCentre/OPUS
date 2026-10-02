@@ -9,3 +9,5 @@ nav:
 - User guide: 'user_guide.md'
 - Admin guide: 'admin_guide.md'
 - Developer guide: 'dev_guide.md'
+- Job definitions service: 'jdl.md'
+- Provenance service: 'provsap.md'

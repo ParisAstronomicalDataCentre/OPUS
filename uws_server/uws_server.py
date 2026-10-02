@@ -1346,6 +1346,112 @@ def provsap():
 
 
 # ----------
+# Capabilities and availability (IVOA VOSI)
+# ----------
+
+
+# Identifiers of the capabilities of the server (standardID):
+# - UWS: defined by the UWS 1.1 Recommendation for the REST interface
+# - job definitions and ProvSAP: specific to OPUS (no registered IVOA identifier), the client or other tools can
+#   use them to recognize an OPUS server
+CAPABILITY_VOSI_CAPABILITIES = "ivo://ivoa.net/std/VOSI#capabilities"
+CAPABILITY_VOSI_AVAILABILITY = "ivo://ivoa.net/std/VOSI#availability"
+CAPABILITY_UWS = "ivo://ivoa.net/std/UWS#rest-1.1"
+CAPABILITY_OPUS_JDL = "https://opus-job-manager.readthedocs.io/#jdl"
+CAPABILITY_OPUS_PROVSAP = "https://opus-job-manager.readthedocs.io/#provsap"
+
+# Start of the server (availability)
+UP_SINCE = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def xml_escape(text):
+    return str(text).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+
+
+@app.get("/capabilities")
+def get_capabilities():
+    """Capabilities of the server (VOSI capabilities): the endpoints of the server and the standards they follow,
+    for the registries and the clients. Public: no job name or user information is given.
+
+    Returns:
+        200 OK: text/xml (vosi:capabilities)
+    """
+    base = settings.BASE_URL
+    # (standardID, description, URL, use of the URL, attributes of the interface)
+    capabilities = [
+        (CAPABILITY_VOSI_CAPABILITIES, None, f"{base}/capabilities", "full", ' role="std"'),
+        (CAPABILITY_VOSI_AVAILABILITY, None, f"{base}/availability", "full", ' role="std"'),
+        (
+            CAPABILITY_UWS,
+            "UWS job lists, one per job definition: <accessURL>/<job name>",
+            f"{base}{settings.UWS_SERVER_ENDPOINT}",
+            "base",
+            ' role="std" version="1.1"',
+        ),
+        (
+            CAPABILITY_OPUS_JDL,
+            "OPUS job definitions: list of the job names (JSON), and <accessURL>/<job name>/json for a definition",
+            f"{base}/jdl",
+            "base",
+            "",
+        ),
+        (
+            CAPABILITY_OPUS_PROVSAP,
+            "Provenance of the jobs and results (IVOA ProvSAP): <accessURL>?ID=<job or entity identifier>",
+            f"{base}/provsap",
+            "base",
+            "",
+        ),
+    ]
+    lines = [
+        "<?xml version='1.0' encoding='utf-8'?>",
+        '<vosi:capabilities xmlns:vosi="http://www.ivoa.net/xml/VOSICapabilities/v1.0"'
+        ' xmlns:vr="http://www.ivoa.net/xml/VOResource/v1.0"'
+        ' xmlns:vs="http://www.ivoa.net/xml/VODataService/v1.1"'
+        ' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">',
+    ]
+    for standard_id, description, url, use, attributes in capabilities:
+        lines.append(f'  <capability standardID="{xml_escape(standard_id)}">')
+        if description:
+            lines.append(f"    <description>{xml_escape(description)}</description>")
+        lines.append(f'    <interface xsi:type="vs:ParamHTTP"{attributes}>')
+        lines.append(f'      <accessURL use="{use}">{xml_escape(url)}</accessURL>')
+        lines.append("    </interface>")
+        lines.append("  </capability>")
+    lines.append("</vosi:capabilities>")
+    response.content_type = "text/xml; charset=UTF-8"
+    return "\n".join(lines) + "\n"
+
+
+@app.get("/availability")
+def get_availability():
+    """Availability of the server (VOSI availability): available if its database can be read. Public.
+
+    Returns:
+        200 OK: text/xml (avl:availability)
+    """
+    available, note = True, ""
+    try:
+        job_storage = getattr(storage, settings.STORAGE + "JobStorage")()
+        with job_storage.get_session() as session:
+            session.query(job_storage.Job.jobid).limit(1).all()
+    except Exception as e:
+        logger.warning(f"Availability: the database cannot be read ({type(e).__name__}: {e})")
+        available, note = False, "The database of the server cannot be read"
+    lines = [
+        "<?xml version='1.0' encoding='utf-8'?>",
+        '<avl:availability xmlns:avl="http://www.ivoa.net/xml/VOSIAvailability/v1.0">',
+        f"  <avl:available>{'true' if available else 'false'}</avl:available>",
+        f"  <avl:upSince>{UP_SINCE}</avl:upSince>",
+    ]
+    if note:
+        lines.append(f"  <avl:note>{xml_escape(note)}</avl:note>")
+    lines.append("</avl:availability>")
+    response.content_type = "text/xml; charset=UTF-8"
+    return "\n".join(lines) + "\n"
+
+
+# ----------
 # Server maintenance
 # ----------
 

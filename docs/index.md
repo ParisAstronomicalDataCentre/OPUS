@@ -36,7 +36,17 @@ display job lists and job properties in web pages.
 
 A set of HTML pages use those scripts and are exposed by a web service based on the 
 Flask framework (though the scripts can be integrated to any other web service).  
-Note that the UWS client also uses the JavaScript frameworks [BootStrap3](http://getbootstrap.com/) 
-and [jQuery](https://jquery.com/), they are thus requirements.
+Note that the UWS client also uses the JavaScript frameworks [Bootstrap 5](http://getbootstrap.com/) 
+and [jQuery](https://jquery.com/), they are provided with the client.
 
-The code is released under the MIT license.
+
+Services of an OPUS server
+--------------------------
+
+An OPUS server lists its services in its capabilities (`<server>/capabilities`, IVOA Support Interfaces), each with
+an identifier and its URL:
+
+* the UWS job lists, with the identifier defined by the IVOA (`ivo://ivoa.net/std/UWS#rest-1.1`),
+* <a id="jdl"></a>the [job definitions](jdl.md) (`https://opus-job-manager.readthedocs.io/#jdl`),
+* <a id="provsap"></a>the [provenance of the jobs](provsap.md), following the IVOA ProvSAP proposal
+  (`https://opus-job-manager.readthedocs.io/#provsap`).

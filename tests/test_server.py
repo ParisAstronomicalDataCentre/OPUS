@@ -517,3 +517,45 @@ class TestExecutionDuration:
         for value in ["-1", "1.5", "long", ""]:
             with pytest.raises(ValueError):
                 execution_duration(value)
+
+
+class TestVOSI:
+    """Capabilities and availability of the server (IVOA VOSI), public"""
+
+    def test_capabilities(self):
+        import xml.etree.ElementTree as ET
+
+        response = test_app.get("/capabilities")  # no authentication
+        assert response.status_int == 200 and response.content_type == "text/xml"
+        root = ET.fromstring(response.body)
+        assert root.tag == "{http://www.ivoa.net/xml/VOSICapabilities/v1.0}capabilities"
+        urls = {c.get("standardID"): c.find("interface/accessURL") for c in root.findall("capability")}
+        base = settings.BASE_URL
+        assert urls["ivo://ivoa.net/std/VOSI#capabilities"].text == f"{base}/capabilities"
+        assert urls["ivo://ivoa.net/std/VOSI#availability"].text == f"{base}/availability"
+        # UWS 1.1 (standardID of the Recommendation): base URL of the job lists
+        uws = urls["ivo://ivoa.net/std/UWS#rest-1.1"]
+        assert uws.text == base + UWS_EP and uws.get("use") == "base"
+        # specific to OPUS: job definitions and provenance
+        assert urls[uws_server.CAPABILITY_OPUS_JDL].text == f"{base}/jdl"
+        assert urls[uws_server.CAPABILITY_OPUS_PROVSAP].text == f"{base}/provsap"
+        # no job name is given
+        assert jobname + "<" not in response.text and "test_activity" not in response.text
+
+    def test_availability(self, monkeypatch):
+        import xml.etree.ElementTree as ET
+
+        ns = {"avl": "http://www.ivoa.net/xml/VOSIAvailability/v1.0"}
+        root = ET.fromstring(test_app.get("/availability").body)
+        assert root.find("avl:available", ns).text == "true"
+        assert root.find("avl:upSince", ns).text.endswith("Z") and root.find("avl:note", ns) is None
+
+        # database not readable: not available, with a note
+        def no_database(self):
+            raise RuntimeError("no database")
+
+        job_storage = getattr(uws_server.storage, settings.STORAGE + "JobStorage")
+        monkeypatch.setattr(job_storage, "get_session", no_database)
+        root = ET.fromstring(test_app.get("/availability").body)
+        assert root.find("avl:available", ns).text == "false"
+        assert "database" in root.find("avl:note", ns).text

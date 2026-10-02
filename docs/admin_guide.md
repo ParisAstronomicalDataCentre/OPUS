@@ -354,6 +354,19 @@ parameters `JOBNAME`, `APPLY` (changes to apply, may be repeated: `to_archive`, 
 `archived_files`, all by default, or `none`) and `ARCHIVE_ACTION` (`archive` by default, or `delete`), and a JSON report. The maintenance
 task run by `cron` (`just maintenance`) applies all the changes, and archives the jobs.
 
+### Capabilities and availability of the server
+
+The server describes itself with the IVOA Support Interfaces (VOSI), for the registries and the other clients. Both
+pages are public, and give no job name or user information:
+
+* `<server>/capabilities`: the endpoints of the server and the standards they follow:
+    * the UWS job lists (`ivo://ivoa.net/std/UWS#rest-1.1`, base URL `<server>/uws`, one list per job definition),
+    * the job definitions (`<server>/jdl`) and the provenance of the jobs (`<server>/provsap`, IVOA ProvSAP), with
+      identifiers specific to OPUS (`https://opus-job-manager.readthedocs.io/#jdl` and `#provsap`): they have no
+      registered IVOA identifier,
+    * the two VOSI pages themselves.
+* `<server>/availability`: the server is available if its database can be read, with the date of its start.
+
 ### Maintenance commands
 
 The following commands are run in the OPUS directory (with `uv run` for a `uv` environment):

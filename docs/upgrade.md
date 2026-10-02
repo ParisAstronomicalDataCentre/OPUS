@@ -3,7 +3,8 @@ Upgrading to v1.0
 =================
 
 This page explains how to upgrade an OPUS installation from a previous version to v1.0. It applies to
-installations at the tag `v0.5`, or at any later commit before `v1.0`.
+installations at the tag `v0.5`, or at any later commit before `v1.0`. See repository tags [here](https://github.com/ivoa/OPUS/tags) version <=v0.5 for indications on how to upgrade previous versions.
+
 To know the version of an installation, run in the OPUS directory:
 
     $ git describe --tags
@@ -82,6 +83,8 @@ Main changes
   Job Definitions (validation, history of the versions, deleted definitions), Logs. The list of all the jobs is at
   `/jobs/_all_` (previously `/jobs/all`, still accepted if no job is named `all`). The client can also show the
   jobs of an external UWS service, e.g. a TAP server (see the [Admin guide](admin_guide.md)).
+* The server describes itself with the IVOA Support Interfaces (VOSI): `<server>/capabilities` and
+  `<server>/availability` (public, see the [Admin guide](admin_guide.md)).
 * New settings: `OPUS_BATCH_SHELL` (shell of the job scripts, `/bin/bash -l` by default), and `OPUS_UWS_AUTH=None`
   (no credentials sent by the client, for an external service). The template `.env.dist` gives the default and the
   possible values of the settings.
