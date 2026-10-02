@@ -8,7 +8,7 @@ OPUS can be installed in three ways:
 * **with Docker**: uvicorn and nginx in a container, with a PostgreSQL database in another container;
 * **with Apache and mod_wsgi**, as in previous versions.
 
-To upgrade an existing installation, see [Upgrade to v0.6](upgrade.md).
+To upgrade an existing installation, see [Upgrade to v1.0](upgrade.md).
 
 
 ## Get the code from the git repository
@@ -18,7 +18,7 @@ the git repository, then check out the last version:
 
     $ git clone https://github.com/ParisAstronomicalDataCentre/OPUS.git opus
     $ cd opus
-    $ git checkout v0.6
+    $ git checkout v1.0
 
 Alternatively, the repository is also available at https://gitlab.obspm.fr/mservillat/OPUS.git.
 

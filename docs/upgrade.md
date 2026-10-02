@@ -1,16 +1,17 @@
 
-Upgrading to v0.6
+Upgrading to v1.0
 =================
 
-This page explains how to upgrade an OPUS installation from a previous version to v0.6. It applies to
-installations at the tag `v0.5`, or at any later commit before `v0.6` (the last one being `dde7ae9`).
+This page explains how to upgrade an OPUS installation from a previous version to v1.0. It applies to
+installations at the tag `v0.5`, or at any later commit before `v1.0`.
 To know the version of an installation, run in the OPUS directory:
 
     $ git describe --tags
     v0.5-229-gdde7ae9
 
-The output gives the last tag, the number of commits since this tag, and the commit hash (after `g`). The hash of
-the running version is also given in the source of the home page of the client (element `git_version`).
+The output gives the last tag, the number of commits since this tag, and the commit hash (after `g`): note it
+before the upgrade, it is the version to go back to (see Rollback). The hash of the running version is also given
+in the source of the home page of the client (element `git_version`).
 
 The upgrade has to be done on each installation. Some steps are **required to fix security issues**, see below.
 
@@ -18,7 +19,7 @@ The upgrade has to be done on each installation. Some steps are **required to fi
 Security issues fixed
 ---------------------
 
-| Issue | Impact | Fix in v0.6 | Action on existing installations |
+| Issue | Impact | Fix in v1.0 | Action on existing installations |
 | ---   | :---   | :---        | :---                             |
 | The key signing the session cookies of the client (`app.secret_key`) was written in the code, so publicly known | Anyone could forge the content of a session cookie (e.g. the state of an OpenID Connect login). The identity of the logged-in user is not affected, as it relies on a random identifier. | The key is the required setting `OPUS_SECRET_KEY` | Generate a random `OPUS_SECRET_KEY` in `.env` (step 3). All users are logged out once. |
 | The token of a new client user was predictable: it could be computed by others. | The token authenticates the user on the UWS server: access to the jobs and results of other users. | Tokens are random (setting `TOKEN_GEN`) | Replace the existing predictable tokens (step 5) |
@@ -28,6 +29,7 @@ Security issues fixed
 | A user signing in with OpenID Connect was linked to the local account with the same email, even if the Identity Provider did not verify the email | Access to a local account with an Identity Provider allowing unverified emails | The email has to be verified to use a local account, and the login is refused if the email is not verified | None |
 | At the logout of a user signed in with OpenID Connect, its tokens were not revoked on the Identity Provider | The tokens stayed valid until their expiration | The tokens are revoked at logout (if the Identity Provider has a `revocation_endpoint`) | None |
 | A validation error of the settings could show all the values read, including secrets | Secrets in logs or tracebacks | Values are hidden in validation errors | None |
+| The IPs of `JOB_SERVERS` (allowed to report job events) and `TRUSTED_CLIENTS` were accepted if they were contained in the IP of a request | Other addresses were accepted: e.g. `::1` accepted any IPv6 address containing `::1`, and `127.0.0.1` accepted `127.0.0.10` | An IP is matched exactly, a set of IPs is written with `*` (e.g. `192.168.1.*`), and the values are checked at start | Check `OPUS_JOB_SERVERS` and `OPUS_TRUSTED_CLIENTS` in `.env`: write a truncated IP (e.g. `"127.0.0."`) as `"127.0.0.*"` (still read, with a warning). **The server does not start** with a key that is neither an IP nor a set of IPs |
 
 
 Main changes
@@ -41,7 +43,10 @@ Main changes
   (`generate_env.py --from` does it, otherwise, set it in the `.env` file).
 * **Docker**: the settings are given at runtime with `env_file: .env.docker` in `docker-compose.yml`, they are no
   longer copied in the image (`settings_docker.py` is no longer used). `nginx.conf` is generated at the start of
-  the container. See the templates `Dockerfile.dist`, `docker-compose.dist.yml` and `.env.docker.dist`.
+  the container. The database service takes its user, database and password from `.env.docker` too
+  (`OPUS_PGSQL_*`): the password is no longer written in `docker-compose.yml`, and **has to be set in
+  `.env.docker`** (see the Docker procedure below). See the templates `Dockerfile.dist`,
+  `docker-compose.dist.yml` and `.env.docker.dist`.
 * On the server, a user is identified by **name + token**: the same name (e.g. an email) can have several accounts,
   one per token (e.g. one per client), each with its own roles and jobs. Changing the token of a user on the profile
   page of the client means using another account on the server.
@@ -60,16 +65,38 @@ Main changes
   redirects to the login page.
 * The maintenance of the jobs (archiving after their destruction date) is not automatic: it should be scheduled
   (step 7), e.g. with the new `just maintenance` recipe.
+* **Archiving a job now deletes its result files** (and uploaded files): its description, parameters, logs and
+  provenance are kept, a result is still listed but its file is no longer available. The maintenance also removes
+  the result files of the jobs archived before the upgrade, and **deletes** the jobs after their destruction date
+  that cannot be archived (not completed, aborted or in error). The new **Maintenance** page of the client (admin)
+  shows what would be done (dry run) before applying it, see the [Admin guide](admin_guide.md).
+* `EXECUTION_DURATION_MAX` was not used: it now limits the execution duration of the jobs (from the job
+  definition, or set by a user). Its default is `0` (no limit, previously `3600`): a value kept from
+  `settings_local.py` is now applied.
+* Changes of the UWS interface of the server, for the scripts and other clients using it: the job list is given
+  **newest first**, and `LAST=n` gives the `n` most recent jobs (previously oldest first, and the `n` oldest); the
+  creation of a job with a missing or invalid input, and an invalid `EXECUTIONDURATION` value, are refused with
+  a `400` (previously `500`); an event for a job already completed, aborted or archived is ignored with a `409`.
+* **Web client**: Bootstrap 5 (previously 3), jQuery 3.7 and CodeMirror 5.65, in `uws_client/static/vendor/`.
+  Templates, styles or scripts modified locally have to be adapted. New pages for the administrator: Maintenance,
+  Job Definitions (validation, history of the versions, deleted definitions), Logs. The list of all the jobs is at
+  `/jobs/_all_` (previously `/jobs/all`, still accepted if no job is named `all`). The client can also show the
+  jobs of an external UWS service, e.g. a TAP server (see the [Admin guide](admin_guide.md)).
+* New settings: `OPUS_BATCH_SHELL` (shell of the job scripts, `/bin/bash -l` by default), and `OPUS_UWS_AUTH=None`
+  (no credentials sent by the client, for an external service). The template `.env.dist` gives the default and the
+  possible values of the settings.
 * Removed files: `run_server.py` and `run_client.py` (use `just server` and `just client`), `Makefile` (use the
   `justfile`, e.g. `just test`), `Dockerfile_apache` and `Dockerfile_apache.dist`. `start.sh` is renamed
-  `docker-start.sh` (entry point of the Docker image).
+  `docker-start.sh` (entry point of the Docker image). `just start` no longer reloads the code when it changes: use
+  `just restart`.
 * The server and the client handle the requests **in parallel** (pool of `OPUS_WSGI_THREADS` threads, 10 by
   default), with uvicorn: previously, one request at a time was handled, e.g. a job list waiting for a phase
   change (`WAIT`) blocked the other requests.
 * The provenance of chained jobs is complete in both directions: a job using a result of another job now records
   it (`DIRECTION=FORWARD` in `/provsap`, for the jobs created after the upgrade), and the internal provenance
   written by a job (`internal_provenance.json`) is included.
-* New dependencies: `pydantic-settings` and `a2wsgi` (replaces `asgiref`), installed by `uv sync`.
+* Dependencies: `pydantic-settings` and `a2wsgi` (replaces `asgiref`) are new, `prov` is limited to the versions
+  below 3; they are installed by `uv sync`.
 * The log file `debug.log` of the server (other modules) is no longer written: it stayed empty (the messages of the
   `prov` library are now in `server_debug.log`). It can be removed from `$OPUS_VAR_PATH/logs`.
 
@@ -87,7 +114,7 @@ as `settings_local.py`.
 **2. Get the new version** and install the dependencies (stop OPUS before):
 
     $ git fetch --tags
-    $ git checkout v0.6
+    $ git checkout v1.0
     $ uv sync --no-dev          # with uv, or in another environment: pip install -e .
 
 **3. Create the `.env` file** from `settings_local.py` (the values are converted, a random `OPUS_SECRET_KEY` is added,
@@ -96,8 +123,9 @@ and the salt used until now is kept):
     $ python generate_env.py --from settings_local.py > .env
     $ chmod 600 .env
 
-Check the content of `.env`, in particular the ignored values listed at the end of the file, and the tokens:
-replace `TBD` or empty values by random values, e.g. generated with:
+Check the content of `.env`, in particular the ignored values listed at the end of the file, the IPs of
+`OPUS_JOB_SERVERS` and `OPUS_TRUSTED_CLIENTS` (see the security issues above), and the tokens: replace `TBD` or
+empty values by random values, e.g. generated with:
 
     $ python -c "import secrets; print(secrets.token_urlsafe(32))"
 
@@ -126,7 +154,9 @@ moved or copied from another place.
 **6. Start OPUS and inform the users**: they have to log in again, and those who use their token outside of the
 web client (scripts, command line) have to get the new one from their profile page.
 
-**7. Schedule the maintenance of the jobs** (recommended), e.g. daily with `cron` (see the [Admin guide](admin_guide.md)):
+**7. Schedule the maintenance of the jobs** (recommended), e.g. daily with `cron` (see the [Admin guide](admin_guide.md)).
+It deletes the result files of the archived jobs, and the jobs that cannot be archived: check first what it would
+do on the existing jobs, with the Maintenance page of the client (dry run):
 
     0 3 * * * cd /opt/opus && just maintenance >> /var/opt/opus/logs/maintenance.log 2>&1
 
@@ -138,7 +168,7 @@ Upgrade procedure with Docker
 
     $ docker compose exec -T db pg_dump -U opus opus > opus_backup.sql
 
-**2. Get the new version** (`git fetch --tags && git checkout v0.6`), and update `Dockerfile` and `docker-compose.yml`
+**2. Get the new version** (`git fetch --tags && git checkout v1.0`), and update `Dockerfile` and `docker-compose.yml`
 from the templates `Dockerfile.dist` and `docker-compose.dist.yml` (`env_file`, pinned `postgres` image,
 `docker-start.sh` entry point...).
 
@@ -146,6 +176,16 @@ from the templates `Dockerfile.dist` and `docker-compose.dist.yml` (`env_file`, 
 
     $ uv run python generate_env.py --from settings_docker.py > .env.docker
     $ chmod 600 .env.docker
+
+**Warning: set the password of the database in `.env.docker`.** The database service no longer has a password
+in `docker-compose.yml`, it reads `OPUS_PGSQL_PASSWORD` from `.env.docker`, and the converted file may not contain
+it. Add the line with the password of the existing `db_data` volume, i.e. the value of `POSTGRES_PASSWORD` in the
+previous `docker-compose.yml` (`opus` if it was not changed):
+
+    OPUS_PGSQL_PASSWORD=<current password of the database>
+
+Without it, OPUS uses its default password, and a new database (no `db_data` volume yet) cannot be created.
+To change the password of an existing database, see [Installation](install.md).
 
 **4. Build and start** the containers:
 
@@ -168,4 +208,6 @@ Rollback
 --------
 
 Steps 4 and 5 modify the databases: to go back to the previous version, restore the backups of the databases and of
-`settings_local.py`, then check out the previous version (e.g. `git checkout dde7ae9`).
+`settings_local.py`, then check out the previous version (the commit noted before the upgrade, e.g.
+`git checkout dde7ae9`). The result files deleted by the maintenance (archived or deleted jobs) are only in the
+backup of the data directory.
