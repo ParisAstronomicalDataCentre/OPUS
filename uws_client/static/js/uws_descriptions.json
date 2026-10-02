@@ -1,0 +1,81 @@
+{
+    "tap": {
+        "standard_id": "ivo://ivoa.net/std/TAP",
+        "jobname": "async",
+        "annotation": "Asynchronous query of a TAP server (IVOA Table Access Protocol 1.1)",
+        "doculink": "https://www.ivoa.net/documents/TAP/",
+        "parameters": {
+            "QUERY": {
+                "datatype": "xs:string",
+                "default": "SELECT TOP 10 * FROM TAP_SCHEMA.tables",
+                "required": "true",
+                "annotation": "Query, in the language given by LANG (the tables are described at &lt;TAP URL&gt;/tables)",
+                "widget": "textarea"
+            },
+            "LANG": {
+                "datatype": "xs:string",
+                "default": "ADQL",
+                "required": "true",
+                "annotation": "Query language (ADQL: last version supported by the server)",
+                "options": "ADQL,ADQL-2.0,ADQL-2.1"
+            },
+            "RESPONSEFORMAT": {
+                "datatype": "xs:string",
+                "default": "",
+                "required": "false",
+                "annotation": "Format of the result, e.g. votable (default), csv, tsv, fits, json (the formats of the server are listed in &lt;TAP URL&gt;/capabilities)"
+            },
+            "MAXREC": {
+                "datatype": "xs:int",
+                "default": "",
+                "required": "false",
+                "annotation": "Maximum number of rows of the result (default and limit set by the server)",
+                "min": 0
+            },
+            "RUNID": {
+                "datatype": "xs:string",
+                "default": "",
+                "required": "false",
+                "annotation": "User specific identifier for the job"
+            },
+            "UPLOAD": {
+                "datatype": "xs:string",
+                "default": "",
+                "required": "false",
+                "annotation": "Tables to upload, as name,URL pairs separated by ; (if supported by the server)"
+            }
+        },
+        "parameters_keys": [
+            "QUERY",
+            "LANG",
+            "RESPONSEFORMAT",
+            "MAXREC",
+            "RUNID",
+            "UPLOAD"
+        ],
+        "used": {},
+        "used_keys": [],
+        "generated": {},
+        "generated_keys": [],
+        "control_parameters": {},
+        "control_parameters_keys": [],
+        "results": {
+            "format_parameters": [
+                "RESPONSEFORMAT",
+                "FORMAT"
+            ],
+            "default_mimetype": "application/x-votable+xml",
+            "extensions": {
+                "application/x-votable+xml": "vot",
+                "text/xml": "vot",
+                "text/csv": "csv",
+                "text/tab-separated-values": "tsv",
+                "text/plain": "txt",
+                "application/json": "json",
+                "application/geo+json": "geojson",
+                "application/fits": "fits",
+                "text/html": "html"
+            }
+        }
+    }
+}
