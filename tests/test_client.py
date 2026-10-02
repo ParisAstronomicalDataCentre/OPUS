@@ -383,6 +383,16 @@ class TestProxy:
         assert response.status_code == 200
         assert "jobnames" in response.get_json()
 
+    def test_repeated_parameter(self, client, local_user, live_server):
+        """All the values of a repeated parameter are sent to the server (e.g. PHASE filter of the job list, used to
+        list the archived jobs too)"""
+        password_login(client, local_user)
+        client.post("/proxy/uws/test_", data={"runId": "repeated-phase"})  # PENDING job
+        listed = client.get("/proxy/uws/test_", query_string="PHASE=COMPLETED&PHASE=PENDING").get_data(as_text=True)
+        assert "repeated-phase" in listed
+        listed = client.get("/proxy/uws/test_", query_string="PHASE=COMPLETED&PHASE=ARCHIVED").get_data(as_text=True)
+        assert "repeated-phase" not in listed
+
     def test_anonymous_refused(self, client, live_server, monkeypatch):
         monkeypatch.setattr(server_settings, "ALLOW_ANONYMOUS", False)
         assert client.get("/proxy/jdl").status_code == 403

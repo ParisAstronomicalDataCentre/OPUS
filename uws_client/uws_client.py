@@ -926,7 +926,8 @@ def uws_server_request(uri, method="GET", init_request=None):
     auth_type = "OIDC" if "Authorization" in headers else ("Basic" if auth else "none")
     # Send request
     if method == "DELETE":
-        params = init_request.args if init_request else {}
+        # (all the values of a repeated parameter are sent)
+        params = init_request.args.to_dict(flat=False) if init_request else {}
         response = requests.delete(f"{server_url}{uri}", params=params, auth=auth, headers=headers)
     elif method == "POST":
         post = {}
@@ -951,7 +952,8 @@ def uws_server_request(uri, method="GET", init_request=None):
     else:
         params = {}
         if init_request:
-            params = init_request.args
+            # all the values of a repeated parameter are sent (e.g. PHASE=COMPLETED&PHASE=ARCHIVED)
+            params = init_request.args.to_dict(flat=False)
         logger.debug(f"{method} {server_url}{uri} {params} ({auth_type})")
         response = requests.get(f"{server_url}{uri}", params=params, auth=auth, headers=headers)
     # Return response

@@ -286,6 +286,10 @@ var uws_client = (function($) {
                 $('#'+jobId+' td button.abort').removeAttr("disabled");
                 $('#'+jobId+' td button.start').removeAttr("disabled");
                 break;
+            case 'ARCHIVED':
+                phase_class = 'btn-outline-secondary';
+                phase_icon = '<span class="bi bi-archive"></span>&nbsp;';
+                break;
             case 'SUSPENDED':
                 phase_class = 'btn-outline-secondary';
                 $('#'+jobId+' td button.abort').removeAttr("disabled");
@@ -1336,13 +1340,21 @@ var uws_client = (function($) {
     //----------
     // GET JOB LIST
 
+    // The ARCHIVED jobs are not listed by default (UWS 1.1): all the phases are asked to list them too
+    var ALL_PHASES = ['PENDING', 'QUEUED', 'EXECUTING', 'COMPLETED', 'ERROR', 'ABORTED', 'UNKNOWN', 'HELD',
+                      'SUSPENDED', 'ARCHIVED'];
+    var showArchived = false;
+    var setShowArchived = function(show) {
+        showArchived = !!show;
+    };
+
     var getJobList = function() {
         prepareTable();
         for (var i in jobNames) {
             $('#loading').show();
             var jobName = jobNames[i];
             logger('INFO', 'Get job list for ' + jobName);
-            clients[jobName].getJobList(getJobListSuccess, getJobListError);
+            clients[jobName].getJobList(getJobListSuccess, getJobListError, showArchived ? ALL_PHASES : null);
             // clients[jobName].getJobListInfos(getJobListSuccess, getJobListError);
         };
     };
@@ -1612,6 +1624,7 @@ var uws_client = (function($) {
         initClient: initClient,
         prepareTable: prepareTable,
         getJobList: getJobList,
+        setShowArchived: setShowArchived,
         selectJob: selectJob,
         createJob: createJob,
         createTestJob: createTestJob,

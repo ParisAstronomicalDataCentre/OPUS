@@ -109,6 +109,23 @@
         get_jobnames();
         $('.selectpicker').selectpicker('deselectAll');
         $('button.actions').attr('disabled', 'disabled');
+        // Archived jobs listed or not (choice kept in the browser)
+        var show_archived = false;
+        try {
+            show_archived = (window.localStorage.getItem('opus_show_archived') == 'true');
+        } catch (e) {}
+        $('#show_archived').prop('checked', show_archived);
+        uws_client.setShowArchived(show_archived);
+        $('#show_archived').on('change', function(){
+            var show = $(this).prop('checked');
+            try {
+                window.localStorage.setItem('opus_show_archived', show ? 'true' : 'false');
+            } catch (e) {}
+            uws_client.setShowArchived(show);
+            if ($('select[name=jobname]').val()) {
+                uws_client.getJobList();
+            };
+        });
         // Add events
         $('.selectpicker').on('change', function(){
             load_job_list();

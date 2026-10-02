@@ -216,11 +216,15 @@ var uwsLib = (function() {
 		});
 	};
 
-	uwsClient.prototype.getJobList = function(successCallback, errorCallback) {
+	// phases: list of the phases of the jobs to get (UWS 1.1 PHASE filter), all the jobs except the ARCHIVED
+	// ones if not given
+	uwsClient.prototype.getJobList = function(successCallback, errorCallback, phases) {
 		var jobName = this.jobName;
 		$.ajax({
 			url : this.serviceUrl,
 			type : 'GET',
+			data : phases ? {PHASE: phases} : {},
+			traditional : true,  // PHASE=a&PHASE=b
 			dataType: "xml",
 			success : function(xml) {
 				var jobList = getJobListFromXml(xml, jobName);
