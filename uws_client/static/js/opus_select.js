@@ -14,10 +14,30 @@
 (function($) {
     "use strict";
 
+    // Order of the options of a select, as first seen (options added later are after the others): Tom Select moves
+    // the selected options to the end, of the select and of its list
+    function recordOrder(select) {
+        select.opusOrder = select.opusOrder || {};
+        Array.from(select.options).forEach(function (option) {
+            if (!(option.value in select.opusOrder)) {
+                select.opusOrder[option.value] = Object.keys(select.opusOrder).length + 1;
+            }
+        });
+    }
+    function restoreOrder(select, ts) {
+        Object.keys(ts.options).forEach(function (value) {
+            if (value in select.opusOrder) {
+                ts.options[value].$order = select.opusOrder[value];
+            }
+        });
+        ts.lastQuery = null;
+    }
+
     function init(select) {
         if (select.tomselect) {
             return select.tomselect;
         }
+        recordOrder(select);
         var title = select.getAttribute('title') || '';
         // single select without selected option: nothing selected, the title is shown
         var has_empty = Array.from(select.options).some(function (o) { return o.value === ''; });
@@ -53,7 +73,9 @@
             var ts = init(this);
             switch (command) {
                 case 'refresh':
+                    recordOrder(this);
                     ts.sync();
+                    restoreOrder(this, ts);
                     break;
                 case 'val':
                     ts.setValue(value, true);

@@ -38,6 +38,7 @@ from flask_login import (
     user_logged_out,
 )
 from flask_mail import Mail
+from markupsafe import Markup, escape
 from flask_security import (
     RoleMixin,
     Security,
@@ -133,15 +134,19 @@ def load_config():
 SETTINGS_CONFIG = {k: app.config[k] for k in EDITABLE_CONFIG if k in app.config}
 
 
+def modified_config():
+    """Editable config values that differ from the settings (changed in the Client Preferences)"""
+    return {
+        k: app.config[k]
+        for k in EDITABLE_CONFIG
+        if k in app.config and app.config[k] != SETTINGS_CONFIG.get(k)
+    }
+
+
 def save_config():
     logger.info("Saving editable config")
     with open(settings.CONFIG_FILE, "w") as cf:
-        econf = {
-            k: app.config[k]
-            for k in EDITABLE_CONFIG
-            if k in app.config and app.config[k] != SETTINGS_CONFIG.get(k)
-        }
-        yaml.dump(econf, cf, default_flow_style=False)
+        yaml.dump(modified_config(), cf, default_flow_style=False)
 
 
 def update_config(key, value):
@@ -550,6 +555,21 @@ def on_user_logged_in(sender, user):
         error_msg = "Server connection error: " + str(e)
         flash(error_msg, "warning")
     flash(f'"{user.email}" is now logged in', "info")
+    # Administrator: warning if the Client Preferences differ from the settings (e.g. another UWS server)
+    if user.has_role("admin"):
+        changed = modified_config()
+        if changed:
+            values = ", ".join(
+                f"{escape(key)} = {escape(value)} (default: {escape(SETTINGS_CONFIG.get(key))})"
+                for key, value in changed.items()
+            )
+            flash(
+                Markup(
+                    f'The <a href="{url_for("preferences")}" class="alert-link">Client Preferences</a> '
+                    f"differ from the settings: {values}"
+                ),
+                "warning-keep",  # kept until closed (see skeleton.html)
+            )
 
 
 @user_logged_out.connect_via(app)
@@ -957,9 +977,16 @@ def uws_server_request(uri, method="GET", init_request=None):
         logger.debug(f"{method} {server_url}{uri} {params} ({auth_type})")
         if method == "HEAD":
             # status of a GET without its content (e.g. is a result file available, before its download)
-            response = requests.head(
-                f"{server_url}{uri}", params=params, auth=auth, headers=headers, allow_redirects=True
-            )
+            # (with a timeout: some servers do not answer to HEAD requests)
+            try:
+                response = requests.head(
+                    f"{server_url}{uri}", params=params, auth=auth, headers=headers, allow_redirects=True, timeout=30
+                )
+            except requests.exceptions.Timeout:
+                response = requests.Response()
+                response.status_code = 504
+                response._content = b""
+                response._content_consumed = True
         else:
             response = requests.get(f"{server_url}{uri}", params=params, auth=auth, headers=headers)
     # Return response

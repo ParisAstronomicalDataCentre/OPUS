@@ -31,6 +31,15 @@
 //                console.log($(this)[0].files[0]);
 //                formData.append($(this).attr('name'), $(this)[0].files[0]);
 //            });
+            if (uws_client.isExternal(jobname)) {
+                // external UWS service (e.g. TAP server): the parameters left empty are not sent (defaults of the
+                // service), nor the fields used by OPUS only
+                Array.from(formData.keys()).forEach(function(key) {
+                    if (formData.get(key) === '' || key == 'control_parameters') {
+                        formData.delete(key);
+                    }
+                });
+            }
             formData.append('PHASE', 'RUN');
             //var anim_icon = '<span class="bi bi-arrow-clockwise spin"></span>&nbsp;';
             //$('button[type=submit]').html(anim_icon);

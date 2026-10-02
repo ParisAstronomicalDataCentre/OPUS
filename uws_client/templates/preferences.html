@@ -1,4 +1,22 @@
 {% extends "skeleton.html" %}
+{% block js %}
+    <script type="text/javascript">
+        // "Reset to default" buttons: set the field to its default value (disabled if it is already the value)
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('button.reset-default').forEach(function (button) {
+                var input = button.closest('.input-group').querySelector('input');
+                var update = function () { button.disabled = (input.value == button.dataset.default); };
+                button.addEventListener('click', function () {
+                    input.value = button.dataset.default;
+                    update();
+                });
+                input.addEventListener('input', update);
+                input.form.addEventListener('reset', function () { setTimeout(update, 0); });
+                update();
+            });
+        });
+    </script>
+{% endblock %}
 {% block content %}
 	<div class="container bs-docs-container">
 	    <div class="row"><div class="offset-md-2 col-md-8">
@@ -9,7 +27,14 @@
                     <div class="row mb-3">
                         <label class="col-md-4 col-form-label">{{ key }}</label>
                         <div id="div_{{ key }}" class="col-md-8 controls">
-                            <input class="form-control" name="{{ key }}" type="text" value="{{ config[key] }}"/>
+                            <div class="input-group">
+                                <input class="form-control" name="{{ key }}" type="text" value="{{ config[key] }}"/>
+                                <button type="button" class="btn btn-outline-secondary reset-default" data-default="{{ defaults[key] }}"
+                                        title="Set the field to the default value (then Submit to save)">
+                                    <span class="bi bi-arrow-counterclockwise"></span>
+                                    Reset to default
+                                </button>
+                            </div>
                             <div class="form-text input-aligned">Default: {{ defaults[key] }}</div>
                         </div>
                     </div>

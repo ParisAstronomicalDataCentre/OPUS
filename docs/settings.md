@@ -194,7 +194,7 @@ recommended to keep it unchanged. However, all those variables can be set in the
 | APPLICATION_ROOT    | Relative URL to the UWS Client                                                                                            |
 | UWS_SERVER_URL      | URL of the UWS Server                                                                                                     |
 | UWS_SERVER_URL_JS   | URL of the UWS Server as called by javascript, generally set to local url (proxy) to avoid cross-calls                    |
-| UWS_AUTH            | Set to Basic. Authentication protocol with UWS Server                                                                     |
+| UWS_AUTH            | Authentication protocol with the UWS Server: `Basic` (default), `OIDC`, or `None` (no credentials sent, for an external UWS service) |
 | ADMIN_NAME          | Login name for the administrator                                                                                          |
 | ADMIN_DEFAULT_PW    | Default password for the administrator (to be changed after install, or kept secret in `.env`)                            |
 | TESTUSER_NAME       | Login name for testuser                                                                                                   |

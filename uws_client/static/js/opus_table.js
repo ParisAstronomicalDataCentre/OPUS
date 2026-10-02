@@ -9,6 +9,7 @@
  * - pager in the footer (class ts-pager): buttons first, prev, next, last, texts pagedisplay ("1–20 of 42") and
  *   pagecount ("of 3"), selects pagesize and pagenum
  * The rows added or removed later are taken into account (the table is observed).
+ * The table can be sorted from the code: table.opusTable.sortBy(index of the column, ascending).
  *
  *   opusTable.init(document.getElementById('job_list'));
  */
@@ -142,7 +143,15 @@ var opusTable = (function() {
         });
         observer.observe(tbody, {childList: true});
 
-        table.opusTable = {render: render, tbody: tbody, observer: observer};
+        // sort on a column from the code (index of the column, ascending or not)
+        function sortBy(index, asc) {
+            state.sortColumn = index;
+            state.sortAsc = !!asc;
+            sort();
+            render();
+        }
+
+        table.opusTable = {render: render, sortBy: sortBy, tbody: tbody, observer: observer};
         render();
         return table.opusTable;
     }

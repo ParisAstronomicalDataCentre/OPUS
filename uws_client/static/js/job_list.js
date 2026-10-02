@@ -60,12 +60,38 @@
             error : function(xhr, status, exception) {
                 $('#loading').hide();
                 console.log(exception);
+                // No list of job definitions: the server is not an OPUS server (e.g. a TAP server, set in the
+                // Client Preferences): the job list is the one of the URL (/jobs/<name>), or the one of the
+                // standard declared in the capabilities of the service (e.g. async for TAP)
+                // No filter on the phases for such a server (list of the service as it is: some services return
+                // nothing for several PHASE values)
+                uws_client.setShowArchived(false);
+                $('#show_archived').prop('checked', false).prop('disabled', true)
+                    .parent().attr('title', 'Not available: jobs of an external UWS service');
+                // The job list of such a server may only give the identifier and phase of the jobs: button to get
+                // the details of each job
+                $('#refresh_details').show();
+                var show_job_list = function(jobname) {
+                    if (jobname) {
+                        $('.selectpicker').append('<option>' + jobname + '</option>');
+                        $('select[name=jobname]').val(jobname);
+                        $('.selectpicker').selectpicker('refresh');
+                        load_job_list();
+                    } else {
+                        global.showMessage('No job list found on the server: it has no job definitions, and its '
+                            + 'capabilities do not declare a known service (e.g. TAP). The name of a job list can '
+                            + 'be given in the URL (/jobs/&lt;name&gt;).', 'warning');
+                    };
+                };
                 var jobname = $('#jobname').attr('value');
-                if (jobname) {
-                    $('.selectpicker').append('<option>' + jobname + '</option>');
-                    $('select[name=jobname]').val(jobname);
-                    $('.selectpicker').selectpicker('refresh');
-                    load_job_list();
+                if (jobname || typeof uwsDescriptions === 'undefined') {
+                    show_job_list(jobname);
+                } else {
+                    $('#loading').show();
+                    uwsDescriptions.find(server_url + server_endpoint, null, function(found) {
+                        $('#loading').hide();
+                        show_job_list(found ? found.jobname : null);
+                    });
                 };
             }
         });
@@ -132,6 +158,19 @@
         });
         $('#refresh_list').click( function() {
             uws_client.getJobList();
+        });
+        // Details of each job of the list (run id, creation time, phase), then sorted by creation time
+        $('#refresh_details').click( function() {
+            var button = $(this), label = button.find('.refresh-details-label');
+            button.attr('disabled', 'disabled');
+            uws_client.getJobListDetails(function(done, total, finished) {
+                if (finished) {
+                    label.text('Refresh with details');
+                    button.removeAttr('disabled');
+                } else {
+                    label.text('Details ' + done + ' / ' + total);
+                }
+            });
         });
         $('#edit_jdl').click( function() {
             var jobname = $('select[name=jobname]').val();

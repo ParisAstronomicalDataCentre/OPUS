@@ -109,7 +109,8 @@ var uws_client = (function($) {
     // Scroll to an anchor in the page with slow animation
 
     function scrollToAnchor(aid){
-        var elt = $("#"+ aid);
+        // (no anchor in the URL: "#" alone is not a valid selector)
+        var elt = $(aid ? document.getElementById(aid) : []);
         if (elt.length != 0) {
             $('html,body').animate( {scrollTop: elt.offset().top}, 'slow' );
         }
@@ -138,17 +139,87 @@ var uws_client = (function($) {
         if (clientEndpoint.length) {
             client_endpoint = clientEndpoint;
         };
-        for (var i in jobNames) {
+        jobNames.forEach(function(jobName) {
             // Init client
-            var url = serviceUrl + server_endpoint_jobs + '/' + jobNames[i];
-            clients[jobNames[i]] = new uwsLib.uwsClient(url);
+            var url = serviceUrl + server_endpoint_jobs + '/' + jobName;
+            clients[jobName] = new uwsLib.uwsClient(url);
             // Get JDL for job
-            $.getJSON(serviceUrl + server_endpoint_jdl.replace("<jobname>", jobNames[i]), function(jdl) {
-                clients[jobNames[i]].jdl = jdl;
+            $.getJSON(serviceUrl + server_endpoint_jdl.replace("<jobname>", jobName), function(jdl) {
+                clients[jobName].jdl = jdl;
+            }).fail(function() {
+                // No job definition: the server is not an OPUS server (e.g. the async endpoint of a TAP server),
+                // its jobs are listed and shown with their own parameters and results.
+                // With a built-in description for this job list (found from the capabilities of the service, see
+                // uws_descriptions.js), jobs can be created and started, else the jobs are not modified (read-only).
+                var setDescription = function(description) {
+                    if (description) {
+                        logger('INFO', 'No job definition for ' + jobName + ': external UWS service, built-in description');
+                        clients[jobName].jdl = $.extend(description, {external: true});
+                        setReadOnly(READ_ONLY_CREATED);
+                    } else {
+                        logger('INFO', 'No job definition for ' + jobName + ': external UWS service, read-only');
+                        clients[jobName].jdl = {
+                            external: true,
+                            parameters: {}, parameters_keys: [],
+                            used: {}, used_keys: [],
+                            generated: {}, generated_keys: [],
+                            control_parameters: {}, control_parameters_keys: []
+                        };
+                        setReadOnly(READ_ONLY_ALL);
+                    }
+                };
+                if (typeof uwsDescriptions !== 'undefined') {
+                    uwsDescriptions.find(serviceUrl + server_endpoint_jobs, jobName, function(found) {
+                        setDescription(found ? found.description : null);
+                    });
+                } else {
+                    setDescription(null);
+                }
             });
-            logger('INFO', 'uwsClient at ' + clients[jobNames[i]].serviceUrl);
-        };
+            logger('INFO', 'uwsClient at ' + clients[jobName].serviceUrl);
+        });
     };
+
+    // Jobs of an external UWS service: buttons disabled
+    // - with a built-in description: jobs can be created and started, not aborted, deleted or run again
+    // - without description (read-only): nothing is created or modified
+    var READ_ONLY_CREATED = '#job_list button.abort, #job_list button.delete, #edit_jdl, #rerun_job';
+    var READ_ONLY_ALL = READ_ONLY_CREATED + ', #job_list button.start, #create_new_job';
+    var readOnly = '';  // buttons disabled ('' for the jobs of an OPUS server)
+    function setReadOnly(buttons) {
+        readOnly = buttons || readOnly;
+        $(readOnly).attr('disabled', 'disabled').addClass('disabled')
+            .attr('title', 'Not available for the jobs of an external UWS service');
+    }
+    function isReadOnly() {
+        return readOnly == READ_ONLY_ALL;
+    }
+    function isExternal(jobName) {
+        return !!(clients[jobName] && clients[jobName].jdl && clients[jobName].jdl.external);
+    }
+
+    // Job definition used to show a job: the one of the server, or for an external UWS service, the parameters
+    // of the job itself
+    function jobJdl(job) {
+        var jdl = clients[job.jobName].jdl;
+        if (!jdl.external) {
+            return jdl;
+        }
+        // (description of a parameter of the built-in description, if any: the names of the parameters of a job
+        // may be in another case, e.g. query for QUERY)
+        var described = {};
+        for (var dname in jdl.parameters) {
+            described[dname.toLowerCase()] = jdl.parameters[dname];
+        }
+        var parameters = {};
+        for (var pname in job.parameters) {
+            parameters[pname] = $.extend(
+                {datatype: 'xs:string', default: '', annotation: ''}, described[pname.toLowerCase()],
+                {required: 'true', options: null}  // all the parameters of the job are shown, as text
+            );
+        }
+        return $.extend({}, jdl, {parameters: parameters, parameters_keys: Object.keys(parameters)});
+    }
 
     function wait_for_jdl(jobName, next_function, args){
         if ((typeof clients[jobName] !== "undefined") && (typeof clients[jobName].jdl !== "undefined")) {
@@ -301,6 +372,9 @@ var uws_client = (function($) {
             return (css.match(/(^|\s)btn-\S+/g) || []).join(' ');
         });
         $('#'+jobId+' td button.phase').addClass(phase_class + ' btn-sm');
+        if (readOnly) {
+            setReadOnly();  // buttons enabled above according to the phase
+        }
         // Refresh phase if change is expected
         switch (phase) {
             case 'QUEUED':
@@ -342,7 +416,9 @@ var uws_client = (function($) {
     //----------
     // DISPLAY JOB ROW
 
-    var displayJobRow = function(job){
+    // top: row added at the top of the table (new job), else at the bottom (order of the job list of the server:
+    // newest first for an OPUS server)
+    var displayJobRow = function(job, top=false){
         logger('OBJECT', job);
         var creation_time = job.creationTime;  //.split("T");
         if (creation_time.length == 1) {
@@ -517,7 +593,11 @@ var uws_client = (function($) {
 //                </td>\
 //            </tr>';
         // Insert row in table
-        $('#job_list tbody').prepend(row);
+        if (top) {
+            $('#job_list tbody').prepend(row);
+        } else {
+            $('#job_list tbody').append(row);
+        };
         // Display phase according to phase status, and update on click
         displayPhase(job.jobId, job.phase);
         // Refresh phase button
@@ -559,9 +639,9 @@ var uws_client = (function($) {
     //----------
     // DISPLAY JOB
 
-    var displayJob = function(job){
+    var displayJob = function(job, top=false){
         // Display row
-        displayJobRow(job);
+        displayJobRow(job, top);
         // Events for Details buttons
         $('#'+job.jobId+' td button.properties').click( function() {
             var jobId = $(this).parents("tr").attr('id');
@@ -656,6 +736,14 @@ var uws_client = (function($) {
         };
     };
     var displayParamFormInputType = function(pname, p){
+        if (p.widget == 'textarea') {
+            // long text (e.g. query of a TAP job)
+            var input = $('#id_'+pname);
+            var textarea = $('<textarea class="form-control" rows="6" style="font-family: monospace;"></textarea>')
+                .attr({id: 'id_'+pname, name: pname}).val(input.val());
+            input.replaceWith(textarea);
+            return;
+        };
         if (p.datatype == 'file'  || p.url == 'file://$ID') {
             $('#id_'+pname).attr('type', 'file');
             $('#id_'+pname).wrap('<div class="input-group"></div>');
@@ -713,9 +801,10 @@ var uws_client = (function($) {
             var options = p.options.split(',');
             for (var i in options) {
                 $('#id_'+pname).append('<option>' + options[i] + '</option>');
-                $('select[name=' + pname + ']').attr('data-width', '100%').selectpicker();
-                $('select[name=' + pname + ']').val(p.default);
             };
+            // (list created once all the options are added, to keep their order)
+            $('select[name=' + pname + ']').val(p.default);
+            $('select[name=' + pname + ']').attr('data-width', '100%').selectpicker();
             $('.selectpicker').selectpicker('refresh');
         };
     };
@@ -723,6 +812,10 @@ var uws_client = (function($) {
         $('#loading').hide();
         // Run displayParamForm before to check that jdl is defined
         var jdl = clients[jobName].jdl;
+        // Description of the jobs of an external service (e.g. TAP query, with the limits of the server)
+        if (jdl.external && jdl.annotation) {
+            $('#job_params').append('<p class="text-muted">' + jdl.annotation + '</p>');
+        };
         // Groups of fields: control parameters, inputs, parameters (a line under a group that is not empty)
         $('#job_params').append('<div id="params_control" class="params-group"></div>'
             + '<div id="params_used" class="params-group"></div>'
@@ -786,6 +879,10 @@ var uws_client = (function($) {
                 </div>\n\
             </div>\n';
         $('#job_params').append(elt);
+        // (no control parameter to add, e.g. external UWS service: the list is not shown)
+        if (jdl.control_parameters_keys.length == 0) {
+            $('#add_control').hide();
+        };
         // Add options to control parameters dropdown
         for (var pkey in jdl.control_parameters_keys) {
             var pname = jdl.control_parameters_keys[pkey];
@@ -820,7 +917,7 @@ var uws_client = (function($) {
     };
     var displayParamFormOkFilled = function(job){
         $('#loading').hide();
-        var jdl = clients[job.jobName].jdl;
+        var jdl = jobJdl(job);
         // Create form fields from JDL
         // list all used entities
         for (var pkey in jdl.used_keys) {
@@ -890,12 +987,14 @@ var uws_client = (function($) {
             };
         };
         // Disable Update button if job is not PENDING
-        if (job.phase != 'PENDING') {
+        // (the parameters of a job of an external UWS service are not modified)
+        if (job.phase != 'PENDING' || jdl.external) {
             //$('#id_'+pname).removeAttr('readonly');
             //$('#id_'+pname).removeAttr('disabled');
             //$('#button_'+pname).removeAttr('disabled');
             $('#job_params input').attr('disabled','disabled');
             $('#job_params select').attr('disabled','disabled');
+            $('#job_params textarea').attr('disabled','disabled');
             $('#job_params button').attr('disabled','disabled');
         };
         // Fill value from job
@@ -903,7 +1002,10 @@ var uws_client = (function($) {
         var qs = {};
         for (var pname in job.parameters) {
             var pvalue = job.parameters[pname].value;
-            pvalue = decodeURIComponent(pvalue).replace(/[+]/g, " ");
+            if (!jdl.external) {
+                // (values of an external service are shown as they are, e.g. a query with % or +)
+                pvalue = decodeURIComponent(pvalue).replace(/[+]/g, " ");
+            };
             if (pname != 'control_parameters') {
                 qs[pname] = pvalue;
             };
@@ -911,6 +1013,7 @@ var uws_client = (function($) {
             $('#param_list').append('<tr><td><strong>' + pname + '</strong></td><td>' + pvalue + '</td></tr>');
             // Update form fields
             $('#id_' + pname).attr('value', pvalue);
+            $('textarea#id_' + pname).val(pvalue);
         };
         $('.selectpicker').selectpicker('refresh');
         $('#all_params').attr('value', JSON.stringify(qs));
@@ -967,6 +1070,106 @@ var uws_client = (function($) {
                 return '<span class="' + (literal ? 'hl-literal' : 'hl-number') + '">' + match + '</span>';
             });
     };
+    // XML text indented: one element per line, nested by depth, a short element with simple children (e.g. a row of
+    // a table) on one line, a long tag with one attribute per line. The text is returned as it is if it is not
+    // well-formed XML, or too long.
+    var XML_PRETTY_MAX = 3000000;  // characters
+    var XML_LINE_MAX = 110;
+    var prettyXml = function(txt){
+        if (txt.length > XML_PRETTY_MAX) {
+            return txt;
+        }
+        var doc;
+        try {
+            doc = new DOMParser().parseFromString(txt, 'application/xml');
+        } catch (e) {
+            return txt;
+        }
+        if (doc.getElementsByTagName('parsererror').length) {
+            return txt;
+        }
+        var INDENT = '  ';
+        var esc = function(text) {
+            return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        };
+        var attributes = function(element) {
+            return Array.from(element.attributes).map(function(a) {
+                return a.name + '="' + esc(a.value).replace(/"/g, '&quot;') + '"';
+            });
+        };
+        // child nodes, without the texts made of spaces only
+        var children = function(element) {
+            return Array.from(element.childNodes).filter(function(n) {
+                return !(n.nodeType == 3 && !n.nodeValue.trim());
+            });
+        };
+        var isText = function(n) { return n.nodeType == 3 || n.nodeType == 4; };
+        var text = function(n) {
+            return (n.nodeType == 4) ? '<![CDATA[' + n.nodeValue + ']]>' : esc(n.nodeValue.trim());
+        };
+        // element with text only (or empty)
+        var isLeaf = function(element) { return children(element).every(isText); };
+        var leaf = function(element, open) {
+            var kids = children(element);
+            return kids.length ? open + '>' + kids.map(text).join('') + '</' + element.nodeName + '>' : open + '/>';
+        };
+        var openTag = function(element, indent) {
+            var attrs = attributes(element);
+            var tag = '<' + element.nodeName + (attrs.length ? ' ' + attrs.join(' ') : '');
+            if (indent.length + tag.length > XML_LINE_MAX && attrs.length > 1) {
+                tag = '<' + element.nodeName + '\n'
+                    + attrs.map(function(a) { return indent + INDENT + INDENT + a; }).join('\n');
+            }
+            return tag;
+        };
+        var compactTag = function(element) {
+            var attrs = attributes(element);
+            return '<' + element.nodeName + (attrs.length ? ' ' + attrs.join(' ') : '');
+        };
+        var lines = [];
+        var write = function(node, indent) {
+            switch (node.nodeType) {
+                case 1:
+                    if (isLeaf(node)) {
+                        lines.push(indent + leaf(node, openTag(node, indent)));
+                        return;
+                    }
+                    var kids = children(node);
+                    if (kids.every(function(k) { return k.nodeType == 1 && isLeaf(k); })) {
+                        var line = indent + compactTag(node) + '>'
+                            + kids.map(function(k) { return leaf(k, compactTag(k)); }).join('')
+                            + '</' + node.nodeName + '>';
+                        if (line.length <= XML_LINE_MAX) {
+                            lines.push(line);
+                            return;
+                        }
+                    }
+                    lines.push(indent + openTag(node, indent) + '>');
+                    kids.forEach(function(k) { write(k, indent + INDENT); });
+                    lines.push(indent + '</' + node.nodeName + '>');
+                    return;
+                case 3:
+                case 4:
+                    lines.push(indent + text(node));
+                    return;
+                case 7:
+                    lines.push(indent + '<?' + node.target + ' ' + node.data + '?>');
+                    return;
+                case 8:
+                    lines.push(indent + '<!--' + node.nodeValue + '-->');
+                    return;
+                case 10:
+                    lines.push(indent + new XMLSerializer().serializeToString(node));
+                    return;
+            }
+        };
+        var declaration = txt.match(/^\s*(<\?xml[^>]*\?>)/);
+        if (declaration) {
+            lines.push(declaration[1]);
+        }
+        Array.from(doc.childNodes).forEach(function(node) { write(node, ''); });
+        return lines.join('\n');
+    };
     var highlightXml = function(txt){
         return escapeHtml(txt).replace(
             /(&lt;!--[\s\S]*?--&gt;)|(&lt;\?[\s\S]*?\?&gt;)|(&lt;\/?)([\w:.-]+)([\s\S]*?)(\/?&gt;)/g,
@@ -987,11 +1190,44 @@ var uws_client = (function($) {
             return highlightJson(txt);
         }
         if (type == 'text/xml') {
-            return highlightXml(txt);
+            return highlightXml(prettyXml(txt));
         }
         return escapeHtml(txt);
     };
 
+    // Result of a job of an external UWS service, when the service gives no type or name for it: type from the
+    // format parameter of the job (see results in uws_descriptions.js), file named after the job
+    var externalResult = function(jdl, job, r) {
+        var info = {type: job.results[r].mimetype, name: job.results[r].filename};
+        var rules = jdl.results;
+        if (!rules) {
+            return info;
+        }
+        if (!info.type) {
+            // value of the format parameter of the job (names of parameters in any case)
+            var value = '';
+            (rules.format_parameters || []).forEach(function(pname) {
+                for (var jname in job.parameters) {
+                    if (!value && jname.toLowerCase() == pname.toLowerCase()) {
+                        value = (job.parameters[jname].value || '').trim();
+                    }
+                }
+            });
+            if (!value) {
+                info.type = rules.default_mimetype;
+            } else {
+                var format = (jdl.output_formats || []).filter(function(f) {
+                    return f.names.map(function(n) { return n.toLowerCase(); }).indexOf(value.toLowerCase()) != -1;
+                })[0];
+                info.type = format ? format.mime : (value.indexOf('/') != -1 ? value : undefined);
+            }
+        }
+        if (!info.name && info.type) {
+            var extension = (rules.extensions || {})[info.type.split(';')[0].trim()];
+            info.name = job.jobName + '_' + job.jobId + (r == 'result' ? '' : '_' + r) + (extension ? '.' + extension : '');
+        }
+        return info;
+    };
     // Message of an error of the server for a result (e.g. 404: file deleted as the job is archived)
     var resultError = function(r, xhr){
         var msg = (xhr.responseText || '').match(/<pre>[\s\S]*<\/pre>/g);
@@ -1033,7 +1269,9 @@ var uws_client = (function($) {
             }
         });
     };
-    var displayResult = function(list, r, r_fname, r_type, r_url, r_url_auth){
+    // r_download: name of the downloaded file, for a result of an external UWS service (the file is then not checked
+    // before its download: not all the services answer to HEAD requests)
+    var displayResult = function(list, r, r_fname, r_type, r_url, r_url_auth, r_download){
         var rsplit = r.replace(/\./g, '_')
         var r_id = 'result_'+rsplit
         var r_url_base = r_url.split('?ID=')[0];
@@ -1043,11 +1281,13 @@ var uws_client = (function($) {
         if (r_fname && r_fname.length != 0) {
             r_fname_display = ": " + r_fname;
         }
+        // type not always given (e.g. results of an external UWS service)
+        var r_type_display = r_type ? ' [' + r_type + ']' : '';
         var r_panel = '\
             <div id="'+r_id+'" class="card mb-3" value="'+r_url+'">\
                 <div class="card-header clearfix">\
                     <span class="float-start" style="padding-top: 4px;">\
-                        <span class="card-title"><strong>'+r+'</strong>'+r_fname_display+'</span> ['+r_type+']\
+                        <span class="card-title"><strong>'+r+'</strong>'+r_fname_display+'</span>'+r_type_display+'\
                     </span>\
                     <div class="btn-group float-end">\
                     </div>\
@@ -1069,7 +1309,16 @@ var uws_client = (function($) {
             </a>'
         );
         // Download: check that the file is available first (e.g. deleted if the job is archived)
+        // (not for a file on another server, e.g. result of an external UWS service: plain link)
+        var r_local = (new URL(r_url_auth, window.location.href).origin == window.location.origin);
         $('#'+r_id+' div.card-header div.btn-group a.download').click(function(event) {
+            if (!r_local) {
+                return;
+            }
+            if (r_download) {
+                $(this).attr('download', r_download);
+                return;
+            }
             event.preventDefault();
             withResult(r, r_url_auth, function() {
                 window.location.href = r_url_auth;
@@ -1080,7 +1329,16 @@ var uws_client = (function($) {
 //                Anonymous Download\
 //            </a>'
         // Show preview according to result type (file extension)
-        switch (r_type) {
+        // (XML types as text/xml, e.g. VOTable, other text types as text/plain)
+        var r_preview = r_type;
+        if (/xml/.test(r_type || '') && r_type != 'image/svg+xml') {
+            r_preview = 'text/xml';
+        } else if (/^text\/(csv|tab-separated-values|plain)/.test(r_type || '')) {
+            r_preview = 'text/plain';
+        } else if (/json/.test(r_type || '')) {
+            r_preview = 'application/json';
+        }
+        switch (r_preview) {
             // FITS files can be SAMPed
             case 'image/fits':
                 // Show image preview
@@ -1147,7 +1405,7 @@ var uws_client = (function($) {
                             context: r_id,  // Set this=r_id for success function
                             success: function (txt) {
                                 $('#loading').hide();
-                                $('#' + this + ' div.card-body pre.text-preview').html(previewText(txt, r_type));
+                                $('#' + this + ' div.card-body pre.text-preview').html(previewText(txt, r_preview));
                                 $('#'+r_id).addClass('preview_loaded');
                                 console.log('Preview loaded for ' + this);
                             },
@@ -1236,6 +1494,18 @@ var uws_client = (function($) {
                     var r_url_auth = r_url.split('?').pop();
                     if (r_url_auth != r_url) {
                         r_url_auth = client_endpoint + client_endpoint_proxy + server_endpoint_results + '?' + r_url_auth
+                    };
+                    if (jdl.external) {
+                        // result of an external UWS service: type and name found from the job, file downloaded
+                        // through the proxy if it is on the server of the service (file name, preview)
+                        var r_info = externalResult(jdl, job, r);
+                        var server_direct = $('#server_url_direct').attr('value');
+                        r_url_auth = r_url;
+                        if (server_direct && r_url.indexOf(server_direct + '/') == 0) {
+                            r_url_auth = client_endpoint + client_endpoint_proxy + r_url.substring(server_direct.length);
+                        };
+                        displayResult('results_list', r, r_info.name, r_info.type, r_url, r_url_auth, r_info.name);
+                        continue;
                     };
                     displayResult('results_list', r, r_fname, r_type, r_url, r_url_auth);
                 };
@@ -1437,6 +1707,61 @@ var uws_client = (function($) {
         logger('INFO', 'Job list loaded ');
         $('#div_table').show();
     };
+    // Details of the jobs of the list, for a job list that only gives the identifier and the phase of the jobs (e.g.
+    // external UWS service): one request per job (a few at a time) to fill its run id, owner and creation time and
+    // update its phase, then the list is sorted by creation time, newest first.
+    // progress(done, total, finished) is called after each job.
+    var DETAILS_REQUESTS = 4;  // requests at the same time
+    var getJobListDetails = function(progress) {
+        progress = progress || function() {};
+        var rows = $('#job_list tbody tr').toArray();
+        var total = rows.length, done = 0, next = 0, running = 0;
+        var cell = function(row, column) {
+            var index = job_list_columns.indexOf(column);
+            return (index == -1) ? $() : $(row).children('td').eq(index);
+        };
+        var finish = function() {
+            var index = job_list_columns.indexOf('creationTime');
+            var table = document.getElementById('job_list');
+            if (index != -1 && table && table.opusTable) {
+                table.opusTable.sortBy(index, false);
+            }
+            logger('INFO', 'Details loaded for ' + total + ' jobs');
+            progress(done, total, true);
+        };
+        var step = function() {
+            running--;
+            done++;
+            if (done == total) {
+                finish();
+            } else {
+                progress(done, total, false);
+                run();
+            }
+        };
+        var run = function() {
+            while (running < DETAILS_REQUESTS && next < total) {
+                (function(row) {
+                    running++;
+                    clients[$(row).attr('jobname')].getJobInfos(row.id, function(job) {
+                        cell(row, 'runId').text(job.runId);
+                        cell(row, 'ownerId').text(job.ownerId);
+                        cell(row, 'creationTime').text(job.creationTime);
+                        if ($('#' + row.id).length) {
+                            displayPhase(row.id, job.phase);
+                        }
+                        step();
+                    }, step);
+                })(rows[next++]);
+            }
+        };
+        if (total == 0) {
+            progress(0, 0, true);
+            return;
+        }
+        progress(0, total, false);
+        run();
+    };
     var getJobListError = function(xhr, status, exception) {
         $('#loading').hide();
         //var responseJSON = $.parseJSON( xhr.responseText );
@@ -1564,8 +1889,17 @@ var uws_client = (function($) {
     var createJobSuccess = function(job) {
         $('#loading').hide();
         logger('INFO', 'Job created with id='+job.jobId+' jobname='+job.jobName);
+        var job_page = client_endpoint + client_endpoint_job_edit + "/" + job.jobName + "/" + job.jobId;
+        if (isExternal(job.jobName) && job.phase == 'PENDING') {
+            // external UWS service that does not start the job at its creation (PHASE=RUN ignored, e.g. some TAP
+            // servers): the job is started, then shown (even if it cannot be started)
+            var show_job = function() { window.location.href = job_page; };
+            $('#loading').show();
+            clients[job.jobName].startJob(job.jobId, show_job, show_job, $('#csrf_token').attr('value'));
+            return;
+        }
         // redirect to URL + job_id
-        window.location.href = client_endpoint + client_endpoint_job_edit + "/" + job.jobName + "/" + job.jobId;
+        window.location.href = job_page;
     };
     var createJobError = function(xhr, status, exception){
         $('#loading').hide();
@@ -1589,7 +1923,7 @@ var uws_client = (function($) {
     var createTestJobSuccess = function(job) {
         $('#loading').hide();
         logger('INFO', 'Test job created with id='+job.jobId+' jobname='+job.jobName);
-        displayJob(job);
+        displayJob(job, true);  // new job: at the top of the list
     };
 
 
@@ -1684,7 +2018,10 @@ var uws_client = (function($) {
         initClient: initClient,
         prepareTable: prepareTable,
         getJobList: getJobList,
+        getJobListDetails: getJobListDetails,
         setShowArchived: setShowArchived,
+        isReadOnly: isReadOnly,
+        isExternal: isExternal,
         selectJob: selectJob,
         createJob: createJob,
         createTestJob: createTestJob,

@@ -643,7 +643,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         where_owner=True,
         include_archived=False,
     ):
-        """Get job list from storage"""
+        """Get job list from storage, newest first (last: only the given number of most recent jobs, UWS 1.1)"""
         with self.get_session() as session:
             query = session.query(self.Job).filter_by(jobname=joblist.jobname)
             if phase:
@@ -655,7 +655,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             if where_owner:
                 query = query.filter_by(owner=joblist.user.name)
                 query = query.filter_by(owner_token=joblist.user.token)
-            query = query.order_by(self.Job.creation_time.asc())
+            query = query.order_by(self.Job.creation_time.desc())
             if last:
                 query = query.limit(last)
             jobs = query.all()

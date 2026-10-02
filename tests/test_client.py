@@ -402,6 +402,40 @@ class TestProxy:
         assert response.status_code == 404
         assert "<pre>" in client.get("/proxy/store", query_string={"ID": "unknown-entity"}).get_data(as_text=True)
 
+    def test_external_server_no_credentials(self, client, local_user, monkeypatch):
+        """External UWS service (e.g. TAP server set in the Client Preferences, UWS_AUTH = None): the name and token
+        of the user are not sent"""
+        password_login(client, local_user)
+        monkeypatch.setitem(c.app.config, "UWS_AUTH", "None")
+        monkeypatch.setitem(c.app.config, "UWS_SERVER_URL", "http://tap.example.org")
+        sent = {}
+
+        def fake_get(url, **kwargs):
+            sent.update(url=url, **kwargs)
+            response = c.requests.Response()
+            response.status_code = 200
+            response._content = b"<uws:jobs/>"
+            response._content_consumed = True
+            response.headers["content-type"] = "text/xml"
+            return response
+
+        monkeypatch.setattr(c.requests, "get", fake_get)
+        response = client.get("/proxy/tap/async", query_string="PHASE=COMPLETED")
+        assert response.status_code == 200 and response.get_data() == b"<uws:jobs/>"
+        assert sent["url"] == "http://tap.example.org/tap/async"
+        assert sent["auth"] is None and sent["headers"] == {}
+
+    def test_head_timeout(self, client, local_user, monkeypatch):
+        """HEAD with a server that does not answer (e.g. results of some external services): 504, no hanging"""
+        password_login(client, local_user)
+
+        def no_answer(url, **kwargs):
+            assert kwargs["timeout"]
+            raise c.requests.exceptions.Timeout()
+
+        monkeypatch.setattr(c.requests, "head", no_answer)
+        assert client.head("/proxy/store", query_string={"ID": "x"}).status_code == 504
+
     def test_anonymous_refused(self, client, live_server, monkeypatch):
         monkeypatch.setattr(server_settings, "ALLOW_ANONYMOUS", False)
         assert client.get("/proxy/jdl").status_code == 403
@@ -505,6 +539,24 @@ class TestAdminPages:
 
 
 class TestPreferences:
+
+    def test_warning_at_admin_login(self, client, local_user, monkeypatch):
+        """The administrator is warned at login if the Client Preferences differ from the settings"""
+        login = {"email": c.settings.ADMIN_NAME, "password": c.settings.ADMIN_DEFAULT_PW.get_secret_value()}
+        # default preferences: no warning
+        page = client.post("/accounts/login", data=login, follow_redirects=True).get_data(as_text=True)
+        assert "is now logged in" in page and "differ from the settings" not in page
+        client.get("/accounts/logout")
+        # another server: warning with the values and their defaults, kept until closed
+        monkeypatch.setitem(c.app.config, "UWS_SERVER_URL", "http://tap.example.org")
+        page = client.post("/accounts/login", data=login, follow_redirects=True).get_data(as_text=True)
+        assert "Client Preferences</a> differ from the settings" in page
+        assert f"UWS_SERVER_URL = http://tap.example.org (default: {c.SETTINGS_CONFIG['UWS_SERVER_URL']})" in page
+        assert 'class="alert alert-warning alert-dismissible' in page
+        client.get("/accounts/logout")
+        # not for the other users
+        password_login(client, local_user)
+        assert "differ from the settings" not in client.get("/").get_data(as_text=True)
 
     def test_defaults_and_saved_values(self, monkeypatch):
         with c.app.test_request_context():

@@ -142,7 +142,13 @@ class TestJobAttributes:
         assert pending in ids and completed not in ids
         ids = job_ids(server, "?PHASE=PENDING&PHASE=COMPLETED")
         assert pending in ids and completed in ids
-        assert len(job_ids(server, "?LAST=1")) == 1
+        # newest first, LAST: the most recent jobs (UWS 1.1)
+        time.sleep(1.1)  # (creation times in seconds)
+        newest = create_job(server, "test_activity_1", run=False, text="newest").split("/")[-1]
+        ids = job_ids(server)
+        assert ids[0] == newest and ids.index(newest) < ids.index(pending)
+        assert job_ids(server, "?LAST=1") == [newest]
+        assert job_ids(server, "?LAST=2")[0] == newest and len(job_ids(server, "?LAST=2")) == 2
         assert pending not in job_ids(server, "?AFTER=2099-01-01T00:00:00")
 
 

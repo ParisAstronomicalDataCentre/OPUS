@@ -20,6 +20,7 @@
         <div id="authenticated" style="display:none" value="{{ 'true' if current_user.is_authenticated else 'false' }}"></div>
         <div id="login_url" style="display:none" value="{{ url_for_security('login') }}"></div>
         <div id="server_url" style="display:none" value="{{ config.UWS_SERVER_URL_JS }}"></div>
+        <div id="server_url_direct" style="display:none" value="{{ config.UWS_SERVER_URL }}"></div>
         <div id="server_endpoint" style="display:none" value="{{ config.UWS_SERVER_ENDPOINT }}"></div>
         <div id="client_endpoint" style="display:none" value="{{ config.UWS_CLIENT_ENDPOINT }}"></div>
         <div id="scim_endpoint" style="display:none" value="{{ config.SCIM_ENDPOINT }}"></div>
@@ -42,9 +43,16 @@
         {% if messages %}
         {% for category, message in messages %}
             {% if category != "message" %}
-            <div class="fadeOut alert alert-{{ category }} text-center"> {{ message }} </div>
+            {# category ending with -keep: message kept until closed (e.g. warning-keep), else it fades out #}
+            {% if category.endswith("-keep") %}
+            <div class="alert alert-{{ category[:-5] }} alert-dismissible text-center"> {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
             {% else %}
-            <div class="fadeOut alert alert-info text-center"> {{ message }} </div>
+            <div class="fadeOut alert alert-{{ category }} text-center"> {{ message }} </div>
+            {% endif %}
+            {% else %}
+            <div class="fadeOut alert alert-info text-center"> {{ message }} </div>
             {% endif %}
         {% endfor %}
         {% endif %}

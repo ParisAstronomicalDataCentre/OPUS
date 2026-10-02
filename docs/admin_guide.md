@@ -66,6 +66,47 @@ default value of each setting (from `.env`) is shown below the field.
 
 The values that differ from the settings are stored in `$OPUS_VAR_PATH/config/uws_client_config.yaml`, and have
 priority over `.env`. To go back to the settings of `.env`, set the default values again, or remove this file.
+When an administrator signs in while some values differ from the settings, a warning lists them with their
+defaults, until it is closed.
+
+#### Jobs of an external UWS service (e.g. a TAP server)
+
+The client can show the jobs of a UWS service that is not an OPUS server, for example the asynchronous queries of
+a TAP server (`<TAP URL>/async`). For `http://voparis-tap-he.obspm.fr/tap/async`, set in the Client Preferences:
+
+| Setting               | Value                           |
+| ---                   | :---                            |
+| `UWS_SERVER_URL`      | `http://voparis-tap-he.obspm.fr` |
+| `UWS_SERVER_ENDPOINT` | `/tap`                          |
+| `UWS_AUTH`            | `None`                          |
+
+The client then reads the **capabilities** of the service (`<service URL>/capabilities`): for a TAP service
+(`standardID="ivo://ivoa.net/std/TAP"`), the job list is `async`, as fixed by the TAP standard, and its jobs are
+listed in the Job List page (`<client>/jobs`). For another service, the name of its job list has to be given in the
+URL (`<client>/jobs/<name>`).
+
+Such a server has no job definitions, so a job is shown with its own parameters and results. The job list of the
+service may only give the identifier and the phase of the jobs, in any order: the button **Refresh with details**
+gets the details of each job (one request per job, a few at a time) to fill its run id and creation time, and
+sorts the list by creation time, newest first. The pages for the administration of an OPUS server (accounts, job
+definitions, maintenance, server logs) do not apply.
+
+The client has **built-in descriptions** for the standards it knows, in the file
+`uws_client/static/js/uws_descriptions.json` (loaded by `uws_descriptions.js`, which describes its format): a TAP
+query has the parameters `QUERY`, `LANG`, `RESPONSEFORMAT`, `MAXREC`, `RUNID` and `UPLOAD`, completed with the
+capabilities of the service (query languages, output formats, default and limit of the number of rows, uploads
+accepted or not, limits of the jobs). With a description, a job can be created with **Create New Job** (the query
+is submitted and started) and started; the jobs cannot be aborted, deleted or run again from the client. Without
+description, the jobs are **read-only**: the buttons that create or modify a job are disabled. If the capabilities
+of the service are not available, the description is found from the name of the job list (`async`).
+
+When the service gives no type or name for the result of a job (e.g. `result` for a TAP query), its type is found
+from the format parameter of the job (`RESPONSEFORMAT`, a VOTable by default), and the file is named after the
+job (e.g. `async_<jobid>.vot`, or `.csv`). The result is downloaded and previewed through the client, if it is on
+the server of the service.
+
+**Set `UWS_AUTH` to `None` for an external service**: with `Basic` or `OIDC`, the name and the OPUS token (or
+access token) of the users would be sent to this service.
 
 ### Client Accounts
 

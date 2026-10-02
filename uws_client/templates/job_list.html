@@ -2,6 +2,7 @@
 {% block js %}
     <script type="text/javascript" src="/static/js/opus_table.js?v={{ asset_version }}" defer></script>
     <script type="text/javascript" src="/static/js/uwsLib.js?v={{ asset_version }}" defer></script>
+    <script type="text/javascript" src="/static/js/uws_descriptions.js?v={{ asset_version }}" defer></script>
     <script type="text/javascript" src="/static/js/uws_client.js?v={{ asset_version }}" defer></script>
     <script type="text/javascript" src="/static/js/job_list.js?v={{ asset_version }}" defer></script>
 {% endblock %}
@@ -28,6 +29,11 @@
                     <button id="refresh_list" type="button" class="actions btn btn-outline-secondary">
                         <span class="bi bi-arrow-clockwise"></span>
                         Refresh List
+                    </button>
+                    <button id="refresh_details" type="button" class="actions btn btn-outline-secondary" style="display: none;"
+                            title="Get the details of each job (run id, creation time, phase), one request per job, and sort the list by creation time">
+                        <span class="bi bi-list-ul"></span>
+                        <span class="refresh-details-label">Refresh with details</span>
                     </button>
                     <button id="edit_jdl" type="button" class="actions btn btn-outline-secondary">
                         <span class="bi bi-pencil-square"></span>
