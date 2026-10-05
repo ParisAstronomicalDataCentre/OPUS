@@ -61,9 +61,10 @@ dev = [
 [tool.ruff]
 line-length = 88
 target-version = "py310"
-select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "SIM"]
-ignore = ["E501"]
-
+lint.select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "SIM"]
+lint.ignore = ["E501", "F841"]
+# F841 Local variable is assigned to but never used
+# E501 Line too long
 [tool.ruff.lint.per-file-ignores]
 # Settings are uppercase, as the environment variables (OPUS_<NAME>) and Flask config
 "opus_config/*" = ["N802"]

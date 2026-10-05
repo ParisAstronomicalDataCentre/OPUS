@@ -196,7 +196,7 @@ def provenance_job(server):
     return job_url
 
 
-class TestInvalidInput:
+class TestInvalidInputError:
     """Input of a job missing or not found: error 400 with the reason, and no job left"""
 
     def job_ids(self, server):  # noqa: F811 (server fixture)

@@ -17,7 +17,10 @@ import logging.config
 import os
 import threading
 
-from opus_config import APP_PATH, ServerSettings  # noqa: F401 (APP_PATH is imported from here)
+from opus_config import (  # noqa: F401 (APP_PATH is imported from here)
+    APP_PATH,
+    ServerSettings,
+)
 
 settings = ServerSettings()
 

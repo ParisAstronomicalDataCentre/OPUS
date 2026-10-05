@@ -7,10 +7,10 @@ UWS client implementation using flask and javascript
 
 import datetime
 import json
-import subprocess
-from urllib.parse import urlencode
 import os
+import subprocess
 import time
+from urllib.parse import urlencode
 
 import requests
 import yaml
@@ -38,7 +38,6 @@ from flask_login import (
     user_logged_out,
 )
 from flask_mail import Mail
-from markupsafe import Markup, escape
 from flask_security import (
     RoleMixin,
     Security,
@@ -51,6 +50,7 @@ from flask_security import (
 )
 from flask_security.forms import LoginForm, RegisterFormV2, unique_user_email
 from flask_sqlalchemy import SQLAlchemy
+from markupsafe import Markup, escape
 from requests.auth import HTTPBasicAuth
 from wtforms import PasswordField, StringField
 from wtforms.validators import InputRequired
@@ -58,10 +58,10 @@ from wtforms.validators import InputRequired
 from opus_config import logs
 
 from .settings import (
-    settings,
     APP_PATH,
     EDITABLE_CONFIG,
     logger,
+    settings,
 )
 
 # ----------
@@ -87,16 +87,16 @@ def git_version():
             logger.warning("Revision id not found, try to read git logs directly")
             out = _minimal_ext_cmd(["tail", "-1", ".git/logs/HEAD"])
             out = out.split(" ")[1]
-        GIT_REVISION = out.strip().decode("ascii")
+        GIT_REVISION = out.strip().decode("ascii")  # noqa: N806
         out = _minimal_ext_cmd(["git", "log", "-1", "--date=short", "--format=%cd"])
         if not out:
             logger.warning("Revision date not found, try to get from index")
             out = _minimal_ext_cmd(["date", "-r", ".git/index", '+"%Y-%m-%d"'])
-        GIT_DATE = out.strip().decode("ascii")
+        GIT_DATE = out.strip().decode("ascii")  # noqa: N806
     except Exception as e:
         logger.warning(str(e))
-        GIT_REVISION = "Unknown"
-        GIT_DATE = "Unknown"
+        GIT_REVISION = "Unknown"  # noqa: N806
+        GIT_DATE = "Unknown"  # noqa: N806
 
     return GIT_DATE, GIT_REVISION
 

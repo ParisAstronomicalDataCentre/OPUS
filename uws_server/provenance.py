@@ -5,6 +5,8 @@
 Export UWS job description to a ProvDocument following the W3C PROV standard
 """
 
+import os
+
 import voprov
 from pydotplus.graphviz import InvocationException
 from voprov.models.model import PROV, VOPROV, VOProvDocument
@@ -13,8 +15,7 @@ from voprov.models.model import PROV, VOPROV, VOProvDocument
 from voprov.visualization.dot import prov_to_dot
 
 from . import uws_classes
-import os
-from .settings import settings, logger
+from .settings import logger, settings
 
 # examples:
 # http://prov.readthedocs.org/en/latest/usage.html#simple-prov-document
@@ -140,8 +141,7 @@ def job2prov(
                     ed = ""
                     edattrs = {}
                     for ekey, evalue in edict.items():
-                        if evalue and ekey not in ["default"]:
-                            if evalue:
+                        if evalue and ekey not in ["default"] and evalue:
                                 if ekey == "content_type":
                                     # EntityDescription
                                     ed = "media-type:" + evalue
@@ -167,8 +167,7 @@ def job2prov(
                     ed = ""
                     edattrs = {}
                     for ekey, evalue in edict.items():
-                        if evalue and ekey not in ["default"]:
-                            if evalue:
+                        if evalue and ekey not in ["default"] and evalue:
                                 if ekey == "content_type":
                                     # EntityDescription
                                     ed = "media-type:" + evalue
@@ -367,8 +366,7 @@ def job2prov(
                     if descriptions > 1 and ed:
                         pdoc.isDescribedBy(pqn, ed)
                     # Explores entity origin if known entity and depth > 1
-                    if entity and depth != 1 and direction == "BACK":
-                        if depth != 1 and entity.get("jobid"):
+                    if entity and depth != 1 and direction == "BACK" and depth != 1 and entity.get("jobid"):
                             other_pdocs.append(
                                 job2prov(
                                     entity["jobid"],
@@ -419,12 +417,12 @@ def job2prov(
                                 # Software: link with activity description rather than activity
                                 if used_type == "Software":
                                     # in adescbundle? or pdoc?
-                                    l = prov_dict["entity"][ent_id].get("voprov:name", "")
-                                    l += " "
-                                    l += prov_dict["entity"][ent_id].get(
+                                    label = prov_dict["entity"][ent_id].get("voprov:name", "")
+                                    label += " "
+                                    label += prov_dict["entity"][ent_id].get(
                                         "voprov:version", ""
                                     )
-                                    used_ent.add_attributes({"prov:label": l})
+                                    used_ent.add_attributes({"prov:label": label})
                                     if descriptions:
                                         pdoc.influence(
                                             adesc,
@@ -541,8 +539,7 @@ def job2prov(
                             # copy_act.used(entity["from_entity"])
                             # e_out[-1].wasGeneratedBy(copy_act)
                         # Add EntityDescription if exists
-                        if pdict and descriptions > 1:
-                            if "content_type" in pdict:
+                        if pdict and descriptions > 1 and "content_type" in pdict:
                                 ed = "media-type:" + pdict["content_type"]
                                 pdoc.isDescribedBy(rqn, ed)
                         # Search forward for activities that used this entity

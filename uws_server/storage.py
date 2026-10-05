@@ -16,10 +16,11 @@ therefore it is possible to retrieve only attributes, parameters or results so a
 the number of database access (in the case of a relational database)
 """
 
-from datetime import datetime, date
-import os
-
 import hashlib
+import os
+import sqlite3
+from contextlib import contextmanager
+from datetime import date, datetime
 
 from sqlalchemy import (
     BigInteger,
@@ -34,11 +35,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import declarative_base, sessionmaker
-import sqlite3
-from contextlib import contextmanager
 
-from .settings import settings, JOB_ATTRIBUTES, logger
-
+from .settings import JOB_ATTRIBUTES, logger, settings
 
 # ---------
 # Register a Custom Adapter for SQLite
@@ -147,7 +145,7 @@ class EntityStorage:
         :param fname:
         :return: hax hash
         """
-        BUF_SIZE = 65536  # lets read stuff in 64kb chunks!
+        BUF_SIZE = 65536  # lets read stuff in 64kb chunks!  # noqa: N806
         sha = getattr(hashlib, "sha" + settings.SHA_ALGO)()
         with open(path, "rb") as f:
             while True:
@@ -210,14 +208,14 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
         # self.Base = automap_base()
         # dt_format = u'%(year)04d/%(month)02d/%(day)02dT%(hour)02d:%(min)02d:%(second)02d'
         # dt_regexp = u'(\d+)/(\d+)/(\d+)T(\d+):(\d+):(\d+)'
-        # myDateTime = DateTime().with_variant(sqlite.DATETIME(storage_format=dt_format, regexp=dt_regexp), 'sqlite')
-        # myDateTime = DateTime().with_variant(sqlite.TIMESTAMP(), 'sqlite')
+        # mydatetime = DateTime().with_variant(sqlite.DATETIME(storage_format=dt_format, regexp=dt_regexp), 'sqlite')
+        # mydatetime = DateTime().with_variant(sqlite.TIMESTAMP(), 'sqlite')
         if settings.STORAGE_TYPE == "SQLite":
-            myDateTime = DateTime().with_variant(String(19), "sqlite")
-            myBoolean = Boolean().with_variant(String(5), "sqlite")
+            mydatetime = DateTime().with_variant(String(19), "sqlite")
+            myboolean = Boolean().with_variant(String(5), "sqlite")
         else:
-            myDateTime = DateTime()
-            myBoolean = Boolean()
+            mydatetime = DateTime()
+            myboolean = Boolean()
 
         class Job(self.Base):
             __tablename__ = "jobs"
@@ -227,10 +225,10 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             quote = Column(Integer(), nullable=True)
             execution_duration = Column(Integer(), nullable=True)
             error = Column(Text(), nullable=True)
-            creation_time = Column(myDateTime)
-            start_time = Column(myDateTime, nullable=True)
-            end_time = Column(myDateTime, nullable=True)
-            destruction_time = Column(myDateTime, nullable=True)
+            creation_time = Column(mydatetime)
+            start_time = Column(mydatetime, nullable=True)
+            end_time = Column(mydatetime, nullable=True)
+            destruction_time = Column(mydatetime, nullable=True)
             owner = Column(String(64), nullable=True)
             owner_token = Column(String(128), nullable=True)
             run_id = Column(String(64), nullable=True)
@@ -243,8 +241,8 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             )  # uuid: max=36
             name = Column(String(255), primary_key=True)
             value = Column(String(255), nullable=True)
-            byref = Column(myBoolean, default=False, nullable=True)
-            # from_entity = Column(myBoolean, default=False, nullable=True)
+            byref = Column(myboolean, default=False, nullable=True)
+            # from_entity = Column(myboolean, default=False, nullable=True)
             entity_id = Column(
                 String(255), ForeignKey("entities.entity_id"), nullable=True
             )
@@ -270,8 +268,8 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             token = Column(String(255), primary_key=True, default=settings.new_token)
             roles = Column(String(255), default="")
             active = Column(Boolean(), default=True)
-            first_connection = Column(myDateTime)
-            # last_login = Column(myDateTime)
+            first_connection = Column(mydatetime)
+            # last_login = Column(mydatetime)
             # TODO: add last_connection, ips?,
             # TODO: roles as a table with FK to jobnames,
 
@@ -283,7 +281,7 @@ class SQLAlchemyJobStorage(JobStorage, UserStorage, EntityStorage):
             file_dir = Column(String(255), nullable=True)
             hash = Column(String(255), nullable=True)
             # hash_type = Column(String(255), nullable=True)
-            creation_time = Column(myDateTime)
+            creation_time = Column(mydatetime)
             content_type = Column(String(255), nullable=True)
             access_url = Column(String(255), nullable=True)
             owner = Column(String(64))

@@ -15,21 +15,18 @@ Specific functions are expected for those classes:
 * cp_script
 """
 
-import datetime as dt
-import re
-import subprocess as sp
-
 import contextlib
+import datetime as dt
 import os
+import re
 import signal
+import subprocess as sp
 import threading
 
 import psutil
 import requests
 
-from .settings import settings, PHASE_CONVERT, SLURM_PARAMETERS, logger
-
-
+from .settings import PHASE_CONVERT, SLURM_PARAMETERS, logger, settings
 
 # -------------
 # Manager class

@@ -35,24 +35,24 @@ from opus_config import logs
 
 from . import jdl_history, maintenance, managers, migrate_users, oidc, storage, uws_jdl
 from .settings import (
-    settings,
     ACTIVE_PHASES,
     APP_PATH,
-    CustomAdapter,
     DT_FMT,
-    PHASES,
     PHASE_CONVERT,
+    PHASES,
+    CustomAdapter,
     logger_init,
     set_log_username,
+    settings,
 )
 from .uws_classes import (
-    EntityAccessDenied,
-    InvalidInput,
+    EntityAccessDeniedError,
+    InvalidInputError,
     Job,
-    JobAccessDenied,
+    JobAccessDeniedError,
     JobList,
-    ParameterTooLong,
-    TooManyJobs,
+    ParameterTooLongError,
+    TooManyJobsError,
     User,
     execution_duration,
     special_users,
@@ -280,7 +280,7 @@ def is_admin(func):
     """
 
     def is_admin_wrapper(*args, **kwargs):
-        user = set_user()
+        user = set_user()  # noqa: F841
         if not user.check_admin():
             abort_403(f"{user.name} is not an admin")
         return func(*args, **kwargs)
@@ -431,8 +431,8 @@ def send_mail(send_to, subject, msg):
 
 
 @app.get(settings.SCIM_ENDPOINT + "/ServiceProviderConfig")
-def scim_ServiceProviderConfig():
-    scim_config = {
+def scim_serviceproviderconfig():
+    scim_config_json = {
         "schemas": ["urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig"],
         "patch": {"supported": False},
         "bulk": {"supported": False, "maxOperations": 1000, "maxPayloadSize": 1048576},
@@ -443,12 +443,12 @@ def scim_ServiceProviderConfig():
         "authenticationSchemes": [{"type": "httpbasic", "name": "HTTP Basic"}],
     }
     # response.content_type = 'application/json; charset=UTF-8'
-    return scim_config
+    return scim_config_json
 
 
 @app.get(settings.SCIM_ENDPOINT + "/Schemas")
-def scim_Schemas():
-    scim_schemas = {
+def scim_schemas():
+    scim_schemas_json = {
         "id": "urn:ietf:params:scim:schemas:core:2.0:User",
         "name": "User",
         "description": "User Account",
@@ -495,12 +495,12 @@ def scim_Schemas():
             },
         ],
     }
-    return scim_schemas
+    return scim_schemas_json
 
 
 @app.get(settings.SCIM_ENDPOINT + "/ResourceTypes")
-def scim_ResourceTypes():
-    scim_resourcetypes = {
+def scim_resourcetypes():
+    scim_resourcetypes_json = {
         "itemsPerPage": 1,
         "startIndex": 1,
         "Resources": [
@@ -514,12 +514,12 @@ def scim_ResourceTypes():
             }
         ],
     }
-    return scim_resourcetypes
+    return scim_resourcetypes_json
 
 
 @app.get(settings.SCIM_ENDPOINT + "/ResourceTypes/User")
-def scim_ResourceTypes_User():
-    scim_resourcetypes = {
+def scim_resourcetypes_user():
+    scim_resourcetypes_json = {
         "id": "Users",
         "schemas": ["urn:scim:schemas:core:2.0:ResourceType"],
         "name": "User",
@@ -527,7 +527,7 @@ def scim_ResourceTypes_User():
         "endpoint": "/Users",
         "schema": "urn:scim:schemas:core:2.0:User",
     }
-    return scim_resourcetypes
+    return scim_resourcetypes_json
 
 
 def user2scim(u):
@@ -703,7 +703,7 @@ def get_jobnames():
     Get list of available jobs on server
     :return: list of job names in json
     """
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         # jobnames = ['copy', 'ctbin']
         # List jdl files (=available jobs)
@@ -745,7 +745,7 @@ def create_new_job_definition():
     # No need to authenticate, users can propose new jobs that will have to be validated
     # Check if client is trusted? not really needed
     jobname = ""
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         jobname = request.forms.get("name").split("/")[-1]
         if jobname:
@@ -771,7 +771,7 @@ def import_job_definition():
     # No need to authenticate, users can propose new jobs that will have to be validated
     # Check if client is trusted? not really needed
     jobname = ""
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         # Save JDL file as new for this jobname
         f = request.files.get("jdl_file", None)
@@ -828,7 +828,7 @@ def import_job_definition():
 def validation_request_job_definition(jobname):
     """Use filled form to create a JDL file for the given job"""
     # Check if client is trusted (only admin should be allowed to validate a job)
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         jdl = getattr(uws_jdl, settings.JDL)()
         jdl_src = f"{jdl.jdl_path}/tmp/{jobname}{jdl.extension}"
@@ -862,7 +862,7 @@ def validation_request_job_definition(jobname):
 @is_admin
 def validate_job_definition(jobname):
     """Validate the job definition submitted in tmp/: the current version (if any) is kept in saved/"""
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         jdl = getattr(uws_jdl, settings.JDL)()
         jdl_src = f"{jdl.jdl_path}/tmp/{jobname}{jdl.extension}"
@@ -910,7 +910,7 @@ def validate_job_definition(jobname):
 @is_admin
 def reject_job_definition(jobname):
     """Reject the job definition submitted in tmp/ (removed), with an optional MESSAGE for the history"""
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         jdl = getattr(uws_jdl, settings.JDL)()
         jdl_src = f"{jdl.jdl_path}/tmp/{jobname}{jdl.extension}"
@@ -972,7 +972,7 @@ def get_inactive_job_definitions():
 def restore_job_definition(jobname):
     """Validate again a saved VERSION (id of a saved version, see history): the job can be run again. The current
     version, if any, is kept in saved/"""
-    user = set_user()
+    user = set_user()  # noqa: F841
     vid = request.forms.get("VERSION", "")
     try:
         version, saved = jdl_history.restore(jobname, vid)
@@ -1037,7 +1037,7 @@ def get_script(jobname):
     :param jobname:
     :return:
     """
-    # user = set_user()
+    # user = set_user()  # noqa: F841
     # db = getattr(storage, STORAGE + 'JobStorage')()
     # if db.has_access(user, jobname):
     #     fname = '{}/{}.sh'.format(SCRIPTS_PATH, jobname)
@@ -1048,7 +1048,7 @@ def get_script(jobname):
     #     abort_404('No script file found for ' + jobname)
     # else:
     #     abort_403()
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         db = getattr(storage, settings.STORAGE + "JobStorage")()
         if not settings.CHECK_PERMISSIONS or db.has_access(user, jobname):
@@ -1073,7 +1073,7 @@ def get_jdl_json(jobname):
     :param jobname:
     :return: json description
     """
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         getattr(storage, settings.STORAGE + "JobStorage")()
         # if not CHECK_PERMISSIONS or db.has_access(user, jobname) or 'tmp/' in jobname:
@@ -1098,7 +1098,7 @@ def get_jdl(jobname):
     :return: VOTable file
     """
     # logger.info(jobname)
-    # user = set_user()
+    # user = set_user()  # noqa: F841
     try:
         # db = getattr(storage, STORAGE + "JobStorage")()
         # if not CHECK_PERMISSIONS or db.has_access(user, jobname):
@@ -1131,7 +1131,7 @@ def get_jdl(jobname):
 @is_admin
 def delete_jdl(jobname):
     """Delete the job definition: the job definition and its script are kept in saved/ (_DELETED)"""
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         jdl = getattr(uws_jdl, settings.JDL)()
         jdl.read(jobname)  # need version for saved files
@@ -1175,7 +1175,7 @@ def download_entity():
         404 Not Found: Entity not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         if "ID" not in request.query:
             raise UserWarning('"ID" is not specified in request') from None
@@ -1188,7 +1188,7 @@ def download_entity():
             # owner = name + token (the token is unknown for some entities registered by previous versions)
             owner_token = entity.get("owner_token")
             if entity["owner"] != user.name or (owner_token is not None and owner_token != user.token):
-                raise EntityAccessDenied(f"User {user.name} is not the owner of the entity")
+                raise EntityAccessDeniedError(f"User {user.name} is not the owner of the entity")
 
         if not os.path.isfile(os.path.join(entity["file_dir"] or "", entity["file_name"] or "")):
             # file deleted: job archived (job that generated the entity, or used it for an uploaded file)
@@ -1224,7 +1224,7 @@ def download_entity():
         #     response.set_header('Content-Disposition', 'attachment; filename="{}"'.format(entity['file_name']))
         #     return static_file(entity['file_name'], root=entity['file_dir'], mimetype=entity['content_type'],
         #                        download=download)
-    except (JobAccessDenied, EntityAccessDenied) as e:
+    except (JobAccessDeniedError, EntityAccessDeniedError) as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
@@ -1247,7 +1247,7 @@ def provsap():
 
     from . import provenance
 
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         if "ID" not in request.query:
             raise BadRequestError('"ID" is not specified in request') from None
@@ -1595,7 +1595,7 @@ def job_event():
                 job.close()
         else:
             raise UserWarning("jobid is not defined in POST") from None
-    except JobAccessDenied as e:
+    except JobAccessDeniedError as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
@@ -1622,7 +1622,7 @@ def get_joblist(jobname):
         200 OK: text/xml (on success)
         500 Internal Server Error (on error)
     """
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         logger.info(f"{jobname}")
         # UWS v1.1 PHASE keyword
@@ -1641,7 +1641,7 @@ def get_joblist(jobname):
             joblist.close()
         response.content_type = "text/xml; charset=UTF-8"
         return xml_out
-    except JobAccessDenied as e:
+    except JobAccessDeniedError as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
@@ -1657,12 +1657,12 @@ def create_job(jobname):
 
     Returns:
         303 See other: /<jobname>/<jobid> (on success)
-        400 Bad Request (on ParameterTooLong, InvalidInput)
-        403 Forbidden (on JobAccessDenied)
+        400 Bad Request (on ParameterTooLongError, InvalidInputError)
+        403 Forbidden (on JobAccessDeniedError)
         500 Internal Server Error (on error)
     """
     # Create new jobid for new job
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         # TODO: Check if form submitted correctly, detect file size overflow?
         # Set new job description from POSTed parameters
@@ -1677,13 +1677,13 @@ def create_job(jobname):
                 )
         finally:
             job.close()
-    except JobAccessDenied as e:
+    except JobAccessDeniedError as e:
         abort_403(str(e))
-    except (ParameterTooLong, InvalidInput) as e:
+    except (ParameterTooLongError, InvalidInputError) as e:
         abort_400(str(e))
     except UserWarning as e:
         abort_500(e.args[0])
-    except TooManyJobs:
+    except TooManyJobsError:
         abort_500_except(
             msg=f"Maximum number of active jobs reached ({settings.NJOBS_MAX})",
             msg_public=f"Maximum number of active jobs reached ({settings.NJOBS_MAX})",
@@ -1714,7 +1714,7 @@ def get_job(jobname, jobid):
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         logger.info(f"{jobname} {jobid}")
         # Get job properties from DB
@@ -1776,7 +1776,7 @@ def get_job(jobname, jobid):
         xml_out = job.to_xml()
         response.content_type = "text/xml; charset=UTF-8"
         return xml_out
-    except JobAccessDenied as e:
+    except JobAccessDeniedError as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
@@ -1795,7 +1795,7 @@ def delete_job(jobname, jobid):
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         logger.info(f"{jobname} {jobid}")
         # Get job properties from DB
@@ -1806,7 +1806,7 @@ def delete_job(jobname, jobid):
         finally:
             job.close()
         logger.info(f"{jobname} {jobid} DELETED")
-    except JobAccessDenied as e:
+    except JobAccessDeniedError as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
@@ -1824,7 +1824,7 @@ def delete_job(jobname, jobid):
 @app.post(settings.UWS_SERVER_ENDPOINT + "/<jobname>/<jobid>")
 def post_job(jobname, jobid):
     """Alias for delete_job() if ACTION=DELETE"""
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         logger.debug(f"POST: {request.POST.__dict__}")
         logger.info(f"deleting {jobname} {jobid}")
@@ -1839,7 +1839,7 @@ def post_job(jobname, jobid):
             logger.info(f"{jobname} {jobid} DELETED")
         else:
             raise UserWarning("ACTION=DELETE is not specified in POST") from None
-    except JobAccessDenied as e:
+    except JobAccessDeniedError as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
@@ -1869,7 +1869,7 @@ def get_phase(jobname, jobid):
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         # logger.info('{} {}'.format(jobname, jobid))
         # Get job properties from DB
@@ -1880,7 +1880,7 @@ def get_phase(jobname, jobid):
             return job.phase
         finally:
             job.close()
-    except JobAccessDenied as e:
+    except JobAccessDeniedError as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
@@ -1897,7 +1897,7 @@ def post_phase(jobname, jobid):
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         if "PHASE" in request.forms:
             new_phase = request.forms.get("PHASE")
@@ -1938,7 +1938,7 @@ def post_phase(jobname, jobid):
                 raise UserWarning("PHASE=" + new_phase + " not expected") from None
         else:
             raise UserWarning("PHASE keyword is not specified in POST") from None
-    except JobAccessDenied as e:
+    except JobAccessDeniedError as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
@@ -1969,7 +1969,7 @@ def get_executionduration(jobname, jobid):
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         logger.info(f"{jobname} {jobid}")
         # Get job properties from DB
@@ -1980,7 +1980,7 @@ def get_executionduration(jobname, jobid):
             return str(job.execution_duration)
         finally:
             job.close()
-    except JobAccessDenied as e:
+    except JobAccessDeniedError as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
@@ -1999,18 +1999,18 @@ def post_executionduration(jobname, jobid):
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         logger.info(f"{jobname} {jobid}")
         # Get value from POST
         if "EXECUTIONDURATION" not in request.forms:
-            raise InvalidInput("EXECUTIONDURATION keyword required") from None
+            raise InvalidInputError("EXECUTIONDURATION keyword required") from None
         new_value = request.forms.get("EXECUTIONDURATION")
         # Check new value (capped at EXECUTION_DURATION_MAX)
         try:
             new_value = execution_duration(new_value)
         except ValueError:
-            raise InvalidInput("Execution duration must be a positive integer (seconds, 0 for unlimited)") from None
+            raise InvalidInputError("Execution duration must be a positive integer (seconds, 0 for unlimited)") from None
         # Get job properties from DB
         job = Job(jobname, jobid, user)
         try:
@@ -2024,9 +2024,9 @@ def post_executionduration(jobname, jobid):
                 ) from None
         finally:
             job.close()
-    except InvalidInput as e:
+    except InvalidInputError as e:
         abort_400(str(e))
-    except JobAccessDenied as e:
+    except JobAccessDeniedError as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
@@ -2052,7 +2052,7 @@ def get_destruction(jobname, jobid):
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         logger.info(f"{jobname} {jobid}")
         # Get job properties from DB
@@ -2063,7 +2063,7 @@ def get_destruction(jobname, jobid):
             return job.destruction_time
         finally:
             job.close()
-    except JobAccessDenied as e:
+    except JobAccessDeniedError as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
@@ -2080,7 +2080,7 @@ def post_destruction(jobname, jobid):
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         logger.info(f"{jobname} {jobid}")
         # Get value from POST
@@ -2106,7 +2106,7 @@ def post_destruction(jobname, jobid):
         finally:
             job.close()
         logger.info(f"{jobname} {jobid} set destruction_time={new_value}")
-    except JobAccessDenied as e:
+    except JobAccessDeniedError as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
@@ -2133,7 +2133,7 @@ def get_error(jobname, jobid):
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         logger.info(f"{jobname} {jobid}")
         # Get job properties from DB
@@ -2144,7 +2144,7 @@ def get_error(jobname, jobid):
             return job.error
         finally:
             job.close()
-    except JobAccessDenied as e:
+    except JobAccessDeniedError as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
@@ -2166,7 +2166,7 @@ def get_quote(jobname, jobid):
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         logger.info(f"{jobname} {jobid}")
         # Get job properties from DB
@@ -2177,7 +2177,7 @@ def get_quote(jobname, jobid):
             return str(job.quote)
         finally:
             job.close()
-    except JobAccessDenied as e:
+    except JobAccessDeniedError as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
@@ -2200,7 +2200,7 @@ def get_parameters(jobname, jobid):
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         logger.info(f"{jobname} {jobid}")
         # Get job properties from DB
@@ -2212,7 +2212,7 @@ def get_parameters(jobname, jobid):
             job.close()
         response.content_type = "text/xml; charset=UTF-8"
         return xml_out
-    except JobAccessDenied as e:
+    except JobAccessDeniedError as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
@@ -2230,7 +2230,7 @@ def get_parameter(jobname, jobid, pname):
         404 Not Found: Parameter not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         logger.info("param=" + pname + " " + jobname + " " + jobid)
         # Get job properties from DB
@@ -2246,7 +2246,7 @@ def get_parameter(jobname, jobid, pname):
             return str(job.parameters[pname]["value"])
         finally:
             job.close()
-    except JobAccessDenied as e:
+    except JobAccessDeniedError as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
@@ -2260,11 +2260,11 @@ def post_parameter(jobname, jobid, pname):
 
     Returns:
         303 See other: /<jobname>/<jobid>/parameters (on success)
-        400 Bad Request (on ParameterTooLong)
+        400 Bad Request (on ParameterTooLongError)
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         logger.info(f"pname={pname} {jobname} {jobid}")
         # Get value from POST
@@ -2285,9 +2285,9 @@ def post_parameter(jobname, jobid, pname):
                 ) from None
         finally:
             job.close()
-    except ParameterTooLong as e:
+    except ParameterTooLongError as e:
         abort_400(str(e))
-    except JobAccessDenied as e:
+    except JobAccessDeniedError as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
@@ -2317,7 +2317,7 @@ def get_results(jobname, jobid):
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         logger.info(f"{jobname} {jobid}")
         # Get job properties from DB
@@ -2329,7 +2329,7 @@ def get_results(jobname, jobid):
             job.close()
         response.content_type = "text/xml; charset=UTF-8"
         return xml_out
-    except JobAccessDenied as e:
+    except JobAccessDeniedError as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
@@ -2347,7 +2347,7 @@ def get_result(jobname, jobid, rname):
         404 Not Found: Result not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         logger.info(f"rname={rname} {jobname} {jobid}")
         # Get job properties from DB
@@ -2363,7 +2363,7 @@ def get_result(jobname, jobid, rname):
             return str(job.results[rname]["url"])
         finally:
             job.close()
-    except JobAccessDenied as e:
+    except JobAccessDeniedError as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
@@ -2381,7 +2381,7 @@ def get_stdout(jobname, jobid):
         404 Not Found: Result not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         # Get job properties from DB
         # job = Job(jobname, jobid, user, get_results=True)
@@ -2394,7 +2394,7 @@ def get_stdout(jobname, jobid):
             )
         # Return file
         return static_file(logname + ".log", root=logroot, mimetype="text")
-    except JobAccessDenied as e:
+    except JobAccessDeniedError as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
@@ -2412,7 +2412,7 @@ def get_stderr(jobname, jobid):
         404 Not Found: Result not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         # Get job properties from DB
         # job = Job(jobname, jobid, user, get_results=True)
@@ -2425,7 +2425,7 @@ def get_stderr(jobname, jobid):
             )
         # Return file
         return static_file(logname + ".log", root=logroot, mimetype="text")
-    except JobAccessDenied as e:
+    except JobAccessDeniedError as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
@@ -2443,7 +2443,7 @@ def get_prov(jobname, jobid, provtype):
         404 Not Found: Result not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         # Get job properties from DB
         # job = Job(jobname, jobid, user, get_results=True)
@@ -2460,7 +2460,7 @@ def get_prov(jobname, jobid, provtype):
             "svg": "image/svg+xml",
         }
         return static_file(provname, root=provroot, mimetype=content_types[provtype])
-    except JobAccessDenied as e:
+    except JobAccessDeniedError as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))
@@ -2482,7 +2482,7 @@ def get_owner(jobname, jobid):
         404 Not Found: Job not found (on NotFoundWarning)
         500 Internal Server Error (on error)
     """
-    user = set_user()
+    user = set_user()  # noqa: F841
     try:
         logger.info(f"{jobname} {jobid}")
         # Get job properties from DB
@@ -2493,7 +2493,7 @@ def get_owner(jobname, jobid):
             return job.owner
         finally:
             job.close()
-    except JobAccessDenied as e:
+    except JobAccessDeniedError as e:
         abort_403(str(e))
     except storage.NotFoundWarning as e:
         abort_404(str(e))

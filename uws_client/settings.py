@@ -18,7 +18,10 @@ import os
 
 import bleach
 
-from opus_config import APP_PATH, ClientSettings  # noqa: F401 (APP_PATH is imported from here)
+from opus_config import (  # noqa: F401 (APP_PATH is imported from here)
+    APP_PATH,
+    ClientSettings,
+)
 
 settings = ClientSettings()
 

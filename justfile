@@ -45,8 +45,8 @@ coverage report="term":
     uv run pytest -q tests --cov --cov-report={{ report }}
 
 # Lint python files with ruff
-ruff path="src":
-    uv run ruff check {{ path }}
+ruff *args:
+    uv run ruff check {{args}} .
     @echo 'ruff ✅'
 
 # Run OPUS server

@@ -20,44 +20,44 @@ from blinker import signal
 
 from . import managers, storage, uws_jdl
 from .settings import (
-    settings,
     ACTIVE_PHASES,
     CONTROL_PARAMETERS_KEYS,
     DT_FMT,
     JOB_ATTRIBUTES,
     UWS_PARAMETERS,
     logger,
+    settings,
 )
 
 # ---------
 # Exceptions/Warnings
 
 
-class JobAccessDenied(Exception):
+class JobAccessDeniedError(Exception):
     """User has no right to access job"""
 
     pass
 
 
-class TooManyJobs(Exception):
+class TooManyJobsError(Exception):
     """Maximum number of active jobs reached (NJOBS_MAX)"""
 
     pass
 
 
-class EntityAccessDenied(Exception):
+class EntityAccessDeniedError(Exception):
     """User has no right to access job"""
 
     pass
 
 
-class ParameterTooLong(Exception):
+class ParameterTooLongError(Exception):
     """Parameter value is longer than its storage column"""
 
     pass
 
 
-class InvalidInput(Exception):
+class InvalidInputError(Exception):
     """Input of a job (used entity) missing, or not found (not in the entity store, URL not reachable)"""
 
     pass
@@ -83,10 +83,10 @@ PARAMETER_MAX_LENGTH_DEF = 255  # job_parameters.value
 
 
 def check_parameter_length(pname, value):
-    """Raise ParameterTooLong if value cannot be stored (PostgreSQL rejects it, SQLite does not)"""
+    """Raise ParameterTooLongError if value cannot be stored (PostgreSQL rejects it, SQLite does not)"""
     max_length = PARAMETER_MAX_LENGTH.get(pname, PARAMETER_MAX_LENGTH_DEF)
     if isinstance(value, str) and len(value) > max_length:
-        raise ParameterTooLong(
+        raise ParameterTooLongError(
             f"Value of parameter '{pname}' is too long ({len(value)} characters, max {max_length})"
         )
 
@@ -159,15 +159,14 @@ special_users = [
 
 
 def check_permissions(job):
-    """Check if user has rights to create/edit such a job, else raise JobAccessDenied"""
+    """Check if user has rights to create/edit such a job, else raise JobAccessDeniedError"""
     if settings.CHECK_PERMISSIONS:
         if job.user in special_users:
             # logger.debug('Permission granted for special user {} (job {}/{})'.format(job.user.name, job.jobname, job.jobid))
             pass
         else:
-            if job.jobname and job.jobname not in ["test_"]:
-                if not job.storage.has_access(job.user, job.jobname):
-                    raise JobAccessDenied(
+            if job.jobname and job.jobname not in ["test_"] and not job.storage.has_access(job.user, job.jobname):
+                    raise JobAccessDeniedError(
                         f"User {job.user.name} does not have permission to create/edit {job.jobname} jobs"
                     )
     # else:
@@ -175,7 +174,7 @@ def check_permissions(job):
 
 
 def check_owner(job):
-    """Check if user has rights to create/edit such a job, else raise JobAccessDenied"""
+    """Check if user has rights to create/edit such a job, else raise JobAccessDeniedError"""
     if settings.CHECK_OWNER:
         if job.user in special_users:
             pass
@@ -183,7 +182,7 @@ def check_owner(job):
             if job.user == User(job.owner, job.owner_token):
                 pass
             else:
-                raise JobAccessDenied(
+                raise JobAccessDeniedError(
                     f"User {job.user.name} is not the owner of the job"
                 )
 
@@ -248,7 +247,7 @@ class Job:
         # logger.debug('Init storage for job {}'.format(self.jobid))
         self.storage = getattr(storage, settings.STORAGE + "JobStorage")()
 
-        # Check if user has rights to create/edit such a job, else raise JobAccessDenied
+        # Check if user has rights to create/edit such a job, else raise JobAccessDeniedError
         check_permissions(self)
 
         # Link to the job manager, e.g. SLURM, see settings.py
@@ -263,7 +262,7 @@ class Job:
             # Check if max number of running jobs is not reached
             jobs = self.storage.get_list(self, phase=ACTIVE_PHASES, where_owner=True)
             if settings.NJOBS_MAX and len(jobs) >= settings.NJOBS_MAX:
-                raise TooManyJobs(
+                raise TooManyJobsError(
                     f"Maximum number of active jobs reached for {user.name} ({settings.NJOBS_MAX})"
                 )
             # Create a new PENDING job and save to storage
@@ -303,7 +302,7 @@ class Job:
                 get_results=get_results,
                 from_process_id=from_process_id,
             )
-            # Check if the user is the owner of the job, else raise JobAccessDenied
+            # Check if the user is the owner of the job, else raise JobAccessDeniedError
             if run_check_owner:
                 check_owner(self)
 
@@ -483,11 +482,11 @@ class Job:
                     )
 
                 elif in_store:
-                    raise InvalidInput(f"Input '{pname}': result {entity_id} not found in the entity store")
+                    raise InvalidInputError(f"Input '{pname}': result {entity_id} not found in the entity store")
                 else:
                     # 5/ Input is a URL
                     if not value:
-                        raise InvalidInput(
+                        raise InvalidInputError(
                             f"Input '{pname}' is required: give a file, an identifier of the entity store, or a URL"
                         )
                     furl = ""
@@ -497,7 +496,7 @@ class Job:
                         # take URL given in JDL, and replace $ID
                         furl = url_jdl.replace("$ID", value)
                     else:
-                        raise InvalidInput(
+                        raise InvalidInputError(
                             f"Input '{pname}': '{value}' is not an identifier of the entity store, nor a URL"
                         )
                     # try to upload file from URL
@@ -505,9 +504,9 @@ class Job:
                         r = requests.get(furl, allow_redirects=True, timeout=60)
                     except requests.exceptions.RequestException as e:
                         logger.warning(f"Cannot upload URL for input '{pname}': {furl}\n{e}")
-                        raise InvalidInput(f"Input '{pname}': cannot get {furl} ({type(e).__name__})") from None
+                        raise InvalidInputError(f"Input '{pname}': cannot get {furl} ({type(e).__name__})") from e
                     if r.status_code != 200:
-                        raise InvalidInput(f"Input '{pname}': cannot get {furl} (HTTP {r.status_code})")
+                        raise InvalidInputError(f"Input '{pname}': cannot get {furl} (HTTP {r.status_code})")
                     cd = r.headers.get("content-disposition")
                     filename = get_filename_from_cd(cd)
                     if not os.path.isdir(job_upload_dir):
@@ -773,7 +772,7 @@ class Job:
         try:
             return ETree.tostring(xml_job)
         except Exception as e:
-            raise UserWarning(f"Cannot serialize job {self.jobid}: {e}")
+            raise UserWarning(f"Cannot serialize job {self.jobid}: {e}") from e
 
     # ----------
     # Metadata management
@@ -948,10 +947,10 @@ class Job:
         try:
             # Test if process_id is an integer
             process_id = int(process_id)
-        except ValueError:
+        except ValueError as e:
             raise RuntimeError(
                 f"Bad process_id returned for job {self.jobid}:\nprocess_id:\n{process_id}"
-            )
+            ) from e
         self.process_id = process_id
         # No need to change times: job not started yet
         # now = dt.datetime.now()
@@ -1097,8 +1096,7 @@ class Job:
         # Set start_time
         if new_phase in ["QUEUED"]:
             self.start_time = now.strftime(DT_FMT)
-        if new_phase in ["COMPLETED", "ABORTED", "ERROR"]:
-            if self.phase not in ["ERROR"]:
+        if new_phase in ["COMPLETED", "ABORTED", "ERROR"] and self.phase not in ["ERROR"]:
                 # Get results, logs
                 try:
                     self.end_time = now.strftime(DT_FMT)
@@ -1180,7 +1178,7 @@ class JobList:
         # logger.debug('Init storage for joblist')
         self.storage = getattr(storage, settings.STORAGE + "JobStorage")()
 
-        # Check if user has rights to create/edit such a job, else raise JobAccessDenied
+        # Check if user has rights to create/edit such a job, else raise JobAccessDeniedError
         check_permissions(self)
 
         # Check if user is admin, then get all jobs
@@ -1247,7 +1245,7 @@ class JobList:
         try:
             return ETree.tostring(xml_jobs)
         except Exception as e:
-            raise UserWarning(f"Cannot serialize joblist: {e}")
+            raise UserWarning(f"Cannot serialize joblist: {e}") from e
 
     def to_html(self):
         """Returns the HTML representation of jobs"""

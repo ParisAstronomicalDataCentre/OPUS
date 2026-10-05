@@ -10,16 +10,16 @@ import copy
 import glob
 import inspect
 import json
+import os
 
-import lxml.etree as ETree
+import lxml.etree as etree
 import yaml
 
-import os
 from .settings import (
-    settings,
     CONTROL_PARAMETERS,
     CONTROL_PARAMETERS_KEYS,
     logger,
+    settings,
 )
 
 # ---------
@@ -329,7 +329,7 @@ class VOTFile(JDLFile):
         # VOTable root
         xmlns = self.xmlns_uris["xmlns"]
         xsi = self.xmlns_uris["xmlns:xsi"]
-        jdl_tree = ETree.Element(
+        jdl_tree = etree.Element(
             "VOTABLE",
             attrib={
                 "version": "1.3",
@@ -339,7 +339,7 @@ class VOTFile(JDLFile):
             },
             nsmap={"xsi": xsi, None: xmlns},
         )
-        resource = ETree.SubElement(
+        resource = etree.SubElement(
             jdl_tree,
             "RESOURCE",
             attrib={
@@ -351,13 +351,13 @@ class VOTFile(JDLFile):
         )
         # Job attributes
         if self.content["annotation"]:
-            ETree.SubElement(resource, "DESCRIPTION").text = self.content[
+            etree.SubElement(resource, "DESCRIPTION").text = self.content[
                 "annotation"
             ]  # .decode() # not needed in Python 3
         # TODO: automatic list of attributes from jdl.content
         for key in ["doculink", "type", "subtype", "version"]:
             #'<PARAM name="{key}" datatype="char" arraysize="*" value="{value}" utype="voprov:ActivityDescription.{key}"/>'.format(key=key, value=self.content.get(key, '')))
-            ETree.SubElement(
+            etree.SubElement(
                 resource,
                 "PARAM",
                 attrib={
@@ -370,7 +370,7 @@ class VOTFile(JDLFile):
             )
         # Contact information
         for key in ["name", "email"]:
-            ETree.SubElement(
+            etree.SubElement(
                 resource,
                 "PARAM",
                 attrib={
@@ -383,7 +383,7 @@ class VOTFile(JDLFile):
             )
         # UWS parameters
         for key in ["executionDuration", "quote"]:
-            ETree.SubElement(
+            etree.SubElement(
                 resource,
                 "PARAM",
                 attrib={
@@ -394,7 +394,7 @@ class VOTFile(JDLFile):
                 },
             )
         # Script
-        script = ETree.SubElement(
+        script = etree.SubElement(
             resource,
             "PARAM",
             attrib={
@@ -404,25 +404,25 @@ class VOTFile(JDLFile):
                 "datatype": "char",
             },
         )
-        # script_d = ETree.SubElement(script, 'DESCRIPTION').text = ETree.CDATA(self.content['script'])
+        # script_d = etree.SubElement(script, 'DESCRIPTION').text = etree.CDATA(self.content['script'])
         # logger.debug(script_d.text)
         # Python 3
         # Insert groups
-        group_params = ETree.SubElement(
+        group_params = etree.SubElement(
             resource,
             "GROUP",
             attrib={
                 "name": "InputParams",
             },
         )
-        group_used = ETree.SubElement(
+        group_used = etree.SubElement(
             resource,
             "GROUP",
             attrib={
                 "name": "Used",
             },
         )
-        group_generated = ETree.SubElement(
+        group_generated = etree.SubElement(
             resource,
             "GROUP",
             attrib={
@@ -448,26 +448,26 @@ class VOTFile(JDLFile):
                 for attr in ["unit", "ucd", "utype"]:
                     if p.get(attr, False):
                         param_attrib[attr] = p[attr]
-                param = ETree.Element("PARAM", attrib=param_attrib)
+                param = etree.Element("PARAM", attrib=param_attrib)
                 pdesc = p.get("annotation", "")
                 # .encode(encoding='utf-8', errors='ignore')
                 # pdesc_clean = ''.join(c for c in pdesc if self.valid_xml_char_ordinal(c))
                 # logger.debug(pdesc)
                 # logger.debug(pdesc_clean)
-                ETree.SubElement(param, "DESCRIPTION").text = pdesc
+                etree.SubElement(param, "DESCRIPTION").text = pdesc
                 if (
                     p.get("min", False)
                     or p.get("max", False)
                     or p.get("options", False)
                 ):
-                    values = ETree.SubElement(param, "VALUES")
+                    values = etree.SubElement(param, "VALUES")
                     if p.get("min", False):
-                        ETree.SubElement(values, "MIN", attrib={"value": p["min"]})
+                        etree.SubElement(values, "MIN", attrib={"value": p["min"]})
                     if p.get("max", False):
-                        ETree.SubElement(values, "MAX", attrib={"value": p["max"]})
+                        etree.SubElement(values, "MAX", attrib={"value": p["max"]})
                     if p.get("options", False):
                         for o in p["options"].split(","):
-                            ETree.SubElement(values, "OPTION", attrib={"value": o})
+                            etree.SubElement(values, "OPTION", attrib={"value": o})
                 group_params.append(param)
         # Prepare used block
         used_attr = [
@@ -492,10 +492,10 @@ class VOTFile(JDLFile):
                 }
                 if pname in self.content["parameters"]:
                     attrib["ref"] = pname
-                used = ETree.Element("GROUP", attrib=attrib)
-                ETree.SubElement(used, "DESCRIPTION").text = pdict.get("annotation", "")
+                used = etree.Element("GROUP", attrib=attrib)
+                etree.SubElement(used, "DESCRIPTION").text = pdict.get("annotation", "")
                 for edattr in used_attr:
-                    ETree.SubElement(
+                    etree.SubElement(
                         used,
                         "PARAM",
                         attrib={
@@ -524,12 +524,12 @@ class VOTFile(JDLFile):
                 }
                 if rname in self.content["parameters"]:
                     attrib["ref"] = rname
-                result = ETree.Element("GROUP", attrib=attrib)
-                ETree.SubElement(result, "DESCRIPTION").text = rdict.get(
+                result = etree.Element("GROUP", attrib=attrib)
+                etree.SubElement(result, "DESCRIPTION").text = rdict.get(
                     "annotation", ""
                 )
                 for edattr in gen_attr:
-                    ETree.SubElement(
+                    etree.SubElement(
                         result,
                         "PARAM",
                         attrib={
@@ -542,7 +542,7 @@ class VOTFile(JDLFile):
                     )
                 group_generated.append(result)
         # Write file
-        jdl_content = ETree.tostring(jdl_tree, pretty_print=True)
+        jdl_content = etree.tostring(jdl_tree, pretty_print=True)
         jdl_fname = self._get_filename(jobname)
         with open(jdl_fname, "wb") as f:
             f.write(jdl_content)
@@ -566,7 +566,7 @@ class VOTFile(JDLFile):
             try:
                 with open(fname) as f:
                     jdl_string = f.read()
-                jdl_tree = ETree.fromstring(jdl_string)
+                jdl_tree = etree.fromstring(jdl_string)
                 # print jdl_tree
                 # Get default namespace
                 xmlns = "{" + jdl_tree.nsmap[None] + "}"
@@ -670,8 +670,7 @@ class VOTFile(JDLFile):
                                         .get("annotation", item["annotation"])
                                     )
                                 for pp in p:
-                                    if pp.tag == f"{xmlns}PARAM":
-                                        if pp.get("name"):
+                                    if pp.tag == f"{xmlns}PARAM" and pp.get("name"):
                                             item[pp.get("name")] = pp.get("value")
                                     if pp.tag == f"{xmlns}DESCRIPTION":
                                         item["annotation"] = pp.text
@@ -702,8 +701,7 @@ class VOTFile(JDLFile):
                                         .get("annotation")
                                     )
                                 for pp in p:
-                                    if pp.tag == f"{xmlns}PARAM":
-                                        if pp.get("name"):
+                                    if pp.tag == f"{xmlns}PARAM" and pp.get("name"):
                                             item[pp.get("name")] = pp.get("value")
                                     if pp.tag == f"{xmlns}DESCRIPTION":
                                         item["annotation"] = pp.text
@@ -712,10 +710,10 @@ class VOTFile(JDLFile):
                 # Log votable access
                 # frame, filename, line_number, function_name, lines, index = inspect.stack()[1]
                 # logger.debug('VOTable read at {} ({}:{}): {}'.format(function_name, filename, line_number, fname))
-            except OSError:
+            except OSError as e:
                 # if file does not exist, continue and return an empty dict
                 logger.debug(f"VOTable not found for job {jobname}")
-                raise UserWarning(f"VOTable not found for job {jobname}")
+                raise UserWarning(f"VOTable not found for job {jobname}") from e
             except Exception as e:
                 logger.error(f"{e}")
                 raise
@@ -765,22 +763,22 @@ class WADLFile(JDLFile):
                 "required": str(p["required"]),
                 "default": p["default"],
             }
-            pelt = ETree.Element("param", attrib=pelt_attrib)
-            ETree.SubElement(pelt, "doc").text = p.get("annotation", "")
+            pelt = etree.Element("param", attrib=pelt_attrib)
+            etree.SubElement(pelt, "doc").text = p.get("annotation", "")
             jdl_params.append(pelt)
             # line = '<option value="{}" content_type="text/plain"><doc>{}</doc></option>' \
             #        ''.format(pname, p['annotation'])
-            poelt = ETree.Element(
+            poelt = etree.Element(
                 "option", attrib={"value": pname, "content_type": "text/plain"}
             )
-            ETree.SubElement(poelt, "doc").text = p.get("annotation", "")
+            etree.SubElement(poelt, "doc").text = p.get("annotation", "")
             jdl_popts.append(poelt)
         # Prepare result block
         jdl_ropts = []
         for rname, r in self.content["generated"].items():
             # rline = '<option value="{}" content_type="{}" default="{}"><doc>{}</doc></option>' \
             #         ''.format(rname, r['content_type'], r['default'], r.get('annotation', ''))
-            roelt = ETree.Element(
+            roelt = etree.Element(
                 "option",
                 attrib={
                     "value": rname,
@@ -788,13 +786,13 @@ class WADLFile(JDLFile):
                     "default": r["default"],
                 },
             )
-            ETree.SubElement(roelt, "doc").text = r.get("annotation", "")
+            etree.SubElement(roelt, "doc").text = r.get("annotation", "")
             jdl_ropts.append(roelt)
         # Read WADL UWS template as XML Tree
         filename = f"{settings.JDL_PATH}/uws_template.wadl"
         with open(filename) as f:
             jdl_string = f.read()
-        jdl_tree = ETree.fromstring(jdl_string)
+        jdl_tree = etree.fromstring(jdl_string)
         xmlns = "{" + jdl_tree.nsmap[None] + "}"
         # Insert raw_jobname as the resource path
         joblist_block = jdl_tree.find(f".//{xmlns}resource[@id='joblist']")
@@ -832,7 +830,7 @@ class WADLFile(JDLFile):
         # Insert default quote
         quote_block = jdl_tree.find(f".//{xmlns}representation[@id='quote']")
         quote_block.set("default", self.content["quote"])
-        jdl_content = ETree.tostring(jdl_tree, pretty_print=True)
+        jdl_content = etree.tostring(jdl_tree, pretty_print=True)
         jdl_fname = self._get_filename(jobname)
         with open(jdl_fname, "w") as f:
             f.write(jdl_content)
@@ -848,7 +846,7 @@ class WADLFile(JDLFile):
         try:
             with open(fname) as f:
                 jdl_string = f.read()
-            jdl_tree = ETree.fromstring(jdl_string)
+            jdl_tree = etree.fromstring(jdl_string)
             # Get default namespace
             xmlns = "{" + jdl_tree.nsmap[None] + "}"
             # Read parameters description
@@ -914,10 +912,10 @@ class WADLFile(JDLFile):
                 1
             ]
             # logger.debug('WADL read at {} ({}:{}): {}'.format(function_name, filename, line_number, fname))
-        except OSError:
+        except OSError as e:
             # if file does not exist, continue and return an empty dict
             logger.debug(f"WADL not found for job {jobname}")
-            raise UserWarning(f"WADL not found for job {jobname}")
+            raise UserWarning(f"WADL not found for job {jobname}") from e
             # return {}
         self.content.update(job_def)
 
@@ -967,13 +965,13 @@ def read_par(jobname):
     for p in job_par:
         # Set if parameter is required (mode q and a)
         if ("q" in p["mode"]) or ("a" in p["mode"]):
-            required = "true"
+            required = "true"  # noqa: F841
         # If param is an integer or a real, add lower and upper limits (if not 0,0)
         if (("i" in p["type"]) or ("r" in p["type"])) and (
             p["lower"] != "0" and p["upper"] != 0
         ):
-            lowup = ' lower="%s" upper="%s"' % (p["lower"], p["upper"])
+            lowup = f' lower="{p["lower"]}" upper="{p["upper"]}"'  # noqa: F841
         # If param is a string (but not 'mode'), does it have limited choices?
         if ("s" in p["type"]) and (p["lower"] != "") and (p["name"] != "mode"):
-            choices = ' choices="%s"' % (p["lower"])
+            choices = f' choices="{p["lower"]}"'  # noqa: F841
         # Write param block to file
