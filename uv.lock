@@ -1604,7 +1604,6 @@ dependencies = [
     { name = "pydantic-settings" },
     { name = "pydot" },
     { name = "pydotplus" },
-    { name = "pytest" },
     { name = "python-dateutil" },
     { name = "pyyaml" },
     { name = "rdflib" },
@@ -1613,7 +1612,6 @@ dependencies = [
     { name = "urllib3" },
     { name = "uvicorn" },
     { name = "voprov" },
-    { name = "webtest" },
     { name = "wtforms" },
 ]
 
@@ -1624,6 +1622,7 @@ dev = [
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "ruff" },
+    { name = "webtest" },
 ]
 
 [package.metadata]
@@ -1647,7 +1646,6 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.15.0" },
     { name = "pydot" },
     { name = "pydotplus" },
-    { name = "pytest" },
     { name = "python-dateutil" },
     { name = "pyyaml" },
     { name = "rdflib" },
@@ -1656,7 +1654,6 @@ requires-dist = [
     { name = "urllib3", specifier = ">=2.8.0" },
     { name = "uvicorn" },
     { name = "voprov" },
-    { name = "webtest" },
     { name = "wtforms" },
 ]
 
@@ -1664,9 +1661,10 @@ requires-dist = [
 dev = [
     { name = "black", specifier = ">=24.0.0" },
     { name = "mypy", specifier = ">=1.0.0" },
-    { name = "pytest", specifier = ">=8.0.0" },
+    { name = "pytest", specifier = ">=9.1.1" },
     { name = "pytest-cov", specifier = ">=7.1.0" },
     { name = "ruff", specifier = ">=0.4.0" },
+    { name = "webtest" },
 ]
 
 [[package]]

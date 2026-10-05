@@ -28,14 +28,12 @@ dependencies = [
     "psycopg2-binary",
     "pydot",
     "pydotplus",
-    "pytest",
     "PyYAML",
     "requests",
     "urllib3>=2.8.0",
     "SQLAlchemy",
     "voprov",
     "rdflib",
-    "WebTest",
     "WTForms",  # ==3.1.2
     "pydantic-settings>=2.15.0",
     "a2wsgi>=1.10.10",
@@ -53,8 +51,9 @@ dev = [
     "ruff>=0.4.0",
     "black>=24.0.0",
     "mypy>=1.0.0",
-    "pytest>=8.0.0",
+    "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
+    "WebTest",
 ]
 
 # Ruff configuration
@@ -84,6 +83,9 @@ disable_error_code = ["no-untyped-def"]
 
 # Coverage of the tests (just coverage)
 [tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-vv --tb=no"
 filterwarnings = [
     # prov is pinned below 3 (see dependencies): changes announced for prov 3.0
     "ignore:.*prov 3\\.0:FutureWarning",
