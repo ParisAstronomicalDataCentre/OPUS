@@ -29,8 +29,8 @@ mypy path="src":
     @echo 'mypy ✅'
 
 # Run the tests
-test:
-    uv run pytest -q tests
+test *args:
+    uv run pytest {{args}}
 
 # Remove the files of the previous test runs
 test_clean:
