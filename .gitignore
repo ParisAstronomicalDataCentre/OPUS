@@ -14,7 +14,8 @@ var_data
 apache_opus.conf
 docker-compose.yml
 Dockerfile
-NOTES
+NOTE*
+NOTE_for_next_version
 patch_prov
 settings_docker.py
 settings_local.py

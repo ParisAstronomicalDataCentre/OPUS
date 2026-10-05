@@ -1,3 +1,15 @@
 
-- change endpoint from /rest to /uws
-- set this endpoint via UWS_SERVER_ENDPOINT in settings_local.py if default is not adapted (e.g. keep UWS_SERVER_ENDPOINT = '/rest')
+Things you raised that are parked, by your choice:
+
+"Client admins" (delegated admin rights): design only, kept aside.
+
+Known limits, documented or reported, not fixed:
+
+SAMP button: the desktop application can't download a result when CHECK_OWNER=true, and browsers limit it on HTTPS pages. It's untested with a real hub.
+Docker template: it still publishes PostgreSQL (5432) and Adminer (8081) to the host. The db container also receives all of .env.docker.
+UWS_AUTH=None for an external server is a documented warning; the code doesn't enforce it.
+Capabilities: no authentication method is declared, and the OPUS client doesn't use them yet.
+MEMBERS in ProvSAP is accepted but has no effect.
+"All jobs" isn't one list sorted by date.
+TAP result preview: the default VOTable shows its data as an unreadable base64 block. A table view was offered.
+The xsl/ folder is kept; it's tied to showing a TAP server's XML.
