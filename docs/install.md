@@ -34,7 +34,12 @@ OPUS has been tested on MacOS, Debian/Ubuntu and CentOS, with Python 3.10 and 3.
 * `git`, `curl` (used by the jobs to report their phase to the server) and `graphviz` (provenance graphs),
 * `nginx`, only to run OPUS behind nginx.
 
-They can be installed e.g. with `brew`, `apt-get`... depending on the system.
+Install `uv`, then `just` with `uv`:
+
+    $ curl -LsSf https://astral.sh/uv/install.sh | sh
+    $ uv tool install rust-just
+
+The others can be installed e.g. with `brew`, `apt-get`... depending on the system.
 
 ### Python environment
 
