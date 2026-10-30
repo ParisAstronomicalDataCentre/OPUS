@@ -53,6 +53,7 @@ dev = [
     "mypy>=1.0.0",
     "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
+    "pytest-sugar>=1.1.1",
     "WebTest",
 ]
 
@@ -84,8 +85,8 @@ disable_error_code = ["no-untyped-def"]
 # Coverage of the tests (just coverage)
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["."]
-addopts = "-vv --tb=no"
+#pythonpath = ["."]
+#addopts = "-vv --tb=no"
 filterwarnings = [
     # prov is pinned below 3 (see dependencies): changes announced for prov 3.0
     "ignore:.*prov 3\\.0:FutureWarning",
