@@ -13,7 +13,7 @@ from urllib.parse import parse_qs, urlparse
 
 import pytest
 from authlib.integrations.base_client import OAuthError
-from flask_security import hash_password
+from flask_security.utils import hash_password
 from test_oidc import FakeIdP  # simulated Identity Provider for the server
 
 from uws_client import uws_client as c
