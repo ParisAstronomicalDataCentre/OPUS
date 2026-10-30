@@ -146,6 +146,18 @@ class TestPages:
         assert 'id="authenticated" style="display:none" value="false"' in html
         assert client.get("/accounts/register").status_code == 200
 
+    def test_idp_icon(self, client, monkeypatch):
+        """Icon of an Identity Provider: the given URL, with the default icon if it does not work, or if none is given"""
+        default = "/static/images/openid.jpg"
+        idp = {"title": "IAM", "description": "", "url": "https://iam.test/config"}
+        monkeypatch.setitem(c.app.config, "OIDC_IDPS", [dict(idp, url_logo="https://iam.test/logo.png")])
+        html = client.get("/").get_data(as_text=True)
+        assert '<img src="https://iam.test/logo.png"' in html
+        assert 'onerror="this.onerror=null; this.src=\'/static/images/openid.jpg\';"' in html
+        for logo in [{}, {"url_logo": ""}]:
+            monkeypatch.setitem(c.app.config, "OIDC_IDPS", [dict(idp, **logo)])
+            assert f'<img src="{default}"' in client.get("/").get_data(as_text=True)
+
     def test_register_link_hidden_when_disabled(self, client, monkeypatch):
         monkeypatch.setitem(c.app.config, "SECURITY_REGISTERABLE", False)
         assert "Register" not in client.get("/").get_data(as_text=True)

@@ -91,7 +91,9 @@
   {% for idp in config.OIDC_IDPS %}
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('oidc_login') }}{{ idp.title }}" title="{{ idp.description }}">
-                                <img src="{{ idp.url_logo }}" height="23" width="20" style="padding-bottom: 3px;"/>
+                                {# default icon if no icon is given, or if its URL does not work #}
+                                <img src="{{ idp.url_logo or '/static/images/openid.jpg' }}" alt="" height="23" width="20" style="padding-bottom: 3px;"
+                                     onerror="this.onerror=null; this.src='/static/images/openid.jpg';"/>
                                 {{ idp.title }}
                             </a>
                         </li>
